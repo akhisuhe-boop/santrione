@@ -1,0 +1,143 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+html,
+body,
+.fi-body,
+.fi-layout,
+.fi-sidebar,
+.fi-topbar,
+.fi-main,
+.fi-section,
+.fi-ta,
+.fi-fo,
+.fi-in {
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+/*
+|--------------------------------------------------------------------------
+| MODERN PAYROLL
+|--------------------------------------------------------------------------
+*/
+
+.modern-payroll-section {
+    overflow: hidden;
+    border-radius: 1rem;
+    border: 1px solid rgb(229 231 235 / 0.8);
+    background: white;
+    box-shadow: 0 1px 2px rgba(0,0,0,.03);
+}
+
+.dark .modern-payroll-section {
+    border-color: rgb(255 255 255 / 0.1);
+    background: rgb(17 24 39);
+}
+
+/*
+|--------------------------------------------------------------------------
+| HEADER
+|--------------------------------------------------------------------------
+*/
+
+.modern-payroll-section .fi-section-header {
+    padding: .75rem 1rem;
+    border-bottom: 1px solid rgb(229 231 235 / 0.7);
+}
+
+/* INFO */
+.modern-payroll-section.info .fi-section-header {
+    background: linear-gradient(
+        to right,
+        rgb(239 246 255),
+        rgb(248 250 252)
+    );
+}
+
+/* SUCCESS */
+.modern-payroll-section.total .fi-section-header {
+    background: linear-gradient(
+        to right,
+        rgb(240 253 244),
+        rgb(248 250 252)
+    );
+}
+
+/* VIOLET */
+.modern-payroll-section.rincian .fi-section-header {
+    background: linear-gradient(
+        to right,
+        rgb(245 243 255),
+        rgb(248 250 252)
+    );
+}
+
+/* ORANGE */
+.modern-payroll-section.adjustment .fi-section-header {
+    background: linear-gradient(
+        to right,
+        rgb(255 247 237),
+        rgb(248 250 252)
+    );
+}
+
+/*
+|--------------------------------------------------------------------------
+| TITLE
+|--------------------------------------------------------------------------
+*/
+
+.modern-payroll-section .fi-section-header-heading {
+    font-size: 15px;
+    font-weight: 600;
+    color: rgb(17 24 39);
+}
+
+.dark .modern-payroll-section .fi-section-header-heading {
+    color: white;
+}
+
+/*
+|--------------------------------------------------------------------------
+| CONTENT
+|--------------------------------------------------------------------------
+*/
+
+.modern-payroll-section .fi-section-content {
+    padding: .5rem .85rem;
+}
+
+/*
+|--------------------------------------------------------------------------
+| GRID SPACING
+|--------------------------------------------------------------------------
+*/
+
+.modern-payroll-grid {
+    gap: .75rem !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| INFOLIST SPACING
+|--------------------------------------------------------------------------
+*/
+
+.modern-payroll-section .fi-in-entry {
+    padding-top: .2rem !important;
+    padding-bottom: .2rem !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| TABLE SPACING
+|--------------------------------------------------------------------------
+*/
+
+.modern-payroll-section table th {
+    padding-top: .75rem !important;
+    padding-bottom: .75rem !important;
+}
+
+.modern-payroll-section table td {
+    padding-top: .85rem !important;
+    padding-bottom: .85rem !important;
+}

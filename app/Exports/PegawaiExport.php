@@ -1,0 +1,108 @@
+<?php
+
+namespace App\Exports;
+
+use App\Models\Pegawai;
+use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Events\AfterSheet;
+use Maatwebsite\Excel\Concerns\WithCustomStartCell;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use Maatwebsite\Excel\Concerns\WithColumnFormatting;
+
+class PegawaiExport implements FromCollection, WithHeadings, ShouldAutoSize, WithEvents, WithCustomStartCell, WithColumnFormatting
+{
+    public function startCell(): string
+    {
+        return 'A5'; // 🔥 tabel mulai dari baris 5
+    }
+
+    public function columnFormats(): array
+    {
+        return [
+            'C' => NumberFormat::FORMAT_TEXT, // kolom NIK
+        ];
+    }
+
+    public function collection()
+    {
+        $data = [];
+        $no = 1;
+
+        $pegawais = Pegawai::with('lembagas')->get();
+
+        foreach ($pegawais as $pegawai) {
+            foreach ($pegawai->lembagas as $lembaga) {
+                $data[] = [
+                    $no++,
+                    $pegawai->nama,
+                    $pegawai->nik,
+                    $pegawai->jenis_kelamin,
+                    $pegawai->no_hp,
+                    $pegawai->pendidikan,
+                    $pegawai->universitas,
+                    $lembaga->nama,
+                    $lembaga->pivot->jabatan,
+                    $lembaga->pivot->status,
+                ];
+            }
+        }
+
+        return collect($data);
+    }
+
+    public function headings(): array
+    {
+        return [
+            'No',
+            'Nama',
+            'NIK',
+            'JK',
+            'No HP',
+            'Pendidikan',
+            'Universitas',
+            'Lembaga',
+            'Jabatan',
+            'Status',
+        ];
+    }
+
+    public function registerEvents(): array
+{
+    return [
+        AfterSheet::class => function (AfterSheet $event) {
+
+            $sheet = $event->sheet->getDelegate();
+
+            // 🔥 JUDUL
+            $sheet->mergeCells('A1:J1');
+            $sheet->setCellValue('A1', 'YAYASAN TUNAS CENDEKIA MADANI');
+
+            $sheet->mergeCells('A2:J2');
+            $sheet->setCellValue('A2', 'DATA GURU');
+
+            $sheet->mergeCells('A3:J3');
+            $sheet->setCellValue('A3', 'SDI TUNAS CENDEKIA MADANI');
+
+            // 🔥 STYLE JUDUL
+            $sheet->getStyle('A1:A3')->getFont()->setBold(true)->setSize(12);
+            $sheet->getStyle('A1:A3')->getAlignment()->setHorizontal('center');
+
+            // 🔥 GARIS
+            $sheet->getStyle('A3:J3')->getBorders()->getBottom()->setBorderStyle('thin');
+
+            // 🔥 HEADER (row 5 sekarang aman)
+            $sheet->getStyle('A5:J5')->getFont()->setBold(true);
+
+            // 🔥 BORDER
+            $lastRow = $sheet->getHighestRow();
+            $sheet->getStyle("A5:J{$lastRow}")
+                ->getBorders()
+                ->getAllBorders()
+                ->setBorderStyle('thin');
+        },
+    ];
+}
+}

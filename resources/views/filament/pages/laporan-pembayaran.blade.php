@@ -1,0 +1,307 @@
+<x-filament::page>
+
+    {{-- ===================== --}}
+    {{-- FILTER --}}
+    {{-- ===================== --}}
+    <div class="mb-6">
+        {{ $this->form }}
+    </div>
+
+    {{-- ===================== --}}
+    {{-- SUMMARY --}}
+    {{-- ===================== --}}
+    @php
+        $summary = $this->getSummary();
+
+        $months = [
+            '07'=>'Juli','08'=>'Agustus','09'=>'September','10'=>'Oktober',
+            '11'=>'November','12'=>'Desember','01'=>'Januari','02'=>'Februari',
+            '03'=>'Maret','04'=>'April','05'=>'Mei','06'=>'Juni',
+        ];
+    @endphp
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+
+    {{-- CARD 1 --}}
+    <div style="background:#eff6ff; padding:16px; border-radius:12px; border:1px solid #bfdbfe;">
+        <div style="font-size:14px; color:#2563eb;">Total Tagihan</div>
+        <div style="font-size:20px; font-weight:bold; color:#1d4ed8;">
+            Rp {{ number_format($summary['tagihan'],0,',','.') }}
+        </div>
+    </div>
+
+    {{-- CARD 2 --}}
+    <div style="background:#f0fdf4; padding:16px; border-radius:12px; border:1px solid #bbf7d0;">
+        <div style="font-size:14px; color:#166534;">Total Dibayar</div>
+        <div style="font-size:20px; font-weight:bold; color:#15803d;">
+            Rp {{ number_format($summary['dibayar'],0,',','.') }}
+        </div>
+    </div>
+
+    {{-- CARD 3 --}}
+    <div style="background:#fef2f2; padding:16px; border-radius:12px; border:1px solid #fecaca;">
+        <div style="font-size:14px; color:#b91c1c;">Total Tunggakan</div>
+        <div style="font-size:20px; font-weight:bold; color:#991b1b;">
+            Rp {{ number_format($summary['tunggakan'],0,',','.') }}
+        </div>
+    </div>
+
+</div>
+
+    {{-- ===================== --}}
+    {{-- A. SPP --}}
+    {{-- ===================== --}}
+    @php $spp = $this->getSppData(); @endphp
+
+    <div class="bg-white rounded-xl shadow mb-8">
+        <div class="p-4 font-bold border-b">
+            A. SPP / Bulanan
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm border">
+
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="p-2">No</th>
+                        <th class="p-2">Nama</th>
+                        <th class="p-2">Kelas</th>
+
+                        @foreach ($months as $label)
+                            <th class="p-2 text-center">{{ $label }}</th>
+                        @endforeach
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach ($spp as $i => $record)
+                        <tr class="border-t">
+                            <td class="p-2 text-center">
+                                {{ ($spp->currentPage() - 1) * $spp->perPage() + $loop->iteration }}
+                            </td>
+                            <td class="p-2">{{ $record->nama_lengkap }}</td>
+                            <td class="p-2">{{ $record->kelas->nama ?? '-' }}</td>
+
+                            @foreach ($months as $num => $label)
+
+                                @php
+                                    $tagihans = $record->tagihans
+                                        ->where('bulan', $num)
+                                        ->filter(fn($t)=> optional($t->jenisTagihan)->nama == 'SPP');
+
+                                    $totalTagihan = $tagihans->sum('nominal');
+                                    $totalBayar = $tagihans->flatMap->pembayarans->sum('nominal');
+                                    $lunas = $totalBayar >= $totalTagihan && $totalTagihan > 0;
+                                @endphp
+
+                                <td class="p-2 text-center">
+                                    @if ($totalTagihan > 0)
+
+                                        @if ($lunas)
+                                            <span style="background:#dcfce7;color:#15803d;padding:4px 8px;border-radius:6px;font-size:11px;">
+                                                LUNAS
+                                            </span>
+
+                                        @elseif ($totalBayar > 0)
+                                            <span style="background:#fef3c7;color:#92400e;padding:4px 8px;border-radius:6px;font-size:11px;">
+                                                CICILAN
+                                            </span>
+
+                                        @else
+                                            <span style="color:#dc2626;">
+                                                {{ number_format($totalTagihan,0,',','.') }}
+                                            </span>
+                                        @endif
+
+                                    @else
+                                        -
+                                    @endif
+                                </td>
+
+                            @endforeach
+                        </tr>
+                    @endforeach
+                </tbody>
+
+            </table>
+        </div>
+
+        {{-- ✅ FIX PAGINATION --}}
+        <div class="p-3 flex justify-end">
+            {{ $spp->links() }}
+        </div>
+    </div>
+
+    {{-- ===================== --}}
+    {{-- B. UMUM --}}
+    {{-- ===================== --}}
+    @php 
+        $umum = $this->getUmumData(); 
+    @endphp
+
+    <div id="table-umum" class="bg-white rounded-xl shadow">
+        <div class="p-4 font-bold border-b">
+            B. Pembayaran Umum (Non SPP)
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm border">
+
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="p-2 text-left">No</th>
+                        <th class="p-2 text-left">Nama</th>
+                        <th class="p-2 text-left">Kelas</th>
+                        <th class="p-2 text-left">Jenis</th>
+                        <th class="p-2 text-left">Total</th>
+                        <th class="p-2 text-left">Dibayar</th>
+                        <th class="p-2 text-left">Sisa</th>
+                        <th class="p-2 text-left">Aksi</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @forelse ($umum as $tagihan)
+
+                        @php
+                            $dibayar = optional($tagihan->pembayarans)->sum('nominal') ?? 0;
+                            $sisa = $tagihan->nominal - $dibayar;
+                        @endphp
+
+                        <tr class="border-t">
+                            <td class="p-2 text-center">
+                                {{ ($umum->currentPage() - 1) * $umum->perPage() + $loop->iteration }}
+                            </td>
+
+                            <td class="p-2">{{ optional($tagihan->siswa)->nama_lengkap 
+                            ?? optional($tagihan->ppdb)->nama_lengkap 
+                            ?? '-' }}</td>
+
+                            <td class="p-2">{{ $tagihan->siswa->kelas->nama ?? '-' }}</td>
+
+                            <td class="p-2">
+                                {{ $tagihan->jenisTagihan->nama ?? '-' }}
+                            </td>
+
+                            <td class="p-2">
+                                {{ number_format($tagihan->nominal,0,',','.') }}
+                            </td>
+
+                            <td class="p-2">
+                                {{ number_format($dibayar,0,',','.') }}
+                            </td>
+
+                            <td class="p-2">
+                                @if ($sisa <= 0)
+                                    <span style="background:#dcfce7;color:#15803d;padding:4px 8px;border-radius:6px;font-size:11px;">
+                                        LUNAS
+                                    </span>
+                                @else
+                                    <span style="color:#dc2626;">
+                                        {{ number_format($sisa,0,',','.') }}
+                                    </span>
+                                @endif
+                            </td>
+
+                            <td class="p-2">
+                                <button
+                                    wire:click="lihatRiwayat({{ $tagihan->id }})"
+                                    style="background:#00A39D;color:#fff;padding:6px 10px;border-radius:6px;font-size:12px;">
+                                    Riwayat
+                                </button>
+                            </td>
+                        </tr>
+
+                    @empty
+                        <tr>
+                            <td colspan="8" class="p-4 text-center text-gray-500">
+                                Tidak ada data
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+
+            </table>
+        </div>
+
+        {{-- ✅ FIX PAGINATION --}}
+        <div class="p-3 flex justify-end">
+            {{ $umum->links() }}
+        </div>
+    </div>
+
+    {{-- ===================== --}}
+    {{-- MODAL --}}
+    {{-- ===================== --}}
+    @if ($showModal && $selectedTagihan)
+
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl p-6 max-h-[80vh] overflow-y-auto">
+
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="font-bold text-lg">Riwayat Pembayaran</h2>
+
+                <button wire:click="$set('showModal', false)">
+                    ✕
+                </button>
+            </div>
+
+            <div class="overflow-hidden border rounded-xl">
+            <table class="w-full text-sm">
+
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="p-3 text-left">Tanggal</th>
+                        <th class="p-3 text-left">Jumlah</th>
+                        <th class="p-3 text-left">Metode</th>
+                        <th class="p-3 text-left">Status</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @forelse ($selectedTagihan->pembayarans as $bayar)
+
+                        @php
+                            $tanggal = $bayar->tanggal ?? $bayar->created_at;
+                            $status = strtolower($bayar->status ?? 'sukses');
+                        @endphp
+
+                        <tr>
+                            <td class="p-2">
+                                {{ \Carbon\Carbon::parse($tanggal)->translatedFormat('d M Y') }}
+                            </td>
+
+                            <td class="p-2">
+                                Rp {{ number_format($bayar->nominal,0,',','.') }}
+                            </td>
+
+                            <td class="p-2">
+                                {{ $bayar->metode ?? '-' }}
+                            </td>
+
+                            <td class="p-2">
+                                <span style="background: {{ $status == 'sukses' ? '#dcfce7' : '#fee2e2' }};color: {{ $status == 'sukses' ? '#15803d' : '#b91c1c' }};padding:4px 8px;border-radius:6px;font-size:11px;">
+                                    {{ ucfirst($status) }}
+                                </span>
+                            </td>
+                        </tr>
+
+                    @empty
+                        <tr>
+                            <td colspan="4" class="p-4 text-center text-gray-500">
+                                Belum ada pembayaran
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+    @endif
+
+</x-filament::page>
