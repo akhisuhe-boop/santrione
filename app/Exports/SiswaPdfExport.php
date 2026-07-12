@@ -30,7 +30,9 @@ class SiswaPdfExport
             $query->where('kelas_id', $this->kelas_id);
         }
 
-        $siswas = $query->get();
+        $siswas = $query
+        ->with(['kelas'])
+        ->get();
 
         $lembaga = $this->lembaga_id
             ? Lembaga::find($this->lembaga_id)

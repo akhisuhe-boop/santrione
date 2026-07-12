@@ -25,8 +25,12 @@ class Kelas extends Model
         return $this->hasMany(Siswa::class);
     }
 
-  public function kurikulum()
+  public function kurikulums()
     {
-        return $this->hasOne(Kurikulum::class);
+        return $this->hasMany(Kurikulum::class);
+    }
+    public function jadwalPelajarans()
+    {
+        return $this->hasMany(JadwalPelajaran::class);
     }
 }

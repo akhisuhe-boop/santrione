@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8">
 
-    <title>Portal Wali Santri</title>
-
+    <title>Portal Guru</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <x-favicon />
 
     <script src="https://cdn.tailwindcss.com"></script>
 
@@ -32,40 +32,38 @@
 
 <body class="font-sans bg-slate-100 min-h-screen flex items-center justify-center p-4">
 
-<div class="w-full max-w-sm">
+<div class="w-full max-w-xs">
 
-    <div class="bg-white rounded-3xl shadow-xl p-8">
+    <div class="bg-white rounded-3xl shadow-xl p-5">
 
         {{-- HEADER --}}
         <div class="text-center mb-8">
-            <div class="flex justify-center mb-2">
-            <div class="
-                w-24 h-24
-                rounded-3xl
-                bg-white
-                shadow-lg
-                border border-slate-100
-                flex items-center justify-center">
 
-                @if(!empty($yayasan?->logo))
+            {{-- LOGO --}}
+            @if(!empty($yayasan?->logo))
+                <div class="flex justify-center mb-3">
+        
                     <img
                         src="{{ asset('storage/'.$yayasan->logo) }}"
                         alt="{{ $yayasan->nama }}"
-                        class="w-16 h-16 object-contain">
-                @endif
-            </div>
-        </div>
+                        class="w-24 h-24 object-contain">
+        
+                </div>
+            @endif
+        
+            {{-- SUBTITLE --}}
             <p class="text-slate-500 mt-4 text-sm">
-                Portal Wali Santri
+                Portal Guru
             </p>
+            
             <h1 class="text-2xl font-bold text-teal-600">
-                {{ $yayasan->nama ?? 'Portal Wali Santri' }}
+                {{ $yayasan->nama ?? 'Portal Guru' }}
             </h1>
-
+            
             <p class="text-slate-500 text-sm">
-                Login menggunakan NIS atau NISN Santri
+                Login menggunakan NIY Guru
             </p>
-
+        
         </div>
 
         {{-- ERROR --}}
@@ -84,15 +82,15 @@
         @endif
 
         {{-- FORM LOGIN --}}
-        <form method="POST" action="{{ route('wali.authenticate') }}">
+        <form method="POST" action="{{ route('guru.authenticate') }}">
             @csrf
 
-            {{-- NIS / NISN --}}
+            {{-- NIY --}}
             <div class="mb-4">
 
                 <label class="block mb-2 text-sm font-medium text-slate-700">
-                    NIS / NISN
-                </label>
+                        NIY (Nomor Induk Yayasan)
+                    </label>
 
                 <div class="relative">
 
@@ -116,7 +114,7 @@
                         type="text"
                         name="login"
                         value="{{ old('login') }}"
-                        placeholder="Masukkan NIS atau NISN"
+                        placeholder="Masukkan NIY"
                         required
                         class="w-full rounded-xl border border-slate-300 py-3 pl-11 pr-4 focus:outline-none focus:ring-2 focus:ring-teal-500"
                     >
@@ -240,12 +238,12 @@
                     <a href="https://www.qinaraindonesia.id"
                     target="_blank"
                     class="font-semibold text-[#00A39D] hover:text-[#00857f] transition">
-                        Qinara Tech
+                        Qinara Indonesia
                     </a>
                 </p>
 
                 <p class="mt-1 text-xs text-slate-400">
-                    SantriOne © {{ date('Y') }}
+                    Portal Guru • QinaraApps © {{ date('Y') }}
                 </p>
             </div>
         </div>

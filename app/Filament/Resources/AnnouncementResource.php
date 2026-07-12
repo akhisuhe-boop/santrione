@@ -23,33 +23,70 @@ class AnnouncementResource extends Resource
     {
         return $form->schema([
 
-            // =========================
-            // ISI PENGUMUMAN
-            // =========================
             Forms\Components\Section::make('Isi Pengumuman')
                 ->schema([
 
                     Forms\Components\TextInput::make('title')
                         ->label('Judul')
                         ->required()
-                        ->maxLength(255)
-                        ->columnSpanFull(),
+                        ->maxLength(255),
 
                     Forms\Components\RichEditor::make('content')
                         ->label('Isi Pengumuman')
                         ->required()
                         ->columnSpanFull(),
+
                 ]),
 
-            // =========================
-            // TARGET + LAMPIRAN
-            // =========================
             Forms\Components\Grid::make(2)
                 ->schema([
 
-                    // LAMPIRAN
+                    Forms\Components\Section::make('Target Pengumuman')
+                        ->schema([
+
+                            Forms\Components\Select::make('target_type')
+                                ->label('Target')
+                                ->required()
+                                ->default('all')
+                                ->live()
+                                ->afterStateUpdated(function ($set) {
+                                    $set('target_role', null);
+                                    $set('kelas_id', null);
+                                })
+                                ->options([
+                                    'all'   => 'Semua Portal',
+                                    'role'  => 'Portal Tertentu',
+                                    'kelas' => 'Kelas Tertentu',
+                                ])
+                                ->helperText('Pilih siapa yang akan menerima pengumuman.'),
+
+                            Forms\Components\Select::make('target_role')
+                                ->label('Portal')
+                                ->options([
+                                    'guru'  => 'Guru',
+                                    'wali'  => 'Wali Murid',
+                                    'ppdb'  => 'PPDB',
+                                ])
+                                ->visible(fn ($get) => $get('target_type') === 'role')
+                                ->required(fn ($get) => $get('target_type') === 'role'),
+
+                            Forms\Components\Select::make('kelas_id')
+                                ->label('Kelas')
+                                ->relationship('kelas', 'nama')
+                                ->searchable()
+                                ->preload()
+                                ->visible(fn ($get) => $get('target_type') === 'kelas')
+                                ->required(fn ($get) => $get('target_type') === 'kelas'),
+
+                            Forms\Components\Toggle::make('is_pinned')
+                                ->label('Pin Pengumuman'),
+
+                            Forms\Components\Toggle::make('send_whatsapp')
+                                ->label('Broadcast WhatsApp'),
+
+                        ]),
+
                     Forms\Components\Section::make('Lampiran')
-                        ->columnSpan(1)
                         ->schema([
 
                             Forms\Components\FileUpload::make('attachment')
@@ -65,34 +102,24 @@ class AnnouncementResource extends Resource
                                 ->maxSize(5120)
                                 ->downloadable()
                                 ->openable(),
+
                         ]),
 
-                    // TARGET KELAS (ONLY)
-                    Forms\Components\Section::make('Target Kelas')
-                        ->columnSpan(1)
-                        ->schema([
-
-                            Forms\Components\Select::make('kelas_id')
-                                ->label('Kelas')
-                                ->relationship('kelas', 'nama')
-                                ->nullable()
-                                ->helperText('Jika dikosongkan, berlaku untuk semua kelas.'),
-
-                            Forms\Components\Toggle::make('send_whatsapp')
-                                ->label('Broadcast WhatsApp')
-                                ->helperText('Kirim pengumuman ke WhatsApp wali/siswa'),
-                        ]),
                 ]),
 
-            // CREATED BY
             Forms\Components\Hidden::make('created_by')
                 ->default(fn () => auth()->id()),
+
         ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
+
+            ->defaultSort('is_pinned', 'desc')
+            ->defaultSort('created_at', 'desc')
+
             ->columns([
 
                 Tables\Columns\TextColumn::make('title')
@@ -100,26 +127,59 @@ class AnnouncementResource extends Resource
                     ->searchable()
                     ->limit(40),
 
-                Tables\Columns\TextColumn::make('kelas.nama')
-                    ->label('Kelas')
-                    ->default('Semua Kelas'),
+                Tables\Columns\TextColumn::make('target_type')
+                ->badge()
+                ->color(function ($state, $record) {
+            
+                    if ($state === 'all') {
+                        return 'success';
+                    }
+            
+                    if ($state === 'role') {
+                        return 'warning';
+                    }
+            
+                    if ($state === 'kelas') {
+                        return 'primary';
+                    }
+            
+                    return 'gray';
+                }),
+                
+                Tables\Columns\IconColumn::make('attachment')
+                ->label('File')
+                ->boolean(fn ($record) => filled($record->attachment)),
 
                 Tables\Columns\IconColumn::make('is_pinned')
-                    ->label('Pinned')
-                    ->boolean(),
+                ->label('Pinned')
+                ->boolean()
+                ->trueIcon('heroicon-o-bookmark')
+                ->falseIcon('heroicon-o-minus'),
+
+                Tables\Columns\IconColumn::make('send_whatsapp')
+                ->label('WA')
+                ->boolean()
+                ->trueColor('success'),
 
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Dibuat')
-                    ->dateTime()
+                    ->label('Tanggal')
+                    ->dateTime('d M Y H:i')
                     ->sortable(),
+
             ])
-            ->defaultSort('created_at', 'desc')
+
             ->actions([
+
                 Tables\Actions\EditAction::make(),
+
                 Tables\Actions\DeleteAction::make(),
+
             ])
+
             ->bulkActions([
+
                 Tables\Actions\DeleteBulkAction::make(),
+
             ]);
     }
 
@@ -131,9 +191,13 @@ class AnnouncementResource extends Resource
     public static function getPages(): array
     {
         return [
+
             'index' => Pages\ListAnnouncements::route('/'),
+
             'create' => Pages\CreateAnnouncement::route('/create'),
+
             'edit' => Pages\EditAnnouncement::route('/{record}/edit'),
+
         ];
     }
 }

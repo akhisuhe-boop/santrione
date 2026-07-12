@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\PembayaranResource\Pages;
+use App\Services\NotificationService;
 use App\Models\Pembayaran;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -442,9 +443,10 @@ class PembayaranResource extends Resource
                             'danger'  => 'gagal',
                         ]),
 
-                    Tables\Columns\TextColumn::make('created_at')
+                    Tables\Columns\TextColumn::make('tanggal_bayar')
                         ->label('Tanggal Bayar')
                         ->dateTime('d M Y H:i')
+                        ->placeholder('-')
                         ->sortable(),
 
                 ])
@@ -487,6 +489,14 @@ class PembayaranResource extends Resource
                             'record' => $record
                         ])
                     ),
+                    
+                    Tables\Actions\Action::make('cetak_kwitansi')
+                    ->label('Cetak Kwitansi')
+                    ->icon('heroicon-o-printer')
+                    ->color('success')
+                    ->visible(fn ($record) => $record->status === 'sukses')
+                    ->url(fn ($record) => route('kwitansi.cetak', $record))
+                    ->openUrlInNewTab(),
 
                     // =====================
                     // TERIMA TRANSFER
@@ -505,11 +515,68 @@ class PembayaranResource extends Resource
                         ->modalDescription('Pembayaran akan dianggap berhasil dan otomatis masuk ke kas.')
 
                         ->action(function ($record) {
-                            $record->update([
-                                'status' => 'sukses',
-                            ]);
-
-                        }),
+                        // ==========================
+                        // Pembayaran berhasil
+                        // ==========================
+                        $record->update([
+                            'status' => 'sukses',
+                        ]);
+                    
+                        $tagihan = $record->tagihan;
+                        if ($tagihan) {
+                    
+                            // ==========================
+                            // Hitung total pembayaran sukses
+                            // ==========================
+                            $totalTerbayar = \App\Models\Pembayaran::where(
+                                    'tagihan_id',
+                                    $tagihan->id
+                                )
+                                ->where('status', 'sukses')
+                                ->sum('nominal');
+                    
+                            $tagihan->nominal_terbayar = $totalTerbayar;
+                    
+                            // ==========================
+                            // Update status tagihan
+                            // ==========================
+                            if ($totalTerbayar >= $tagihan->nominal) {
+                    
+                                $tagihan->status = 'lunas';
+                    
+                            } elseif ($totalTerbayar > 0) {
+                    
+                                $tagihan->status = 'sebagian';
+                    
+                            } else {
+                    
+                                $tagihan->status = 'belum';
+                    
+                            }
+                    
+                            $tagihan->save();
+                    
+                            // ==========================
+                            // Jalankan business logic
+                            // ==========================
+                            if ($tagihan->status === 'lunas') {
+                    
+                                \App\Services\TagihanService::afterPaid($tagihan);
+                    
+                            }
+                        }
+                    
+                        // ==========================
+                        // Kirim Notifikasi
+                        // ==========================
+                        $user = $record->siswa ?? $record->ppdb;
+                    
+                        NotificationService::sendPembayaran(
+                            $user,
+                            $record
+                        );
+                    
+                    }),
 
                     // =====================
                     // TOLAK TRANSFER

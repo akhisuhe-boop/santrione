@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::table('withdraw_requests', function (Blueprint $table) {
             $table->string('rekening_tujuan')->nullable()->change();
-            $table->string('no_hp')->nullable()->change();
         });
     }
 
@@ -18,7 +17,6 @@ return new class extends Migration
     {
         Schema::table('withdraw_requests', function (Blueprint $table) {
             $table->string('rekening_tujuan')->nullable(false)->change();
-            $table->string('no_hp')->nullable(false)->change();
         });
     }
 };

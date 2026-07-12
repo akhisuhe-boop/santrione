@@ -21,6 +21,10 @@ class Payroll extends Model
         'tanggal_bayar',
         'catatan',
     ];
+    
+    protected $casts = [
+        'tanggal_bayar' => 'datetime',
+    ];
 
     public function pegawai()
     {

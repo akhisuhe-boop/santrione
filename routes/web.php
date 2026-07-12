@@ -7,6 +7,9 @@ use App\Exports\SiswaTemplateExport;
 use App\Exports\SiswaPdfExport;
 use App\Exports\PegawaiTemplateExport;
 
+use App\Http\Controllers\KwitansiController;
+use App\Http\Controllers\SlipGajiController;
+
 use App\Http\Controllers\KartuController;
 use App\Http\Controllers\JadwalKegiatanController;
 use App\Http\Controllers\WhatsappSettingController;
@@ -19,6 +22,23 @@ use App\Http\Controllers\TopupController;
 use App\Http\Controllers\PerizinanController;
 use App\Http\Controllers\RoleLoginController;
 use App\Http\Controllers\AnnouncementController;
+
+use App\Http\Controllers\Guru\GuruAuthController;
+use App\Http\Controllers\Guru\GuruDashboardController;
+use App\Http\Controllers\Guru\GuruAbsensiController;
+use App\Http\Controllers\Guru\GuruJurnalController;
+use App\Http\Controllers\Guru\GuruGajiController;
+use App\Http\Controllers\Guru\GuruProfileController;
+use App\Http\Controllers\Guru\GuruJadwalController;
+use App\Http\Controllers\Guru\GuruNilaiController;
+use App\Http\Controllers\Guru\GuruPengumumanController;
+
+use App\Http\Controllers\Ppdb\PpdbDashboardController;
+use App\Http\Controllers\Ppdb\PpdbProfileController;
+use App\Http\Controllers\Ppdb\PpdbPembayaranController;
+use App\Http\Controllers\Ppdb\PpdbPengumumanController;
+use App\Http\Controllers\Ppdb\PpdbFormulirController;
+use App\Http\Controllers\Ppdb\PpdbAuthController;
 
 // ==========================
 // ROLE LOGIN GATEWAY (BARU)
@@ -102,6 +122,52 @@ Route::middleware(['auth'])->group(function () {
         ->name('raport.pdf');
 });
 
+// ==========================
+// KWITANSI
+// ==========================
+Route::middleware('akses.kwitansi')->group(function () {
+
+    Route::get('/kwitansi/{pembayaran}', [KwitansiController::class, 'show'])
+        ->name('kwitansi.show');
+
+    Route::get('/kwitansi/{pembayaran}/thermal58', [KwitansiController::class, 'thermal58'])
+        ->name('kwitansi.thermal58');
+
+    Route::get('/kwitansi/{pembayaran}/thermal80', [KwitansiController::class, 'thermal80'])
+        ->name('kwitansi.thermal80');
+
+    Route::get('/kwitansi/{pembayaran}/dotmatrix', [KwitansiController::class, 'dotmatrix'])
+        ->name('kwitansi.dotmatrix');
+        
+    Route::get('/kwitansi/{pembayaran}/cetak', [KwitansiController::class, 'cetak'])
+    ->name('kwitansi.cetak');
+    
+    Route::get('/kwitansi/{pembayaran}/pdf', [KwitansiController::class, 'pdf'])
+    ->name('kwitansi.pdf');
+
+});
+
+// ==========================
+// GAJI
+// ==========================
+Route::middleware('akses.slip.gaji')
+    ->prefix('slip-gaji')
+    ->name('slip-gaji.')
+    ->group(function () {
+
+        Route::get('/{payroll}', [SlipGajiController::class, 'show'])->name('show');
+
+        Route::get('/{payroll}/pdf', [SlipGajiController::class, 'pdf'])->name('pdf');
+
+        Route::get('/{payroll}/thermal80', [SlipGajiController::class, 'thermal80'])->name('thermal80');
+
+        Route::get('/{payroll}/thermal58', [SlipGajiController::class, 'thermal58'])->name('thermal58');
+
+        Route::get('/{payroll}/dotmatrix', [SlipGajiController::class, 'dotmatrix'])->name('dotmatrix');
+
+        Route::get('/{payroll}/cetak', [SlipGajiController::class, 'cetak'])->name('cetak');
+
+    });
 
 // ==========================
 // PORTAL WALI SANTRI
@@ -181,4 +247,157 @@ Route::prefix('wali')->group(function () {
     // CALLBACK PAYMENT GATEWAY
     Route::post('/duitku/callback', [DuitkuController::class,'callback'])
         ->name('duitku.callback');
+});
+
+
+    //ROUTE GURU
+
+    Route::prefix('guru')->group(function () {
+
+    // ======================
+    // LOGIN
+    // ======================
+
+    Route::get('/login', [GuruAuthController::class, 'login'])
+        ->name('guru.login');
+
+    Route::post('/authenticate', [GuruAuthController::class, 'authenticate'])
+        ->name('guru.authenticate');
+
+    Route::post('/logout', [GuruAuthController::class, 'logout'])
+        ->name('guru.logout');
+
+    // ======================
+    // SETELAH LOGIN
+    // ======================
+    
+    Route::middleware('guru')->group(function () {
+
+    // Dashboard
+    Route::get('/dashboard', [GuruDashboardController::class, 'index'])
+        ->name('guru.dashboard');
+
+    // Jadwal Mengajar
+    Route::get('/jadwal', [GuruJadwalController::class, 'index'])
+        ->name('guru.jadwal');
+
+    // Jurnal Mengajar
+    Route::get('/jurnal', [GuruJurnalController::class, 'index'])
+        ->name('guru.jurnal');
+        
+    Route::post('/jurnal', [GuruJurnalController::class, 'store'])
+    ->name('guru.jurnal.store');
+
+    // Absensi
+    Route::get('/absensi', [GuruAbsensiController::class, 'index'])
+        ->name('guru.absensi');
+
+    Route::get('/nilai', [GuruNilaiController::class,'index'])
+    ->name('guru.nilai');
+
+    Route::post('/nilai', [GuruNilaiController::class,'store'])
+    ->name('guru.nilai.store');
+
+    // Gaji
+    Route::get('/gaji', [GuruGajiController::class, 'index'])
+    ->name('guru.gaji');
+
+    // Profil
+    Route::get('/profil', [GuruProfileController::class, 'index'])
+    ->name('guru.profile');
+
+    Route::post('/profil/password', [GuruProfileController::class, 'updatePassword'])
+    ->name('guru.profil.updatePassword');
+    
+    // Pengumuman
+    Route::get('/pengumuman', [GuruPengumumanController::class, 'index'])
+        ->name('guru.pengumuman');
+    });
+});
+
+    /*
+    |--------------------------------------------------------------------------
+    | ROUTER PPDB
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('ppdb')->group(function () {
+
+    Route::get('/register', [PpdbAuthController::class, 'register'])
+        ->name('ppdb.register');
+
+    Route::post('/register', [PpdbAuthController::class, 'store'])
+        ->name('ppdb.store');
+
+    /*
+    |--------------------------------------------------------------------------
+    | LOGIN PPDB
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/login', [PpdbAuthController::class, 'login'])
+        ->name('ppdb.login');
+
+    Route::post('/authenticate', [PpdbAuthController::class, 'authenticate'])
+        ->name('ppdb.authenticate');
+
+    Route::post('/logout', [PpdbAuthController::class, 'logout'])
+        ->name('ppdb.logout');
+
+    /*
+    |--------------------------------------------------------------------------
+    | AFTER LOGIN PPDB
+    |--------------------------------------------------------------------------
+    */
+
+    Route::middleware('ppdb')->group(function () {
+
+        // Dashboard
+        Route::get('/dashboard', [PpdbDashboardController::class, 'index'])
+            ->name('ppdb.dashboard');
+        
+        // Pembayaran
+        Route::get('/pembayaran', [PpdbPembayaranController::class, 'index'])
+            ->name('ppdb.pembayaran');
+        
+        Route::post('/pembayaran/saldo/{tagihan}', [PpdbPembayaranController::class, 'bayarSaldo'])
+            ->name('ppdb.pembayaran.saldo');
+        
+        Route::get('/pembayaran/transfer/{tagihan}', [PpdbPembayaranController::class, 'showTransferForm'])
+            ->name('ppdb.pembayaran.transfer');
+        
+        Route::post('/pembayaran/transfer/{tagihan}', [PpdbPembayaranController::class, 'bayarTransfer'])
+            ->name('ppdb.pembayaran.transfer.store');
+        
+        Route::get('/pembayaran/duitku/{tagihan}', [PpdbPembayaranController::class, 'showDuitkuForm'])
+            ->name('ppdb.pembayaran.duitku.form');
+        
+        Route::post('/pembayaran/duitku/{tagihan}', [PpdbPembayaranController::class, 'duitku'])
+            ->name('ppdb.pembayaran.duitku');
+        
+        // Formulir
+        Route::get('/formulir', [PpdbFormulirController::class, 'index'])
+            ->name('ppdb.formulir');
+        
+        Route::post('/formulir', [PpdbFormulirController::class, 'store'])
+            ->name('ppdb.formulir.store');
+        
+        // Upload Berkas
+        Route::get('/upload-berkas', [PpdbFormulirController::class, 'uploadBerkas'])
+            ->name('ppdb.upload-berkas');
+        
+        Route::post('/upload-berkas', [PpdbFormulirController::class, 'storeBerkas'])
+            ->name('ppdb.upload-berkas.store');
+
+        // Pengumuman
+        Route::get('/pengumuman', [PpdbPengumumanController::class, 'index'])
+            ->name('ppdb.pengumuman');
+        
+        // Profil
+        Route::get('/profil', [PpdbProfileController::class, 'index'])
+            ->name('ppdb.profil');
+
+        Route::post('/profil/password', [PpdbProfileController::class, 'updatePassword'])
+            ->name('ppdb.profil.updatePassword');
+    });
+
 });

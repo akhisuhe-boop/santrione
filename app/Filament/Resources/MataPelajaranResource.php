@@ -15,6 +15,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Textarea;
+
 
 class MataPelajaranResource extends Resource
 {
@@ -30,15 +32,23 @@ class MataPelajaranResource extends Resource
             ->schema([
 
                 Section::make('Mata Pelajaran')
-                    ->description('Isi data mata pelajaran')
-                    ->icon('heroicon-o-book-open')
-                    ->schema([
-
-                        TextInput::make('nama')
-                            ->required()
-                            ->maxLength(100),
-
-                    ]),
+                ->description('Isi data mata pelajaran')
+                ->icon('heroicon-o-book-open')
+                ->schema([
+            
+                    TextInput::make('nama')
+                        ->label('Nama Mata Pelajaran')
+                        ->required()
+                        ->maxLength(100),
+            
+                    Textarea::make('kompetensi')
+                        ->label('Kompetensi Pembelajaran')
+                        ->rows(4)
+                        ->columnSpanFull()
+                        ->placeholder('Contoh: konsep gaya, energi, dan gerak.')
+                        ->helperText('Kompetensi ini akan digunakan untuk membuat deskripsi raport secara otomatis.'),
+            
+                ]),
 
             ]);
     }
@@ -48,8 +58,15 @@ class MataPelajaranResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('nama')
-                ->searchable()
-                ->sortable(),
+                    ->label('Nama Mata Pelajaran')
+                    ->searchable()
+                    ->sortable(),
+            
+                TextColumn::make('kompetensi')
+                    ->label('Kompetensi')
+                    ->limit(80)
+                    ->wrap(),
+            
             ])
             ->filters([
                 //

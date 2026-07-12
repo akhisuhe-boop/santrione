@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Siswa;
 use App\Models\TahunAjaran;
 use App\Models\Tagihan;
+use App\Services\NotificationService;
 use Illuminate\Support\Facades\DB;
 use App\Models\Kas;
 use App\Models\Pembayaran;
@@ -57,17 +58,12 @@ class WaliDashboardController extends Controller
 
         });
 
-        $pengumuman = Announcement::query()
-                ->where(function ($q) {
-                    $q->where('target_type', 'all')
-                    ->orWhere(function ($q) {
-                        $q->where('target_type', 'role')
-                            ->where('target_role', 'wali');
-                    });
-                })
-                ->latest()
-                ->take(2)
-                ->get();
+        $pengumuman = Announcement::visibleFor(
+            'wali',
+            $siswa->kelas_id
+        )
+        ->take(2)
+        ->get();
 
         return view('wali.dashboard', compact(
             'siswa',
@@ -147,12 +143,12 @@ class WaliDashboardController extends Controller
             })
             ->sortByDesc('created_at');
 
-        $riwayatPembayaran = $siswa->tagihans
-            ->filter(function ($tagihan) {
-                return strtolower(trim($tagihan->status)) === 'lunas';
-            })
-            ->sortByDesc('created_at')
-            ->take(10);
+        $riwayatPembayaran = Pembayaran::with('tagihan')
+        ->where('siswa_id', $siswa->id)
+        ->where('status', 'sukses')
+        ->latest('tanggal_bayar')
+        ->take(10)
+        ->get();
 
         return view(
             'wali.keuangan',
@@ -429,15 +425,20 @@ class WaliDashboardController extends Controller
                 'description'  => 'Payment '.$tagihan->judul,
             ]);
 
-            Pembayaran::create([
+            $pembayaran = Pembayaran::create([
                 'tagihan_id'    => $tagihan->id,
                 'siswa_id'      => $siswa->id,
                 'nominal'       => $nominalBayar,
-                'metode'        => 'wallet',
+                'metode'        => 'ewallet',
                 'status'        => 'sukses',
                 'tanggal_bayar' => now(),
                 'keterangan'    => 'Pembayaran menggunakan saldo wallet',
             ]);
+            
+            NotificationService::sendPembayaran(
+                $siswa,
+                $pembayaran
+            );
         });
 
         return redirect()

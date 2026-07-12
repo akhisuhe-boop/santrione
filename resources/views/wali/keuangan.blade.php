@@ -398,11 +398,11 @@
                 <div>
 
                     <div class="font-semibold text-[15px] text-slate-900">
-                        {{ $riwayat->judul }}
+                        {{ $riwayat->tagihan->judul }}
                     </div>
 
                     <div class="text-[12px] text-slate-500">
-                        {{ optional($riwayat->updated_at)->format('d M Y') }}
+                        {{ optional($riwayat->tanggal_bayar)->format('d M Y') }}
                     </div>
 
                 </div>
@@ -415,8 +415,23 @@
                     Rp {{ number_format($riwayat->nominal,0,',','.') }}
                 </div>
 
-                <div class="text-[12px] text-green-500">
-                    Lunas
+                <div class="flex items-center justify-end gap-2 mt-1 text-[12px]">
+
+                    <span class="text-green-500 font-medium">
+                        Lunas
+                    </span>
+                
+                    <a
+                        href="{{ route('kwitansi.pdf', $riwayat->id) }}"
+                        target="_blank"
+                        class="inline-flex items-center gap-1 text-[#00A39D] font-semibold hover:text-[#00837e]">
+                
+                        <x-heroicon-o-arrow-down-tray class="w-3.5 h-3.5"/>
+                
+                        Kwitansi
+                
+                    </a>
+                
                 </div>
 
             </div>

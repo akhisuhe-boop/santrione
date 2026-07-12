@@ -294,19 +294,17 @@ class LaporanKas extends Page implements HasForms, HasTable
                 ),
 
                 Tables\Columns\TextColumn::make('kategori.nama')
-                    ->label('Kategori')
-                    ->getStateUsing(function ($record) {
-                        $nama = $record->kategori?->nama ?? '-';
-
-                        if (strtolower($nama) === 'spp' && $record->tanggal) {
-                            $bulanTahun = Carbon::parse($record->tanggal)
-                                ->translatedFormat('F Y');
-
-                            return "SPP ({$bulanTahun})";
-                        }
-
-                        return $nama;
-                    }),
+                ->label('Kategori')
+                ->getStateUsing(function ($record) {
+            
+                    $tagihan = $record->pembayaran?->tagihan;
+            
+                    if (!$tagihan) {
+                        return $record->kategori?->nama ?? '-';
+                    }
+            
+                    return $tagihan->judul;
+                }),
 
                 Tables\Columns\TextColumn::make('tanggal')
                     ->label('Tanggal')

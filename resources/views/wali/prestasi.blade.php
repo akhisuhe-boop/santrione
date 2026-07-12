@@ -3,16 +3,18 @@
 @php
     $totalPrestasi = $siswa->prestasiSiswa->count();
     $totalPoint = $siswa->prestasiSiswa->sum('point');
-    $terakhir = $siswa->prestasiSiswa
-        ->sortByDesc('tanggal')
-        ->first();
+    $terakhir = $siswa->prestasiSiswa()
+    ->orderByDesc('tanggal')
+    ->orderByDesc('id')
+    ->first();
     $statusLabel = 'Berprestasi';
     if ($totalPoint >= 200) {
         $statusLabel = 'Sangat Berprestasi';
     }
-    $prestasiList = $siswa->prestasiSiswa
-        ->sortByDesc('tanggal')
-        ->values();
+    $prestasiList = $siswa->prestasiSiswa()
+    ->orderByDesc('tanggal')
+    ->orderByDesc('id')
+    ->get();
 @endphp
 
 <div class="p-4 space-y-5">

@@ -1,718 +1,689 @@
-@extends('wali.layout.wali')
+@extends('guru.layout.guru')
 
 @section('content')
 
 <div class="px-4 pb-4 bg-[#F8FAFB] min-h-screen">
-
-    {{-- HEADER --}}
-    <div class="-mx-4 mb-4 px-4 py-3">
-
-        <div class="flex justify-between items-center px-3 py-3">
-
+   {{-- HEADER --}}
+    <div class="-mx-4 mb-3 px-4 pt-2 pb-1">
+        
+        {{-- NOTIF --}}
+        
+        @if(session('warning'))
+    
+        <div
+            id="alertWarning"
+            class="mt-4 mb-5 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+        
+            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100">
+        
+                <x-heroicon-o-exclamation-triangle
+                    class="h-5 w-5 text-amber-600"/>
+        
+            </div>
+        
+            <div class="flex-1">
+        
+            <div class="text-[13px] font-semibold leading-none text-amber-800">
+                Pemberitahuan
+            </div>
+        
+            <div class="mt-px text-[13px] leading-5 text-amber-700">
+                {{ session('warning') }}
+            </div>
+        
+            </div>
+        
+        </div>
+        
+        <script>
+        
+        setTimeout(() => {
+        
+            const alert = document.getElementById('alertWarning');
+        
+            if (alert) {
+        
+                alert.classList.add('opacity-0', '-translate-y-2');
+        
+                setTimeout(() => alert.remove(), 500);
+        
+            }
+        
+        }, 5000);
+        
+        </script>
+        
+        @endif
+        
+        <div class="flex items-center justify-between px-3 py-2">
+    
+            {{-- INFORMASI GURU --}}
             <div>
+    
                 <div class="text-xs text-slate-500">
                     Assalamualaikum, Selamat Datang
                 </div>
-
+    
                 <div class="font-bold text-base text-slate-900">
-                    {{ session('wali_nama') }}
+                    {{ session('guru_nama') }}
                 </div>
+    
             </div>
-
+    
+            {{-- TANGGAL --}}
             <div class="text-right">
-                <div class="text-xs text-slate-500">
+    
+                <div class="flex items-center justify-end gap-1 text-xs text-slate-500">
+    
+                    <x-heroicon-o-calendar-days class="w-4 h-4"/>
+    
                     {{ now()->translatedFormat('l') }}
+    
                 </div>
-
-                <div class="text-sm font-semibold text-slate-900">
+    
+                <div class="mt-1 text-sm font-semibold text-slate-900">
                     {{ now()->translatedFormat('d M Y') }}
                 </div>
+    
             </div>
-
+    
+        </div>
+    
     </div>
+    
 
-</div>
-
-    {{-- CARD SANTRI --}}
-
+    {{-- CARD GURU --}}
     <div
         class="
             relative
             overflow-hidden
             rounded-[28px]
+            bg-gradient-to-br
+            from-[#00A39D]
+            via-[#00B4AC]
+            to-[#14C8C0]
+            p-5
+            text-white
+            shadow-xl
+        ">
+    
+        {{-- ORNAMENT --}}
+        <div
+            class="
+                absolute
+                top-0
+                right-0
+                w-40
+                h-40
+                rounded-full
+                bg-white/10
+                -mr-16
+                -mt-16
+            ">
+        </div>
+    
+        <div
+            class="
+                absolute
+                bottom-0
+                left-0
+                w-28
+                h-28
+                rounded-full
+                bg-white/5
+                -ml-10
+                -mb-10
+            ">
+        </div>
+    
+        <div class="relative z-10">
+    
+            <div class="flex gap-4">
+    
+                {{-- FOTO GURU --}}
+                <div class="relative">
+    
+                    <div
+                        class="
+                            w-[72px]
+                            h-[72px]
+                            rounded-2xl
+                            overflow-hidden
+                            bg-white/20
+                            backdrop-blur-sm
+                            border border-white/20
+                            shadow-lg
+                        ">
+    
+                        @if($guru->foto)
+    
+                            <img
+                                src="{{ asset('storage/' . $guru->foto) }}"
+                                alt="{{ $guru->nama }}"
+                                class="w-full h-full object-cover">
+                        
+                        @else
+                        
+                            <div class="w-full h-full flex items-center justify-center">
+                                <x-heroicon-o-user class="w-10 h-10 text-white"/>
+                            </div>
+                        
+                        @endif
+    
+                    </div>
+    
+                    {{-- STATUS --}}
+                    <div
+                        class="
+                            absolute
+                            -bottom-1
+                            -right-1
+                            w-5
+                            h-5
+                            rounded-full
+                            bg-emerald-400
+                            border-[3px]
+                            border-[#00A39D]
+                        ">
+                    </div>
+    
+                </div>
+    
+                {{-- PROFILE --}}
+                <div class="flex-1">
+    
+                    <div class="text-xs text-white/70">
+                        Nama Guru
+                    </div>
+    
+                    <div class="text-lg font-bold leading-tight">
+                        {{ $guru->nama }}
+                    </div>
+    
+                    <div class="flex flex-wrap gap-2 mt-2">
+    
+                        {{-- STATUS --}}
+                        <span
+                            class="
+                                inline-flex
+                                items-center
+                                gap-1
+                                px-3
+                                py-1
+                                rounded-full
+                                bg-emerald-500/20
+                                border border-emerald-300/30
+                                text-[11px]
+                                font-medium
+                            ">
+    
+                            <x-heroicon-s-check-circle class="w-3.5 h-3.5"/>
+    
+                            Guru Aktif
+    
+                        </span>
+    
+                        {{-- SEMESTER --}}
+                        <span
+                            class="
+                                inline-flex
+                                items-center
+                                gap-1
+                                px-3
+                                py-1
+                                rounded-full
+                                bg-white/15
+                                backdrop-blur-sm
+                                border border-white/20
+                                text-[11px]
+                                font-medium
+                            ">
+    
+                            <x-heroicon-o-calendar-days class="w-3.5 h-3.5"/>
+    
+                            {{ $semesterAktif?->semester ?? '-' }}
+    
+                        </span>
+    
+                    </div>
+    
+                </div>
+    
+            </div>
+    
+            {{-- DIVIDER --}}
+    <div
+    class="
+        border-t
+        border-white/30
+        my-4
+    ">
+</div>
 
-        bg-gradient-to-br
-        from-[#00A39D]
-        via-[#00B4AC]
-        to-[#14C8C0]
-
-        p-5
-        text-white
-        shadow-xl
+{{-- INFO GURU --}}
+<div
+    class="
+        grid
+        grid-cols-3
+        gap-3
     ">
 
-    {{-- ORNAMENT --}}
+    {{-- NIY --}}
     <div
         class="
-            absolute
-            top-0
-            right-0
-            w-40
-            h-40
-            rounded-full
+            rounded-2xl
             bg-white/10
-            -mr-16
-            -mt-16
+            backdrop-blur-sm
+            border border-white/10
+            p-3
         ">
+
+        <div
+            class="
+                flex items-center gap-1
+                text-[11px]
+                text-white/70
+                mb-1
+            ">
+
+            <x-heroicon-o-identification class="w-3 h-3"/>
+
+            NIY
+
+        </div>
+
+        <div
+            class="
+                text-sm
+                font-semibold
+            ">
+
+            {{ $guru->niy }}
+
+        </div>
+
     </div>
 
+    {{-- JABATAN --}}
     <div
         class="
-            absolute
-            bottom-0
-            left-0
-            w-28
-            h-28
-            rounded-full
-            bg-white/5
-            -ml-10
-            -mb-10
+            rounded-2xl
+            bg-white/10
+            backdrop-blur-sm
+            border border-white/10
+            p-3
         ">
-    </div>
 
-    <div class="relative z-10">
-
-        <div class="flex gap-4">
-
-            {{-- AVATAR --}}
-            <div class="relative">
-
-                <div
-                    class="
-                        w-[72px] h-[72px]
-                        rounded-2xl
-                        overflow-hidden
-                        bg-white/20
-                        backdrop-blur-sm
-                        border border-white/20
-                        shadow-lg
-                    "
-                >
-
-                    @if($siswa->foto)
-
-                        <img
-                            src="{{ asset('storage/' . $siswa->foto) }}"
-                            alt="{{ $siswa->nama_lengkap }}"
-                            class="w-full h-full object-cover"
-                        >
-
-                    @else
-
-                        <div
-                            class="
-                                w-full h-full
-                                flex items-center justify-center
-                                text-xl font-bold
-                                text-white
-                            "
-                        >
-                            {{
-                                strtoupper(
-                                    substr($siswa->nama_lengkap, 0, 2)
-                                )
-                            }}
-                        </div>
-
-                    @endif
-
-                </div>
-
-                <div
-                    class="
-                        absolute
-                        -bottom-1
-                        -right-1
-                        w-5 h-5
-                        rounded-full
-                        bg-emerald-400
-                        border-[3px]
-                        border-[#00A39D]
-                    "
-                ></div>
-
-            </div>
-
-            {{-- PROFILE --}}
-            <div class="flex-1">
-
-                <div>
-                    <div class="text-xs text-white/70">
-                        Nama Siswa
-                    </div>
-
-                    <div class="text-lg font-bold leading-tight">
-                        {{ $siswa->nama_lengkap }}
-                    </div>
-                </div>
-
-                <div
-                    class="
-                        flex
-                        flex-wrap
-                        gap-2
-                        mt-2
-                    ">
-
-                    <span
-                        class="
-                            inline-flex
-                            items-center
-                            gap-1
-
-                            px-3
-                            py-1
-
-                            rounded-full
-
-                            bg-emerald-500/20
-                            border
-                            border-emerald-300/30
-
-                            text-[11px]
-                            font-medium
-                        ">
-
-                        <span>●</span>
-
-                        {{ $siswa->status_siswa }}
-
-                    </span>
-
-                    <span
-                        class="
-                            px-3
-                            py-1
-
-                            rounded-full
-
-                            bg-white/15
-                            backdrop-blur-sm
-
-                            border
-                            border-white/20
-
-                            text-[11px]
-                            font-medium
-                        ">
-
-                        {{ $semesterAktif?->semester }}
-
-                    </span>
-
-                </div>
-
-            </div>
-
-        </div>
-
-        {{-- DIVIDER --}}
         <div
             class="
-                border-t
-                border-white/30
-                my-4
+                flex items-center gap-1
+                text-[11px]
+                text-white/70
+                mb-1
             ">
+
+            <x-heroicon-o-briefcase class="w-3 h-3"/>
+
+            Jabatan
+
         </div>
 
-        {{-- INFO --}}
         <div
             class="
-                grid
-                grid-cols-3
-                gap-3
+                text-sm
+                font-semibold
+                truncate
             ">
 
-            <div
-                class="
-                    rounded-2xl
-
-                    bg-white/10
-                    backdrop-blur-sm
-
-                    border
-                    border-white/10
-
-                    p-3
-                ">
-
-                <div
-                    class="
-                        text-[11px]
-                        text-white/70
-                        mb-1
-                    ">
-
-                    NIS
-
-                </div>
-
-                <div
-                    class="
-                        text-sm
-                        font-semibold
-                    ">
-
-                    {{ $siswa->nis }}
-
-                </div>
-
-            </div>
-
-            <div
-                class="
-                    rounded-2xl
-
-                    bg-white/10
-                    backdrop-blur-sm
-
-                    border
-                    border-white/10
-
-                    p-3
-                ">
-
-                <div
-                    class="
-                        text-[11px]
-                        text-white/70
-                        mb-1
-                    ">
-
-                    NISN
-
-                </div>
-
-                <div
-                    class="
-                        text-sm
-                        font-semibold
-                    ">
-
-                    {{ $siswa->nisn }}
-
-                </div>
-
-            </div>
-
-            <div
-                class="
-                    rounded-2xl
-
-                    bg-white/10
-                    backdrop-blur-sm
-
-                    border
-                    border-white/10
-
-                    p-3
-                ">
-
-                <div
-                    class="
-                        text-[11px]
-                        text-white/70
-                        mb-1
-                    ">
-
-                    Kelas
-
-                </div>
-
-                <div
-                    class="
-                        text-sm
-                        font-semibold
-                    ">
-
-                    {{ $siswa->kelas?->nama ?? '-' }}
-
-                </div>
-
-            </div>
+            {{ $guru->jabatan ?? 'Guru' }}
 
         </div>
 
     </div>
 
-    </div>
-
-
-    {{-- HEADER TAGIHAN --}}
-    <div class="flex items-center justify-between mt-7 mb-4">
-
-        <div class="flex items-center gap-2">
-
-            <div
-                class="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center">
-
-                <svg xmlns="http://www.w3.org/2000/svg"
-                     fill="none"
-                     viewBox="0 0 24 24"
-                     stroke-width="2"
-                     stroke="currentColor"
-                     class="w-4 h-4 text-red-500">
-                    <path stroke-linecap="round"
-                          stroke-linejoin="round"
-                          d="M12 9v3.75m0 3.75h.008v.008H12v-.008z"/>
-                    <path stroke-linecap="round"
-                          stroke-linejoin="round"
-                          d="M10.34 3.94L1.82 18a1.875 1.875 0 001.6 2.81h17.16a1.875 1.875 0 001.6-2.81L13.66 3.94a1.875 1.875 0 00-3.32 0z"/>
-                </svg>
-
-            </div>
-
-            <div class="font-bold text-base">
-                Tagihan Aktif
-            </div>
-
-            <span
-                class="bg-red-50 text-red-500 px-2 py-1 rounded-xl text-[11px] font-semibold">
-                {{ $tagihanAktif->count() }}
-            </span>
-
-        </div>
-
-        <a href="{{ route('wali.keuangan') }}"
-           class="text-[#00A39D] text-sm font-semibold">
-            Semua →
-        </a>
-
-    </div>
-
-    {{-- LIST TAGIHAN --}}
-    @foreach($tagihanAktif as $tagihan)
-
-        @php
-
-        $status = strtolower(trim($tagihan->status));
-
-        switch ($status) {
-
-            case 'lunas':
-
-                $cardClass   = 'bg-green-50 border-green-200';
-                $iconClass   = 'bg-green-100 text-green-600';
-                $amountClass = 'text-green-600';
-                $badgeClass  = 'bg-green-100 text-green-700';
-
-                break;
-
-            case 'sebagian':
-
-                $cardClass   = 'bg-yellow-50 border-yellow-300';
-                $iconClass   = 'bg-yellow-100 text-yellow-600';
-                $amountClass = 'text-yellow-700';
-                $badgeClass  = 'bg-yellow-100 text-yellow-700';
-
-                break;
-
-            case 'belum':
-
-                $cardClass   = 'bg-red-50 border-red-200';
-                $iconClass   = 'bg-red-100 text-red-500';
-                $amountClass = 'text-red-500';
-                $badgeClass  = 'bg-red-100 text-red-600';
-
-                break;
-
-            default:
-
-                $cardClass   = 'bg-slate-50 border-slate-200';
-                $iconClass   = 'bg-slate-100 text-slate-500';
-                $amountClass = 'text-slate-500';
-                $badgeClass  = 'bg-slate-100 text-slate-500';
-
-                break;
-        }
-
-    @endphp
-
-    <div class="rounded-[20px] border {{ $cardClass }} p-4 mb-4">
-
-        <div class="flex items-center justify-between gap-3">
-
-            {{-- KIRI --}}
-            <div class="flex items-center gap-4 flex-1">
-
-                {{-- ICON --}}
-                <div
-                    class="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 {{ $iconClass }}">
-
-                    @if(
-                        str_contains($status,'lunas') ||
-                        str_contains($status,'sudah bayar')
-                    )
-
-                        {{-- Check --}}
-                        <svg xmlns="http://www.w3.org/2000/svg"
-                             fill="none"
-                             viewBox="0 0 24 24"
-                             stroke-width="2"
-                             stroke="currentColor"
-                             class="w-5 h-5">
-                            <path stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  d="M9 12.75L11.25 15 15 9.75" />
-                            <path stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-
-                    @elseif(str_contains($status,'segera'))
-
-                        {{-- Book --}}
-                        <svg xmlns="http://www.w3.org/2000/svg"
-                             fill="none"
-                             viewBox="0 0 24 24"
-                             stroke-width="2"
-                             stroke="currentColor"
-                             class="w-5 h-5">
-                            <path stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  d="M12 6.253v13M12 6.253C10.832 5.477 9.246 5 7.5 5A4.5 4.5 0 003 9.5v9A4.5 4.5 0 017.5 14c1.746 0 3.332.477 4.5 1.253M12 6.253C13.168 5.477 14.754 5 16.5 5A4.5 4.5 0 0121 9.5v9A4.5 4.5 0 0016.5 14c-1.746 0-3.332.477-4.5 1.253"/>
-                        </svg>
-
-                    @else
-
-                        {{-- Wallet --}}
-                        <svg xmlns="http://www.w3.org/2000/svg"
-                             fill="none"
-                             viewBox="0 0 24 24"
-                             stroke-width="2"
-                             stroke="currentColor"
-                             class="w-5 h-5">
-                            <path stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  d="M21 12V7.5A2.25 2.25 0 0018.75 5.25H5.25A2.25 2.25 0 003 7.5v9A2.25 2.25 0 005.25 18.75h13.5A2.25 2.25 0 0021 16.5V12z"/>
-                        </svg>
-
-                    @endif
-
-                </div>
-
-                {{-- INFO --}}
-                <div>
-
-                    <div class="font-semibold text-[16px] leading-tight text-slate-900">
-                        {{ $tagihan->judul }}
-                    </div>
-
-                    <div class="flex items-center gap-1 mt-1 text-[13px] text-gray-500">
-
-                        <svg xmlns="http://www.w3.org/2000/svg"
-                             fill="none"
-                             viewBox="0 0 24 24"
-                             stroke-width="2"
-                             stroke="currentColor"
-                             class="w-3.5 h-3.5">
-                            <path stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  d="M8.25 6.75V4.5m7.5 2.25V4.5M3.75 9.75h16.5m-15 9h13.5A1.5 1.5 0 0020.25 17.25V8.25A1.5 1.5 0 0018.75 6.75H5.25A1.5 1.5 0 003.75 8.25v9A1.5 1.5 0 005.25 18.75z"/>
-                        </svg>
-
-                        <span>
-                            Jatuh tempo
-                            {{ optional($tagihan->jatuh_tempo)->format('d M Y') }}
-                        </span>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-            {{-- KANAN --}}
-            <div class="text-right">
-
-                <div class="font-bold text-[18px] leading-tight {{ $amountClass }}">
-                    Rp {{ number_format($tagihan->nominal,0,',','.') }}
-                </div>
-
-                <span
-                    class="inline-flex mt-2 px-3 py-1 rounded-xl text-[11px] font-semibold {{ $badgeClass }}">
-                    {{ $tagihan->status }}
-                </span>
-
-            </div>
-
-        </div>
-
-    </div>
-
-@endforeach
-
-    {{-- TOTAL TAGIHAN --}}
+    {{-- LEMBAGA --}}
     <div
-        class="bg-[#FF0000] rounded-[15px] p-4 mt-5 text-white flex items-center justify-between shadow-lg">
+        class="
+            rounded-2xl
+            bg-white/10
+            backdrop-blur-sm
+            border border-white/10
+            p-3
+        ">
+
+        <div
+            class="
+                flex items-center gap-1
+                text-[11px]
+                text-white/70
+                mb-1
+            ">
+
+            <x-heroicon-o-building-office-2 class="w-3 h-3"/>
+
+            Lembaga
+
+        </div>
+
+        <div
+            class="
+                text-sm
+                font-semibold
+                truncate
+            ">
+
+            {{ $guru->lembagas->first()?->nama ?? '-' }}
+
+        </div>
+
+    </div>
+
+</div>
+
+</div>
+
+</div>
+
+    {{-- HEADER JADWAL --}}
+<div class="flex items-center justify-between mt-7 mb-4">
+
+    <div class="flex items-center gap-2">
+
+        <div class="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">
+            <x-heroicon-o-calendar-days class="w-5 h-5 text-blue-600"/>
+        </div>
+
+        <div class="font-bold text-base text-slate-900">
+            Jadwal Mengajar Hari Ini
+        </div>
+
+        <span class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-xl text-[11px] font-semibold">
+            {{ $jadwalHariIni->count() }}
+        </span>
+
+    </div>
+
+    <a href="{{ route('guru.jadwal') }}"
+       class="text-[#00A39D] text-sm font-semibold hover:text-[#00897B] transition">
+        Lihat Semua →
+    </a>
+
+</div>
+
+{{-- LIST JADWAL --}}
+@forelse($jadwalHariIni as $jadwal)
+
+<div class="rounded-[22px] border border-slate-200 bg-white p-4 mb-4 shadow-sm">
+
+    <div class="flex items-center justify-between gap-4">
+
+        {{-- KIRI --}}
+        <div class="flex items-center gap-4 flex-1">
+
+            <div class="w-12 h-12 rounded-2xl bg-teal-50 flex items-center justify-center flex-shrink-0">
+                <x-heroicon-o-academic-cap class="w-6 h-6 text-[#00A39D]"/>
+            </div>
+
+            <div>
+
+                <div class="font-semibold text-[16px] leading-tight text-slate-900">
+                    {{ $jadwal->mataPelajaran->nama ?? '-' }}
+                </div>
+            
+                <div class="mt-0.5 text-[11px] font-medium text-slate-500">
+            
+                    {{ $jadwal->kelas->nama ?? '-' }}
+            
+                    <span class="mx-2 text-slate-300">•</span>
+            
+                    {{ $jadwal->jam_mulai }} - {{ $jadwal->jam_selesai }}
+            
+                </div>
+            
+            </div>
+
+        </div>
+
+        {{-- STATUS --}}
+        <div class="text-right">
+
+            @if($jadwal->jurnal_sudah_diisi)
+        
+                <span
+                    class="inline-flex items-center gap-1.5
+                           rounded-full
+                           bg-emerald-50
+                           px-2.5 py-1
+                           text-[10px]
+                           font-medium
+                           text-emerald-700">
+        
+                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+        
+                    Selesai
+        
+                </span>
+        
+            @else
+        
+                <span
+                    class="inline-flex items-center gap-1.5
+                           rounded-full
+                           bg-red-50
+                           px-2.5 py-1
+                           text-[10px]
+                           font-medium
+                           text-red-700">
+        
+                    <span class="h-1.5 w-1.5 rounded-full bg-red-500"></span>
+        
+                    Belum Jurnal
+        
+                </span>
+        
+            @endif
+        
+        </div>
+
+    </div>
+
+</div>
+
+@empty
+
+<div class="bg-white rounded-[22px] border border-slate-200 p-8 text-center">
+
+    <div class="w-16 h-16 mx-auto rounded-2xl bg-slate-100 flex items-center justify-center">
+
+        <x-heroicon-o-calendar-days class="w-8 h-8 text-slate-400"/>
+
+    </div>
+
+    <div class="mt-4 font-semibold text-slate-700">
+        Tidak ada jadwal mengajar hari ini
+    </div>
+
+    <div class="text-sm text-slate-500 mt-1">
+        Selamat menikmati waktu istirahat.
+    </div>
+
+</div>
+
+@endforelse
+
+{{-- RINGKASAN --}}
+<div class="bg-gradient-to-r from-[#00A39D] to-[#14C8C0] rounded-[20px] p-5 mt-5 text-white shadow-lg">
+
+    <div class="flex items-center justify-between">
 
         <div>
 
             <div class="text-sm text-white/80">
-                Total Tagihan Belum Lunas
+                Total Jadwal Hari Ini
             </div>
 
-            <div class="text-2xl font-bold leading-none mt-1">
-                Rp {{ number_format($totalTagihan,0,',','.') }}
+            <div class="text-3xl font-bold mt-1">
+                {{ $jadwalHariIni->count() }}
+            </div>
+
+            <div class="text-xs text-white/80 mt-1">
+                Sesi Pembelajaran
             </div>
 
         </div>
 
-        <a href="{{ route('wali.keuangan') }}"
-           class="bg-white text-[#FF0000] px-4 py-3 rounded-2xl font-semibold text-sm shadow-sm">
-            Bayar Sekarang →
+        <a href="{{ route('guru.jurnal') }}"
+           class="bg-white text-[#00A39D] px-5 py-3 rounded-2xl font-semibold text-sm shadow">
+            Isi Jurnal →
         </a>
 
     </div>
 
-{{-- MENU UTAMA SAAS --}}
+</div>
+
+{{-- MENU UTAMA --}}
 <div class="mt-7">
 
     {{-- HEADER --}}
     <div class="flex items-center justify-between mb-4">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg"
-                    class="w-5 h-5 text-[#00A39D]"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="1.8"
-                    stroke="currentColor">
 
-                    <path stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M3.75 4.5h6v6h-6v-6zm0 9h6v6h-6v-6zm9-9h6v6h-6v-6zm0 9h6v6h-6v-6z" />
-                </svg>
+        <div class="flex items-center gap-3">
+
+            <div class="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center">
+                <x-heroicon-o-squares-2x2 class="w-5 h-5 text-[#00A39D]" />
             </div>
+
             <div>
                 <div class="text-base font-bold text-slate-900">
                     Menu Utama
                 </div>
+
                 <div class="text-xs text-slate-500">
-                    Akses Fitur Utama Santri
+                    Akses fitur utama Guru
                 </div>
             </div>
 
         </div>
+
     </div>
 
-    {{-- MAIN CARD --}}
+    {{-- CARD --}}
     <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-4">
 
-        <div class="grid grid-cols-3 sm:grid-cols-3 gap-3">
+        <div class="grid grid-cols-3 gap-3">
 
-            {{-- TAHFIDZ --}}
-            <a href="{{ route('wali.tahfidz') }}"
-               class="group p-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-cyan-50 to-white hover:shadow-md transition">
+            {{-- JADWAL --}}
+            <a href="{{ route('guru.jadwal') }}"
+               class="group p-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-blue-50 to-white hover:shadow-md transition">
 
-                <div class="w-10 h-10 rounded-xl bg-cyan-100 flex items-center justify-center mb-2">
-                    <svg class="w-5 h-5 text-cyan-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M12 6.253v13M12 6.253C10.832 5.477 9.246 5 7.5 5A4.5 4.5 0 003 9.5v9A4.5 4.5 0 017.5 14c1.746 0 3.332.477 4.5 1.253M12 6.253C13.168 5.477 14.754 5 16.5 5A4.5 4.5 0 0121 9.5v9A4.5 4.5 0 0016.5 14c-1.746 0-3.332.477-4.5 1.253"/>
-                    </svg>
+                <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center mb-2">
+                    <x-heroicon-o-calendar-days class="w-5 h-5 text-blue-600"/>
                 </div>
 
-                <div class="font-semibold text-sm text-slate-900">Tahfidz</div>
-                <div class="text-[11px] text-slate-500 mt-1">Hafalan Al-Qur’an</div>
+                <div class="font-semibold text-sm text-slate-900">
+                    Jadwal
+                </div>
+
+                <div class="text-[11px] text-slate-500 mt-1">
+                    Jadwal mengajar
+                </div>
+
+            </a>
+
+            {{-- JURNAL --}}
+            <a href="{{ route('guru.jurnal') }}"
+               class="group p-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-teal-50 to-white hover:shadow-md transition">
+
+                <div class="w-10 h-10 rounded-xl bg-teal-100 flex items-center justify-center mb-2">
+                    <x-heroicon-o-document-text class="w-5 h-5 text-teal-600"/>
+                </div>
+
+                <div class="font-semibold text-sm text-slate-900">
+                    Jurnal
+                </div>
+
+                <div class="text-[11px] text-slate-500 mt-1">
+                    Jurnal mengajar
+                </div>
 
             </a>
 
             {{-- ABSENSI --}}
-            <a href="{{ route('wali.absensi') }}"
-               class="group p-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-blue-50 to-white hover:shadow-md transition">
-
-                <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center mb-2">
-                    <svg class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M9 12.75L11.25 15 15 9.75"/>
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                </div>
-
-                <div class="font-semibold text-sm text-slate-900">Absensi</div>
-                <div class="text-[11px] text-slate-500 mt-1">Kehadiran harian</div>
-
-            </a>
-
-            {{-- PELANGGARAN --}}
-            <a href="{{ route('wali.pelanggaran') }}"
-               class="group p-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-orange-50 to-white hover:shadow-md transition">
-
-                <div class="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center mb-2">
-                    <svg class="w-5 h-5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M12 9v3.75m0 3.75h.008v.008H12v-.008z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M10.34 3.94L1.82 18a1.875 1.875 0 001.6 2.81h17.16a1.875 1.875 0 001.6-2.81L13.66 3.94a1.875 1.875 0 00-3.32 0z"/>
-                    </svg>
-                </div>
-
-                <div class="font-semibold text-sm text-slate-900">Pelanggaran</div>
-                <div class="text-[11px] text-slate-500 mt-1">Catatan disiplin</div>
-
-            </a>
-
-            {{-- PRESTASI --}}
-            <a href="{{ route('wali.prestasi') }}"
-               class="group p-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-yellow-50 to-white hover:shadow-md transition">
-
-                <div class="w-10 h-10 rounded-xl bg-yellow-100 flex items-center justify-center mb-2">
-                    <svg class="w-5 h-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M11.48 3.5a.56.56 0 011.04 0l2.12 5.11a.56.56 0 00.48.35l5.52.44a.56.56 0 01.32.99l-4.2 3.6a.56.56 0 00-.18.56l1.28 5.38a.56.56 0 01-.84.61L12 17.06l-4.72 2.89a.56.56 0 01-.84-.61l1.28-5.38a.56.56 0 00-.18-.56l-4.2-3.6a.56.56 0 01.32-.99l5.52-.44a.56.56 0 00.48-.35l2.12-5.11z"/>
-                    </svg>
-                </div>
-
-                <div class="font-semibold text-sm text-slate-900">Prestasi</div>
-                <div class="text-[11px] text-slate-500 mt-1">Capaian siswa</div>
-
-            </a>
-
-            {{-- PERIZINAN --}}
-            <a href="{{ route('wali.perizinan') }}"
-               class="group p-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-violet-50 to-white hover:shadow-md transition">
-
-                <div class="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center mb-2">
-                    <svg class="w-5 h-5 text-violet-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-3.75 0h16.5A1.125 1.125 0 0121.375 11.625v7.125A1.125 1.125 0 0120.25 20.25H3.75A1.125 1.125 0 012.625 18.75V11.625A1.125 1.125 0 013.75 10.5z"/>
-                    </svg>
-                </div>
-
-                <div class="font-semibold text-sm text-slate-900">Perizinan</div>
-                <div class="text-[11px] text-slate-500 mt-1">Ajukan izin</div>
-
-            </a>
-
-            {{-- RAPORT --}}
-            <a href="{{ route('wali.raport') }}"
+            <a href="{{ route('guru.absensi') }}"
                class="group p-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-emerald-50 to-white hover:shadow-md transition">
 
                 <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center mb-2">
-                    <svg class="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M3 13h18M3 6h18M3 20h18"/>
-                    </svg>
+                    <x-heroicon-o-check-circle class="w-5 h-5 text-emerald-600"/>
                 </div>
 
-                <div class="font-semibold text-sm text-slate-900">Raport</div>
-                <div class="text-[11px] text-slate-500 mt-1">Nilai akademik</div>
+                <div class="font-semibold text-sm text-slate-900">
+                    Absensi
+                </div>
+
+                <div class="text-[11px] text-slate-500 mt-1">
+                    Kehadiran siswa
+                </div>
 
             </a>
 
+            {{-- NILAI --}}
+            <a href="{{ route('guru.nilai') }}"
+               class="group p-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-yellow-50 to-white hover:shadow-md transition">
+
+                <div class="w-10 h-10 rounded-xl bg-yellow-100 flex items-center justify-center mb-2">
+                    <x-heroicon-o-academic-cap class="w-5 h-5 text-yellow-600"/>
+                </div>
+
+                <div class="font-semibold text-sm text-slate-900">
+                    Nilai
+                </div>
+
+                <div class="text-[11px] text-slate-500 mt-1">
+                    Input penilaian
+                </div>
+
+            </a>
+            
+            {{-- GAJI --}}
+            <a href="{{ route('guru.gaji') }}"
+               class="group p-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-emerald-50 to-white hover:shadow-md transition">
+            
+                <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center mb-2">
+                    <x-heroicon-o-banknotes class="w-5 h-5 text-emerald-600"/>
+                </div>
+            
+                <div class="font-semibold text-sm text-slate-900">
+                    Gaji
+                </div>
+            
+                <div class="text-[11px] text-slate-500 mt-1">
+                    Slip & riwayat gaji
+                </div>
+            
+            </a>
+            
+            {{-- PROFIL --}}
+            <a href="{{ route('guru.profile') }}"
+               class="group p-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-indigo-50 to-white hover:shadow-md transition">
+            
+                <div class="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center mb-2">
+                    <x-heroicon-o-user class="w-5 h-5 text-indigo-600"/>
+                </div>
+            
+                <div class="font-semibold text-sm text-slate-900">
+                    Profil
+                </div>
+            
+                <div class="text-[11px] text-slate-500 mt-1">
+                    Data & password
+                </div>
+            
+            </a>
+
         </div>
+
     </div>
+
 </div>
 
 {{-- PENGUMUMAN SAAS TEAL MODERN --}}
@@ -724,18 +695,7 @@
     <div class="flex items-center justify-between mb-4">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg"
-                    class="w-5 h-5 text-[#00A39D]"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="1.8"
-                    stroke="currentColor">
-
-                    <path stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.311 6.022c1.733.64 3.56 1.085 5.455 1.31m5.713 0a24.255 24.255 0 0 1-5.713 0m5.713 0a3 3 0 11-5.713 0" />
-
-                </svg>
+                <x-heroicon-o-megaphone class="w-6 h-6 text-[#00A39D]" />
             </div>
             <div>
                 <div class="text-base font-bold text-slate-900">
@@ -748,7 +708,7 @@
 
         </div>
 
-        <a href="{{ route('wali.pengumuman') }}"
+        <a href="{{ route('guru.pengumuman') }}"
            class="text-sm font-semibold text-[#00A39D] hover:text-[#008f87] transition">
             Lihat semua →
         </a>

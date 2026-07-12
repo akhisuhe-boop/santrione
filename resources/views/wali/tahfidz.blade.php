@@ -10,9 +10,10 @@
         $targetJuz = $siswa->progress_tahfidz['juz'] ?? '-';
         $status = $siswa->progress_tahfidz['status'] ?? '-';
 
-        $setoranTerakhir = $siswa->tahfidzSetoran
-            ->sortByDesc('tanggal')
-            ->first();
+        $setoranTerakhir = $siswa->tahfidzSetoran()
+        ->orderByDesc('tanggal')
+        ->orderByDesc('id')
+        ->first();
 
     @endphp
 
@@ -226,24 +227,18 @@
 
                 <div class="text-right">
 
-                    <div
-                        class="
-                            text-xs
-                            text-slate-400
-                        "
-                    >
-                        Jumlah Ayat
+                    <div class="text-xs text-slate-400">
+                        Rentang Ayat
                     </div>
-
-                    <div
-                        class="
-                            text-base
-                            font-semibold
-                            text-slate-900
-                            mt-0.5
-                        "
-                    >
-                        {{ $setoranTerakhir->jumlah_ayat }}
+                    
+                    <div class="text-base font-semibold text-slate-900 mt-0.5">
+                        {{ $setoranTerakhir->ayat_dari }}
+                        -
+                        {{ $setoranTerakhir->ayat_sampai }}
+                    </div>
+                    
+                    <div class="text-xs text-slate-400">
+                        {{ $setoranTerakhir->jumlah_ayat }} ayat
                     </div>
 
                 </div>
@@ -351,9 +346,10 @@
 
     {{-- ACTIVITY --}}
     @php
-        $setoranList = $siswa->tahfidzSetoran
-            ->sortByDesc('tanggal')
-            ->values();
+    $setoranList = $siswa->tahfidzSetoran()
+        ->orderByDesc('tanggal')
+        ->orderByDesc('id')
+        ->get();
     @endphp
 
     <div
@@ -403,7 +399,7 @@
                     />
 
                     {{ $setoranList->count() }}
-                    Aktivitas
+                    Setoran
 
                 </div>
 
@@ -536,8 +532,13 @@
                             "
                         >
 
-                            {{ $setoran->jumlah_ayat }}
-                            ayat
+                            <div class="text-[11px] text-slate-400 mt-0.5">
+                                Ayat {{ $setoran->ayat_dari }} - {{ $setoran->ayat_sampai }}
+                            </div>
+                            
+                            <div class="text-[11px] text-slate-400">
+                                {{ $setoran->jumlah_ayat }} ayat
+                            </div>
 
                         </div>
 

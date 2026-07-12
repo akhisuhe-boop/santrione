@@ -24,12 +24,17 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Illuminate\Support\HtmlString;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Support\Facades\Vite;
+use Illuminate\Support\Facades\Schema;
 
 class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
 {
-    $yayasan = Yayasan::first();
+    $yayasan = null;
+
+    $yayasan = Schema::hasTable('yayasans')
+    ? Yayasan::first()
+    : null;
 
     return $panel
         ->default()
@@ -57,28 +62,27 @@ class AdminPanelProvider extends PanelProvider
                 }
             </style>
         '
-    )
-        
+        )
         ->brandName(
             $yayasan?->nama ?? 'yayasan'
         )
 
         ->brandName(function () use ($yayasan) {
-    $logo = $yayasan?->logo
-        ? asset('storage/' . $yayasan->logo)
-        : null;
-
-    $nama = $yayasan?->nama ?? 'Yayasan';
-
-    return new HtmlString('
-            <div style="display:flex; align-items:center; gap:10px;">
-                ' . ($logo ? '<img src="'.$logo.'" style="height:32px;">' : '') . '
-                <span style="font-weight:600; font-size:16px;">
-                    '.$nama.'
-                </span>
-            </div>
-        ');
-    })
+            $logo = $yayasan?->logo
+                ? asset('storage/' . $yayasan->logo)
+                : null;
+        
+            $nama = $yayasan?->nama ?? 'Yayasan';
+        
+            return new HtmlString('
+                <div style="display:flex; align-items:center; gap:10px;">
+                    ' . ($logo ? '<img src="'.$logo.'" style="height:32px;">' : '') . '
+                    <span style="font-weight:600; font-size:16px;">
+                        '.$nama.'
+                    </span>
+                </div>
+            ');
+        })
 
         ->favicon(
             $yayasan?->logo
@@ -87,7 +91,7 @@ class AdminPanelProvider extends PanelProvider
         )
 
         ->sidebarCollapsibleOnDesktop()
-
+        
         ->navigationGroups([
             NavigationGroup::make('Master Data')
                 ->icon('heroicon-o-folder'),
@@ -134,11 +138,6 @@ class AdminPanelProvider extends PanelProvider
             for: 'App\\Filament\\Pages'
         )
 
-        ->pages([
-            Pages\Dashboard::class,
-            \App\Filament\Pages\JadwalGrid::class,
-        ])
-
         ->discoverWidgets(
             in: app_path('Filament/Widgets'),
             for: 'App\\Filament\\Widgets'
@@ -163,7 +162,7 @@ class AdminPanelProvider extends PanelProvider
         ->plugins([
             FilamentShieldPlugin::make(),
         ])
-
+        
         ->authMiddleware([
             Authenticate::class,
         ]);

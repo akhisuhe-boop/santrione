@@ -214,13 +214,26 @@ class SiswaResource extends Resource
             ])->columns(4),
 
             Section::make('Dokumen')->schema([
-                FileUpload::make('foto')->image(),
+                FileUpload::make('foto')
+                    ->label('Foto')
+                    ->image()
+                    ->disk('public')
+                    ->directory('foto-siswa'),
+            
                 FileUpload::make('scan_kk')
-                ->label('Scan Kartu Keluarga'),
+                    ->label('Scan Kartu Keluarga')
+                    ->disk('public')
+                    ->directory('scan-kk'),
+            
                 FileUpload::make('scan_akta')
-                ->label('Scan Akta Kelahiran'),
+                    ->label('Scan Akta Kelahiran')
+                    ->disk('public')
+                    ->directory('scan-akta'),
+            
                 FileUpload::make('scan_ijazah')
-                ->label('Scan Ijazah'),
+                    ->label('Scan Ijazah')
+                    ->disk('public')
+                    ->directory('scan-ijazah'),
             ])->columns(2),
 
             Section::make('Status')->schema([
@@ -272,8 +285,8 @@ class SiswaResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\ImageColumn::make('foto')
-                ->getStateUsing(fn ($record) => $record->foto ? asset('storage/'.$record->foto) : null)
                 ->label('Foto')
+                ->disk('public')
                 ->circular()
                 ->size(40),
 
@@ -400,12 +413,15 @@ class SiswaResource extends Resource
             ]),
     ])
                 ->action(function (array $data) {
-                Excel::import(
-                new \App\Imports\SiswaImport,
-                $data['file'],
-                'local' // DISK HARUS SAMA
-        );
-    }),
+                
+                    $path = \Illuminate\Support\Facades\Storage::disk('local')->path($data['file']);
+                
+                    \Maatwebsite\Excel\Facades\Excel::import(
+                        new \App\Imports\SiswaImport,
+                        $path
+                    );
+                }),
+                
                 Action::make('export')
                 ->label('Export Excel')
                 ->icon('heroicon-o-arrow-down-circle')
@@ -450,12 +466,15 @@ class SiswaResource extends Resource
                 ->icon('heroicon-o-document-arrow-down')
                 ->color('danger')
                 ->action(function (array $data) {
-
-                return (new \App\Exports\SiswaPdfExport(
-                $data['lembaga_id'] ?? null,
-                $data['kelas_id'] ?? null
-                ))->download();
+                    return redirect()->to(
+                        route('export.siswa.pdf', [
+                            'lembaga_id' => $data['lembaga_id'] ?? null,
+                            'kelas_id'   => $data['kelas_id'] ?? null,
+                        ])
+                    );
+                
                 })
+                
                 ->form([
                 Select::make('lembaga_id')
                 ->label('Pilih Lembaga')
@@ -471,15 +490,16 @@ class SiswaResource extends Resource
 
                 if (!$lembagaId) {
                 return [];
-            }
-
-            return \App\Models\Kelas::where('lembaga_id', $lembagaId)
-                ->pluck('nama', 'id');
-        })
-        ->disabled(fn (callable $get) => !$get('lembaga_id')),
-            ]),              
-
-            ])
+                }
+    
+                return \App\Models\Kelas::where('lembaga_id', $lembagaId)
+                    ->pluck('nama', 'id');
+                })
+                ->disabled(fn (callable $get) => !$get('lembaga_id')),
+                    ]),              
+        
+                    ])
+                
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),

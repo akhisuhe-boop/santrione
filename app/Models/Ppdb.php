@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Ppdb extends Model
 {
+    protected $table = 'ppdbs';
     protected $fillable = [
     'user_id',
     'siswa_id',
@@ -72,10 +73,12 @@ class Ppdb extends Model
     'kelas_id',
 
     'status',
+    'password',
 ];
 
 protected static function booted()
 {
+    // Sebelum data disimpan
     static::creating(function ($model) {
 
         if (!$model->tahun_ajaran_id) {
@@ -83,7 +86,30 @@ protected static function booted()
         }
 
     });
+
+    // Setelah data berhasil disimpan
+    static::created(function ($ppdb) {
+
+        \App\Services\TagihanService::buatPendaftaran($ppdb);
+
+    });
+
+    // Setelah data diupdate
+    static::updated(function ($ppdb) {
+
+        // Jika status berubah menjadi lulus
+        if (
+            $ppdb->wasChanged('status') &&
+            $ppdb->status === 'lulus'
+        ) {
+
+            \App\Services\TagihanService::buatDaftarUlang($ppdb);
+
+        }
+
+    });
 }
+
 public function toSiswaArray()
 {
     return collect($this->attributes)

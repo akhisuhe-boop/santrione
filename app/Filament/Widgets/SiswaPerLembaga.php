@@ -34,7 +34,7 @@ class SiswaPerLembaga extends Widget
     public function getLembagaData()
     {
         return Lembaga::withCount('siswas')
-            ->orderBy('name')
+            ->orderBy('nama', 'asc')
             ->get();
     }
 }

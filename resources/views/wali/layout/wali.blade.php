@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
+    <x-favicon />
     <title>Portal Wali Santri</title>
 
     <script src="https://cdn.tailwindcss.com"></script>

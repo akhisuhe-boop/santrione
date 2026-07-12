@@ -21,6 +21,7 @@ use App\Services\NisService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Builder;
 use App\Services\NotificationService;
+use Illuminate\Support\Facades\Hash;
 
 class PpdbResource extends Resource
 {
@@ -201,14 +202,18 @@ class PpdbResource extends Resource
             // ======================
             Section::make('Status')->schema([
                 Select::make('status')
-                    ->options([
-                        'draft' => 'Draft',
-                        'menunggu_pembayaran' => 'Menunggu Pembayaran',
-                        'tes' => 'Tes',
-                        'lulus' => 'Lulus',
-                        'tidak_lulus' => 'Tidak Lulus',
-                    ])
-                    ->default('draft'),
+                ->options([
+                    'draft' => 'Draft',
+                    'menunggu_pembayaran' => 'Menunggu Pembayaran',
+                    'upload_berkas' => 'Upload Berkas',
+                    'verifikasi_berkas' => 'Verifikasi Berkas',
+                    'tes' => 'Tes Seleksi',
+                    'lulus' => 'Lulus',
+                    'tidak_lulus' => 'Tidak Lulus',
+                    'daftar_ulang' => 'Daftar Ulang',
+                    'aktif' => 'Aktif',
+                ])
+                ->default('draft'),
             ]),
 
         ]);
@@ -276,20 +281,27 @@ class PpdbResource extends Resource
 
                 Tables\Columns\BadgeColumn::make('status')
                 ->formatStateUsing(fn ($state) => match ($state) {
-                    'draft' => 'Draft',
-                    'menunggu_pembayaran' => 'Menunggu Pembayaran',
-                    'tes' => 'Tes',
-                    'lulus' => 'Lulus',
-                    'tidak_lulus' => 'Tidak Lulus',
-                    'daftar_ulang' => 'Daftar Ulang',
-                    'aktif' => 'Aktif',
-                    default => ucfirst($state),
-                })
+                        'draft' => 'Draft',
+                        'menunggu_pembayaran' => 'Menunggu Pembayaran',
+                    
+                        'upload_berkas' => 'Upload Berkas',
+                        'verifikasi_berkas' => 'Verifikasi Berkas',
+                    
+                        'tes' => 'Tes',
+                        'lulus' => 'Lulus',
+                        'tidak_lulus' => 'Tidak Lulus',
+                        'daftar_ulang' => 'Daftar Ulang',
+                        'aktif' => 'Aktif',
+                    
+                        default => ucfirst($state),
+                    })
 
                 ->color(fn ($state) => match ($state) {
                     'draft' => 'secondary',
                     'menunggu_pembayaran' => 'warning',
-                    'tes' => 'info',
+                    'upload_berkas' => 'warning',
+                    'verifikasi_berkas' => 'info',
+                    'tes' => 'primary',
                     'lulus' => 'success',
                     'tidak_lulus' => 'danger',
                     'daftar_ulang' => 'primary',
@@ -441,6 +453,76 @@ class PpdbResource extends Resource
                 });
 
             }),
+            
+            // ======================
+            // 🔵 VERIFIKASI BERKAS
+            // ======================
+            
+            Tables\Actions\Action::make('verifikasiBerkas')
+                ->label('Verifikasi Berkas')
+                ->icon('heroicon-o-document-check')
+                ->color('primary')
+            
+                ->visible(fn ($record) => $record->status === 'verifikasi_berkas')
+                ->modalHeading('Verifikasi Berkas')
+                ->modalSubmitActionLabel('Approve')
+            
+                ->form([
+                    Forms\Components\Placeholder::make('kk')
+                        ->label('Kartu Keluarga')
+                        ->content(fn ($record) =>
+                            new \Illuminate\Support\HtmlString(
+                                $record->scan_kk
+                                    ? '<a href="'.asset('storage/'.$record->scan_kk).'" target="_blank" style="color:#0ea5e9">Lihat Kartu Keluarga</a>'
+                                    : '-'
+                            )
+                        ),
+            
+                    Forms\Components\Placeholder::make('akta')
+                        ->label('Akta Kelahiran')
+                        ->content(fn ($record) =>
+                            new \Illuminate\Support\HtmlString(
+                                $record->scan_akta
+                                    ? '<a href="'.asset('storage/'.$record->scan_akta).'" target="_blank" style="color:#0ea5e9">Lihat Akta</a>'
+                                    : '-'
+                            )
+                        ),
+            
+                    Forms\Components\Placeholder::make('ijazah')
+                        ->label('Ijazah / SKL')
+                        ->content(fn ($record) =>
+                            new \Illuminate\Support\HtmlString(
+                                $record->scan_ijazah
+                                    ? '<a href="'.asset('storage/'.$record->scan_ijazah).'" target="_blank" style="color:#0ea5e9">Lihat Ijazah</a>'
+                                    : 'Tidak ada'
+                            )
+                        ),
+            
+                ])
+            
+                ->requiresConfirmation()
+                ->action(function ($record) {
+                    if ($record->lembaga?->tes_masuk) {
+                    
+                        // Jalur Tes
+                        $record->update([
+                            'status' => 'tes',
+                        ]);
+                    
+                        NotificationService::sendPpdbTes($record);
+                    
+                    } else {
+                    
+                        // Jalur Non Tes
+                        $record->update([
+                            'status' => 'lulus',
+                        ]);
+                    
+                        NotificationService::sendPpdbLulus($record);
+                    
+                    }
+                }),
+
 
             // ======================
             // 🔵 MENUNGGU → TES
@@ -775,16 +857,38 @@ class PpdbResource extends Resource
 
                 Tables\Actions\EditAction::make(),
 
+                Tables\Actions\Action::make('resetPassword')
+                    ->label('Reset Password')
+                    ->icon('heroicon-o-key')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->modalHeading('Reset Password')
+                    ->modalDescription('Password akan direset menjadi NISN.')
+                    ->modalSubmitActionLabel('Reset')
+                    ->action(function ($record) {
+                
+                        $record->update([
+                            'password' => Hash::make($record->nisn),
+                        ]);
+                        
+                        NotificationService::sendPpdbResetPassword($record);
+                
+                        \Filament\Notifications\Notification::make()
+                            ->title('Berhasil')
+                            ->body('Password berhasil direset menjadi NISN.')
+                            ->success()
+                            ->send();
+                    }),
+                
                 Tables\Actions\Action::make('bayar')
-                ->label('Bayar')
-                ->icon('heroicon-o-credit-card')
-
-                ->visible(fn ($record) =>
-                    in_array($record->status, [
-                        'menunggu_pembayaran',
-                        'daftar_ulang',
-                    ])
-                )
+                    ->label('Bayar')
+                    ->icon('heroicon-o-credit-card')
+                    ->visible(fn ($record) =>
+                        in_array($record->status, [
+                            'menunggu_pembayaran',
+                            'daftar_ulang',
+                        ])
+                    )
 
                 ->url(function ($record) {
 

@@ -88,11 +88,13 @@ class RiwayatPembayaranTable extends BaseWidget
                 */
 
                 Tables\Columns\TextColumn::make('nominal')
-                    ->label('Nominal Dibayar')
-                    ->money('IDR')
-                    ->sortable()
-                    ->weight('bold')
-                    ->color('success'),
+                ->label('Nominal Dibayar')
+                ->formatStateUsing(
+                    fn ($state) => 'Rp ' . number_format($state, 0, ',', '.')
+                )
+                ->sortable()
+                ->weight('bold')
+                ->color('success'),
 
                 /*
                 |--------------------------------------------------------------------------
@@ -101,15 +103,22 @@ class RiwayatPembayaranTable extends BaseWidget
                 */
 
                 Tables\Columns\TextColumn::make('metode')
-                    ->label('Metode')
-                    ->badge()
-                    ->color(fn ($state) => match ($state) {
-                        'admin' => 'primary',
-                        'transfer' => 'success',
-                        'ewallet' => 'warning',
-                        'gateway' => 'danger',
-                        default => 'gray',
-                    }),
+                ->label('Metode')
+                ->badge()
+                ->color(fn ($state) => match ($state) {
+                    'admin' => 'primary',
+                    'transfer' => 'success',
+                    'ewallet' => 'warning',
+                    'gateway' => 'danger',
+                    default => 'gray',
+                })
+                ->formatStateUsing(fn ($state) => match ($state) {
+                    'admin' => 'Tunai',
+                    'transfer' => 'Transfer',
+                    'ewallet' => 'Saldo',
+                    'gateway' => 'Gateway',
+                    default => $state,
+                }),
 
                 /*
                 |--------------------------------------------------------------------------
@@ -128,7 +137,7 @@ class RiwayatPembayaranTable extends BaseWidget
                     })
                     ->formatStateUsing(fn ($state) => match ($state) {
                         'pending' => 'Pending',
-                        'sukses' => 'Sukses',
+                        'sukses' => 'Berhasil',
                         'gagal' => 'Gagal',
                         default => $state,
                     }),

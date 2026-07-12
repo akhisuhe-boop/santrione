@@ -6,30 +6,27 @@ use Illuminate\Database\Seeder;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
-use BezhanSalleh\FilamentShield\Support\Utils;
+use Spatie\Permission\Models\Permission;
 
 class AdminSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. buat role super admin
         $role = Role::firstOrCreate([
-            'name' => 'super_admin'
+            'name' => 'super_admin',
+            'guard_name' => 'web',
         ]);
 
-        // 2. buat user admin
-        $user = User::firstOrCreate(
+        $user = User::updateOrCreate(
             ['email' => 'admin@admin.com'],
             [
                 'name' => 'Super Admin',
-                'password' => Hash::make('password'),
+                'password' => Hash::make('123456'),
             ]
         );
 
-        // 3. assign role
         $user->assignRole($role);
 
-        // 4. sync semua permission (penting untuk Filament Shield)
-        $role->syncPermissions(\Spatie\Permission\Models\Permission::all());
+        $role->syncPermissions(Permission::all());
     }
 }

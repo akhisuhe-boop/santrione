@@ -101,13 +101,14 @@ class PegawaiResource extends Resource
                 // 🔥 FOTO
                 Forms\Components\FileUpload::make('foto')
                     ->image()
-                    ->directory('pegawai')
+                    ->disk('public')
+                    ->directory('foto-pegawai')
                     ->imagePreviewHeight('100'),
 
                 // 🔥 IJAZAH
                 Forms\Components\FileUpload::make('file_ijazah')
                     ->label('Fotocopy Ijazah')
-                    ->directory('ijazah')
+                    ->directory('ijazah-pegawai')
                     ->acceptedFileTypes(['application/pdf','image/*'])
                     ->maxSize(2048),
 
@@ -157,7 +158,9 @@ class PegawaiResource extends Resource
             ->columns([
 
                 Tables\Columns\ImageColumn::make('foto')
-                    ->circular(),
+                ->disk('public')
+                ->circular()
+                ->size(40),
 
                 Tables\Columns\TextColumn::make('nama')
                     ->searchable()
@@ -310,16 +313,20 @@ class PegawaiResource extends Resource
 
                         // 🔥 UPLOAD FILE
                         Forms\Components\FileUpload::make('file')
-                            ->label('Upload File Excel')
-                            ->required(),
+                        ->disk('public')
+                        ->directory('imports')
+                        ->required(),
 
                     ])
                     ->action(function (array $data) {
+
+                        $path = storage_path('app/public/' . $data['file']);
+                    
                         \Maatwebsite\Excel\Facades\Excel::import(
                             new \App\Imports\PegawaiImport,
-                            $data['file']
+                            $path
                         );
-                    }),
+                    })
             ]);
             
             

@@ -77,11 +77,11 @@ class Siswa extends Model
         static::creating(function ($siswa) {
 
             if (!$siswa->password) {
-                $siswa->password = '12345678'; // auto hashed
+                $siswa->password = '12345678';
             }
-
+        
             if (!$siswa->pin) {
-                $siswa->pin = Hash::make('123456'); // tetap manual (sesuai kode Akhi)
+                $siswa->pin = '123456';
             }
         });
 

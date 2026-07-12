@@ -9,6 +9,7 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Carbon\Carbon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -240,8 +241,8 @@ class PayrollResource extends Resource
             Tables\Columns\BadgeColumn::make('status')
                 ->colors([
                     'gray' => 'draft',
-                    'warning' => 'approved',
-                    'success' => 'paid',
+                    'warning' => 'disetujui',
+                    'success' => 'dibayar',
                     'danger' => 'cancelled',
                 ]),
 
@@ -251,8 +252,8 @@ class PayrollResource extends Resource
             Tables\Filters\SelectFilter::make('status')
                 ->options([
                     'draft' => 'Draft',
-                    'approved' => 'Approved',
-                    'paid' => 'Paid',
+                    'disetujui' => 'Disetujui',
+                    'dibayar' => 'Dibayar',
                     'cancelled' => 'Cancelled',
                 ]),
         ])
@@ -267,6 +268,20 @@ class PayrollResource extends Resource
     Tables\Actions\ViewAction::make()
         ->label('Rincian')
         ->icon('heroicon-o-eye'),
+        
+    Tables\Actions\Action::make('cetak')
+    ->label('Cetak Slip Gaji')
+    ->icon('heroicon-o-printer')
+    ->color('success')
+    ->visible(fn ($record) =>
+        $record->status === 'dibayar'
+    )
+
+    ->url(fn ($record) =>
+        route('slip-gaji.cetak', $record)
+    )
+
+    ->openUrlInNewTab(),
 
     /*
     |--------------------------------------------------------------------------
@@ -303,11 +318,11 @@ class PayrollResource extends Resource
         ->action(function ($record) {
 
             $record->update([
-                'status' => 'approved',
+                'status' => 'disetujui',
                 'approved_at' => now(),
                 'approved_by' => auth()->id(),
             ]);
-
+        
         }),
 
     /*
@@ -321,7 +336,7 @@ class PayrollResource extends Resource
     ->color('primary')
 
     ->visible(fn ($record) =>
-        $record->status === 'approved'
+        $record->status === 'disetujui'
     )
     ->form([
 
@@ -348,7 +363,7 @@ class PayrollResource extends Resource
         |--------------------------------------------------------------------------
         */
 
-        if ($record->status === 'paid') {
+        if ($record->status === 'dibayar') {
             return;
         }
         /*
@@ -373,9 +388,10 @@ class PayrollResource extends Resource
         */
 
         $record->update([
-            'status' => 'paid',
-            'paid_at' => now(),
-            'paid_by' => auth()->id(),
+            'status'         => 'dibayar',
+            'tanggal_bayar'  => now(),
+            'paid_at'        => now(),
+            'paid_by'        => auth()->id(),
         ]);
 
         /*
@@ -408,13 +424,16 @@ class PayrollResource extends Resource
             'nominal' => $record->total_gaji,
             'sumber' => 'payroll',
             'tanggal' => now(),
-            'keterangan' =>
-                'Gaji Pegawai : ' .
-                $record->pegawai?->nama .
-                ' periode ' .
-                $record->bulan .
-                '/' .
-                $record->tahun,
+            'keterangan' => sprintf(
+                'Gaji Pegawai : %s periode %s',
+                $record->pegawai?->nama,
+                Carbon::create(
+                    $record->tahun,
+                    $record->bulan
+                )
+                ->locale('id')
+                ->translatedFormat('F Y')
+            ),
 
             'penanggung_jawab' => auth()->user()?->name,
             'lembaga_id' => $record->pegawai?->lembagas?->first()?->id,
@@ -435,7 +454,7 @@ class PayrollResource extends Resource
         ->visible(fn ($record) =>
             in_array($record->status, [
                 'draft',
-                'approved',
+                'disetujui',
             ])
         )
 
@@ -458,7 +477,7 @@ class PayrollResource extends Resource
 
 ])
         ->bulkActions([
-
+        
     /*
     |--------------------------------------------------------------------------
     | BULK APPROVE
@@ -478,7 +497,7 @@ class PayrollResource extends Resource
                 }
 
                 $record->update([
-                    'status' => 'approved',
+                    'status' => 'disetujui',
                     'approved_at' => now(),
                     'approved_by' => auth()->id(),
                 ]);
@@ -521,7 +540,7 @@ class PayrollResource extends Resource
             |--------------------------------------------------------------------------
             */
 
-            if ($record->status !== 'approved') {
+            if ($record->status !== 'disetujui') {
                 continue;
             }
 
@@ -547,9 +566,10 @@ class PayrollResource extends Resource
             */
 
             $record->update([
-                'status' => 'paid',
-                'paid_at' => now(),
-                'paid_by' => auth()->id(),
+                'status'         => 'dibayar',
+                'tanggal_bayar'  => now(),
+                'paid_at'        => now(),
+                'paid_by'        => auth()->id(),
             ]);
 
             /*
@@ -585,14 +605,16 @@ class PayrollResource extends Resource
                 'nominal' => $record->total_gaji,
                 'sumber' => 'payroll',
                 'tanggal' => now(),
-
-                'keterangan' =>
-                    'Gaji Pegawai : ' .
-                    $record->pegawai?->nama .
-                    ' periode ' .
-                    $record->bulan .
-                    '/' .
-                    $record->tahun,
+                'keterangan' => sprintf(
+                    'Gaji Pegawai : %s periode %s',
+                    $record->pegawai?->nama,
+                    Carbon::create(
+                        $record->tahun,
+                        $record->bulan
+                    )
+                    ->locale('id')
+                    ->translatedFormat('F Y')
+                ),
 
                 'penanggung_jawab' =>
                     auth()->user()?->name,

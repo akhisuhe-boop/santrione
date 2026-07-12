@@ -224,51 +224,6 @@ class DetailNilai extends Page
                     NilaiService::generateDeskripsi(
                         $nilaiAkhir
                     );
-
-                /*
-                |--------------------------------------------------------------------------
-                | SIMPAN REKAP NILAI
-                |--------------------------------------------------------------------------
-                */
-
-                RekapNilai::updateOrCreate(
-
-                    [
-
-                        'siswa_id' =>
-                            $siswa->id,
-
-                        'kelas_id' =>
-                            $kelas,
-
-                        'mapel_id' =>
-                            $mapel,
-
-                        'tahun_ajaran_id' =>
-                            $tahun,
-
-                    ],
-
-                    [
-
-                        'guru_id' =>
-                            $kurikulum?->pegawai_id,
-
-                        'nilai_akhir' =>
-                            $nilaiAkhir,
-
-                        'grade' =>
-                            $grade,
-
-                        'deskripsi' =>
-                            $deskripsi,
-
-                        'status' =>
-                            'draft',
-
-                    ]
-
-                );
             }
 
             /*

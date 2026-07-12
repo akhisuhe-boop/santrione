@@ -9,6 +9,7 @@ use App\Models\Kelas;
 use App\Models\MataPelajaran;
 use App\Models\JadwalPelajaran;
 use App\Models\User;
+use App\Models\JamPelajaran;
 
 class JurnalMengajar extends Model
 {
@@ -17,10 +18,9 @@ class JurnalMengajar extends Model
         'pegawai_lembaga_id',
         'kelas_id',
         'mata_pelajaran_id',
+        'jam_pelajaran_id',
         'jadwal_pelajaran_id',
         'tanggal',
-        'jam_ke',
-        'durasi_jam',
         'materi',
         'status',
         'validated_by',
@@ -64,5 +64,10 @@ class JurnalMengajar extends Model
     public function pegawaiLembaga()
     {
         return $this->belongsTo(PegawaiLembaga::class);
+    }
+    
+    public function jamPelajaran()
+    {
+        return $this->belongsTo(JamPelajaran::class);
     }
 }

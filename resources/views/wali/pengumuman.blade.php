@@ -9,19 +9,10 @@
         <div class="flex items-start justify-between">
 
             <div>
-                <h1 class="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                <h1 class="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
 
                     {{-- ICON --}}
-                    <svg xmlns="http://www.w3.org/2000/svg"
-                         class="w-6 h-6 text-[#00A39D]"
-                         fill="none"
-                         viewBox="0 0 24 24"
-                         stroke-width="1.8"
-                         stroke="currentColor">
-                        <path stroke-linecap="round"
-                              stroke-linejoin="round"
-                              d="M11.48 3.5a.6.6 0 0 1 1.04 0l2.12 5.11a.6.6 0 0 0 .48.34l5.52.44a.6.6 0 0 1 .32.99l-4.2 3.6a.6.6 0 0 0-.18.56l1.28 5.39a.6.6 0 0 1-.84.61l-4.73-2.89a.6.6 0 0 0-.59 0l-4.73 2.89a.6.6 0 0 1-.84-.61l1.28-5.39a.6.6 0 0 0-.18-.56l-4.2-3.6a.6.6 0 0 1 .32-.99l5.52-.44a.6.6 0 0 0 .48-.34L11.48 3.5Z" />
-                    </svg>
+                    <x-heroicon-o-megaphone class="w-6 h-6 text-[#00A39D]" />
 
                     Pengumuman
 

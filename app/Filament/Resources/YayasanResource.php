@@ -8,6 +8,7 @@ use App\Models\Yayasan;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Section;
 use Filament\Resources\Resource;
@@ -30,22 +31,61 @@ class YayasanResource extends Resource
     {
         return $form
             ->schema([
-                Section::make('Data Yayasan')
-            ->description('Informasi dasar tentang yayasan')
-            ->schema([
-                TextInput::make('nama')
-                    ->label('Nama Yayasan')
-                    ->required(),
-
-                TextInput::make('ketua')
-                    ->label('Ketua Yayasan'),
-
-                FileUpload::make('logo')
-                    ->label('Logo')
-                    ->image()
-                    ->directory('yayasan'),
-            ])
-            ->columns(3),
+    
+                Section::make('Informasi Yayasan')
+                    ->description('Informasi dasar yayasan')
+                    ->icon('heroicon-o-building-library')
+                    ->schema([
+    
+                        TextInput::make('nama')
+                            ->label('Nama Yayasan')
+                            ->required()
+                            ->maxLength(255),
+    
+                        TextInput::make('ketua')
+                            ->label('Ketua Yayasan')
+                            ->maxLength(255),
+    
+                        FileUpload::make('logo')
+                            ->label('Logo Yayasan')
+                            ->image()
+                            ->disk('public')
+                            ->directory('yayasan')
+                            ->visibility('public')
+                            ->imageEditor(),
+    
+                    ])
+                    ->columns(3),
+    
+                Section::make('Kontak Yayasan')
+                    ->description('Informasi kontak yang akan tampil pada raport, kwitansi dan surat.')
+                    ->icon('heroicon-o-map-pin')
+                    ->schema([
+    
+                        Forms\Components\Textarea::make('alamat')
+                            ->label('Alamat')
+                            ->rows(3)
+                            ->columnSpanFull(),
+    
+                        TextInput::make('telepon')
+                            ->label('Telepon')
+                            ->tel()
+                            ->maxLength(30),
+    
+                        TextInput::make('email')
+                            ->label('Email')
+                            ->email()
+                            ->maxLength(100),
+    
+                        TextInput::make('website')
+                            ->label('Website')
+                            ->url()
+                            ->placeholder('https://')
+                            ->maxLength(150),
+    
+                    ])
+                    ->columns(3),
+    
             ]);
     }
 
@@ -53,35 +93,35 @@ class YayasanResource extends Resource
     {
         return $table
             ->columns([
+
             Tables\Columns\ImageColumn::make('logo')
                 ->label('Logo')
                 ->circular()
-                ->size(40),
-
+                ->size(45),
+        
             Tables\Columns\TextColumn::make('nama')
                 ->label('Nama Yayasan')
                 ->searchable()
                 ->sortable(),
-
+        
             Tables\Columns\TextColumn::make('ketua')
-                ->label('Ketua Yayasan')
+                ->label('Ketua')
                 ->searchable(),
-
+        
+            Tables\Columns\TextColumn::make('telepon')
+                ->label('Telepon')
+                ->toggleable(),
+        
+            Tables\Columns\TextColumn::make('website')
+                ->label('Website')
+                ->toggleable(),
+        
             Tables\Columns\TextColumn::make('created_at')
                 ->label('Dibuat')
                 ->date('d M Y')
                 ->toggleable(isToggledHiddenByDefault: true),
-            ])
-            ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
-            ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ]);
+        
+        ]);
     }
 
     public static function getRelations(): array

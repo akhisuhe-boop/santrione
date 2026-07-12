@@ -199,10 +199,22 @@ class PayrollService
                 |--------------------------------------------------------------------------
                 */
                 $totalJP = JurnalMengajar::query()
-                    ->where('pegawai_lembaga_id', $jabatan->id)
-                    ->whereMonth('tanggal', $payroll->bulan)
-                    ->whereYear('tanggal', $payroll->tahun)
-                    ->sum('durasi_jam');
+                ->join(
+                    'jadwal_pelajarans',
+                    'jadwal_pelajarans.id',
+                    '=',
+                    'jurnal_mengajars.jadwal_pelajaran_id'
+                )
+                ->join(
+                    'jam_pelajarans',
+                    'jam_pelajarans.id',
+                    '=',
+                    'jadwal_pelajarans.jam_pelajaran_id'
+                )
+                ->where('jurnal_mengajars.pegawai_lembaga_id', $jabatan->id)
+                ->whereMonth('jurnal_mengajars.tanggal', $payroll->bulan)
+                ->whereYear('jurnal_mengajars.tanggal', $payroll->tahun)
+                ->sum('jam_pelajarans.durasi_jp');
                 /*
                 |--------------------------------------------------------------------------
                 | SKIP JIKA TIDAK ADA JP

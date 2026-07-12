@@ -8,7 +8,7 @@ class Dashboard extends BaseDashboard
 {
     public function getColumns(): int | string | array
     {
-        return 4;
+        return 2;
     }
 
     public function getWidgets(): array
@@ -21,7 +21,7 @@ class Dashboard extends BaseDashboard
         |--------------------------------------------------------------------------
         */
 
-        $widgets[] = \App\Filament\Widgets\GreetingWidget::class;
+        //$widgets[] = \App\Filament\Widgets\GreetingWidget::class;
 
         /*
         |--------------------------------------------------------------------------
@@ -123,7 +123,7 @@ class Dashboard extends BaseDashboard
         |--------------------------------------------------------------------------
         */
 
-        $widgets[] = \App\Filament\Widgets\QuickActionWidget::class;
+        //$widgets[] = \App\Filament\Widgets\QuickActionWidget::class;
 
         return $widgets;
     }

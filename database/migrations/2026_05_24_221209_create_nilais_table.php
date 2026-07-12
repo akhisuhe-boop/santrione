@@ -30,7 +30,7 @@ return new class extends Migration
 
             $table->foreignId('guru_id')
                 ->nullable()
-                ->constrained('users')
+                ->constrained('pegawais')
                 ->nullOnDelete();
 
             // semester sudah menyatu di tahun_ajarans

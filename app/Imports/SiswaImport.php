@@ -27,7 +27,7 @@ class SiswaImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFai
         if (!empty($row['nis'])) {
             $extensions = ['jpg', 'jpeg', 'png'];
             foreach ($extensions as $ext) {
-                $file = 'imports/foto/' . $row['nis'] . '.' . $ext;
+                $file = 'foto-siswa/' . $row['nis'] . '.' . $ext;
                 if (Storage::disk('public')->exists($file)) {
                     $fotoPath = $file; // simpan path relatif ke storage/public
                     break;
@@ -90,7 +90,7 @@ class SiswaImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFai
                 'status_siswa' => $row['status_siswa'] ?? 'Aktif',
 
                 // foto
-                'foto' => $fotoPath,
+                'foto' => is_string($fotoPath) ? $fotoPath : null,
 
                 // AUTO AKUN ORTU & siswa
                 'password' => Hash::make('12345678'),
@@ -107,6 +107,7 @@ class SiswaImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFai
             'nis' => 'required',
             'nama_lengkap' => 'required',
             'jenis_kelamin' => 'required|in:L,P',
+            'foto' => 'nullable|string',
         ];
     }
 }

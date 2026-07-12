@@ -11,6 +11,7 @@ class Kurikulum extends Model
         'pegawai_id',
         'mata_pelajaran_id',
         'jumlah_jam_per_minggu',
+        'jp_per_pertemuan',
     ];
 
     public function kelas()

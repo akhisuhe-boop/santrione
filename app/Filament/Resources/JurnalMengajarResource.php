@@ -116,14 +116,32 @@ class JurnalMengajarResource extends Resource
                         $hari = $hariMap[\Carbon\Carbon::parse($tanggal)->format('l')] ?? null;
 
                         return \App\Models\JadwalPelajaran::query()
-                            ->where('pegawai_id', $pegawaiId)
-                            ->where('hari', $hari)
-                            ->with('kelas')
-                            ->orderBy('jam_ke')
-                            ->get()
+                        ->select('jadwal_pelajarans.*')
+                        ->join(
+                            'jam_pelajarans',
+                            'jam_pelajarans.id',
+                            '=',
+                            'jadwal_pelajarans.jam_pelajaran_id'
+                        )
+                        ->where('jadwal_pelajarans.pegawai_id', $pegawaiId)
+                        ->where('jadwal_pelajarans.hari', $hari)
+                        ->with([
+                            'kelas',
+                            'mataPelajaran',
+                            'jamPelajaran',
+                        ])
+                        ->orderBy('jam_pelajarans.urutan')
+                        ->get()
                             ->mapWithKeys(fn ($j) => [
-                                $j->id => "Jam Ke {$j->jam_ke} - {$j->kelas->nama} - {$j->mataPelajaran->nama} ({$j->durasi_jam} JP)"
-                            ]);
+    $j->id => sprintf(
+        '%s (%s–%s) • %s • %s',
+        $j->jamPelajaran->nama,
+        date('H:i', strtotime($j->jamPelajaran->jam_mulai)),
+        date('H:i', strtotime($j->jamPelajaran->jam_selesai)),
+        $j->kelas->nama,
+        $j->mataPelajaran->nama,
+    ),
+]);
                     })
                     ->live()
                     ->afterStateUpdated(function ($state, callable $set) {
@@ -141,9 +159,11 @@ class JurnalMengajarResource extends Resource
                     |--------------------------------------------------------------------------
                     */
                     $set('kelas_id', $jadwal->kelas_id);
+
                     $set('mata_pelajaran_id', $jadwal->mata_pelajaran_id);
-                    $set('jam_ke', $jadwal->jam_ke);
-                    $set('durasi_jam', $jadwal->durasi_jam);
+                    $set('jam_ke', $jadwal->jamPelajaran->urutan);
+                    $set('durasi_jam', $jadwal->jamPelajaran->durasi_jp);
+                    $set('jam_pelajaran_id', $jadwal->jam_pelajaran_id);
                     /*
                     |--------------------------------------------------------------------------
                     | GENERATE ABSENSI SISWA
@@ -167,8 +187,12 @@ class JurnalMengajarResource extends Resource
                 // 📌 AUTO FIELD (hidden logic)
                 Hidden::make('kelas_id'),
                 Hidden::make('mata_pelajaran_id'),
-                Hidden::make('jam_ke'),
-                Hidden::make('durasi_jam'),
+                Hidden::make('jam_pelajaran_id'),
+                Hidden::make('jam_ke')
+                    ->dehydrated(false),
+                
+                Hidden::make('durasi_jam')
+                    ->dehydrated(false),
 
                 // 📝 Materi
                 Textarea::make('materi')
@@ -265,10 +289,18 @@ class JurnalMengajarResource extends Resource
                     ->locale('id')
                     ->translatedFormat('d F Y')
                 ),
-                TextColumn::make('jam_ke')->label('Jam Ke'),
                 TextColumn::make('kelas.nama'),
                 TextColumn::make('mataPelajaran.nama')->label('Mapel'),
-                TextColumn::make('durasi_jam')->label('JP'),
+                TextColumn::make('jadwal.jamPelajaran.jam_mulai')
+                    ->label('Mulai')
+                    ->time('H:i'),
+                
+                TextColumn::make('jadwal.jamPelajaran.jam_selesai')
+                    ->label('Selesai')
+                    ->time('H:i'),
+                
+                TextColumn::make('jadwal.jamPelajaran.durasi_jp')
+                    ->label('JP'),
                 TextColumn::make('materi')->label('Materi')->limit(50)->wrap(),
                 TextColumn::make('rekap_absensi')
                     ->label('Absensi')

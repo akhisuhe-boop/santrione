@@ -4,9 +4,10 @@
 
     $totalPelanggaran = $siswa->pelanggaranSiswa->count();
     $totalPoint = $siswa->pelanggaranSiswa->sum('point');
-    $terakhir = $siswa->pelanggaranSiswa
-        ->sortByDesc('tanggal')
-        ->first();
+    $terakhir = $siswa->pelanggaranSiswa()
+    ->orderByDesc('tanggal')
+    ->orderByDesc('id')
+    ->first();
 
     $statusLabel = 'Baik';
     $statusColor = 'emerald';
@@ -23,9 +24,10 @@
         $statusLabel = 'Ringan';
         $statusColor = 'yellow';
     }
-    $pelanggaranList = $siswa->pelanggaranSiswa
-        ->sortByDesc('tanggal')
-        ->values();
+    $pelanggaranList = $siswa->pelanggaranSiswa()
+    ->orderByDesc('tanggal')
+    ->orderByDesc('id')
+    ->get();
 @endphp
 <div class="p-4 space-y-5">
     {{-- HERO --}}

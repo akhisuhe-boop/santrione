@@ -7,6 +7,7 @@ use App\Filament\Resources\KurikulumResource\RelationManagers;
 use App\Models\Kurikulum;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Components\Placeholder;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -72,11 +73,11 @@ class KurikulumResource extends Resource
                     ]),
 
                 TextInput::make('jumlah_jam_per_minggu')
-                ->label('Jam per Minggu')
+                ->label('JP Per Minggu')
                 ->numeric()
                 ->minValue(1)
                 ->required()
-                ->reactive()
+                ->live()
                 ->afterStateUpdated(function ($state, callable $get, callable $set) {
 
                     $kelasId = $get('kelas_id');
@@ -129,6 +130,41 @@ class KurikulumResource extends Resource
                             ->send();
                     }
                 }),
+                
+                TextInput::make('jp_per_pertemuan')
+                ->label('JP Per Pertemuan')
+                ->numeric()
+                ->required()
+                ->default(2)
+                ->placeholder('Contoh: 2')
+                ->live()
+                ->minValue(1)
+                ->maxValue(6)
+                ->helperText('Contoh: 2 = belajar 2 JP setiap satu kali masuk kelas.'),
+                
+                Placeholder::make('jumlah_pertemuan')
+                ->label('Pertemuan / Minggu')
+                ->content(function (callable $get) {
+            
+                    $jpMinggu = (int) ($get('jumlah_jam_per_minggu') ?? 0);
+                    $jpPertemuan = (int) ($get('jp_per_pertemuan') ?? 1);
+            
+                    if ($jpMinggu <= 0) {
+                        return '-';
+                    }
+            
+                    $jumlahPertemuan = ceil($jpMinggu / max($jpPertemuan, 1));
+            
+                    $sisa = $jpMinggu % $jpPertemuan;
+            
+                    if ($sisa === 0) {
+            
+                        return "{$jumlahPertemuan} Kali Pertemuan ({$jpPertemuan} JP × {$jumlahPertemuan})";
+            
+                    }
+            
+                    return "{$jumlahPertemuan} Kali Pertemuan ({$jpPertemuan} JP + sisa {$sisa} JP)";
+    }),
 
             ])
             ->columns(2),
@@ -148,6 +184,9 @@ class KurikulumResource extends Resource
                 Sum::make()
                     ->label('Total JP')
             ),
+            TextColumn::make('jp_per_pertemuan')
+            ->label('JP/Pertemuan')
+            ->alignCenter(),
             ])
             ->defaultSort('kelas_id')
 

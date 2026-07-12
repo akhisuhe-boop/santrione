@@ -5,8 +5,10 @@
     <meta charset="UTF-8">
 
     <title>Portal Wali Santri</title>
-
+    
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <x-favicon />
 
     <script src="https://cdn.tailwindcss.com"></script>
 
@@ -32,40 +34,40 @@
 
 <body class="font-sans bg-slate-100 min-h-screen flex items-center justify-center p-4">
 
-<div class="w-full max-w-sm">
+<div class="w-full max-w-xs">
 
-    <div class="bg-white rounded-3xl shadow-xl p-8">
+    <div class="bg-white rounded-3xl shadow-xl p-5">
 
         {{-- HEADER --}}
         <div class="text-center mb-8">
-            <div class="flex justify-center mb-2">
-            <div class="
-                w-24 h-24
-                rounded-3xl
-                bg-white
-                shadow-lg
-                border border-slate-100
-                flex items-center justify-center">
 
-                @if(!empty($yayasan?->logo))
+            {{-- LOGO --}}
+            @if(!empty($yayasan?->logo))
+                <div class="flex justify-center mb-3">
+        
                     <img
                         src="{{ asset('storage/'.$yayasan->logo) }}"
                         alt="{{ $yayasan->nama }}"
-                        class="w-16 h-16 object-contain">
-                @endif
-            </div>
-        </div>
-            <p class="text-slate-500 mt-4 text-sm">
+                        class="w-24 h-24 object-contain">
+        
+                </div>
+            @endif
+        
+            {{-- SUBTITLE --}}
+            <p class="text-slate-500 text-sm">
                 Portal Wali Santri
             </p>
-            <h1 class="text-2xl font-bold text-teal-600">
+        
+            {{-- NAMA YAYASAN --}}
+            <h1 class="mt-1 text-2xl font-bold text-[#00A39D] leading-tight">
                 {{ $yayasan->nama ?? 'Portal Wali Santri' }}
             </h1>
-
-            <p class="text-slate-500 text-sm">
+        
+            {{-- DESKRIPSI --}}
+            <p class="mt-2 text-sm text-slate-500">
                 Login menggunakan NIS atau NISN Santri
             </p>
-
+        
         </div>
 
         {{-- ERROR --}}
@@ -240,12 +242,12 @@
                     <a href="https://www.qinaraindonesia.id"
                     target="_blank"
                     class="font-semibold text-[#00A39D] hover:text-[#00857f] transition">
-                        Qinara Tech
+                        Qinara Indonesia
                     </a>
                 </p>
 
                 <p class="mt-1 text-xs text-slate-400">
-                    SantriOne © {{ date('Y') }}
+                    QinaraApps © {{ date('Y') }}
                 </p>
             </div>
         </div>

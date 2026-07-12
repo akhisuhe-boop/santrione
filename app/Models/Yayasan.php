@@ -6,7 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class Yayasan extends Model
 {
-    protected $fillable = ['nama', 'ketua', 'logo'];
+    protected $fillable = [
+    'nama',
+    'ketua',
+    'logo',
+    'alamat',
+    'telepon',
+    'email',
+    'website',
+    ];
 
     public function lembagas()
     {

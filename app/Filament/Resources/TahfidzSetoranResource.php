@@ -171,7 +171,7 @@ class TahfidzSetoranResource extends Resource
                         ->numeric()
                         ->minValue(1)
                         ->required()
-                        ->live()
+                        ->live(debounce: 700)
                         ->rule(function ($get) {
                         return function ($attribute, $value, $fail) use ($get) {
 

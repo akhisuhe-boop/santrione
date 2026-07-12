@@ -118,15 +118,7 @@
                     <span class="absolute top-1 w-1.5 h-1.5 rounded-full bg-[#00A39D]"></span>
                 @endif
 
-                <svg class="w-6 h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    viewBox="0 0 24 24">
-                    <path stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M5.121 17.804A9 9 0 1118.88 17.8M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                </svg>
+                <x-heroicon-o-user-circle class="w-6 h-6"/>
 
                 <span class="text-xs mt-0.5 font-medium">
                     Profil

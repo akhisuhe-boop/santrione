@@ -64,23 +64,25 @@ class TagihanService
     // ======================
     public static function buatPendaftaran($ppdb)
     {
-        $jenis = JenisTagihan::where('kode', 'ppdb_pendaftaran')->first();
+        $jenis = JenisTagihan::where('kode', 'formulir_pendaftaran')->first();
         $rekening = Rekening::first();
         $tahunAjaran = TahunAjaran::aktif();
-
+    
         if (!$jenis || !$rekening || !$tahunAjaran) return;
-
+    
         // ❌ cegah duplikat
-        if (Tagihan::where('ppdb_id', $ppdb->id)
-            ->where('jenis_tagihan_id', $jenis->id)
-            ->exists()) {
+        if (
+            Tagihan::where('ppdb_id', $ppdb->id)
+                ->where('jenis_tagihan_id', $jenis->id)
+                ->exists()
+        ) {
             return;
         }
-
+        
         $data = self::resolveNominal($jenis, $ppdb);
 
         if (!$data || !$data['nominal']) return;
-
+    
         Tagihan::create([
             'ppdb_id' => $ppdb->id,
             'siswa_id' => null,
@@ -94,6 +96,7 @@ class TagihanService
             'is_cicilan' => $data['is_cicilan'],
             'jatuh_tempo' => now()->addDays($data['jatuh_tempo']),
         ]);
+
     }
 
     // ======================
@@ -130,5 +133,51 @@ class TagihanService
             'is_cicilan' => $data['is_cicilan'],
             'jatuh_tempo' => now()->addDays($data['jatuh_tempo']),
         ]);
+    }
+    
+    // ======================
+    // SETELAH PEMBAYARAN LUNAS
+    // ======================
+    public static function afterPaid(Tagihan $tagihan): void
+    {
+        $tagihan->loadMissing('jenisTagihan', 'ppdb');
+        $kode = $tagihan->jenisTagihan?->kode;
+        switch ($kode) {
+    
+            /*
+            |--------------------------------------------------------------------------
+            | FORMULIR PENDAFTARAN
+            |--------------------------------------------------------------------------
+            */
+            case 'formulir_pendaftaran':
+                if ($tagihan->ppdb) {
+                    $tagihan->ppdb->update([
+                        'status' => 'formulir',
+                    ]);
+                }
+            break;
+    
+            /*
+            |--------------------------------------------------------------------------
+            | DAFTAR ULANG PPDB
+            |--------------------------------------------------------------------------
+            */
+            case 'ppdb_daftar_ulang':
+                if ($tagihan->ppdb) {
+                    $tagihan->ppdb->update([
+                        'status' => 'aktif',
+                    ]);
+                }
+            break;
+    
+            /*
+            |--------------------------------------------------------------------------
+            | SPP / DSP / DLL
+            |--------------------------------------------------------------------------
+            */
+            default:
+                // Tidak melakukan apa-apa
+            break;
+        }
     }
 }

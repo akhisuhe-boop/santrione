@@ -16,6 +16,7 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 
 class SiswaExport implements 
     FromCollection, 
@@ -164,8 +165,11 @@ class SiswaExport implements
                 // ======================
                 // AUTO WIDTH
                 // ======================
-                foreach(range('A', $lastColumn) as $col) {
-                    $sheet->getColumnDimension($col)->setAutoSize(true);
+                $lastColumnIndex = Coordinate::columnIndexFromString($lastColumn);
+                
+                for ($i = 1; $i <= $lastColumnIndex; $i++) {
+                    $column = Coordinate::stringFromColumnIndex($i);
+                    $sheet->getColumnDimension($column)->setAutoSize(true);
                 }
             },
         ];

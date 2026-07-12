@@ -11,6 +11,7 @@ use Maatwebsite\Excel\Events\AfterSheet;
 use Maatwebsite\Excel\Concerns\WithCustomStartCell;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
+use App\Models\Yayasan;
 
 class PegawaiExport implements FromCollection, WithHeadings, ShouldAutoSize, WithEvents, WithCustomStartCell, WithColumnFormatting
 {
@@ -78,20 +79,16 @@ class PegawaiExport implements FromCollection, WithHeadings, ShouldAutoSize, Wit
 
             // 🔥 JUDUL
             $sheet->mergeCells('A1:J1');
-            $sheet->setCellValue('A1', 'YAYASAN TUNAS CENDEKIA MADANI');
+            $sheet->setCellValue('A1', 'DATA GURU & PEGAWAI');
+
+            $namaYayasan = Yayasan::first()?->nama ?? '-';
 
             $sheet->mergeCells('A2:J2');
-            $sheet->setCellValue('A2', 'DATA GURU');
-
-            $sheet->mergeCells('A3:J3');
-            $sheet->setCellValue('A3', 'SDI TUNAS CENDEKIA MADANI');
+            $sheet->setCellValue('A2', strtoupper($namaYayasan));
 
             // 🔥 STYLE JUDUL
             $sheet->getStyle('A1:A3')->getFont()->setBold(true)->setSize(12);
             $sheet->getStyle('A1:A3')->getAlignment()->setHorizontal('center');
-
-            // 🔥 GARIS
-            $sheet->getStyle('A3:J3')->getBorders()->getBottom()->setBorderStyle('thin');
 
             // 🔥 HEADER (row 5 sekarang aman)
             $sheet->getStyle('A5:J5')->getFont()->setBold(true);

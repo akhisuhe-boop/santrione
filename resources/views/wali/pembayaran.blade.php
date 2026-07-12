@@ -2,7 +2,7 @@
 
 @section('content')
 
-<div class="bg-[#F7F9FC] min-h-screen">
+<div class="px-5 pt-4 pb-4 bg-[#F7F9FC] min-h-screen">
 
     {{-- TOAST ERROR --}}
     @if(session('error'))

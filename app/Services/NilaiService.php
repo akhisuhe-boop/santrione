@@ -54,23 +54,30 @@ class NilaiService
     */
 
     public static function generateDeskripsi(
-        $nilai
+    int $nilai,
+    ?string $kompetensi = null
     ): string {
-
+    
+        $kompetensi = $kompetensi ?: 'materi pembelajaran';
+    
         if ($nilai >= 90) {
-
-            return 'Menunjukkan capaian belajar yang sangat baik serta aktif dalam proses pembelajaran.';
-
-        } elseif ($nilai >= 80) {
-
-            return 'Menunjukkan pemahaman yang baik terhadap materi pembelajaran dan memiliki semangat belajar yang baik.';
-
-        } elseif ($nilai >= 70) {
-
-            return 'Menunjukkan perkembangan belajar yang cukup baik dan perlu meningkatkan konsistensi belajar.';
-
+    
+            return "Menunjukkan capaian belajar yang sangat baik dalam {$kompetensi}, mampu menerapkan konsep dengan tepat serta aktif selama proses pembelajaran.";
+    
         }
-
-        return 'Memerlukan pendampingan lebih lanjut dalam proses pembelajaran.';
+    
+        if ($nilai >= 80) {
+    
+            return "Menunjukkan pemahaman yang baik terhadap {$kompetensi} serta mampu menyelesaikan sebagian besar kegiatan pembelajaran dengan baik.";
+    
+        }
+    
+        if ($nilai >= 70) {
+    
+            return "Menunjukkan perkembangan yang cukup baik dalam memahami {$kompetensi}, namun masih perlu meningkatkan konsistensi belajar.";
+    
+        }
+    
+        return "Perlu meningkatkan pemahaman terhadap {$kompetensi} melalui latihan dan pendampingan yang lebih intensif.";
     }
 }

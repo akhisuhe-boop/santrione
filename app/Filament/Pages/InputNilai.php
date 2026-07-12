@@ -8,6 +8,7 @@ use App\Models\Siswa;
 use App\Models\Kurikulum;
 use App\Models\TahunAjaran;
 use App\Models\MataPelajaran;
+use App\Services\RekapNilaiService;
 
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -346,18 +347,14 @@ class InputNilai extends Page implements Forms\Contracts\HasForms
     public function simpan()
     {
         foreach ($this->siswas as $siswa) {
-
             $types = [
-
                 'tugas',
                 'harian',
                 'uts',
                 'uas',
-
             ];
 
             foreach ($types as $type) {
-
                 $query = [
 
                     'siswa_id' =>
@@ -378,38 +375,40 @@ class InputNilai extends Page implements Forms\Contracts\HasForms
                 ];
 
                 if (
-
                     isset($siswa[$type]) &&
-
                     $siswa[$type] !== null &&
-
                     $siswa[$type] !== ''
-
                 ) {
 
                     Nilai::updateOrCreate(
-
                         $query,
-
                         [
-
                             'nilai' =>
                                 $siswa[$type],
 
                             'is_publish' =>
                                 false,
-
                         ]
-
                     );
 
                 } else {
 
                     Nilai::where($query)->delete();
-
                 }
             }
         }
+        
+        /*
+        |--------------------------------------------------------------------------
+        | GENERATE REKAP NILAI
+        |--------------------------------------------------------------------------
+        */
+        
+        RekapNilaiService::generate(
+            $this->data['kelas_id'],
+            $this->data['mapel_id'],
+            $this->data['tahun_ajaran_id']
+        );
 
         Notification::make()
             ->title('Berhasil')

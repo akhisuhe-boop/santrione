@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Siswa;
+use App\Models\Lembaga;
+use App\Models\Yayasan;
 use App\Models\Kurikulum;
 use App\Models\AbsensiMapel;
 use App\Models\RekapNilai;
@@ -22,10 +24,17 @@ class PrintRaportController extends Controller
         */
 
         $tahunAjaran = TahunAjaran::query()
-
             ->where('aktif', true)
-
             ->first();
+        
+        /*
+        |--------------------------------------------------------------------------
+        | LEMBAGA & YAYASAN
+        |--------------------------------------------------------------------------
+        */
+        
+        $lembaga = $siswa->kelas?->lembaga;
+        $yayasan = $lembaga?->yayasan;
 
         /*
         |--------------------------------------------------------------------------
@@ -252,16 +261,18 @@ class PrintRaportController extends Controller
         $pdf = Pdf::loadView(
             'exports.raport',
             compact(
-                'siswa',
-                'tahunAjaran',
-                'nilaiAkademik',
-                'nonAkademik',
-                'total',
-                'rataRata',
-                'tertinggi',
-                'terendah',
-                'absensiSummary',
-            )
+            'siswa',
+            'tahunAjaran',
+            'lembaga',
+            'yayasan',
+            'nilaiAkademik',
+            'nonAkademik',
+            'total',
+            'rataRata',
+            'tertinggi',
+            'terendah',
+            'absensiSummary',
+        )
         )
 
         ->setPaper(

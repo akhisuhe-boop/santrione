@@ -167,7 +167,7 @@
 
             <td width="6%">No</td>
 
-            <td width="40%">
+            <td width="28%">
                 Mata Pelajaran
             </td>
 
@@ -179,7 +179,7 @@
                 Grade
             </td>
 
-            <td width="34%">
+            <td width="50%">
                 Deskripsi
             </td>
 

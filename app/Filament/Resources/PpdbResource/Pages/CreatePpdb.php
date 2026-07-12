@@ -5,6 +5,7 @@ namespace App\Filament\Resources\PpdbResource\Pages;
 use App\Filament\Resources\PpdbResource;
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Support\Facades\Hash;
 
 class CreatePpdb extends CreateRecord
 {
@@ -13,13 +14,16 @@ class CreatePpdb extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $tahunId = \App\Models\TahunAjaran::aktif()?->id;
-
-        if (!$tahunId) {
+    
+        if (! $tahunId) {
             throw new \Exception('Tahun ajaran aktif belum diset!');
         }
-
+    
         $data['tahun_ajaran_id'] = $tahunId;
-
+    
+        // Password awal = NISN
+        $data['password'] = Hash::make($data['nisn']);
+    
         return $data;
     }
 }

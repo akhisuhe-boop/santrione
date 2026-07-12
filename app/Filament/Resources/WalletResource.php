@@ -13,6 +13,9 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use App\Models\Lembaga;
+use App\Models\Kelas;
 
 class WalletResource extends Resource
 {
@@ -51,9 +54,41 @@ class WalletResource extends Resource
             TextColumn::make('updated_at')
                 ->formatStateUsing(fn ($state) => \Carbon\Carbon::parse($state)->translatedFormat('d F Y H:i:s'))
             ])
+            
             ->filters([
-                //
-            ])
+            SelectFilter::make('lembaga')
+                ->label('Lembaga')
+                ->options(
+                    Lembaga::orderBy('nama')
+                        ->pluck('nama', 'id')
+                )
+                ->query(function (Builder $query, array $data) {
+                    if (blank($data['value'])) {
+                        return;
+                    }
+        
+                    $query->whereHas('siswa.kelas', function (Builder $q) use ($data) {
+                        $q->where('lembaga_id', $data['value']);
+                    });
+                }),
+        
+            SelectFilter::make('kelas')
+                ->label('Kelas')
+                ->options(
+                    Kelas::orderBy('nama')
+                        ->pluck('nama', 'id')
+                )
+                ->query(function (Builder $query, array $data) {
+                    if (blank($data['value'])) {
+                        return;
+                    }
+        
+                    $query->whereHas('siswa', function (Builder $q) use ($data) {
+                        $q->where('kelas_id', $data['value']);
+                    });
+                }),
+        ])
+            
             ->actions([
                 Tables\Actions\Action::make('topup')
             ->label('Top Up')

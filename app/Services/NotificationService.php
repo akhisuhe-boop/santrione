@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Jobs\SendWhatsappJob;
 use Carbon\Carbon;
+use App\Models\Ppdb;
 
 class NotificationService
 {
@@ -318,28 +319,43 @@ class NotificationService
     |--------------------------------------------------------------------------
     */
 
-    public static function sendPpdbBaru($ppdb)
+    public static function sendPpdbBaru(Ppdb $ppdb): void
     {
-        $nomor = $ppdb->wa_ayah ?? $ppdb->wa_ibu;
-
-        if (!$nomor) {
+        $nomor = $ppdb->wa_ayah;
+    
+        if (empty($nomor)) {
+            $nomor = $ppdb->wa_ibu;
+        }
+    
+        if (empty($nomor)) {
+            $nomor = $ppdb->wa_wali;
+        }
+    
+        if (empty($nomor)) {
             return;
         }
-
+    
         $nomor = self::formatPhone($nomor);
-
+    
         $pesan =
-            "*PENDAFTARAN PPDB BERHASIL*\n\n" .
-
-            "Data pendaftaran telah diterima.\n\n" .
-
-            "Nama : *{$ppdb->nama_lengkap}*\n" .
-            "Lembaga : *{$ppdb->lembaga?->nama}*\n" .
-            "Status : *Draft*\n\n" .
-
-            "Silakan menunggu informasi selanjutnya.\n\n" .
-            "Terima kasih.";
-
+            "🎉 *PENDAFTARAN PPDB BERHASIL*\n\n"
+    
+            ."Assalamu'alaikum Wr. Wb.\n\n"
+    
+            ."Terima kasih telah melakukan pendaftaran PPDB.\n\n"
+    
+            ."Berikut akun Portal PPDB Anda:\n\n"
+    
+            ."👤 Nama : *{$ppdb->nama_lengkap}*\n"
+            ."🆔 NISN : *{$ppdb->nisn}*\n"
+            ."🔑 Password Awal : *{$ppdb->nisn}*\n\n"
+    
+            ."Silakan login ke Portal PPDB untuk melengkapi data pendaftaran.\n\n"
+    
+            ."Demi keamanan akun, segera ubah password setelah berhasil login.\n\n"
+    
+            ."Barakallahu fiikum.";
+    
         self::wa($nomor, $pesan);
     }
 
@@ -522,6 +538,40 @@ class NotificationService
 
         self::wa($nomor, $pesan);
     }
+    
+    /*
+    |--------------------------------------------------------------------------
+    | PPDB - RESET PASSWORD
+    |--------------------------------------------------------------------------
+    */
+    public static function sendPpdbResetPassword(Ppdb $ppdb): void
+    {
+        $nomor = $ppdb->wa_ayah;
+    
+        if (empty($nomor)) {
+            $nomor = $ppdb->wa_ibu;
+        }
+    
+        if (empty($nomor)) {
+            $nomor = $ppdb->wa_wali;
+        }
+    
+        if (empty($nomor)) {
+            return;
+        }
+    
+        $pesan = "🔑 *RESET PASSWORD PORTAL PPDB*\n\n"
+            ."Assalamu'alaikum Wr. Wb.\n\n"
+            ."Password Portal PPDB berhasil direset.\n\n"
+            ."Silakan login menggunakan:\n"
+            ."NISN : {$ppdb->nisn}\n"
+            ."Password : {$ppdb->nisn}\n\n"
+            ."Setelah berhasil login, segera ubah password Anda.\n\n"
+            ."Terima kasih.";
+            
+        $nomor = self::formatPhone($nomor);
+        self::wa($nomor, $pesan);
+    }
 
      /*
     |--------------------------------------------------------------------------
@@ -614,4 +664,41 @@ class NotificationService
 
         self::wa($nomor, $pesan);
     }
+    
+    /*
+    |--------------------------------------------------------------------------
+    | PENGUMUMAN
+    |--------------------------------------------------------------------------
+    */
+    
+    public static function sendAnnouncement($recipient, string $message)
+    {
+        $nomor = null;
+    
+        if ($recipient instanceof \App\Models\Pegawai) {
+            $nomor = $recipient->no_hp;
+        }
+    
+        elseif ($recipient instanceof \App\Models\Siswa) {
+            $nomor =
+                $recipient->wa_wali
+                ?: $recipient->wa_ayah
+                ?: $recipient->wa_ibu;
+        }
+    
+        elseif ($recipient instanceof \App\Models\Ppdb) {
+            $nomor =
+                $recipient->wa_wali
+                ?: $recipient->wa_ayah
+                ?: $recipient->wa_ibu;
+        }
+    
+        if (! $nomor) {
+            return;
+        }
+    
+        $nomor = self::formatPhone($nomor);
+        self::wa($nomor, $message);
+    }
+    
 }

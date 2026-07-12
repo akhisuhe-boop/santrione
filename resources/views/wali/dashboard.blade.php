@@ -445,112 +445,69 @@
             {{-- KIRI --}}
             <div class="flex items-center gap-4 flex-1">
 
-                {{-- ICON --}}
-                <div
-                    class="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 {{ $iconClass }}">
-
-                    @if(
-                        str_contains($status,'lunas') ||
-                        str_contains($status,'sudah bayar')
-                    )
-
-                        {{-- Check --}}
-                        <svg xmlns="http://www.w3.org/2000/svg"
-                             fill="none"
-                             viewBox="0 0 24 24"
-                             stroke-width="2"
-                             stroke="currentColor"
-                             class="w-5 h-5">
-                            <path stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  d="M9 12.75L11.25 15 15 9.75" />
-                            <path stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-
-                    @elseif(str_contains($status,'segera'))
-
-                        {{-- Book --}}
-                        <svg xmlns="http://www.w3.org/2000/svg"
-                             fill="none"
-                             viewBox="0 0 24 24"
-                             stroke-width="2"
-                             stroke="currentColor"
-                             class="w-5 h-5">
-                            <path stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  d="M12 6.253v13M12 6.253C10.832 5.477 9.246 5 7.5 5A4.5 4.5 0 003 9.5v9A4.5 4.5 0 017.5 14c1.746 0 3.332.477 4.5 1.253M12 6.253C13.168 5.477 14.754 5 16.5 5A4.5 4.5 0 0121 9.5v9A4.5 4.5 0 0016.5 14c-1.746 0-3.332.477-4.5 1.253"/>
-                        </svg>
-
-                    @else
-
-                        {{-- Wallet --}}
-                        <svg xmlns="http://www.w3.org/2000/svg"
-                             fill="none"
-                             viewBox="0 0 24 24"
-                             stroke-width="2"
-                             stroke="currentColor"
-                             class="w-5 h-5">
-                            <path stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  d="M21 12V7.5A2.25 2.25 0 0018.75 5.25H5.25A2.25 2.25 0 003 7.5v9A2.25 2.25 0 005.25 18.75h13.5A2.25 2.25 0 0021 16.5V12z"/>
-                        </svg>
-
-                    @endif
-
-                </div>
-
-                {{-- INFO --}}
-                <div>
-
-                    <div class="font-semibold text-[16px] leading-tight text-slate-900">
-                        {{ $tagihan->judul }}
-                    </div>
-
-                    <div class="flex items-center gap-1 mt-1 text-[13px] text-gray-500">
-
-                        <svg xmlns="http://www.w3.org/2000/svg"
-                             fill="none"
-                             viewBox="0 0 24 24"
-                             stroke-width="2"
-                             stroke="currentColor"
-                             class="w-3.5 h-3.5">
-                            <path stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  d="M8.25 6.75V4.5m7.5 2.25V4.5M3.75 9.75h16.5m-15 9h13.5A1.5 1.5 0 0020.25 17.25V8.25A1.5 1.5 0 0018.75 6.75H5.25A1.5 1.5 0 003.75 8.25v9A1.5 1.5 0 005.25 18.75z"/>
-                        </svg>
-
-                        <span>
-                            Jatuh tempo
-                            {{ optional($tagihan->jatuh_tempo)->format('d M Y') }}
-                        </span>
-
-                    </div>
-
-                </div>
-
+            {{-- ICON --}}
+            <div
+                class="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 {{ $iconClass }}">
+            
+                @if(
+                    str_contains($status,'lunas') ||
+                    str_contains($status,'sudah bayar')
+                )
+            
+                    {{-- Lunas --}}
+                    <x-heroicon-o-check-badge class="w-6 h-6" />
+            
+                @elseif(str_contains($status,'segera'))
+            
+                    {{-- Akademik --}}
+                    <x-heroicon-o-academic-cap class="w-6 h-6" />
+            
+                @else
+            
+                    {{-- Tagihan --}}
+                    <x-heroicon-o-wallet class="w-6 h-6" />
+            
+                @endif
+            
             </div>
-
-            {{-- KANAN --}}
-            <div class="text-right">
-
-                <div class="font-bold text-[18px] leading-tight {{ $amountClass }}">
-                    Rp {{ number_format($tagihan->nominal,0,',','.') }}
+            
+                            {{-- INFO --}}
+                            <div>
+            
+                                <div class="font-semibold text-[16px] leading-tight text-slate-900">
+                                    {{ $tagihan->judul }}
+                                </div>
+            
+                                <div class="mt-1 text-[12px] text-slate-600">
+            
+                                    Jatuh tempo:
+                                    {{ optional($tagihan->jatuh_tempo)->format('d M Y') }}
+                                
+                                </div>
+            
+                            </div>
+            
+                        </div>
+            
+                        {{-- KANAN --}}
+                        <div class="text-right">
+            
+                            <div class="font-bold text-[18px] leading-tight {{ $amountClass }}">
+                                Rp {{ number_format($tagihan->nominal,0,',','.') }}
+                            </div>
+            
+                            <span
+                                class="inline-flex mt-2 px-3 py-1 rounded-xl text-[11px] font-semibold {{ $badgeClass }}">
+                                {{ $tagihan->status }}
+                            </span>
+            
+                        </div>
+            
+                    </div>
+            
                 </div>
-
-                <span
-                    class="inline-flex mt-2 px-3 py-1 rounded-xl text-[11px] font-semibold {{ $badgeClass }}">
-                    {{ $tagihan->status }}
-                </span>
-
-            </div>
-
-        </div>
-
-    </div>
-
-@endforeach
+            
+            @endforeach
 
     {{-- TOTAL TAGIHAN --}}
     <div
@@ -559,10 +516,10 @@
         <div>
 
             <div class="text-sm text-white/80">
-                Total Tagihan Belum Lunas
+                Total Tagihan
             </div>
 
-            <div class="text-2xl font-bold leading-none mt-1">
+            <div class="text-xl font-bold leading-none mt-1">
                 Rp {{ number_format($totalTagihan,0,',','.') }}
             </div>
 

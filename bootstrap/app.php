@@ -14,6 +14,10 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'wali' => \App\Http\Middleware\WaliMiddleware::class,
+            'guru' => \App\Http\Middleware\GuruMiddleware::class,
+            'ppdb' => \App\Http\Middleware\PpdbMiddleware::class,
+            'akses.kwitansi' => \App\Http\Middleware\AksesKwitansi::class,
+            'akses.slip.gaji' => \App\Http\Middleware\AksesSlipGaji::class,
         ]);
 
     })
