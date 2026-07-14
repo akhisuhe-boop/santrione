@@ -28,14 +28,29 @@ use Illuminate\Support\Facades\Schema;
 
 class AdminPanelProvider extends PanelProvider
 {
+    /**
+     * Ambil Yayasan milik user yang sedang login (dievaluasi per-request,
+     * BUKAN sekali di boot). Return null kalau belum ada yang login atau
+     * user belum terhubung ke yayasan manapun — supaya branding tidak
+     * "nyasar" ke yayasan orang lain.
+     */
+    protected function resolveYayasanForBranding(): ?Yayasan
+    {
+        if (! Schema::hasTable('yayasans')) {
+            return null;
+        }
+
+        $user = auth()->user();
+
+        if (! $user || empty($user->yayasan_id)) {
+            return null;
+        }
+
+        return Yayasan::find($user->yayasan_id);
+    }
+
     public function panel(Panel $panel): Panel
 {
-    $yayasan = null;
-
-    $yayasan = Schema::hasTable('yayasans')
-    ? Yayasan::first()
-    : null;
-
     return $panel
         ->default()
         ->id('admin')
@@ -63,16 +78,14 @@ class AdminPanelProvider extends PanelProvider
             </style>
         '
         )
-        ->brandName(
-            $yayasan?->nama ?? 'yayasan'
-        )
+        ->brandName(function () {
+            $yayasan = $this->resolveYayasanForBranding();
 
-        ->brandName(function () use ($yayasan) {
             $logo = $yayasan?->logo
                 ? asset('storage/' . $yayasan->logo)
                 : null;
         
-            $nama = $yayasan?->nama ?? 'Yayasan';
+            $nama = $yayasan?->nama ?? 'Qinara App';
         
             return new HtmlString('
                 <div style="display:flex; align-items:center; gap:10px;">
@@ -84,11 +97,13 @@ class AdminPanelProvider extends PanelProvider
             ');
         })
 
-        ->favicon(
-            $yayasan?->logo
+        ->favicon(function () {
+            $yayasan = $this->resolveYayasanForBranding();
+
+            return $yayasan?->logo
                 ? asset('storage/' . $yayasan->logo)
-                : asset('favicon.ico')
-        )
+                : asset('favicon.ico');
+        })
 
         ->sidebarCollapsibleOnDesktop()
         
