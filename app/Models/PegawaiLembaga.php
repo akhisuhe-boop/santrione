@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Lembaga;
 
 class PegawaiLembaga extends Model
 {
+    use BelongsToTenant;
+
     protected $table = 'pegawai_lembaga';
 
     protected $fillable = [

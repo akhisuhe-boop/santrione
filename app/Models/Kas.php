@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\HasKode;
 
 class Kas extends Model
 {
+    use BelongsToTenant;
+
     use HasKode;
 
     protected $table = 'kas';

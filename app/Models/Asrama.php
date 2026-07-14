@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Pegawai;
 use App\Models\Lembaga;
@@ -9,6 +10,8 @@ use App\Models\Siswa;
 
 class Asrama extends Model
 {
+    use BelongsToTenant;
+
     protected $fillable = [
     'lembaga_id',
     'nama',

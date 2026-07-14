@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Hash; // jangan lupa import Hash
 use App\Models\Wallet;
 
 class Siswa extends Model
 {
+    use BelongsToTenant;
+
     protected $fillable = [
         'lembaga_id',
         'kelas_id',

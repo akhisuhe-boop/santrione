@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Pegawai;
 use App\Models\PegawaiLembaga;
@@ -10,9 +11,18 @@ use App\Models\MataPelajaran;
 use App\Models\JadwalPelajaran;
 use App\Models\User;
 use App\Models\JamPelajaran;
+use App\Models\Concerns\BelongsToTenant;
 
 class JurnalMengajar extends Model
 {
+    use BelongsToTenant;
+
+    // Tidak ada lembaga_id langsung — scoping lewat kelas.lembaga
+    protected static function applyTenantScope(Builder $builder, int $yayasanId): void
+    {
+        $builder->whereHas('kelas.lembaga', fn ($q) => $q->where('yayasan_id', $yayasanId));
+    }
+
     protected $fillable = [
         'pegawai_id',
         'pegawai_lembaga_id',

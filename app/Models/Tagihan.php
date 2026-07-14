@@ -2,10 +2,25 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\BelongsToTenant;
 
 class Tagihan extends Model
 {
+    use BelongsToTenant;
+
+    // Tagihan tidak punya lembaga_id langsung — scoping lewat siswa.lembaga.
+    // Beberapa tagihan berasal dari PPDB (siswa_id kosong), jadi ikut cek
+    // jalur ppdb.lembaga juga.
+    protected static function applyTenantScope(Builder $builder, int $yayasanId): void
+    {
+        $builder->where(function (Builder $q) use ($yayasanId) {
+            $q->whereHas('siswa.lembaga', fn ($sub) => $sub->where('yayasan_id', $yayasanId))
+              ->orWhereHas('ppdb.lembaga', fn ($sub) => $sub->where('yayasan_id', $yayasanId));
+        });
+    }
+
     protected $fillable = [
     'siswa_id',
     'ppdb_id',

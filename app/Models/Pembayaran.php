@@ -2,13 +2,23 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\HasKode;
 use App\Models\Kas;
+use App\Models\Concerns\BelongsToTenant;
 
 class Pembayaran extends Model
 {
-    use HasKode;
+    use HasKode, BelongsToTenant;
+
+    protected static function applyTenantScope(Builder $builder, int $yayasanId): void
+    {
+        $builder->where(function (Builder $q) use ($yayasanId) {
+            $q->whereHas('siswa.lembaga', fn ($sub) => $sub->where('yayasan_id', $yayasanId))
+              ->orWhereHas('ppdb.lembaga', fn ($sub) => $sub->where('yayasan_id', $yayasanId));
+        });
+    }
 
     protected $fillable = [
         'tagihan_id',

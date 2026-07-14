@@ -22,6 +22,8 @@ class User extends Authenticatable implements FilamentUser
         'name',
         'email',
         'password',
+        'yayasan_id',
+        'is_platform_admin',
     ];
 
     /**
@@ -44,14 +46,29 @@ class User extends Authenticatable implements FilamentUser
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_platform_admin' => 'boolean',
         ];
+    }
+
+    public function yayasan()
+    {
+        return $this->belongsTo(Yayasan::class);
     }
 
     /**
      * Allow user to access Filament panel.
+     *
+     * TODO Fase 5: tambahkan cek status subscription yayasan di sini
+     * (redirect/block kalau status suspended karena belum bayar).
      */
     public function canAccessPanel(Panel $panel): bool
     {
-        return true;
+        // Platform admin selalu boleh masuk.
+        if ($this->is_platform_admin) {
+            return true;
+        }
+
+        // User biasa WAJIB terhubung ke sebuah yayasan untuk bisa masuk.
+        return ! empty($this->yayasan_id);
     }
 }

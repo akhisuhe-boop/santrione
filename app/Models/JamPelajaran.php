@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 
 class JamPelajaran extends Model
 {
+    use BelongsToTenant;
+
     protected $fillable = [
 
         'lembaga_id',

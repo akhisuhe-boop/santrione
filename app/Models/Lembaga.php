@@ -2,10 +2,21 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\BelongsToTenant;
 
 class Lembaga extends Model
 {
+    use BelongsToTenant;
+
+    // Lembaga TIDAK punya relasi lembaga() ke dirinya sendiri — override
+    // scope supaya filter langsung ke kolom yayasan_id di tabel ini.
+    protected static function applyTenantScope(Builder $builder, int $yayasanId): void
+    {
+        $builder->where('yayasan_id', $yayasanId);
+    }
+
     protected $fillable = [
     'yayasan_id',
     'nama',
@@ -23,11 +34,16 @@ class Lembaga extends Model
     {
         static::creating(function ($lembaga) {
 
-            // Otomatis isi yayasan jika belum ada
+            // Isi otomatis dari user yang sedang login (konteks tenant aktif),
+            // BUKAN dari yayasan pertama di database.
+            // Untuk multi-tenant, yayasan_id WAJIB eksplisit (dari user login
+            // atau dari form) sebelum record boleh dibuat.
+            if (empty($lembaga->yayasan_id) && auth()->check()) {
+                $lembaga->yayasan_id = auth()->user()->yayasan_id;
+            }
+
             if (empty($lembaga->yayasan_id)) {
-
-                $lembaga->yayasan_id = Yayasan::query()->value('id');
-
+                throw new \Exception('yayasan_id wajib diisi saat membuat Lembaga baru.');
             }
 
         });
