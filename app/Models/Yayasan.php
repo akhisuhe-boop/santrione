@@ -6,10 +6,18 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use App\Models\Concerns\BelongsToTenant;
+use Filament\Models\Contracts\HasName;
 
-class Yayasan extends Model
+class Yayasan extends Model implements HasName
 {
     use BelongsToTenant;
+
+    // Filament butuh tahu kolom mana yang jadi "nama tampilan" tenant —
+    // tabel kita pakai 'nama', bukan 'name' bawaan default Filament.
+    public function getFilamentName(): string
+    {
+        return $this->nama ?? 'Yayasan';
+    }
 
     // Yayasan adalah tenant itu sendiri — filter langsung berdasarkan id-nya
     // sendiri (bukan lewat relasi lembaga), harus sama dengan yayasan_id
