@@ -20,7 +20,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class LembagaResource extends Resource
+class LembagaResource extends BaseResource
 {
     protected static ?string $model = Lembaga::class;
     protected static ?string $navigationGroup = 'Master Data';

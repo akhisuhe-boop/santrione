@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 
-class JadwalKegiatanResource extends Resource implements HasShieldPermissions
+class JadwalKegiatanResource extends BaseResource implements HasShieldPermissions
 {
     protected static ?string $model = JadwalKegiatan::class;
     protected static bool $shouldRegisterNavigation = false;

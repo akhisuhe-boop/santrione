@@ -29,7 +29,7 @@ use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\ToggleButtons;
 
 
-class JurnalMengajarResource extends Resource
+class JurnalMengajarResource extends BaseResource
 {
     protected static ?string $model = JurnalMengajar::class;
     protected static ?string $navigationGroup = 'Akademik';

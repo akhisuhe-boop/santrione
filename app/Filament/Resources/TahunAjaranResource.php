@@ -13,7 +13,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class TahunAjaranResource extends Resource
+class TahunAjaranResource extends BaseResource
 {
     protected static ?string $model = TahunAjaran::class;
     protected static ?string $navigationGroup = 'Master Setting';

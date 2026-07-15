@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Forms\Components\Section;
 
-class RekeningResource extends Resource
+class RekeningResource extends BaseResource
 {
     protected static ?string $model = Rekening::class;
     protected static ?string $navigationGroup = 'Keuangan';

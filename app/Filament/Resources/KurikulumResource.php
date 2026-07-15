@@ -19,7 +19,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\Summarizers\Sum;
 
-class KurikulumResource extends Resource
+class KurikulumResource extends BaseResource
 {
     protected static ?string $model = Kurikulum::class;
     protected static ?string $navigationGroup = 'Akademik';

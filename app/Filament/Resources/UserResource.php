@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\Hash;
 
 use Spatie\Permission\Models\Role;
 
-class UserResource extends Resource
+class UserResource extends BaseResource
 {
     protected static ?string $model = User::class;
     protected static ?string $navigationGroup = 'Master Setting';

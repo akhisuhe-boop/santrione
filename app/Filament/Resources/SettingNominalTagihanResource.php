@@ -12,7 +12,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use filament\components\CheckboxList;
 
-class SettingNominalTagihanResource extends Resource
+class SettingNominalTagihanResource extends BaseResource
 {
     protected static ?string $model = SettingNominalTagihan::class;
     protected static ?string $navigationGroup = 'Keuangan';

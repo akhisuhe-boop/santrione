@@ -14,7 +14,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class PayrollResource extends Resource
+class PayrollResource extends BaseResource
 {
     protected static ?string $navigationGroup = 'Keuangan';
     protected static ?string $navigationLabel = 'Penggajian';

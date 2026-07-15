@@ -11,7 +11,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 
-class TahfidzSetoranResource extends Resource
+class TahfidzSetoranResource extends BaseResource
 {
     protected static ?string $model = TahfidzSetoran::class;
     protected static ?string $navigationGroup = 'Tahfidz';

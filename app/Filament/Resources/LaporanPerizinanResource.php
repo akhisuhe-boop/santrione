@@ -12,7 +12,7 @@ use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 
-class LaporanPerizinanResource extends Resource
+class LaporanPerizinanResource extends BaseResource
 {
     protected static ?string $model = Siswa::class;
 

@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\Summarizers\Summarizer;
 
-class LaporanPelanggaranResource extends Resource
+class LaporanPelanggaranResource extends BaseResource
 {
     protected static ?string $model = PelanggaranSiswa::class;
     protected static ?string $navigationGroup = 'Konseling';

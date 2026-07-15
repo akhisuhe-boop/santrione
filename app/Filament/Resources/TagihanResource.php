@@ -16,7 +16,7 @@ use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Tables\Actions\Action;
 
-class TagihanResource extends Resource
+class TagihanResource extends BaseResource
 {
     protected static ?string $model = Tagihan::class;
     protected static ?string $navigationGroup = 'Keuangan';

@@ -19,7 +19,7 @@ use Filament\Forms\Components\TextInput;
 use Carbon\Carbon;
 use App\Models\JadwalKegiatan;
 
-class TemplateKegiatanResource extends Resource
+class TemplateKegiatanResource extends BaseResource
 {
     protected static ?string $model = TemplateKegiatan::class;
     protected static ?string $navigationGroup = 'Absensi';

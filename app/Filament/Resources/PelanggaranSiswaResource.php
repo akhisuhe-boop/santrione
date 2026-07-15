@@ -18,7 +18,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Textarea;
 
-class PelanggaranSiswaResource extends Resource
+class PelanggaranSiswaResource extends BaseResource
 {
     protected static ?string $model = PelanggaranSiswa::class;
     protected static ?string $navigationGroup = 'Konseling';

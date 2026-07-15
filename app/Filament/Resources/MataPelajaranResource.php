@@ -18,7 +18,7 @@ use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Textarea;
 
 
-class MataPelajaranResource extends Resource
+class MataPelajaranResource extends BaseResource
 {
     protected static ?string $model = MataPelajaran::class;
     protected static ?string $navigationGroup = 'Akademik';

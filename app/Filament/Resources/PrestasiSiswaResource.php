@@ -17,7 +17,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Textarea;
 
-class PrestasiSiswaResource extends Resource
+class PrestasiSiswaResource extends BaseResource
 {
     protected static ?string $model = PrestasiSiswa::class;
     protected static ?string $navigationGroup = 'Konseling';

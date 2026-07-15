@@ -12,7 +12,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 
-class MonitoringMengajarResource extends Resource
+class MonitoringMengajarResource extends BaseResource
 {
     /*
     |--------------------------------------------------------------------------

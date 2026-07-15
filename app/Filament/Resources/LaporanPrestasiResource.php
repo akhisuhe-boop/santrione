@@ -14,7 +14,7 @@ use Filament\Tables\Table;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\Summarizers\Summarizer;
 
-class LaporanPrestasiResource extends Resource
+class LaporanPrestasiResource extends BaseResource
 {
     protected static ?string $model = PrestasiSiswa::class;
     protected static ?string $navigationGroup = 'Konseling';

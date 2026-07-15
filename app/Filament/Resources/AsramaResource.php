@@ -18,7 +18,7 @@ use Filament\Forms\Components\TextInput;
 use App\Models\Lembaga;
 use App\Models\Pegawai;
 
-class AsramaResource extends Resource
+class AsramaResource extends BaseResource
 {
     protected static ?string $model = Asrama::class;
     protected static ?string $navigationGroup = 'Master Data';

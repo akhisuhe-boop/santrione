@@ -17,7 +17,7 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Tables\Columns\ImageColumn;
 use Illuminate\Support\Facades\Storage;
 
-class KartuTemplateResource extends Resource
+class KartuTemplateResource extends BaseResource
 {
     protected static ?string $model = KartuTemplate::class;
     protected static ?string $navigationLabel = 'Template Kartu';

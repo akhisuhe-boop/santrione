@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
 
-class PrestasiResource extends Resource
+class PrestasiResource extends BaseResource
 {
     protected static ?string $model = Prestasi::class;
     protected static ?string $navigationGroup = 'Konseling';

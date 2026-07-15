@@ -11,7 +11,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Http;
 
-class WhatsappSettingResource extends Resource
+class WhatsappSettingResource extends BaseResource
 {
     protected static ?string $navigationGroup = 'Master Setting';
     protected static ?string $navigationLabel = 'WhatsApp Gateway';

@@ -23,7 +23,7 @@ use Filament\Forms\Components\Grid;
 
 use Carbon\Carbon;
 
-class PerizinanResource extends Resource
+class PerizinanResource extends BaseResource
 {
     protected static ?string $model = Perizinan::class;
     protected static ?string $navigationGroup = 'Perizinan';

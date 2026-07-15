@@ -25,19 +25,29 @@ use Illuminate\Support\HtmlString;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\Facades\Schema;
+use Filament\Facades\Filament;
 
 class AdminPanelProvider extends PanelProvider
 {
     /**
-     * Ambil Yayasan milik user yang sedang login (dievaluasi per-request,
-     * BUKAN sekali di boot). Return null kalau belum ada yang login atau
-     * user belum terhubung ke yayasan manapun — supaya branding tidak
-     * "nyasar" ke yayasan orang lain.
+     * Ambil Yayasan untuk keperluan branding (dievaluasi per-request,
+     * BUKAN sekali di boot).
+     *
+     * Prioritas: tenant yang sedang aktif di URL (mis. /admin/sdit-tcm/...)
+     * — ini penting terutama untuk platform admin, yang bisa berpindah
+     * antar yayasan. Fallback ke yayasan milik user (untuk halaman yang
+     * belum masuk konteks tenant, mis. halaman pilih tenant).
      */
     protected function resolveYayasanForBranding(): ?Yayasan
     {
         if (! Schema::hasTable('yayasans')) {
             return null;
+        }
+
+        $tenant = Filament::getTenant();
+
+        if ($tenant instanceof Yayasan) {
+            return $tenant;
         }
 
         $user = auth()->user();
@@ -46,7 +56,7 @@ class AdminPanelProvider extends PanelProvider
             return null;
         }
 
-        return Yayasan::find($user->yayasan_id);
+        return Yayasan::withoutGlobalScopes()->find($user->yayasan_id);
     }
 
     public function panel(Panel $panel): Panel
@@ -57,6 +67,12 @@ class AdminPanelProvider extends PanelProvider
         ->path('admin')
         ->login()
         ->maxContentWidth('full')
+        ->tenant(Yayasan::class, slugAttribute: 'slug')
+        ->tenantMiddleware([
+            // middleware bawaan Filament sudah otomatis cek canAccessTenant()
+            // lewat interface HasTenants di model User — tidak perlu tambahan
+            // di sini untuk saat ini.
+        ], isPersistent: true)
         ->renderHook(
         'panels::head.end',
         fn (): string => '

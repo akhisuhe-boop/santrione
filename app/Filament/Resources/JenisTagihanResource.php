@@ -12,7 +12,7 @@ use Filament\Tables\Table;
 use Filament\Forms\Components\Section;
 use App\Filament\Resources\JenisTagihanResource\RelationManagers\SettingNominalTagihansRelationManager;
 
-class JenisTagihanResource extends Resource
+class JenisTagihanResource extends BaseResource
 {
     protected static ?string $model = JenisTagihan::class;
     protected static ?string $navigationGroup = 'Keuangan';

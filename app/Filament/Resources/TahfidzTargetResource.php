@@ -13,7 +13,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Notifications\Notification;
 
-class TahfidzTargetResource extends Resource
+class TahfidzTargetResource extends BaseResource
 {
     protected static ?string $model = TahfidzTarget::class;
     protected static ?string $navigationGroup = 'Tahfidz';

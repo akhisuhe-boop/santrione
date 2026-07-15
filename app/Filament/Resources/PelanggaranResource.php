@@ -19,7 +19,7 @@ use Filament\Forms\Components\Section;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\BadgeColumn;
 
-class PelanggaranResource extends Resource
+class PelanggaranResource extends BaseResource
 {
     protected static ?string $model = Pelanggaran::class;
     protected static ?string $navigationGroup = 'Konseling';

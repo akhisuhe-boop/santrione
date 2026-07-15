@@ -3,13 +3,16 @@
 namespace App\Models;
 
 use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasTenants;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable implements FilamentUser, HasTenants
 {
     use HasFactory, Notifiable, HasRoles;
 
@@ -70,5 +73,30 @@ class User extends Authenticatable implements FilamentUser
 
         // User biasa WAJIB terhubung ke sebuah yayasan untuk bisa masuk.
         return ! empty($this->yayasan_id);
+    }
+
+    /**
+     * Daftar yayasan (tenant) yang boleh diakses user ini.
+     * Platform admin bisa akses semua yayasan (untuk keperluan support);
+     * user biasa hanya yayasan miliknya sendiri.
+     */
+    public function getTenants(Panel $panel): array|Collection
+    {
+        if ($this->is_platform_admin) {
+            return Yayasan::withoutGlobalScopes()->get();
+        }
+
+        return Yayasan::withoutGlobalScopes()
+            ->where('id', $this->yayasan_id)
+            ->get();
+    }
+
+    public function canAccessTenant(Model $tenant): bool
+    {
+        if ($this->is_platform_admin) {
+            return true;
+        }
+
+        return $tenant->getKey() === $this->yayasan_id;
     }
 }

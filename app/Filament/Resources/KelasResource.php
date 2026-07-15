@@ -17,7 +17,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class KelasResource extends Resource
+class KelasResource extends BaseResource
 {
     protected static ?string $model = Kelas::class;
     protected static ?string $navigationGroup = 'Master Data';

@@ -23,7 +23,7 @@ use Illuminate\Database\Eloquent\Builder;
 use App\Services\NotificationService;
 use Illuminate\Support\Facades\Hash;
 
-class PpdbResource extends Resource
+class PpdbResource extends BaseResource
 {
     protected static ?string $model = Ppdb::class;
 

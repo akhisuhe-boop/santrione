@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Forms\Components\Section;
 
-class KategoriKasResource extends Resource
+class KategoriKasResource extends BaseResource
 {
     protected static ?string $model = KategoriKas::class;
     protected static ?string $navigationGroup = 'Keuangan';

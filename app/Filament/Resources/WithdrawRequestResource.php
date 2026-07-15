@@ -14,7 +14,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Forms\Components\Section;
 
-class WithdrawRequestResource extends Resource
+class WithdrawRequestResource extends BaseResource
 {
     protected static ?string $model = WithdrawRequest::class;
     protected static ?string $navigationGroup = 'Keuangan';

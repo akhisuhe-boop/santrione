@@ -17,7 +17,7 @@ use Filament\Tables\Filters\SelectFilter;
 use App\Models\Lembaga;
 use App\Models\Kelas;
 
-class WalletResource extends Resource
+class WalletResource extends BaseResource
 {
     protected static ?string $model = Wallet::class;
     protected static ?string $navigationGroup = 'Keuangan';

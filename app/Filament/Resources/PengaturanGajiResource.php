@@ -13,7 +13,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class PengaturanGajiResource extends Resource
+class PengaturanGajiResource extends BaseResource
 {
     protected static ?string $model = PegawaiLembaga::class;
     protected static ?string $navigationGroup = 'Keuangan';

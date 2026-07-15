@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\FileUpload;
 
-class KasResource extends Resource
+class KasResource extends BaseResource
 {
     protected static ?string $model = Kas::class;
     protected static ?string $navigationGroup = 'Keuangan';

@@ -13,7 +13,7 @@ use Filament\Tables\Table;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Get;
 
-class PembayaranResource extends Resource
+class PembayaranResource extends BaseResource
 {
     protected static ?string $model = Pembayaran::class;
 

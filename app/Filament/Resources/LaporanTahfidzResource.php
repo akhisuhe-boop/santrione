@@ -8,7 +8,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 
-class LaporanTahfidzResource extends Resource
+class LaporanTahfidzResource extends BaseResource
 {
     protected static ?string $model = Siswa::class;
 

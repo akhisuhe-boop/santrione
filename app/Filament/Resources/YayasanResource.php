@@ -17,7 +17,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class YayasanResource extends Resource
+class YayasanResource extends BaseResource
 {
     protected static ?string $model = Yayasan::class;
     protected static ?string $navigationGroup = 'Master Data';

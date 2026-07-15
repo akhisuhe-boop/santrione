@@ -30,7 +30,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Exports\SiswaPdfExport;
 use Illuminate\Database\Eloquent\Builder;
 
-class SiswaResource extends Resource
+class SiswaResource extends BaseResource
 {
     protected static ?string $model = Siswa::class;
     protected static ?string $navigationGroup = 'Master Data';

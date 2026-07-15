@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 use App\Models\Concerns\BelongsToTenant;
 
 class Yayasan extends Model
@@ -18,8 +19,29 @@ class Yayasan extends Model
         $builder->where('id', $yayasanId);
     }
 
+    protected static function booted(): void
+    {
+        static::creating(function (self $yayasan) {
+            if (empty($yayasan->slug) && ! empty($yayasan->nama)) {
+                $base = Str::slug($yayasan->nama);
+                $slug = $base;
+                $i = 1;
+
+                while (
+                    static::withoutGlobalScopes()->where('slug', $slug)->exists()
+                ) {
+                    $slug = $base . '-' . $i;
+                    $i++;
+                }
+
+                $yayasan->slug = $slug;
+            }
+        });
+    }
+
     protected $fillable = [
     'nama',
+    'slug',
     'ketua',
     'logo',
     'alamat',

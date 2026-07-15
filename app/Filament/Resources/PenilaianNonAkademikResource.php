@@ -19,7 +19,7 @@ use App\Filament\Resources\PenilaianNonAkademikResource\Pages;
 use App\Helpers\GradeHelper;
 use Filament\Forms\Components\Hidden;
 
-class PenilaianNonAkademikResource extends Resource
+class PenilaianNonAkademikResource extends BaseResource
 {
     protected static ?string $model = RaportNonAkademik::class;
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document';

@@ -17,7 +17,7 @@ use App\Imports\PegawaiImport;
 use App\Exports\PegawaiExport;
 use App\Exports\PegawaiTemplateExport;
 
-class PegawaiResource extends Resource
+class PegawaiResource extends BaseResource
 {
     protected static ?string $model = Pegawai::class;
     protected static ?string $navigationGroup = 'Master Data';

@@ -10,7 +10,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 
-class JamPelajaranResource extends Resource
+class JamPelajaranResource extends BaseResource
 {
     protected static ?string $model = JamPelajaran::class;
 

@@ -8,7 +8,7 @@ use Filament\Resources\Resource;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 
-class JadwalPelajaranResource extends Resource
+class JadwalPelajaranResource extends BaseResource
 {
     protected static ?string $model = JadwalPelajaran::class;
 
