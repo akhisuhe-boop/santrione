@@ -26,7 +26,7 @@ class ListTemplateKegiatans extends ListRecords
         Actions\Action::make('lihatJadwal')
         ->label('Lihat Jadwal')
         ->icon('heroicon-o-eye')
-        ->url('/admin/jadwal-kegiatans')
+        ->url('/admin/' . \Filament\Facades\Filament::getTenant()?->slug . '/jadwal-kegiatans')
         ->color('info'),
 
         Actions\Action::make('generateJadwal')

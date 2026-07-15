@@ -892,9 +892,12 @@ class PpdbResource extends BaseResource
 
                 ->url(function ($record) {
 
+                    $tenantSlug = \Filament\Facades\Filament::getTenant()?->slug;
+
                     // 🔥 masih PPDB
                     if ($record->status !== 'aktif') {
                         return route('filament.admin.resources.pembayarans.create', [
+                            'tenant' => $tenantSlug,
                             'ppdb_id' => $record->id
                         ]);
                     }
@@ -902,11 +905,14 @@ class PpdbResource extends BaseResource
                     // 🔥 sudah siswa
                     if ($record->siswa_id) {
                         return route('filament.admin.resources.pembayarans.create', [
+                            'tenant' => $tenantSlug,
                             'siswa_id' => $record->siswa_id
                         ]);
                     }
 
-                    return route('filament.admin.resources.pembayarans.create');
+                    return route('filament.admin.resources.pembayarans.create', [
+                        'tenant' => $tenantSlug,
+                    ]);
                 })
         ])
 

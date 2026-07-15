@@ -94,6 +94,7 @@ public static function form(Form $form): Form
                 ->color('info')
                 ->url(fn ($record) =>
                     route('filament.admin.resources.siswas.index', [
+                        'tenant' => \Filament\Facades\Filament::getTenant()?->slug,
                         'tableFilters[kelas_id][value]' => $record->id,
                     ])
                 ),

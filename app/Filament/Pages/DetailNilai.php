@@ -327,7 +327,7 @@ class DetailNilai extends Page
 
                 ->color('primary')
 
-                ->url(url('/admin/rekap-nilai'))
+                ->url(url('/admin/' . \Filament\Facades\Filament::getTenant()?->slug . '/rekap-nilai'))
 
                 ->button(),
 
