@@ -33,14 +33,25 @@ class AdminPanelProvider extends PanelProvider
      * Ambil Yayasan untuk keperluan branding (dievaluasi per-request,
      * BUKAN sekali di boot).
      *
-     * Prioritas: tenant yang sedang aktif di URL (mis. /admin/sdit-tcm/...)
-     * — ini penting terutama untuk platform admin, yang bisa berpindah
-     * antar yayasan. Fallback ke yayasan milik user (untuk halaman yang
-     * belum masuk konteks tenant, mis. halaman pilih tenant).
+     * Prioritas:
+     * 1. Platform admin -> selalu null (fallback ke branding "Qinara App"),
+     *    terlepas dari tenant mana yang sedang dilihat.
+     * 2. Tenant yang sedang aktif di URL (mis. /admin/sdit-tcm/...)
+     *    — untuk user tenant biasa.
+     * 3. Fallback ke yayasan milik user (untuk halaman yang belum masuk
+     *    konteks tenant, mis. halaman pilih tenant).
      */
     protected function resolveYayasanForBranding(): ?Yayasan
     {
         if (! Schema::hasTable('yayasans')) {
+            return null;
+        }
+
+        $user = auth()->user();
+
+        // Platform admin selalu tampil branding "Qinara App",
+        // terlepas dari tenant mana yang sedang dilihat.
+        if ($user && $user->is_platform_admin) {
             return null;
         }
 
@@ -49,8 +60,6 @@ class AdminPanelProvider extends PanelProvider
         if ($tenant instanceof Yayasan) {
             return $tenant;
         }
-
-        $user = auth()->user();
 
         if (! $user || empty($user->yayasan_id)) {
             return null;
@@ -100,9 +109,9 @@ class AdminPanelProvider extends PanelProvider
             $logo = $yayasan?->logo
                 ? asset('storage/' . $yayasan->logo)
                 : null;
-        
+
             $nama = $yayasan?->nama ?? 'Qinara App';
-        
+
             return new HtmlString('
                 <div style="display:flex; align-items:center; gap:10px;">
                     ' . ($logo ? '<img src="'.$logo.'" style="height:32px;">' : '') . '
@@ -122,7 +131,7 @@ class AdminPanelProvider extends PanelProvider
         })
 
         ->sidebarCollapsibleOnDesktop()
-        
+
         ->navigationGroups([
             NavigationGroup::make('Master Data')
                 ->icon('heroicon-o-folder'),
@@ -152,7 +161,7 @@ class AdminPanelProvider extends PanelProvider
                 ->icon('heroicon-o-chat-bubble-oval-left-ellipsis'),
 
             NavigationGroup::make('Master Setting')
-                ->icon('heroicon-o-cog-6-tooth'),                 
+                ->icon('heroicon-o-cog-6-tooth'),
         ])
 
         ->colors([
@@ -193,7 +202,7 @@ class AdminPanelProvider extends PanelProvider
         ->plugins([
             FilamentShieldPlugin::make(),
         ])
-        
+
         ->authMiddleware([
             Authenticate::class,
         ]);
