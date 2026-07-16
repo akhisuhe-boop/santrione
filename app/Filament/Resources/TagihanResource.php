@@ -223,10 +223,30 @@ class TagihanResource extends BaseResource
                 ->icon('heroicon-o-bolt')
                 ->form([
 
+                    Select::make('mode')
+                        ->label('Generate Untuk')
+                        ->options([
+                            'kelas' => 'Per Kelas',
+                            'siswa' => 'Per Siswa (pilih manual)',
+                        ])
+                        ->default('kelas')
+                        ->required()
+                        ->reactive(),
+
                     Select::make('kelas_id')
                         ->options(\App\Models\Kelas::pluck('nama', 'id'))
                         ->label('Kelas')
-                        ->required(),
+                        ->visible(fn ($get) => $get('mode') !== 'siswa')
+                        ->required(fn ($get) => $get('mode') !== 'siswa'),
+
+                    Select::make('siswa_ids')
+                        ->label('Siswa')
+                        ->multiple()
+                        ->searchable()
+                        ->preload()
+                        ->options(\App\Models\Siswa::pluck('nama_lengkap', 'id'))
+                        ->visible(fn ($get) => $get('mode') === 'siswa')
+                        ->required(fn ($get) => $get('mode') === 'siswa'),
 
                     Select::make('jenis_tagihan_id')
                         ->options(\App\Models\JenisTagihan::pluck('nama', 'id'))
@@ -243,6 +263,11 @@ class TagihanResource extends BaseResource
                     Toggle::make('is_tunggakan')
                         ->label('Input Tunggakan?')
                         ->reactive(),
+
+                    Toggle::make('regenerate')
+                        ->label('Update nominal tagihan lama yang belum dibayar?')
+                        ->helperText('Kalau aktif: tagihan yang sudah ada dan BELUM ADA PEMBAYARAN SAMA SEKALI akan di-update nominalnya sesuai setting terbaru. Tagihan yang sudah dicicil/lunas TIDAK akan diubah. Kalau nonaktif: hanya membuat tagihan baru untuk yang belum pernah di-generate (perilaku lama).')
+                        ->default(false),
 
                     CheckboxList::make('bulan')
                         ->options([
@@ -328,7 +353,10 @@ class TagihanResource extends BaseResource
                         '12' => 'Desember',
                     ];
 
-                    $siswaList = \App\Models\Siswa::where('kelas_id', $data['kelas_id'])->get();
+                    $siswaList = $data['mode'] === 'siswa'
+                        ? \App\Models\Siswa::whereIn('id', $data['siswa_ids'])->get()
+                        : \App\Models\Siswa::where('kelas_id', $data['kelas_id'])->get();
+
                     $jenis = \App\Models\JenisTagihan::findOrFail($data['jenis_tagihan_id']);
                     $tahunAjaran = \App\Models\TahunAjaran::find($data['tahun_ajaran_id']);
                     $tahun = (int) substr($tahunAjaran->nama, 0, 4);
@@ -336,6 +364,10 @@ class TagihanResource extends BaseResource
                     if ($jenis->is_bulanan && empty($data['bulan'])) {
                         throw new \Exception('Bulan wajib dipilih untuk tagihan bulanan');
                     }
+
+                    $dibuat = 0;
+                    $diupdate = 0;
+                    $dilewati = 0;
 
                     foreach ($siswaList as $siswa) {
 
@@ -378,16 +410,37 @@ class TagihanResource extends BaseResource
 
                             $nominal = $setting?->nominal ?? $jenis->default_nominal;
 
-                            // 🔥 ANTI DUPLIKAT SUPER AMAN
-                            $exists = Tagihan::where([
+                            // 🔥 CEK APAKAH TAGIHAN INI SUDAH PERNAH DIBUAT
+                            $existing = Tagihan::where([
                                     'siswa_id' => $siswa->id,
                                     'jenis_tagihan_id' => $jenis->id,
                                     'tahun_ajaran_id' => $data['tahun_ajaran_id'],
                                 ])
                                 ->when($bulan, fn ($q) => $q->where('bulan', $bulan))
-                                ->exists();
+                                ->first();
 
-                            if ($exists) continue;
+                            if ($existing) {
+
+                                // REGENERATE: hanya update nominal kalau tagihan
+                                // BELUM ADA PEMBAYARAN SAMA SEKALI. Tagihan yang
+                                // sudah dicicil/lunas tidak pernah disentuh --
+                                // supaya riwayat pembayaran tetap konsisten.
+                                if (
+                                    !empty($data['regenerate'])
+                                    && $existing->status === 'belum'
+                                    && $existing->nominal_terbayar == 0
+                                ) {
+                                    $existing->update([
+                                        'nominal' => $nominal,
+                                        'rekening_id' => $data['rekening_id'],
+                                    ]);
+                                    $diupdate++;
+                                } else {
+                                    $dilewati++;
+                                }
+
+                                continue;
+                            }
 
                             $judul = $jenis->nama 
                                 . ($bulan ? ' - ' . $bulanNama[$bulan] : '');
@@ -411,8 +464,15 @@ class TagihanResource extends BaseResource
                                 'bulan' => $bulan,
                                 'jatuh_tempo' => $jatuhTempo,
                             ]);
+                            $dibuat++;
                         }
                     }
+
+                    \Filament\Notifications\Notification::make()
+                        ->title('Generate Tagihan Selesai')
+                        ->body("Dibuat baru: {$dibuat}. Diupdate: {$diupdate}. Dilewati (sudah ada pembayaran): {$dilewati}.")
+                        ->success()
+                        ->send();
                 }),
         ]);
     }
