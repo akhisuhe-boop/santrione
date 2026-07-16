@@ -406,22 +406,34 @@ switch ($ppdb->status) {
             @if($tagihan)
             @php
 
-            $status = $pembayaran?->status;
-            $badgeText = match($status) {
-                'pending' => 'MENUNGGU VERIFIKASI',
-                'sukses' => 'LUNAS',
-                'gagal' => 'DITOLAK',
-                default => 'BELUM BAYAR',
-            };
-            
-            $badgeClass = match($status) {
-                'pending' => 'bg-blue-100 text-blue-700',
-                'sukses' => 'bg-emerald-100 text-emerald-700',
-                'gagal' => 'bg-red-100 text-red-700',
-                default => 'bg-amber-100 text-amber-700',
-            };
-            
-            $paid = $status == 'sukses';
+            // Status TAGIHAN (belum/sebagian/lunas) itu akumulasi dari
+            // SEMUA pembayaran sukses -- ini yang benar dipakai untuk
+            // menentukan LUNAS atau belum, bukan status transaksi
+            // pembayaran TERAKHIR saja (yang sebelumnya salah dipakai,
+            // jadi cicilan pertama langsung dikira LUNAS).
+            $tagihanStatus = $tagihan->status;
+            $latestStatus  = $pembayaran?->status;
+
+            if ($latestStatus === 'pending') {
+                $badgeText  = 'MENUNGGU VERIFIKASI';
+                $badgeClass = 'bg-blue-100 text-blue-700';
+            } elseif ($latestStatus === 'gagal' && $tagihanStatus !== 'lunas') {
+                $badgeText  = 'DITOLAK';
+                $badgeClass = 'bg-red-100 text-red-700';
+            } else {
+                $badgeText = match($tagihanStatus) {
+                    'lunas' => 'LUNAS',
+                    'sebagian' => 'DIBAYAR SEBAGIAN',
+                    default => 'BELUM BAYAR',
+                };
+                $badgeClass = match($tagihanStatus) {
+                    'lunas' => 'bg-emerald-100 text-emerald-700',
+                    'sebagian' => 'bg-amber-100 text-amber-700',
+                    default => 'bg-amber-100 text-amber-700',
+                };
+            }
+
+            $paid = $tagihanStatus === 'lunas';
             @endphp
 
             <div
