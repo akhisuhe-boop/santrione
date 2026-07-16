@@ -2,13 +2,22 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
+use App\Models\Concerns\BelongsToTenant;
 
 class Pegawai extends Authenticatable
 {
-    use Notifiable;
+    use Notifiable, BelongsToTenant;
+
+    // Pegawai bisa kerja di lebih dari 1 lembaga (many-to-many), tapi
+    // tetap harus dalam 1 yayasan yang sama — cukup cek salah satu match.
+    protected static function applyTenantScope(Builder $builder, int $yayasanId): void
+    {
+        $builder->whereHas('lembagas', fn ($q) => $q->where('yayasan_id', $yayasanId));
+    }
 
     protected static function booted(): void
     {

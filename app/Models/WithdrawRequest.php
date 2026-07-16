@@ -2,10 +2,20 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
+use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 
 class WithdrawRequest extends Model
 {
+    use BelongsToTenant;
+
+    // Scoping lewat wallet.siswa.lembaga
+    protected static function applyTenantScope(Builder $builder, int $yayasanId): void
+    {
+        $builder->whereHas('wallet.siswa.lembaga', fn ($q) => $q->where('yayasan_id', $yayasanId));
+    }
+
     protected $fillable = [
         'wallet_id',
         'amount',

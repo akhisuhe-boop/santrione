@@ -2,11 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 
 class Rekening extends Model
 {
+    use BelongsToTenant;
+
     protected $fillable = [
+        'lembaga_id',
         'nama',
         'bank',
         'no_rekening',
@@ -43,5 +47,10 @@ class Rekening extends Model
     public function getLabelAttribute()
     {
         return "{$this->nama} - {$this->bank} ({$this->no_rekening})";
+    }
+
+    public function lembaga()
+    {
+        return $this->belongsTo(Lembaga::class);
     }
 }

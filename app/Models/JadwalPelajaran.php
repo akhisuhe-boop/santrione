@@ -2,10 +2,20 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
+use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 
 class JadwalPelajaran extends Model
 {
+    use BelongsToTenant;
+
+    // Scoping lewat kelas.lembaga
+    protected static function applyTenantScope(Builder $builder, int $yayasanId): void
+    {
+        $builder->whereHas('kelas.lembaga', fn ($q) => $q->where('yayasan_id', $yayasanId));
+    }
+
     protected $table = 'jadwal_pelajarans';
 
     protected $fillable = [

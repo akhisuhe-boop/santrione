@@ -2,12 +2,16 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class Announcement extends Model
 {
+    use BelongsToTenant;
+
     protected $fillable = [
+        'lembaga_id',
         'title',
         'content',
         'target_type',
@@ -99,5 +103,10 @@ class Announcement extends Model
             })
             ->orderByDesc('is_pinned')
             ->orderByDesc('created_at');
+    }
+
+    public function lembaga()
+    {
+        return $this->belongsTo(Lembaga::class);
     }
 }
