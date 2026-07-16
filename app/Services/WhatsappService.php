@@ -8,14 +8,28 @@ use App\Models\WhatsappSetting;
 
 class WhatsappService
 {
-    public static function send($phone, $message)
+    /**
+     * @param  int|null  $lembagaId  WAJIB diisi untuk kirim dari job/queue
+     *         (tidak ada user login di context itu, jadi tidak bisa
+     *         mengandalkan tenant scope otomatis). Kalau null, fallback
+     *         ke setting aktif pertama yang ditemukan (kurang akurat untuk
+     *         yayasan dengan >1 lembaga, tapi tetap jalan agar tidak
+     *         gagal total).
+     */
+    public static function send($phone, $message, $lembagaId = null)
     {
         try {
 
-            $setting = WhatsappSetting::where('is_active', 1)->first();
+            $query = WhatsappSetting::withoutGlobalScopes()->where('is_active', 1);
+
+            if ($lembagaId) {
+                $query->where('lembaga_id', $lembagaId);
+            }
+
+            $setting = $query->first();
 
             if (!$setting) {
-                Log::error('WhatsApp setting tidak ditemukan');
+                Log::error('WhatsApp setting tidak ditemukan', ['lembaga_id' => $lembagaId]);
                 return false;
             }
 

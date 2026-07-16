@@ -15,15 +15,17 @@ class SendWhatsappJob implements ShouldQueue
 
     public $phone;
     public $message;
+    public $lembagaId;
 
-    public function __construct($phone, $message)
+    public function __construct($phone, $message, $lembagaId = null)
     {
         $this->phone = $phone;
         $this->message = $message;
+        $this->lembagaId = $lembagaId;
     }
 
     public function handle()
     {
-        WhatsappService::send($this->phone, $this->message);
+        WhatsappService::send($this->phone, $this->message, $this->lembagaId);
     }
 }

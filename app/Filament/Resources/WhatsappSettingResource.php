@@ -26,6 +26,20 @@ class WhatsappSettingResource extends BaseResource
                 Forms\Components\Section::make('Pengaturan Gateway')
                     ->schema([
 
+                        Forms\Components\Select::make('lembaga_id')
+                            ->label('Lembaga')
+                            ->relationship(
+                                'lembaga',
+                                'nama',
+                                modifyQueryUsing: fn ($query) => $query->where(
+                                    'yayasan_id',
+                                    \Filament\Facades\Filament::getTenant()?->id
+                                ),
+                            )
+                            ->required()
+                            ->preload()
+                            ->searchable(),
+
                         Forms\Components\TextInput::make('provider')
                             ->default('xSender')
                             ->readOnly(),
@@ -152,6 +166,10 @@ class WhatsappSettingResource extends BaseResource
     {
         return $table
             ->columns([
+            Tables\Columns\TextColumn::make('lembaga.nama')
+                ->label('Lembaga')
+                ->badge(),
+
             Tables\Columns\TextColumn::make('provider')
                 ->label('Provider'),
 

@@ -13,9 +13,9 @@ class NotificationService
     | CORE WA
     |--------------------------------------------------------------------------
     */
-    public static function wa($phone, $message)
+    public static function wa($phone, $message, $lembagaId = null)
     {
-        SendWhatsappJob::dispatch($phone, $message);
+        SendWhatsappJob::dispatch($phone, $message, $lembagaId);
     }
 
     /*
@@ -64,7 +64,7 @@ class NotificationService
             "Jam : *{$jam}*\n\n" .
             "Terima kasih";
 
-        self::wa($nomor, $pesan);
+        self::wa($nomor, $pesan, $kegiatan->templateKegiatan->lembaga_id ?? $siswa->lembaga_id);
     }
 
     /*
@@ -97,7 +97,7 @@ class NotificationService
             "Jam : *{$jam}*\n\n" .
             "Terima kasih";
 
-        self::wa($nomorAdmin, $pesan);
+        self::wa($nomorAdmin, $pesan, $kegiatan->templateKegiatan->lembaga_id ?? null);
     }
 
      /*
@@ -131,7 +131,7 @@ class NotificationService
             "Mohon perhatian dan pembinaannya.\n\n" .
             "Terima kasih.";
 
-        self::wa($nomor, $pesan);
+        self::wa($nomor, $pesan, $siswa->lembaga_id);
     }
 
      /*
@@ -164,7 +164,7 @@ class NotificationService
             "Semoga terus berprestasi.\n\n" .
             "Terima kasih.";
 
-        self::wa($nomor, $pesan);
+        self::wa($nomor, $pesan, $siswa->lembaga_id);
     }
 
      /*
@@ -206,7 +206,7 @@ class NotificationService
             "Semoga istiqomah dalam menghafal Al-Qur'an.\n\n" .
             "Barakallahu fiikum.";
 
-        self::wa($nomor, $pesan);
+        self::wa($nomor, $pesan, $siswa->lembaga_id);
     }
 
      /*
@@ -240,7 +240,7 @@ class NotificationService
 
             "Terima kasih.";
 
-        self::wa($nomor, $pesan);
+        self::wa($nomor, $pesan, $siswa->lembaga_id);
     }
 
      /*
@@ -271,7 +271,7 @@ class NotificationService
 
             "Semoga selamat dalam perjalanan.";
 
-        self::wa($nomor, $pesan);
+        self::wa($nomor, $pesan, $siswa->lembaga_id);
     }
 
      /*
@@ -310,7 +310,7 @@ class NotificationService
 
             "Terima kasih.";
 
-        self::wa($nomor, $pesan);
+        self::wa($nomor, $pesan, $siswa->lembaga_id);
     }
 
     /*
@@ -356,7 +356,7 @@ class NotificationService
     
             ."Barakallahu fiikum.";
     
-        self::wa($nomor, $pesan);
+        self::wa($nomor, $pesan, $ppdb->lembaga_id);
     }
 
     /*
@@ -388,7 +388,7 @@ class NotificationService
             "Mohon segera melakukan pembayaran.\n\n" .
             "Terima kasih.";
 
-        self::wa($nomor, $pesan);
+        self::wa($nomor, $pesan, $ppdb->lembaga_id);
     }
 
     /*
@@ -418,7 +418,7 @@ class NotificationService
             "Silakan menunggu jadwal tes dari panitia.\n\n" .
             "Terima kasih.";
 
-        self::wa($nomor, $pesan);
+        self::wa($nomor, $pesan, $ppdb->lembaga_id);
     }
 
     /*
@@ -446,7 +446,7 @@ class NotificationService
             "Silakan melanjutkan proses daftar ulang.\n\n" .
             "Barakallahu fiikum.";
 
-        self::wa($nomor, $pesan);
+        self::wa($nomor, $pesan, $ppdb->lembaga_id);
     }
 
     /*
@@ -476,7 +476,7 @@ class NotificationService
             "Tetap semangat dan sukses selalu.\n\n" .
             "Terima kasih.";
 
-        self::wa($nomor, $pesan);
+        self::wa($nomor, $pesan, $ppdb->lembaga_id);
     }
 
     /*
@@ -506,7 +506,7 @@ class NotificationService
 
             "Terima kasih.";
 
-        self::wa($nomor, $pesan);
+        self::wa($nomor, $pesan, $ppdb->lembaga_id);
     }
 
     /*
@@ -536,7 +536,7 @@ class NotificationService
             "Semoga menjadi siswa yang sholeh dan berprestasi.\n\n" .
             "Barakallahu fiikum.";
 
-        self::wa($nomor, $pesan);
+        self::wa($nomor, $pesan, $siswa->lembaga_id);
     }
     
     /*
@@ -570,7 +570,7 @@ class NotificationService
             ."Terima kasih.";
             
         $nomor = self::formatPhone($nomor);
-        self::wa($nomor, $pesan);
+        self::wa($nomor, $pesan, $ppdb->lembaga_id);
     }
 
      /*
@@ -626,7 +626,7 @@ class NotificationService
             "Mohon segera melakukan pembayaran ke rekening resmi yayasan.\n\n" .
             "Terima kasih.";
 
-        self::wa($nomor, $pesan);
+        self::wa($nomor, $pesan, $user->lembaga_id ?? null);
     }
 
      /*
@@ -662,7 +662,7 @@ class NotificationService
             
             "Terima kasih.";
 
-        self::wa($nomor, $pesan);
+        self::wa($nomor, $pesan, $user->lembaga_id ?? null);
     }
     
     /*
@@ -674,9 +674,11 @@ class NotificationService
     public static function sendAnnouncement($recipient, string $message)
     {
         $nomor = null;
+        $lembagaId = null;
     
         if ($recipient instanceof \App\Models\Pegawai) {
             $nomor = $recipient->no_hp;
+            $lembagaId = $recipient->lembagas()->value('lembagas.id');
         }
     
         elseif ($recipient instanceof \App\Models\Siswa) {
@@ -684,6 +686,7 @@ class NotificationService
                 $recipient->wa_wali
                 ?: $recipient->wa_ayah
                 ?: $recipient->wa_ibu;
+            $lembagaId = $recipient->lembaga_id;
         }
     
         elseif ($recipient instanceof \App\Models\Ppdb) {
@@ -691,6 +694,7 @@ class NotificationService
                 $recipient->wa_wali
                 ?: $recipient->wa_ayah
                 ?: $recipient->wa_ibu;
+            $lembagaId = $recipient->lembaga_id;
         }
     
         if (! $nomor) {
@@ -698,7 +702,7 @@ class NotificationService
         }
     
         $nomor = self::formatPhone($nomor);
-        self::wa($nomor, $message);
+        self::wa($nomor, $message, $lembagaId);
     }
     
 }
