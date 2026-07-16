@@ -765,17 +765,34 @@ class PpdbResource extends BaseResource
                         'status' => 'daftar_ulang'
                     ]);
                     $tahunAjaran = \App\Models\TahunAjaran::aktif();
-                    $tagihan = \App\Models\Tagihan::create([
-                        'ppdb_id' => $record->id,
-                        'jenis_tagihan_id' => $data['jenis_tagihan_id'],
-                        'judul' => \App\Models\JenisTagihan::find($data['jenis_tagihan_id'])->nama,
-                        'nominal' => $data['nominal'],
-                        'nominal_terbayar' => 0,
-                        'status' => 'belum',
-                        'rekening_id' => $data['rekening_id'],
-                        'tahun_ajaran_id' => $tahunAjaran->id,
-                        'jatuh_tempo' => now()->addDays(3),
-                    ]);
+
+                    // Cek dulu -- mungkin sudah ada tagihan Daftar Ulang
+                    // yang dibuat OTOMATIS (waktu status berubah jadi
+                    // 'lulus'). Kalau ada, update yang itu saja, jangan
+                    // bikin baru (supaya tidak dobel).
+                    $tagihan = \App\Models\Tagihan::where('ppdb_id', $record->id)
+                        ->where('jenis_tagihan_id', $data['jenis_tagihan_id'])
+                        ->first();
+
+                    if ($tagihan) {
+                        $tagihan->update([
+                            'nominal' => $data['nominal'],
+                            'rekening_id' => $data['rekening_id'],
+                        ]);
+                    } else {
+                        $tagihan = \App\Models\Tagihan::create([
+                            'ppdb_id' => $record->id,
+                            'jenis_tagihan_id' => $data['jenis_tagihan_id'],
+                            'judul' => \App\Models\JenisTagihan::find($data['jenis_tagihan_id'])->nama,
+                            'nominal' => $data['nominal'],
+                            'nominal_terbayar' => 0,
+                            'status' => 'belum',
+                            'rekening_id' => $data['rekening_id'],
+                            'tahun_ajaran_id' => $tahunAjaran->id,
+                            'jatuh_tempo' => now()->addDays(3),
+                        ]);
+                    }
+
                     NotificationService::sendPpdbDaftarUlang(
                         $record,
                         $tagihan
