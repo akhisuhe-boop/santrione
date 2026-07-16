@@ -10,6 +10,24 @@ class EditWallet extends EditRecord
 {
     protected static string $resource = WalletResource::class;
 
+    protected $oldSaldo;
+
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        $this->oldSaldo = $this->record->saldo;
+        return $data;
+    }
+
+    protected function afterSave(): void
+    {
+        $diff = $this->record->saldo - $this->oldSaldo;
+
+        if ($diff != 0) {
+            app(\App\Services\WalletService::class)
+                ->logAdjustment($this->record, $diff);
+        }
+    }
+
     protected function getHeaderActions(): array
     {
         return [

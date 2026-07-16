@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\FileUpload;
+use Filament\Support\RawJs;
 
 class KasResource extends BaseResource
 {
@@ -78,6 +79,8 @@ class KasResource extends BaseResource
 
                 Forms\Components\TextInput::make('nominal')
                     ->numeric()
+                    ->mask(RawJs::make("\$money(\$input, ',', '.')"))
+                    ->stripCharacters('.')
                     ->required()
                     ->rule(function ($get) {
                     return function ($attribute, $value, $fail) use ($get) {

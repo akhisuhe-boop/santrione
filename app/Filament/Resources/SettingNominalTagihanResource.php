@@ -11,6 +11,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use filament\components\CheckboxList;
+use Filament\Support\RawJs;
 
 class SettingNominalTagihanResource extends BaseResource
 {
@@ -141,6 +142,8 @@ class SettingNominalTagihanResource extends BaseResource
 
                         Forms\Components\TextInput::make('nominal')
                             ->numeric()
+                            ->mask(RawJs::make("\$money(\$input, ',', '.')"))
+                            ->stripCharacters('.')
                             ->required()
                             ->prefix('Rp')
                             ->helperText('Isi hanya jika nominal berbeda dari default')

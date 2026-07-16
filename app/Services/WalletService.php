@@ -49,24 +49,29 @@ throw ValidationException::withMessages([
     // =========================
     // 🔧 HELPER REKENING
     // =========================
-    protected function getRekeningWallet()
+    protected function getRekeningWallet($lembagaId = null)
     {
-        $rekening = Rekening::where('tipe', 'ewallet')
-            ->where('is_active', true)
-            ->first();
+        $query = Rekening::where('tipe', 'ewallet')
+            ->where('is_active', true);
+
+        if ($lembagaId) {
+            $query->where('lembaga_id', $lembagaId);
+        }
+
+        $rekening = $query->first();
 
         if (!$rekening) {
 
-            \Log::warning('Rekening e-wallet belum tersedia');
+            \Log::warning('Rekening e-wallet belum tersedia', ['lembaga_id' => $lembagaId]);
 
             \Filament\Notifications\Notification::make()
                 ->title('Rekening Belum Disetting')
-                ->body('Rekening E-Wallet belum dibuat atau belum aktif. Silakan tambahkan di menu Keuangan → Rekening.')
+                ->body('Rekening E-Wallet belum dibuat/aktif untuk lembaga ini. Silakan tambahkan di menu Keuangan → Rekening.')
                 ->danger()
                 ->send();
 
             throw \Illuminate\Validation\ValidationException::withMessages([
-                'rekening' => 'Rekening E-Wallet belum tersedia.',
+                'rekening' => 'Rekening E-Wallet belum tersedia untuk lembaga ini.',
             ]);
         }
 
@@ -88,6 +93,43 @@ throw ValidationException::withMessages([
             'nama' => $nama,
             'kelas' => $kelas,
         ];
+    }
+
+    // =========================
+    // ✏️ PENYESUAIAN SALDO MANUAL (dari halaman Edit Wallet)
+    // =========================
+    // Dipanggil SETELAH kolom saldo sudah ter-update oleh Filament --
+    // fungsi ini cuma mencatat jejaknya (WalletTransaction + Kas),
+    // TIDAK mengubah saldo lagi (supaya tidak dobel).
+    public function logAdjustment($wallet, $diff)
+    {
+        if ($diff == 0) return;
+
+        DB::transaction(function () use ($wallet, $diff) {
+
+            $wallet = $wallet->fresh(['siswa.kelas']);
+            $siswa = $this->getSiswaInfo($wallet);
+
+            WalletTransaction::create([
+                'wallet_id' => $wallet->id,
+                'type' => 'adjustment',
+                'amount' => abs($diff),
+                'status' => 'success',
+                'description' => 'Penyesuaian saldo manual oleh admin',
+            ]);
+
+            Kas::create([
+                'tipe' => $diff > 0 ? 'masuk' : 'keluar',
+                'kategori_id' => $this->getKategori('Penyesuaian Saldo', $diff > 0 ? 'masuk' : 'keluar'),
+                'rekening_id' => $this->getRekeningWallet($wallet->siswa->lembaga_id ?? null),
+                'nominal' => abs($diff),
+                'sumber' => 'wallet',
+                'tanggal' => now(),
+                'keterangan' => 'Penyesuaian saldo - ' . $siswa['nama'] . ' - ' . $siswa['kelas'],
+                'penanggung_jawab' => $siswa['nama'] . ' - ' . $siswa['kelas'],
+                'lembaga_id' => $wallet->siswa->lembaga_id ?? null,
+            ]);
+        });
     }
 
     // =========================
@@ -124,7 +166,7 @@ throw ValidationException::withMessages([
             Kas::create([
                 'tipe' => 'masuk',
                 'kategori_id' => $this->getKategori('Top Up', 'masuk'),
-                'rekening_id' => $this->getRekeningWallet(),
+                'rekening_id' => $this->getRekeningWallet($wallet->siswa->lembaga_id ?? null),
                 'nominal' => $amount,
                 'sumber' => 'wallet',
                 'tanggal' => now(),
@@ -183,7 +225,7 @@ throw ValidationException::withMessages([
             Kas::create([
                 'tipe' => 'keluar',
                 'kategori_id' => $this->getKategori('Penarikan Saldo', 'keluar'),
-                'rekening_id' => $this->getRekeningWallet(),
+                'rekening_id' => $this->getRekeningWallet($wallet->siswa->lembaga_id ?? null),
                 'nominal' => $withdraw->amount,
                 'sumber' => 'wallet',
                 'tanggal' => now(),

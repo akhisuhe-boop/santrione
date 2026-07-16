@@ -16,6 +16,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use App\Models\Lembaga;
 use App\Models\Kelas;
+use Filament\Support\RawJs;
 
 class WalletResource extends BaseResource
 {
@@ -29,6 +30,27 @@ class WalletResource extends BaseResource
     {
         return false;
     }
+    public static function form(Form $form): Form
+    {
+        return $form->schema([
+
+            Forms\Components\TextInput::make('siswa.nama_lengkap')
+                ->label('Siswa')
+                ->disabled()
+                ->dehydrated(false),
+
+            Forms\Components\TextInput::make('saldo')
+                ->label('Saldo')
+                ->numeric()
+                ->mask(RawJs::make("\$money(\$input, ',', '.')"))
+                ->stripCharacters('.')
+                ->prefix('Rp')
+                ->required()
+                ->helperText('Mengubah saldo di sini akan otomatis tercatat sebagai "Penyesuaian Saldo" di Kas, supaya tetap ada jejaknya -- BUKAN diam-diam berubah tanpa catatan.'),
+
+        ]);
+    }
+
     public static function table(Table $table): Table
     {
         return $table
@@ -99,6 +121,8 @@ class WalletResource extends BaseResource
                 Forms\Components\TextInput::make('amount')
                     ->label('Nominal Top Up')
                     ->numeric()
+                    ->mask(RawJs::make("\$money(\$input, ',', '.')"))
+                    ->stripCharacters('.')
                     ->required(),
             ])
 

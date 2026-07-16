@@ -13,6 +13,7 @@ use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Forms\Components\Section;
+use Filament\Support\RawJs;
 
 class WithdrawRequestResource extends BaseResource
 {
@@ -74,6 +75,8 @@ class WithdrawRequestResource extends BaseResource
                     Forms\Components\TextInput::make('amount')
                         ->label('Nominal')
                         ->numeric()
+                        ->mask(RawJs::make("\$money(\$input, ',', '.')"))
+                        ->stripCharacters('.')
                         ->required()
                         ->rule(function (callable $get) {
                             return function ($attribute, $value, $fail) use ($get) {

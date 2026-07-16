@@ -33,7 +33,10 @@ class LaporanKasPdf
                 $q->where('kategori_id', $filters['kategori_id']))
 
             ->when($filters['lembaga_id'], fn ($q) =>
-                $q->where('lembaga_id', $filters['lembaga_id']));
+                $q->where('lembaga_id', $filters['lembaga_id']))
+
+            ->when($filters['rekening_id'] ?? null, fn ($q) =>
+                $q->where('rekening_id', $filters['rekening_id']));
 
         $data = $query->get();
 

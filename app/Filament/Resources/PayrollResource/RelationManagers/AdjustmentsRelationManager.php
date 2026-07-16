@@ -7,6 +7,7 @@ use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Support\RawJs;
 
 class AdjustmentsRelationManager extends RelationManager
 {
@@ -37,6 +38,8 @@ class AdjustmentsRelationManager extends RelationManager
 
                 Forms\Components\TextInput::make('nominal')
                     ->numeric()
+                    ->mask(RawJs::make("\$money(\$input, ',', '.')"))
+                    ->stripCharacters('.')
                     ->prefix('Rp')
                     ->required(),
 

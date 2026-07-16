@@ -15,6 +15,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Tables\Actions\Action;
+use Filament\Support\RawJs;
 
 class TagihanResource extends BaseResource
 {
@@ -80,6 +81,8 @@ class TagihanResource extends BaseResource
 
                     Forms\Components\TextInput::make('nominal')
                         ->numeric()
+                        ->mask(RawJs::make("\$money(\$input, ',', '.')"))
+                        ->stripCharacters('.')
                         ->required()
                         ->prefix('Rp'),
 

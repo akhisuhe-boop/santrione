@@ -12,6 +12,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Get;
+use Filament\Support\RawJs;
 
 class PembayaranResource extends BaseResource
 {
@@ -160,6 +161,8 @@ class PembayaranResource extends BaseResource
                 // ======================
                 Forms\Components\TextInput::make('nominal')
                     ->numeric()
+                    ->mask(RawJs::make("\$money(\$input, ',', '.')"))
+                    ->stripCharacters('.')
                     ->prefix('Rp')
                     ->required()
                     ->helperText('Tidak boleh melebihi sisa tagihan')
@@ -435,6 +438,11 @@ class PembayaranResource extends BaseResource
                             'warning' => 'gateway',
                             'gray'    => 'admin',
                         ]),
+
+                    Tables\Columns\TextColumn::make('diinput_oleh')
+                        ->label('Diinput Oleh')
+                        ->placeholder('-')
+                        ->toggleable(),
 
                     Tables\Columns\BadgeColumn::make('status')
                         ->colors([

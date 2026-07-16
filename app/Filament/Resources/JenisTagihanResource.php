@@ -11,6 +11,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Forms\Components\Section;
 use App\Filament\Resources\JenisTagihanResource\RelationManagers\SettingNominalTagihansRelationManager;
+use Filament\Support\RawJs;
 
 class JenisTagihanResource extends BaseResource
 {
@@ -59,6 +60,8 @@ class JenisTagihanResource extends BaseResource
                         Forms\Components\TextInput::make('default_nominal')
                             ->label('Nominal')
                             ->numeric()
+                            ->mask(RawJs::make("\$money(\$input, ',', '.')"))
+                            ->stripCharacters('.')
                             ->prefix('Rp')
                             ->required()
                             ->placeholder('Nominal yang akan dibuat tagihan siswa'),

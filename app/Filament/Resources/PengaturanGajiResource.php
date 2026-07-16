@@ -12,6 +12,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Support\RawJs;
 
 class PengaturanGajiResource extends BaseResource
 {
@@ -113,6 +114,8 @@ class PengaturanGajiResource extends BaseResource
                     Forms\Components\TextInput::make('nominal_tetap')
                         ->label('Gaji Tetap')
                         ->numeric()
+                        ->mask(RawJs::make("\$money(\$input, ',', '.')"))
+                        ->stripCharacters('.')
                         ->prefix('Rp')
                         ->visible(fn ($get) =>
                             $get('metode_penggajian') === 'tetap'
@@ -121,6 +124,8 @@ class PengaturanGajiResource extends BaseResource
                     Forms\Components\TextInput::make('tarif_per_jp')
                         ->label('Honor per JP')
                         ->numeric()
+                        ->mask(RawJs::make("\$money(\$input, ',', '.')"))
+                        ->stripCharacters('.')
                         ->prefix('Rp')
                         ->visible(fn ($get) =>
                             $get('metode_penggajian') === 'per_jp'

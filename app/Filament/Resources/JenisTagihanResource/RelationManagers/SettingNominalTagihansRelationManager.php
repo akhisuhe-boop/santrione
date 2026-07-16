@@ -9,6 +9,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use App\Models\TahunAjaran;
 use Filament\Tables\Actions\CreateAction;
+use Filament\Support\RawJs;
 
 class SettingNominalTagihansRelationManager extends RelationManager
 {
@@ -131,6 +132,8 @@ class SettingNominalTagihansRelationManager extends RelationManager
             // ======================
             Forms\Components\TextInput::make('nominal')
                 ->numeric()
+                ->mask(RawJs::make("\$money(\$input, ',', '.')"))
+                ->stripCharacters('.')
                 ->prefix('Rp')
                 ->required(fn ($get) =>
                     empty($get('siswa_ids')) &&

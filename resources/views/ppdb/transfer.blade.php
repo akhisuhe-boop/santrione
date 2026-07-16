@@ -261,11 +261,17 @@
             <input
                 type="number"
                 name="nominal"
+                id="nominal-input"
                 min="1000"
                 max="{{ $sisaTagihan }}"
                 value="{{ old('nominal', $sisaTagihan) }}"
                 required
+                oninput="document.getElementById('nominal-preview').innerText = 'Rp ' + Number(this.value || 0).toLocaleString('id-ID')"
                 class="w-full border border-slate-200 rounded-2xl p-3">
+
+            <p id="nominal-preview" class="text-xs text-slate-500 mt-1">
+                Rp {{ number_format(old('nominal', $sisaTagihan), 0, ',', '.') }}
+            </p>
         </div>
 
         {{-- BUKTI TRANSFER --}}

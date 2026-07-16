@@ -27,6 +27,7 @@ class Pembayaran extends Model
         'kode',
         'nominal',
         'metode',
+        'diinput_oleh',
         'status',
         'bukti_transfer',
         'tanggal_bayar',
@@ -69,6 +70,13 @@ class Pembayaran extends Model
     static::creating(function ($model) {
         if (!$model->kode) {
             $model->kode = self::generateKode('PAY', self::class);
+        }
+
+        // Catat siapa yang input pembayaran, khusus metode tunai/admin
+        // (yang diinput langsung oleh staff, bukan transfer mandiri dari
+        // orang tua) -- supaya ketahuan transaksi ini diproses oleh siapa.
+        if ($model->metode === 'admin' && empty($model->diinput_oleh) && auth()->check()) {
+            $model->diinput_oleh = auth()->user()->name;
         }
     });
 

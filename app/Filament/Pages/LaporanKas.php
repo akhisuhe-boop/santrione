@@ -45,6 +45,7 @@ class LaporanKas extends Page implements HasForms, HasTable
     public $tipe;
     public $kategori_id;
     public $lembaga_id;
+    public $rekening_id;
 
     public function mount(): void
     {
@@ -60,6 +61,7 @@ class LaporanKas extends Page implements HasForms, HasTable
                 'tipe' => $this->tipe,
                 'kategori_id' => $this->kategori_id,
                 'lembaga_id' => $this->lembaga_id,
+                        'rekening_id' => $this->rekening_id,
             ]),
             'laporan-kas.xlsx'
         );
@@ -81,6 +83,7 @@ class LaporanKas extends Page implements HasForms, HasTable
                             'tipe' => $this->tipe,
                             'kategori_id' => $this->kategori_id,
                             'lembaga_id' => $this->lembaga_id,
+                        'rekening_id' => $this->rekening_id,
                         ]),
                         'laporan-kas.xlsx'
                     );
@@ -98,6 +101,7 @@ class LaporanKas extends Page implements HasForms, HasTable
                         'tipe' => $this->tipe,
                         'kategori_id' => $this->kategori_id,
                         'lembaga_id' => $this->lembaga_id,
+                        'rekening_id' => $this->rekening_id,
                     ]);
 
                     $pdf = Pdf::loadView('exports.laporan-kas', $data)
@@ -185,6 +189,21 @@ class LaporanKas extends Page implements HasForms, HasTable
                         ->searchable()
                         ->preload()
                         ->live(debounce: 400),
+
+                    Forms\Components\Select::make('rekening_id')
+                        ->label('Rekening')
+                        ->options(fn ($get) =>
+                            \App\Models\Rekening::query()
+                                ->when($get('lembaga_id'), fn ($q) =>
+                                    $q->where('lembaga_id', $get('lembaga_id')))
+                                ->get()
+                                ->mapWithKeys(fn ($r) => [
+                                    $r->id => $r->nama . ' - ' . $r->bank . ' (' . $r->no_rekening . ')'
+                                ])
+                        )
+                        ->searchable()
+                        ->preload()
+                        ->live(debounce: 400),
                 ])
         ];
     }
@@ -208,7 +227,10 @@ class LaporanKas extends Page implements HasForms, HasTable
                 $q->where('kategori_id', $this->kategori_id))
 
             ->when($this->lembaga_id, fn ($q) =>
-                $q->where('lembaga_id', $this->lembaga_id));
+                $q->where('lembaga_id', $this->lembaga_id))
+
+            ->when($this->rekening_id, fn ($q) =>
+                $q->where('rekening_id', $this->rekening_id));
 
         $masuk = (clone $query)->where('tipe', 'masuk')->sum('nominal');
         $keluar = (clone $query)->where('tipe', 'keluar')->sum('nominal');
@@ -257,6 +279,9 @@ class LaporanKas extends Page implements HasForms, HasTable
 
                     ->when($this->lembaga_id, fn ($q) =>
                         $q->where('lembaga_id', $this->lembaga_id))
+
+                    ->when($this->rekening_id, fn ($q) =>
+                        $q->where('rekening_id', $this->rekening_id))
             )
 
             ->defaultSort('tanggal', 'desc')
