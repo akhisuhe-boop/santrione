@@ -40,6 +40,9 @@ class AdminPanelProvider extends PanelProvider
      *    — untuk user tenant biasa.
      * 3. Fallback ke yayasan milik user (untuk halaman yang belum masuk
      *    konteks tenant, mis. halaman pilih tenant).
+     * 4. Belum login sama sekali (mis. /admin/login) -- cek session
+     *    'active_public_yayasan_id' dari portal publik /y/{slug}, supaya
+     *    branding halaman login menyamakan dengan portal wali/guru/ppdb.
      */
     protected function resolveYayasanForBranding(): ?Yayasan
     {
@@ -61,11 +64,20 @@ class AdminPanelProvider extends PanelProvider
             return $tenant;
         }
 
-        if (! $user || empty($user->yayasan_id)) {
-            return null;
+        if ($user && ! empty($user->yayasan_id)) {
+            return Yayasan::withoutGlobalScopes()->find($user->yayasan_id);
         }
 
-        return Yayasan::withoutGlobalScopes()->find($user->yayasan_id);
+        // Belum login (mis. di halaman /admin/login) -- cek apakah user
+        // datang lewat pintu masuk /y/{slug}. Ini menyamakan branding
+        // halaman login admin dengan portal wali/guru/ppdb.
+        $sessionId = session('active_public_yayasan_id');
+
+        if ($sessionId) {
+            return Yayasan::withoutGlobalScopes()->find($sessionId);
+        }
+
+        return null;
     }
 
     public function panel(Panel $panel): Panel
