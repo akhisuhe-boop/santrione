@@ -164,8 +164,16 @@ class TagihanService
             */
             case 'daftar_ulang_ppdb':
                 if ($tagihan->ppdb) {
+                    // PENTING: status di sini HARUS 'daftar_ulang', BUKAN
+                    // 'aktif'. 'aktif' cuma boleh di-set lewat tombol
+                    // "Aktifkan Siswa" (di PpdbResource), karena di situ
+                    // yang beneran generate NIS dan bikin record Siswa.
+                    // Sebelumnya kode ini langsung set 'aktif' tanpa
+                    // pernah bikin Siswa -- makanya status PPDB kelihatan
+                    // "Peserta Didik Aktif" padahal datanya nggak pernah
+                    // ada di tabel siswa.
                     $tagihan->ppdb->update([
-                        'status' => 'aktif',
+                        'status' => 'daftar_ulang',
                     ]);
                 }
             break;
