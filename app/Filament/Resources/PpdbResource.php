@@ -626,11 +626,11 @@ class PpdbResource extends BaseResource
                 Forms\Components\Select::make('jenis_tagihan_id')
     ->label('Jenis Tagihan')
     ->options(
-        \App\Models\JenisTagihan::where('kode', 'daftar_ulang_ppdb')
+        \App\Models\JenisTagihan::where('tipe_sistem', 'daftar_ulang_ppdb')
             ->pluck('nama', 'id')
     )
     ->default(fn () =>
-        \App\Models\JenisTagihan::where('kode', 'daftar_ulang_ppdb')->value('id')
+        \App\Models\JenisTagihan::where('tipe_sistem', 'daftar_ulang_ppdb')->value('id')
     )
     ->required()
     ->native(false)
@@ -706,7 +706,7 @@ class PpdbResource extends BaseResource
 
                     $record = $livewire->getMountedTableActionRecord();
 
-                    $jenis = \App\Models\JenisTagihan::where('kode', 'daftar_ulang_ppdb')->first();
+                    $jenis = \App\Models\JenisTagihan::where('tipe_sistem', 'daftar_ulang_ppdb')->first();
                     if (!$jenis) return;
 
                     $nominal = $jenis->default_nominal;
