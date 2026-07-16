@@ -582,7 +582,7 @@ switch ($ppdb->status) {
         
                     {{-- Tombol --}}
                     {{-- Status Pembayaran --}}
-                    @if($status == 'pending')
+                    @if($latestStatus == 'pending')
                     
                         <div
                             class="mt-3
@@ -621,7 +621,7 @@ switch ($ppdb->status) {
                     
                         </div>
                     
-                    @elseif($status == 'sukses')
+                    @elseif($latestStatus == 'sukses')
                     
                         <div
                             class="mt-3
@@ -669,7 +669,7 @@ switch ($ppdb->status) {
                     
                         </div>
                     
-                    @elseif($status == 'gagal')
+                    @elseif($latestStatus == 'gagal')
                     
                         <div
                             class="mt-3
