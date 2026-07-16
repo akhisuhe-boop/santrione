@@ -73,15 +73,31 @@ class PpdbPembayaranController extends Controller
     
         abort_if($tagihan->ppdb_id != $ppdb->id, 403);
     
-        $request->validate([
+        $sisa = $tagihan->nominal - $tagihan->nominal_terbayar;
+
+        $rules = [
             'bukti_transfer_ppdb' => [
                 'required',
                 'image',
                 'mimes:jpg,jpeg,png,webp',
                 'max:4096',
             ],
-        ]);
-    
+        ];
+
+        // Kalau tagihan ini boleh dicicil, terima input nominal dari
+        // form (dulu di-hardcode selalu full, TODO lama yang belum
+        // dikerjakan). Kalau TIDAK boleh dicicil, tetap wajib bayar
+        // penuh sesuai sisa tagihan.
+        if ($tagihan->is_cicilan) {
+            $rules['nominal'] = ['required', 'numeric', 'min:1', 'max:' . $sisa];
+        }
+
+        $request->validate($rules);
+
+        $nominal = $tagihan->is_cicilan
+            ? (int) $request->input('nominal')
+            : $sisa;
+
         // Cek apakah masih ada pembayaran pending
         $pending = Pembayaran::where('tagihan_id', $tagihan->id)
             ->where('status', 'pending')
@@ -103,7 +119,7 @@ class PpdbPembayaranController extends Controller
         Pembayaran::create([
             'tagihan_id'     => $tagihan->id,
             'ppdb_id'        => $ppdb->id,
-            'nominal'        => $tagihan->nominal, // nanti saat cicilan gunakan $request->nominal
+            'nominal'        => $nominal,
             'metode'         => 'transfer',
             'reference'      => 'PPDB-' . now()->format('YmdHis') . rand(100,999),
             'status'         => 'pending',

@@ -56,15 +56,23 @@ class PpdbDashboardController extends Controller
             'ppdb'        => $ppdb,
             'tagihan'     => $tagihan,
             'pembayaran'  => $pembayaran,
-            'progress'    => $this->progress($ppdb->status),
+            'progress'    => $this->progress($ppdb->status, (bool) $ppdb->lembaga?->is_tes),
             'pengumuman'  => $pengumuman,
         ]);
     }
 
     /**
      * Progress PPDB
+     *
+     * @param  bool  $isTes  Apakah lembaga ini pakai jalur tes. Untuk
+     *         lembaga TANPA tes, "Verifikasi Berkas" dan "Pengumuman"
+     *         terjadi dalam 1 langkah yang sama (begitu diverifikasi,
+     *         langsung dinyatakan lulus) -- jadi begitu status='lulus',
+     *         yang perlu ditunggu orang tua selanjutnya adalah Daftar
+     *         Ulang, bukan "Pengumuman" (karena pengumumannya sudah
+     *         terjadi bersamaan dengan verifikasi).
      */
-    protected function progress(string $status): array
+    protected function progress(string $status, bool $isTes = true): array
     {
         $steps = [
             'Akun Dibuat',
@@ -92,7 +100,7 @@ class PpdbDashboardController extends Controller
 
             'tes' => 5,
 
-            'lulus' => 6,
+            'lulus' => $isTes ? 6 : 7,
 
             'daftar_ulang' => 7,
 
