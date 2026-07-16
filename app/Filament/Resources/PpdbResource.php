@@ -583,6 +583,11 @@ class PpdbResource extends BaseResource
                             'status' => 'lulus'
                         ]);
 
+                        // 🔥 AUTO BUAT TAGIHAN DAFTAR ULANG -- konsisten
+                        // dengan jalur tanpa tes (lihat Pembayaran.php),
+                        // yang sebelumnya kelewat di jalur pakai tes ini.
+                        \App\Services\TagihanService::buatDaftarUlang($record);
+
                         NotificationService::sendPpdbLulus($record);
 
                     });
