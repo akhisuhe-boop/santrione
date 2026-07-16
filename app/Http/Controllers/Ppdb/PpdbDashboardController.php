@@ -19,7 +19,10 @@ class PpdbDashboardController extends Controller
     {
         $ppdb = Ppdb::findOrFail(session('ppdb_id'));
 
-        $yayasan = Yayasan::first();
+        // Ambil yayasan dari lembaga milik PPDB ini, BUKAN yayasan
+        // pertama di database -- supaya portal orang tua nampilin
+        // branding yayasan yang benar, bukan tertukar antar yayasan.
+        $yayasan = $ppdb->lembaga?->yayasan ?? Yayasan::first();
 
         // Tagihan PPDB yang belum lunas
         $tagihan = Tagihan::where('ppdb_id', $ppdb->id)

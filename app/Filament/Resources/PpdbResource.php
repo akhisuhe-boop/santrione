@@ -502,7 +502,7 @@ class PpdbResource extends BaseResource
             
                 ->requiresConfirmation()
                 ->action(function ($record) {
-                    if ($record->lembaga?->tes_masuk) {
+                    if ($record->lembaga?->is_tes) {
                     
                         // Jalur Tes
                         $record->update([
@@ -517,6 +517,11 @@ class PpdbResource extends BaseResource
                         $record->update([
                             'status' => 'lulus',
                         ]);
+
+                        // 🔥 AUTO BUAT TAGIHAN DAFTAR ULANG -- konsisten
+                        // dengan jalur pembayaran (Pembayaran.php) dan
+                        // jalur setelah tes (action 'lulus' di bawah).
+                        \App\Services\TagihanService::buatDaftarUlang($record);
                     
                         NotificationService::sendPpdbLulus($record);
                     
