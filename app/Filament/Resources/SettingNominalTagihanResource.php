@@ -53,6 +53,20 @@ class SettingNominalTagihanResource extends BaseResource
                 Forms\Components\Section::make('Setting Nominal')
                     ->schema([
 
+                        Forms\Components\Select::make('lembaga_id')
+                            ->label('Lembaga')
+                            ->relationship(
+                                'lembaga',
+                                'nama',
+                                modifyQueryUsing: fn ($query) => $query->where(
+                                    'yayasan_id',
+                                    \Filament\Facades\Filament::getTenant()?->id
+                                ),
+                            )
+                            ->required()
+                            ->preload()
+                            ->searchable(),
+
                         Forms\Components\Select::make('jenis_tagihan_id')
                             ->relationship('jenisTagihan', 'nama')
                             ->reactive()

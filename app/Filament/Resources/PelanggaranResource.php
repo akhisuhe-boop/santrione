@@ -35,6 +35,20 @@ class PelanggaranResource extends BaseResource
         ->description('Silakan isi jenis pelanggaran dan bobot poinnya')
         ->schema([
 
+            Forms\Components\Select::make('lembaga_id')
+                ->label('Lembaga')
+                ->relationship(
+                    'lembaga',
+                    'nama',
+                    modifyQueryUsing: fn ($query) => $query->where(
+                        'yayasan_id',
+                        \Filament\Facades\Filament::getTenant()?->id
+                    ),
+                )
+                ->required()
+                ->preload()
+                ->searchable(),
+
             Forms\Components\TextInput::make('nama')
                 ->label('Nama Pelanggaran')
                 ->placeholder('Contoh: Tidak memakai seragam')
@@ -63,6 +77,10 @@ class PelanggaranResource extends BaseResource
     {
         return $table
             ->columns([
+                TextColumn::make('lembaga.nama')
+            ->label('Lembaga')
+            ->badge(),
+
                 TextColumn::make('nama')
             ->label('Pelanggaran')
             ->searchable()

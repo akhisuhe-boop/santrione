@@ -31,6 +31,20 @@ class PrestasiResource extends BaseResource
             ->description('Silakan isi jenis prestasi dan bobot poinnya')
             ->schema([
 
+            Forms\Components\Select::make('lembaga_id')
+                ->label('Lembaga')
+                ->relationship(
+                    'lembaga',
+                    'nama',
+                    modifyQueryUsing: fn ($query) => $query->where(
+                        'yayasan_id',
+                        \Filament\Facades\Filament::getTenant()?->id
+                    ),
+                )
+                ->required()
+                ->preload()
+                ->searchable(),
+
             Forms\Components\TextInput::make('nama')
                 ->label('Nama Prestasi')
                 ->placeholder('Contoh: Juara 1 Lomba MTQ')
@@ -51,6 +65,10 @@ class PrestasiResource extends BaseResource
     {
         return $table
             ->columns([
+            Tables\Columns\TextColumn::make('lembaga.nama')
+                ->label('Lembaga')
+                ->badge(),
+
             Tables\Columns\TextColumn::make('nama')
                 ->label('Nama Prestasi')
                 ->searchable()

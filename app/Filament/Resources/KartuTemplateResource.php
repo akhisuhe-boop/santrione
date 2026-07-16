@@ -32,6 +32,20 @@ class KartuTemplateResource extends BaseResource
                 Section::make('Template Kartu Siswa')
                 ->icon('heroicon-o-credit-card')
                 ->schema([
+                Forms\Components\Select::make('lembaga_id')
+                ->label('Lembaga')
+                ->relationship(
+                    'lembaga',
+                    'nama',
+                    modifyQueryUsing: fn ($query) => $query->where(
+                        'yayasan_id',
+                        \Filament\Facades\Filament::getTenant()?->id
+                    ),
+                )
+                ->required()
+                ->preload()
+                ->searchable(),
+
                 Forms\Components\Select::make('jenis')
                 ->label('Jenis Kartu')
                 ->options([
@@ -61,6 +75,10 @@ class KartuTemplateResource extends BaseResource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('lembaga.nama')
+                    ->label('Lembaga')
+                    ->badge(),
+
                 Tables\Columns\TextColumn::make('jenis')
                 ->label('Jenis')
                 ->formatStateUsing(fn ($state) => match ($state) {

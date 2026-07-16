@@ -35,6 +35,20 @@ class TemplateKegiatanResource extends BaseResource
                 ->description('Silakan isi template kegiatan yang akan digunakan untuk membuat jadwal kegiatan')
                 ->schema([
 
+                    Forms\Components\Select::make('lembaga_id')
+                        ->label('Lembaga')
+                        ->relationship(
+                            'lembaga',
+                            'nama',
+                            modifyQueryUsing: fn ($query) => $query->where(
+                                'yayasan_id',
+                                \Filament\Facades\Filament::getTenant()?->id
+                            ),
+                        )
+                        ->required()
+                        ->preload()
+                        ->searchable(),
+
                     Forms\Components\TextInput::make('nama_kegiatan')
                         ->label('Nama Kegiatan')
                         ->required(),
@@ -94,6 +108,10 @@ class TemplateKegiatanResource extends BaseResource
     {
         return $table                
             ->columns([
+            Tables\Columns\TextColumn::make('lembaga.nama')
+                ->label('Lembaga')
+                ->badge(),
+
             Tables\Columns\TextColumn::make('hari')
                 ->label('Hari'),
 

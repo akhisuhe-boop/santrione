@@ -26,6 +26,20 @@ class AnnouncementResource extends BaseResource
             Forms\Components\Section::make('Isi Pengumuman')
                 ->schema([
 
+                    Forms\Components\Select::make('lembaga_id')
+                        ->label('Lembaga')
+                        ->relationship(
+                            'lembaga',
+                            'nama',
+                            modifyQueryUsing: fn ($query) => $query->where(
+                                'yayasan_id',
+                                \Filament\Facades\Filament::getTenant()?->id
+                            ),
+                        )
+                        ->required()
+                        ->preload()
+                        ->searchable(),
+
                     Forms\Components\TextInput::make('title')
                         ->label('Judul')
                         ->required()
@@ -121,6 +135,10 @@ class AnnouncementResource extends BaseResource
             ->defaultSort('created_at', 'desc')
 
             ->columns([
+
+                Tables\Columns\TextColumn::make('lembaga.nama')
+                    ->label('Lembaga')
+                    ->badge(),
 
                 Tables\Columns\TextColumn::make('title')
                     ->label('Judul')

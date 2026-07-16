@@ -30,6 +30,20 @@ class RekeningResource extends BaseResource
                 ->icon('heroicon-o-clipboard-document-check')
                 ->schema([
 
+                    Forms\Components\Select::make('lembaga_id')
+                        ->label('Lembaga')
+                        ->relationship(
+                            'lembaga',
+                            'nama',
+                            modifyQueryUsing: fn ($query) => $query->where(
+                                'yayasan_id',
+                                \Filament\Facades\Filament::getTenant()?->id
+                            ),
+                        )
+                        ->required()
+                        ->preload()
+                        ->searchable(),
+
                     Forms\Components\TextInput::make('nama')
                         ->label('Nama Rekening')
                         ->placeholder('Contoh: BSI Operasional / Mandiri PPDB')
@@ -67,6 +81,10 @@ class RekeningResource extends BaseResource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('lembaga.nama')
+                    ->label('Lembaga')
+                    ->badge(),
+
                 Tables\Columns\TextColumn::make('nama')->searchable(),
                 Tables\Columns\TextColumn::make('bank'),
                 Tables\Columns\TextColumn::make('no_rekening'),
