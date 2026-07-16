@@ -223,6 +223,9 @@ class Pembayaran extends Model
                 'sumber' => 'pembayaran',
                 'tanggal' => $pembayaran->tanggal_bayar ?? now(),
                 'keterangan' => 'Pembayaran ' . $pembayaran->kode,
+                'lembaga_id' => $tagihan->siswa->lembaga_id
+                    ?? $tagihan->ppdb->lembaga_id
+                    ?? null,
             ]);
         }
     });

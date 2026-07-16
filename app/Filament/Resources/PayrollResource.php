@@ -413,6 +413,7 @@ class PayrollResource extends BaseResource
             'payroll_id' => $record->id,
             'tipe' => 'keluar',
             'kategori_id' => $kategori?->id,
+            'lembaga_id' => $record->pegawai?->lembagas()->value('lembagas.id'),
 
             /*
             |--------------------------------------------------------------------------
@@ -594,6 +595,7 @@ class PayrollResource extends BaseResource
                 'payroll_id' => $record->id,
                 'tipe' => 'keluar',
                 'kategori_id' => $kategori?->id,
+                'lembaga_id' => $record->pegawai?->lembagas()->value('lembagas.id'),
 
                 /*
                 |--------------------------------------------------------------------------
