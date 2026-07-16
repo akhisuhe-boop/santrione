@@ -64,8 +64,8 @@ class TagihanService
     // ======================
     public static function buatPendaftaran($ppdb)
     {
-        $jenis = JenisTagihan::where('kode', 'formulir_pendaftaran')->first();
-        $rekening = Rekening::first();
+        $jenis = JenisTagihan::where('tipe_sistem', 'pendaftaran_ppdb')->first();
+        $rekening = Rekening::where('lembaga_id', $ppdb->lembaga_id)->first();
         $tahunAjaran = TahunAjaran::aktif();
     
         if (!$jenis || !$rekening || !$tahunAjaran) return;
@@ -104,8 +104,8 @@ class TagihanService
     // ======================
     public static function buatDaftarUlang($ppdb)
     {
-        $jenis = JenisTagihan::where('kode', 'ppdb_daftar_ulang')->first();
-        $rekening = Rekening::first();
+        $jenis = JenisTagihan::where('tipe_sistem', 'daftar_ulang_ppdb')->first();
+        $rekening = Rekening::where('lembaga_id', $ppdb->lembaga_id)->first();
         $tahunAjaran = TahunAjaran::aktif();
 
         if (!$jenis || !$rekening || !$tahunAjaran) return;
@@ -141,15 +141,15 @@ class TagihanService
     public static function afterPaid(Tagihan $tagihan): void
     {
         $tagihan->loadMissing('jenisTagihan', 'ppdb');
-        $kode = $tagihan->jenisTagihan?->kode;
-        switch ($kode) {
+        $tipeSistem = $tagihan->jenisTagihan?->tipe_sistem;
+        switch ($tipeSistem) {
     
             /*
             |--------------------------------------------------------------------------
             | FORMULIR PENDAFTARAN
             |--------------------------------------------------------------------------
             */
-            case 'formulir_pendaftaran':
+            case 'pendaftaran_ppdb':
                 if ($tagihan->ppdb) {
                     $tagihan->ppdb->update([
                         'status' => 'formulir',
@@ -162,7 +162,7 @@ class TagihanService
             | DAFTAR ULANG PPDB
             |--------------------------------------------------------------------------
             */
-            case 'ppdb_daftar_ulang':
+            case 'daftar_ulang_ppdb':
                 if ($tagihan->ppdb) {
                     $tagihan->ppdb->update([
                         'status' => 'aktif',

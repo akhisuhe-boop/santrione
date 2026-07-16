@@ -164,7 +164,7 @@ class Pembayaran extends Model
                 $lembaga = $ppdb->lembaga;
 
                 // 🟡 PENDAFTARAN
-                if ($tagihan->jenisTagihan->nama === 'Pendaftaran') {
+                if ($tagihan->jenisTagihan->tipe_sistem === 'pendaftaran_ppdb') {
 
                     if ($lembaga && $lembaga->is_tes) {
 
@@ -184,7 +184,7 @@ class Pembayaran extends Model
                 }
 
                 // 🟢 DAFTAR ULANG
-                if ($tagihan->jenisTagihan->nama === 'Daftar Ulang') {
+                if ($tagihan->jenisTagihan->tipe_sistem === 'daftar_ulang_ppdb') {
 
                     $ppdb->update([
                         'status' => 'daftar_ulang'

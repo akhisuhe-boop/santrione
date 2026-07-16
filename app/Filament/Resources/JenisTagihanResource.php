@@ -46,6 +46,16 @@ class JenisTagihanResource extends BaseResource
                             ->dehydrated() // 🔥 tetap disimpan ke DB
                             ->helperText('Kode otomatis dari nama'),
 
+                        Forms\Components\Select::make('tipe_sistem')
+                            ->label('Peran Sistem')
+                            ->helperText('Tandai kalau jenis tagihan ini yang dipakai sistem untuk alur PPDB otomatis (nama tampilan boleh apa saja, tidak harus persis).')
+                            ->options([
+                                'pendaftaran_ppdb' => 'Biaya Pendaftaran PPDB',
+                                'daftar_ulang_ppdb' => 'Biaya Daftar Ulang PPDB',
+                            ])
+                            ->placeholder('Tagihan umum (bukan bagian alur PPDB otomatis)')
+                            ->nullable(),
+
                         Forms\Components\TextInput::make('default_nominal')
                             ->label('Nominal')
                             ->numeric()
@@ -92,6 +102,16 @@ class JenisTagihanResource extends BaseResource
     {
         return $table
             ->columns([
+
+                Tables\Columns\TextColumn::make('tipe_sistem')
+                    ->label('Peran Sistem')
+                    ->badge()
+                    ->color(fn ($state) => $state ? 'warning' : 'gray')
+                    ->formatStateUsing(fn ($state) => match ($state) {
+                        'pendaftaran_ppdb' => 'Pendaftaran PPDB',
+                        'daftar_ulang_ppdb' => 'Daftar Ulang PPDB',
+                        default => 'Tagihan Umum',
+                    }),
 
                 Tables\Columns\TextColumn::make('nama')
                     ->label('Jenis Tagihan')
