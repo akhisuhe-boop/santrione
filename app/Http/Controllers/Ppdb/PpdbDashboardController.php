@@ -29,14 +29,14 @@ class PpdbDashboardController extends Controller
             ->latest()
             ->first();
             
-        // Pembayaran terakhir PPDB
-        $pembayaran = Pembayaran::whereHas('tagihan', function ($query) use ($ppdb) {
-        
-            $query->where('ppdb_id', $ppdb->id);
-        
-        })
-        ->latest()
-        ->first();
+        // Pembayaran untuk TAGIHAN YANG SEDANG DITAMPILKAN saja --
+        // sebelumnya ambil pembayaran terakhir dari SELURUH riwayat PPDB
+        // ini, jadi kalau ada tagihan baru yang belum dibayar (mis. Daftar
+        // Ulang), sistem salah nampilin status pembayaran tagihan LAMA
+        // yang sudah lunas (mis. Formulir Pendaftaran).
+        $pembayaran = $tagihan
+            ? Pembayaran::where('tagihan_id', $tagihan->id)->latest()->first()
+            : null;
             
         // Pengumuman    
         $pengumuman = Announcement::query()
