@@ -155,16 +155,19 @@ class Pembayaran extends Model
         // =========================
         // 🔥 AUTO UPDATE STATUS PPDB
         // =========================
-        if ($tagihan->ppdb_id) {
+        if ($tagihan->ppdb_id && $pembayaran->status === 'sukses') {
 
             $ppdb = \App\Models\Ppdb::find($tagihan->ppdb_id);
 
-            if ($ppdb && $tagihan->status === 'lunas') {
+            if ($ppdb) {
 
                 $lembaga = $ppdb->lembaga;
+                $tipeSistem = $tagihan->jenisTagihan->tipe_sistem;
 
-                // 🟡 PENDAFTARAN
-                if ($tagihan->jenisTagihan->tipe_sistem === 'pendaftaran_ppdb') {
+                // 🟡 PENDAFTARAN -- tetap WAJIB lunas penuh dulu sebelum
+                // lanjut ke tahap berikutnya (tidak ada opsi cicilan
+                // untuk biaya pendaftaran).
+                if ($tipeSistem === 'pendaftaran_ppdb' && $tagihan->status === 'lunas') {
 
                     if ($lembaga && $lembaga->is_tes) {
 
@@ -183,8 +186,13 @@ class Pembayaran extends Model
                     }
                 }
 
-                // 🟢 DAFTAR ULANG
-                if ($tagihan->jenisTagihan->tipe_sistem === 'daftar_ulang_ppdb') {
+                // 🟢 DAFTAR ULANG -- boleh baru dibayar SEBAGIAN (DP).
+                // Begitu ada 1x pembayaran sukses (nggak harus lunas),
+                // tombol "Aktifkan Siswa" sudah boleh dipakai admin.
+                // Sisa tagihan yang belum lunas otomatis ikut pindah ke
+                // siswa begitu diaktifkan (lihat aksi 'aktifkan' di
+                // PpdbResource, tidak difilter status lunas/belum).
+                if ($tipeSistem === 'daftar_ulang_ppdb' && $ppdb->status === 'lulus') {
 
                     $ppdb->update([
                         'status' => 'daftar_ulang'
