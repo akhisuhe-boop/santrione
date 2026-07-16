@@ -109,7 +109,16 @@ class TagihanResource extends BaseResource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('kode')->searchable()->copyable(),
-                Tables\Columns\TextColumn::make('siswa.nama_lengkap'),
+                Tables\Columns\TextColumn::make('siswa.nama_lengkap')
+                    ->label('Siswa')
+                    ->getStateUsing(fn ($record) =>
+                        $record->siswa?->nama_lengkap
+                        ?? $record->ppdb?->nama_lengkap
+                        ?? '-'
+                    )
+                    ->description(fn ($record) =>
+                        ! $record->siswa && $record->ppdb ? 'Calon siswa (PPDB)' : null
+                    ),
                 Tables\Columns\TextColumn::make('judul')
                 ->label('Jenis Tagihan'),
                 Tables\Columns\TextColumn::make('nominal')
