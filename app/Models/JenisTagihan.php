@@ -2,14 +2,24 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use App\Models\Concerns\BelongsToTenant;
 
 class JenisTagihan extends Model
 {
+    use BelongsToTenant;
+
+    protected static function applyTenantScope(Builder $builder, int $yayasanId): void
+    {
+        $builder->where('yayasan_id', $yayasanId);
+    }
+
     protected $table = 'jenis_tagihans';
 
     protected $fillable = [
+        'yayasan_id',
         'nama',
         'kode',
         'default_nominal',
@@ -28,6 +38,13 @@ class JenisTagihan extends Model
     // ======================
     protected static function booted()
     {
+        static::creating(function ($model) {
+            if (empty($model->yayasan_id)) {
+                $model->yayasan_id = \Filament\Facades\Filament::getTenant()?->id
+                    ?? auth()->user()?->yayasan_id;
+            }
+        });
+
         static::saving(function ($model) {
 
             // 🔥 AUTO GENERATE KODE (jika kosong)
@@ -56,6 +73,11 @@ class JenisTagihan extends Model
     public function kategoriKas()
     {
         return $this->belongsTo(\App\Models\KategoriKas::class);
+    }
+
+    public function yayasan()
+    {
+        return $this->belongsTo(Yayasan::class);
     }
 
     // ke setting nominal tagihan
