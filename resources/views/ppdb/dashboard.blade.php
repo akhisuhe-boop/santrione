@@ -621,7 +621,7 @@ switch ($ppdb->status) {
                     
                         </div>
                     
-                    @elseif($latestStatus == 'sukses')
+                    @elseif($latestStatus == 'sukses' && $tagihanStatus == 'lunas')
                     
                         <div
                             class="mt-3
@@ -668,6 +668,81 @@ switch ($ppdb->status) {
                             </div>
                     
                         </div>
+
+                    @elseif($latestStatus == 'sukses' && $tagihanStatus == 'sebagian')
+
+                        <div
+                            class="mt-3
+                                   rounded-xl
+                                   border
+                                   border-amber-200
+                                   bg-amber-50
+                                   p-3">
+
+                            <div class="flex items-center gap-3">
+
+                                <div
+                                    class="w-10 h-10
+                                           rounded-xl
+                                           bg-amber-100
+                                           flex items-center justify-center">
+
+                                    <x-heroicon-o-check-badge
+                                        class="w-5 h-5 text-amber-600"/>
+
+                                </div>
+
+                                <div>
+
+                                    <div
+                                        class="text-sm
+                                               font-semibold
+                                               text-amber-700">
+
+                                        Pembayaran Sebagian Diterima
+
+                                    </div>
+
+                                    <div
+                                        class="text-xs
+                                               text-slate-500">
+
+                                        Sisa Rp {{ number_format($tagihan->nominal - $tagihan->nominal_terbayar, 0, ',', '.') }} lagi.
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <a
+                            href="{{ route('ppdb.pembayaran') }}"
+                            class="mt-3
+                                   w-full
+                                   inline-flex
+                                   items-center
+                                   justify-center
+                                   gap-2
+                                   rounded-xl
+                                   bg-[#00A39D]
+                                   py-2.5
+                                   text-sm
+                                   font-semibold
+                                   text-white
+                                   shadow-sm
+                                   transition-all
+                                   duration-200
+                                   hover:bg-[#008B86]
+                                   hover:shadow-md">
+
+                            <x-heroicon-o-credit-card
+                                class="w-4 h-4"/>
+
+                            Bayar Sisa Tagihan
+
+                        </a>
                     
                     @elseif($latestStatus == 'gagal')
                     
