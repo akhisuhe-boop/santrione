@@ -28,6 +28,7 @@ class Pembayaran extends Model
         'nominal',
         'metode',
         'diinput_oleh',
+        'diverifikasi_oleh',
         'status',
         'bukti_transfer',
         'tanggal_bayar',

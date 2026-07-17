@@ -444,6 +444,11 @@ class PembayaranResource extends BaseResource
                         ->placeholder('-')
                         ->toggleable(),
 
+                    Tables\Columns\TextColumn::make('diverifikasi_oleh')
+                        ->label('Diverifikasi Oleh')
+                        ->placeholder('-')
+                        ->toggleable(),
+
                     Tables\Columns\BadgeColumn::make('status')
                         ->colors([
                             'warning' => 'pending',
@@ -528,6 +533,7 @@ class PembayaranResource extends BaseResource
                         // ==========================
                         $record->update([
                             'status' => 'sukses',
+                            'diverifikasi_oleh' => auth()->user()?->name,
                         ]);
                     
                         $tagihan = $record->tagihan;
@@ -608,6 +614,7 @@ class PembayaranResource extends BaseResource
                             $record->update([
                                 'status' => 'gagal',
                                 'keterangan' => $data['keterangan'],
+                                'diverifikasi_oleh' => auth()->user()?->name,
                             ]);
 
                         }),
