@@ -97,18 +97,28 @@
                                 <td class="p-2 text-center">
                                     @if ($totalTagihan > 0)
 
+                                        @php
+                                            $tagihanId = $tagihans->first()?->id;
+                                        @endphp
+
                                         @if ($lunas)
-                                            <span style="background:#dcfce7;color:#15803d;padding:4px 8px;border-radius:6px;font-size:11px;">
+                                            <span
+                                                wire:click="lihatRiwayat({{ $tagihanId }})"
+                                                style="cursor:pointer;background:#dcfce7;color:#15803d;padding:4px 8px;border-radius:6px;font-size:11px;">
                                                 LUNAS
                                             </span>
 
                                         @elseif ($totalBayar > 0)
-                                            <span style="background:#fef3c7;color:#92400e;padding:4px 8px;border-radius:6px;font-size:11px;">
+                                            <span
+                                                wire:click="lihatRiwayat({{ $tagihanId }})"
+                                                style="cursor:pointer;background:#fef3c7;color:#92400e;padding:4px 8px;border-radius:6px;font-size:11px;">
                                                 CICILAN
                                             </span>
 
                                         @else
-                                            <span style="color:#dc2626;">
+                                            <span
+                                                wire:click="lihatRiwayat({{ $tagihanId }})"
+                                                style="cursor:pointer;color:#dc2626;">
                                                 {{ number_format($totalTagihan,0,',','.') }}
                                             </span>
                                         @endif

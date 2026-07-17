@@ -138,7 +138,7 @@ class LaporanKas extends Page implements HasForms, HasTable
     protected function getFormSchema(): array
     {
         return [
-            Forms\Components\Grid::make(5)
+            Forms\Components\Grid::make(6)
                 ->schema([
 
                     Forms\Components\DatePicker::make('dari')
@@ -282,6 +282,9 @@ class LaporanKas extends Page implements HasForms, HasTable
 
                     ->when($this->rekening_id, fn ($q) =>
                         $q->where('rekening_id', $this->rekening_id))
+
+                    ->orderByDesc('tanggal')
+                    ->orderByDesc('id')
             )
 
             ->defaultSort('tanggal', 'desc')
