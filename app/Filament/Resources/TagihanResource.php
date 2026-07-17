@@ -120,7 +120,11 @@ class TagihanResource extends BaseResource
                         ?? '-'
                     )
                     ->description(fn ($record) =>
-                        ! $record->siswa && $record->ppdb ? 'Calon siswa (PPDB)' : null
+                        ! $record->siswa && $record->ppdb
+                            ? 'Calon siswa (PPDB)'
+                            : ($record->siswa && $record->siswa->status_siswa !== 'Aktif'
+                                ? '⚠️ Alumni (' . $record->siswa->status_siswa . ')'
+                                : null)
                     ),
                 Tables\Columns\TextColumn::make('judul')
                 ->label('Jenis Tagihan'),
@@ -212,6 +216,16 @@ class TagihanResource extends BaseResource
                     'sebagian' => 'Sebagian',
                     'lunas' => 'Lunas',
                 ]),
+
+            Tables\Filters\Filter::make('piutang_alumni')
+                ->label('Piutang Alumni')
+                ->toggle()
+                ->query(fn ($query) =>
+                    $query->whereHas('siswa', fn ($q) =>
+                        $q->whereIn('status_siswa', ['Lulus', 'Pindah'])
+                    )
+                    ->whereIn('status', ['Belum', 'sebagian'])
+                ),
         ])
 
             ->headerActions([

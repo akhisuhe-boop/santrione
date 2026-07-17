@@ -33,7 +33,9 @@ class SiswaPerLembaga extends Widget
 
     public function getLembagaData()
     {
-        return Lembaga::withCount('siswas')
+        return Lembaga::withCount([
+                'siswas' => fn ($q) => $q->where('status_siswa', 'Aktif'),
+            ])
             ->orderBy('nama', 'asc')
             ->get();
     }

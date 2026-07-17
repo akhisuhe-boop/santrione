@@ -46,7 +46,7 @@ class StatistikAkademik extends BaseWidget
 
             Stat::make(
                 'Total Data Siswa',
-                number_format(Siswa::count())
+                number_format(Siswa::where('status_siswa', 'Aktif')->count())
             )
                 ->description('Jumlah seluruh siswa')
                 ->descriptionIcon('heroicon-m-users')

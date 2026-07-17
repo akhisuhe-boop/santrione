@@ -372,7 +372,8 @@ class SiswaResource extends BaseResource
                         'Aktif' => 'Aktif',
                         'Lulus' => 'Lulus',
                         'Pindah' => 'Pindah',
-                    ]),
+                    ])
+                    ->default('Aktif'),
             ])
             ->headerActions([
 
