@@ -400,6 +400,16 @@ class LaporanKas extends Page implements HasForms, HasTable
                         ?? '-';
                 }),
 
+                Tables\Columns\TextColumn::make('diinput_oleh')
+                    ->label('Diinput Oleh')
+                    ->getStateUsing(fn ($record) => $record->pembayaran?->diinput_oleh ?? '-')
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('diverifikasi_oleh')
+                    ->label('Diverifikasi Oleh')
+                    ->getStateUsing(fn ($record) => $record->pembayaran?->diverifikasi_oleh ?? '-')
+                    ->toggleable(),
+
                 Tables\Columns\BadgeColumn::make('bukti')
                     ->label('Bukti')
                     ->getStateUsing(fn ($record) =>

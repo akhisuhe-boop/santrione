@@ -81,7 +81,9 @@ public static function form(Form $form): Form
 
                 Tables\Columns\TextColumn::make('siswa_count')
                 ->label('Jumlah Siswa')
-                ->counts('siswa')
+                ->counts([
+                    'siswa' => fn ($q) => $q->where('status_siswa', 'Aktif'),
+                ])
                 ->badge()
                 ->color('primary')
                 ->suffix(' Siswa'),

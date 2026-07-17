@@ -123,7 +123,14 @@ class TagihanResource extends BaseResource
                         ! $record->siswa && $record->ppdb
                             ? 'Calon siswa (PPDB)'
                             : ($record->siswa && $record->siswa->status_siswa !== 'Aktif'
-                                ? '⚠️ Alumni (' . $record->siswa->status_siswa . ')'
+                                ? new \Illuminate\Support\HtmlString(
+                                    '<span class="inline-flex items-center gap-1 text-amber-600">'
+                                    . '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5 flex-shrink-0">'
+                                    . '<path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />'
+                                    . '</svg>'
+                                    . 'Alumni (' . e($record->siswa->status_siswa) . ')'
+                                    . '</span>'
+                                )
                                 : null)
                     ),
                 Tables\Columns\TextColumn::make('judul')

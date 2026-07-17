@@ -535,6 +535,19 @@ class PembayaranResource extends BaseResource
                             'status' => 'sukses',
                             'diverifikasi_oleh' => auth()->user()?->name,
                         ]);
+
+                        if ($record->siswa && $record->siswa->status_siswa !== 'Aktif') {
+                            \Filament\Notifications\Notification::make()
+                                ->title('Perhatian: Siswa Alumni')
+                                ->body(
+                                    $record->siswa->nama_lengkap
+                                    . ' berstatus "' . $record->siswa->status_siswa . '"'
+                                    . ' (bukan siswa aktif). Pastikan pembayaran ini memang disengaja.'
+                                )
+                                ->warning()
+                                ->persistent()
+                                ->send();
+                        }
                     
                         $tagihan = $record->tagihan;
                         if ($tagihan) {

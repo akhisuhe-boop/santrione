@@ -255,6 +255,7 @@
                         <th class="p-3 text-left">Tanggal</th>
                         <th class="p-3 text-left">Jumlah</th>
                         <th class="p-3 text-left">Metode</th>
+                        <th class="p-3 text-left">Petugas</th>
                         <th class="p-3 text-left">Status</th>
                     </tr>
                 </thead>
@@ -280,6 +281,18 @@
                                 {{ $bayar->metode ?? '-' }}
                             </td>
 
+                            <td class="p-2 text-xs text-gray-600">
+                                @if($bayar->diinput_oleh)
+                                    Input: {{ $bayar->diinput_oleh }}<br>
+                                @endif
+                                @if($bayar->diverifikasi_oleh)
+                                    Verifikasi: {{ $bayar->diverifikasi_oleh }}
+                                @endif
+                                @if(!$bayar->diinput_oleh && !$bayar->diverifikasi_oleh)
+                                    -
+                                @endif
+                            </td>
+
                             <td class="p-2">
                                 <span style="background: {{ $status == 'sukses' ? '#dcfce7' : '#fee2e2' }};color: {{ $status == 'sukses' ? '#15803d' : '#b91c1c' }};padding:4px 8px;border-radius:6px;font-size:11px;">
                                     {{ ucfirst($status) }}
@@ -289,7 +302,7 @@
 
                     @empty
                         <tr>
-                            <td colspan="4" class="p-4 text-center text-gray-500">
+                            <td colspan="5" class="p-4 text-center text-gray-500">
                                 Belum ada pembayaran
                             </td>
                         </tr>
