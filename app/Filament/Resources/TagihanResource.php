@@ -224,14 +224,16 @@ class TagihanResource extends BaseResource
                     'lunas' => 'Lunas',
                 ]),
 
-            Tables\Filters\Filter::make('piutang_alumni')
-                ->label('Piutang Alumni')
+            Tables\Filters\Filter::make('sembunyikan_alumni')
+                ->label('Sembunyikan Alumni')
                 ->toggle()
+                ->default(true)
                 ->query(fn ($query) =>
-                    $query->whereHas('siswa', fn ($q) =>
-                        $q->whereIn('status_siswa', ['Lulus', 'Pindah'])
-                    )
-                    ->whereIn('status', ['Belum', 'sebagian'])
+                    $query->where(function ($q) {
+                        $q->whereDoesntHave('siswa')
+                          ->orWhereHas('siswa', fn ($s) =>
+                              $s->where('status_siswa', 'Aktif'));
+                    })
                 ),
         ])
 

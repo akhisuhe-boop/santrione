@@ -63,7 +63,15 @@ class LaporanKasExport implements FromCollection, WithHeadings, WithStyles, Shou
                 $q->where('lembaga_id', $this->filters['lembaga_id']))
 
             ->when($this->filters['rekening_id'] ?? null, fn ($q) =>
-                $q->where('rekening_id', $this->filters['rekening_id']));
+                $q->where('rekening_id', $this->filters['rekening_id']))
+
+            ->when(empty($this->filters['tampilkan_alumni']), fn ($q) =>
+                $q->where(function ($sub) {
+                    $sub->whereDoesntHave('pembayaran.siswa')
+                        ->orWhereHas('pembayaran.siswa', fn ($s) =>
+                            $s->where('status_siswa', 'Aktif'));
+                })
+            );
 
         $data = $query->get()->map(function ($item) {
 

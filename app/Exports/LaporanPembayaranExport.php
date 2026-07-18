@@ -65,6 +65,9 @@ class LaporanPembayaranExport implements WithMultipleSheets
                         ->when($f['siswa_id'] ?? null, fn ($q) =>
                             $q->where('id', $f['siswa_id']))
 
+                        ->when(empty($f['tampilkan_alumni']), fn ($q) =>
+                            $q->where('status_siswa', 'Aktif'))
+
                         ->with([
                             'kelas',
                             'lembaga.yayasan',
@@ -163,6 +166,14 @@ class LaporanPembayaranExport implements WithMultipleSheets
 
                         ->when($f['siswa_id'] ?? null, fn ($q) =>
                             $q->where('siswa_id', $f['siswa_id']))
+
+                        ->when(empty($f['tampilkan_alumni']), fn ($q) =>
+                            $q->where(function ($sub) {
+                                $sub->whereDoesntHave('siswa')
+                                    ->orWhereHas('siswa', fn ($s) =>
+                                        $s->where('status_siswa', 'Aktif'));
+                            })
+                        )
 
                         ->latest()
                         ->get();

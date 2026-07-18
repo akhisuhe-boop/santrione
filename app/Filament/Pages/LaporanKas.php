@@ -46,6 +46,7 @@ class LaporanKas extends Page implements HasForms, HasTable
     public $kategori_id;
     public $lembaga_id;
     public $rekening_id;
+    public $tampilkan_alumni = false;
 
     public function mount(): void
     {
@@ -62,6 +63,7 @@ class LaporanKas extends Page implements HasForms, HasTable
                 'kategori_id' => $this->kategori_id,
                 'lembaga_id' => $this->lembaga_id,
                         'rekening_id' => $this->rekening_id,
+                        'tampilkan_alumni' => $this->tampilkan_alumni,
             ]),
             'laporan-kas.xlsx'
         );
@@ -84,6 +86,7 @@ class LaporanKas extends Page implements HasForms, HasTable
                             'kategori_id' => $this->kategori_id,
                             'lembaga_id' => $this->lembaga_id,
                         'rekening_id' => $this->rekening_id,
+                        'tampilkan_alumni' => $this->tampilkan_alumni,
                         ]),
                         'laporan-kas.xlsx'
                     );
@@ -102,6 +105,7 @@ class LaporanKas extends Page implements HasForms, HasTable
                         'kategori_id' => $this->kategori_id,
                         'lembaga_id' => $this->lembaga_id,
                         'rekening_id' => $this->rekening_id,
+                        'tampilkan_alumni' => $this->tampilkan_alumni,
                     ]);
 
                     $pdf = Pdf::loadView('exports.laporan-kas', $data)
@@ -204,6 +208,11 @@ class LaporanKas extends Page implements HasForms, HasTable
                         ->searchable()
                         ->preload()
                         ->live(debounce: 400),
+
+                    Forms\Components\Toggle::make('tampilkan_alumni')
+                        ->label('Tampilkan Alumni')
+                        ->helperText('Transaksi siswa yang sudah lulus/pindah sembunyi secara default.')
+                        ->live(),
                 ])
         ];
     }
@@ -230,7 +239,15 @@ class LaporanKas extends Page implements HasForms, HasTable
                 $q->where('lembaga_id', $this->lembaga_id))
 
             ->when($this->rekening_id, fn ($q) =>
-                $q->where('rekening_id', $this->rekening_id));
+                $q->where('rekening_id', $this->rekening_id))
+
+            ->when(! $this->tampilkan_alumni, fn ($q) =>
+                $q->where(function ($sub) {
+                    $sub->whereDoesntHave('pembayaran.siswa')
+                        ->orWhereHas('pembayaran.siswa', fn ($s) =>
+                            $s->where('status_siswa', 'Aktif'));
+                })
+            );
 
         $masuk = (clone $query)->where('tipe', 'masuk')->sum('nominal');
         $keluar = (clone $query)->where('tipe', 'keluar')->sum('nominal');
@@ -282,6 +299,14 @@ class LaporanKas extends Page implements HasForms, HasTable
 
                     ->when($this->rekening_id, fn ($q) =>
                         $q->where('rekening_id', $this->rekening_id))
+
+                    ->when(! $this->tampilkan_alumni, fn ($q) =>
+                        $q->where(function ($sub) {
+                            $sub->whereDoesntHave('pembayaran.siswa')
+                                ->orWhereHas('pembayaran.siswa', fn ($s) =>
+                                    $s->where('status_siswa', 'Aktif'));
+                        })
+                    )
 
                     ->orderByDesc('tanggal')
                     ->orderByDesc('id')

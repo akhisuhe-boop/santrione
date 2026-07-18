@@ -39,6 +39,7 @@ class LaporanPembayaran extends Page implements HasForms
     public $kelas_id;
     public $siswa_id;
     public $jenis_tagihan_id;
+    public $tampilkan_alumni = false;
 
     // 🔥 MODAL
     public $selectedTagihan = null;
@@ -64,6 +65,7 @@ class LaporanPembayaran extends Page implements HasForms
                             'kelas_id' => $this->kelas_id,
                             'siswa_id' => $this->siswa_id,
                             'jenis_tagihan_id' => $this->jenis_tagihan_id,
+                            'tampilkan_alumni' => $this->tampilkan_alumni,
                         ]),
                         'laporan-pembayaran.xlsx'
                     );
@@ -112,6 +114,11 @@ class LaporanPembayaran extends Page implements HasForms
                         ->searchable()
                         ->options(\App\Models\JenisTagihan::pluck('nama', 'id'))
                         ->live(),
+
+                    Forms\Components\Toggle::make('tampilkan_alumni')
+                        ->label('Tampilkan Alumni')
+                        ->helperText('Siswa yang sudah lulus/pindah sembunyi secara default.')
+                        ->live(),
                 ])
                 ->columnSpanFull(),
         ];
@@ -140,6 +147,9 @@ class LaporanPembayaran extends Page implements HasForms
 
             ->when($this->siswa_id, fn ($q) =>
                 $q->where('id', $this->siswa_id))
+
+            ->when(! $this->tampilkan_alumni, fn ($q) =>
+                $q->where('status_siswa', 'Aktif'))
 
             ->with([
                 'kelas',
@@ -194,6 +204,16 @@ public function getUmumData()
         // FILTER SISWA
         ->when($this->siswa_id, fn ($q) =>
             $q->where('siswa_id', $this->siswa_id))
+
+        // Sembunyikan alumni secara default -- tagihan PPDB (belum
+        // punya siswa) tetap selalu tampil, bukan bagian dari alumni.
+        ->when(! $this->tampilkan_alumni, fn ($q) =>
+            $q->where(function ($sub) {
+                $sub->whereDoesntHave('siswa')
+                    ->orWhereHas('siswa', fn ($s) =>
+                        $s->where('status_siswa', 'Aktif'));
+            })
+        )
 
         ->latest()
 

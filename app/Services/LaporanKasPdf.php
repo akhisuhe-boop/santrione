@@ -36,7 +36,15 @@ class LaporanKasPdf
                 $q->where('lembaga_id', $filters['lembaga_id']))
 
             ->when($filters['rekening_id'] ?? null, fn ($q) =>
-                $q->where('rekening_id', $filters['rekening_id']));
+                $q->where('rekening_id', $filters['rekening_id']))
+
+            ->when(empty($filters['tampilkan_alumni']), fn ($q) =>
+                $q->where(function ($sub) {
+                    $sub->whereDoesntHave('pembayaran.siswa')
+                        ->orWhereHas('pembayaran.siswa', fn ($s) =>
+                            $s->where('status_siswa', 'Aktif'));
+                })
+            );
 
         $data = $query->get();
 
