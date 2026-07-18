@@ -53,6 +53,12 @@ class LaporanPembayaran extends Page implements HasForms
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('toggleAlumni')
+                ->label(fn () => $this->tampilkan_alumni ? 'Sembunyikan Alumni' : 'Tampilkan Alumni')
+                ->icon(fn () => $this->tampilkan_alumni ? 'heroicon-o-eye-slash' : 'heroicon-o-eye')
+                ->color(fn () => $this->tampilkan_alumni ? 'gray' : 'warning')
+                ->action(fn () => $this->tampilkan_alumni = ! $this->tampilkan_alumni),
+
             Action::make('export')
                 ->label('Export Excel')
                 ->icon('heroicon-o-arrow-down-tray')
@@ -113,11 +119,6 @@ class LaporanPembayaran extends Page implements HasForms
                         ->placeholder('Semua Jenis')
                         ->searchable()
                         ->options(\App\Models\JenisTagihan::pluck('nama', 'id'))
-                        ->live(),
-
-                    Forms\Components\Toggle::make('tampilkan_alumni')
-                        ->label('Tampilkan Alumni')
-                        ->helperText('Siswa yang sudah lulus/pindah sembunyi secara default.')
                         ->live(),
                 ])
                 ->columnSpanFull(),

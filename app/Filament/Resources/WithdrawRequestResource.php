@@ -278,6 +278,52 @@ TextColumn::make('wallet.siswa.kelas.nama')
                             'processed_at' => now(),
                         ]);
                     }),
+            ])
+
+            ->bulkActions([
+
+                Tables\Actions\BulkAction::make('bulkApprove')
+                    ->label('Approve Terpilih')
+                    ->color('success')
+                    ->icon('heroicon-o-check-circle')
+                    ->requiresConfirmation()
+                    ->modalDescription('Semua permintaan yang masih "Pending" dari yang dipilih akan disetujui. Yang bukan pending akan dilewati.')
+                    ->action(function ($records) {
+
+                        $berhasil = 0;
+                        $gagal = 0;
+                        $dilewati = 0;
+                        $pesanGagal = [];
+
+                        foreach ($records as $record) {
+
+                            if ($record->status !== 'pending') {
+                                $dilewati++;
+                                continue;
+                            }
+
+                            try {
+                                app(\App\Services\WalletService::class)
+                                    ->approveWithdraw($record);
+                                $berhasil++;
+                            } catch (\Exception $e) {
+                                $gagal++;
+                                $pesanGagal[] = ($record->wallet?->siswa?->nama_lengkap ?? 'ID ' . $record->id) . ': ' . $e->getMessage();
+                            }
+                        }
+
+                        \Filament\Notifications\Notification::make()
+                            ->title('Bulk Approve Selesai')
+                            ->body(
+                                "Berhasil: {$berhasil}. Gagal: {$gagal}. Dilewati (bukan pending): {$dilewati}."
+                                . ($pesanGagal ? "\n\nDetail gagal:\n" . implode("\n", $pesanGagal) : '')
+                            )
+                            ->color($gagal > 0 ? 'warning' : 'success')
+                            ->persistent()
+                            ->send();
+                    })
+                    ->deselectRecordsAfterCompletion(),
+
             ]);
     }
 

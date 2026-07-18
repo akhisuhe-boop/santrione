@@ -72,6 +72,12 @@ class LaporanKas extends Page implements HasForms, HasTable
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('toggleAlumni')
+                ->label(fn () => $this->tampilkan_alumni ? 'Sembunyikan Alumni' : 'Tampilkan Alumni')
+                ->icon(fn () => $this->tampilkan_alumni ? 'heroicon-o-eye-slash' : 'heroicon-o-eye')
+                ->color(fn () => $this->tampilkan_alumni ? 'gray' : 'warning')
+                ->action(fn () => $this->tampilkan_alumni = ! $this->tampilkan_alumni),
+
             Action::make('export')
                 ->label('Export Excel')
                 ->icon('heroicon-o-arrow-down-tray')
@@ -208,11 +214,6 @@ class LaporanKas extends Page implements HasForms, HasTable
                         ->searchable()
                         ->preload()
                         ->live(debounce: 400),
-
-                    Forms\Components\Toggle::make('tampilkan_alumni')
-                        ->label('Tampilkan Alumni')
-                        ->helperText('Transaksi siswa yang sudah lulus/pindah sembunyi secara default.')
-                        ->live(),
                 ])
         ];
     }
