@@ -112,7 +112,7 @@ class SiswaExport implements
 
                 $sheet->mergeCells("A2:{$lastColumn}2");
 
-                $namaYayasan = \App\Models\Yayasan::first()?->nama ?? '-';
+                $namaYayasan = $this->lembaga?->yayasan?->nama ?? '-';
                 $sheet->setCellValue('A2', strtoupper($namaYayasan));
 
                 $sheet->getStyle('A1')->getFont()->setSize(16)->setBold(true);

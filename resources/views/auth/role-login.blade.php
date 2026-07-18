@@ -59,7 +59,7 @@
             <div class="flex justify-center mt-4 mb-4">
                 <img
                     src="{{ asset('storage/' . $yayasan->logo) }}"
-                    alt="{{ $yayasan->nama }}"
+                    alt="{{ $yayasan->nama ?? 'Qinara App' }}"
                     class="h-24 md:h-28 w-auto object-contain"
                 >
             </div>
@@ -72,7 +72,7 @@
 
         {{-- NAMA YAYASAN --}}
         <h1 class="mt-3 text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-slate-900">
-            {{ $yayasan->nama }}
+            {{ $yayasan->nama ?? 'Qinara App' }}
         </h1>
 
         {{-- TAGLINE --}}

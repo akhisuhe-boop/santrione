@@ -81,7 +81,7 @@ class PegawaiExport implements FromCollection, WithHeadings, ShouldAutoSize, Wit
             $sheet->mergeCells('A1:J1');
             $sheet->setCellValue('A1', 'DATA GURU & PEGAWAI');
 
-            $namaYayasan = Yayasan::first()?->nama ?? '-';
+            $namaYayasan = (\Filament\Facades\Filament::getTenant()?->nama ?? auth()->user()?->yayasan?->nama ?? '-');
 
             $sheet->mergeCells('A2:J2');
             $sheet->setCellValue('A2', strtoupper($namaYayasan));

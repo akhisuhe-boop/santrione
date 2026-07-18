@@ -52,6 +52,19 @@ Route::get('/login', function () {
     return view('auth.role-login');
 })->name('login');
 
+Route::get('/y/{slug}', function (string $slug) {
+    $yayasan = \App\Models\Yayasan::withoutGlobalScopes()
+        ->where('slug', $slug)
+        ->first();
+
+    if (! $yayasan) {
+        abort(404);
+    }
+
+    session(['active_public_yayasan_id' => $yayasan->id]);
+
+    return redirect()->route('login');
+})->name('tenant.entry');
 
 // ==========================
 // ROUTE LAMA (TIDAK DIUBAH)

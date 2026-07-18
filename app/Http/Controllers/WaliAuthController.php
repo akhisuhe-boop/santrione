@@ -2,19 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\ResolvesPublicTenant;
 use App\Models\Siswa;
-use App\Models\Yayasan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
 class WaliAuthController extends Controller
 {
+    use ResolvesPublicTenant;
+
     /**
      * Form Login
      */
     public function login()
     {
-        $yayasan = Yayasan::first();
+        $yayasan = $this->currentYayasan();
         return view('wali.auth.login', compact('yayasan'));
     }
 
@@ -29,10 +31,21 @@ class WaliAuthController extends Controller
         ]);
 
         $login = trim($request->login);
+        $yayasanId = $this->currentYayasanId();
 
-        $siswa = Siswa::where('nis', $login)
-            ->orWhere('nisn', $login)
-            ->first();
+        $query = Siswa::withoutGlobalScopes()
+            ->where(function ($q) use ($login) {
+                $q->where('nis', $login)->orWhere('nisn', $login);
+            });
+
+        // Kalau ada context tenant (dari /y/{slug}), scope ketat ke yayasan itu.
+        if ($yayasanId) {
+            $query->whereHas('lembaga', function ($q) use ($yayasanId) {
+                $q->where('yayasan_id', $yayasanId);
+            });
+        }
+
+        $siswa = $query->first();
 
         if (! $siswa) {
             return back()->with('error', 'NIS / NISN tidak ditemukan');
@@ -55,7 +68,7 @@ class WaliAuthController extends Controller
      */
     public function logout(Request $request)
     {
-        $request->session()->invalidate();
+        $request->session()->forget(['siswa_id', 'wali_nama']);
         $request->session()->regenerateToken();
 
         return redirect()->route('role.login');

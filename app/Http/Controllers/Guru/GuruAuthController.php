@@ -2,20 +2,22 @@
 
 namespace App\Http\Controllers\Guru;
 
+use App\Http\Controllers\Concerns\ResolvesPublicTenant;
 use App\Http\Controllers\Controller;
 use App\Models\Pegawai;
-use App\Models\Yayasan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
 class GuruAuthController extends Controller
 {
+    use ResolvesPublicTenant;
+
     /**
      * Form Login
      */
     public function login()
     {
-        $yayasan = Yayasan::first();
+        $yayasan = $this->currentYayasan();
 
         return view('guru.auth.login', compact('yayasan'));
     }
@@ -30,7 +32,19 @@ class GuruAuthController extends Controller
             'password' => ['required'],
         ]);
 
-        $guru = Pegawai::where('niy', trim($request->login))->first();
+        $yayasanId = $this->currentYayasanId();
+
+        $query = Pegawai::where('niy', trim($request->login));
+
+        // Kalau ada context tenant (dari /y/{slug}), scope ketat ke yayasan itu
+        // lewat relasi many-to-many pegawai <-> lembaga.
+        if ($yayasanId) {
+            $query->whereHas('lembagas', function ($q) use ($yayasanId) {
+                $q->where('yayasan_id', $yayasanId);
+            });
+        }
+
+        $guru = $query->first();
 
         if (! $guru) {
             return back()->with('error', 'NIY tidak ditemukan');
@@ -53,7 +67,7 @@ class GuruAuthController extends Controller
      */
     public function logout(Request $request)
     {
-        $request->session()->invalidate();
+        $request->session()->forget(['guru_id', 'guru_nama']);
         $request->session()->regenerateToken();
 
         return redirect()->route('login');

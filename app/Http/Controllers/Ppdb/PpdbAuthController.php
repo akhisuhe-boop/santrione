@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Ppdb;
 
+use App\Http\Controllers\Concerns\ResolvesPublicTenant;
 use App\Http\Controllers\Controller;
 use App\Models\Lembaga;
 use App\Models\Ppdb;
-use App\Models\Yayasan;
 use App\Models\TahunAjaran;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
@@ -14,13 +14,14 @@ use Illuminate\Validation\Rule;
 
 class PpdbAuthController extends Controller
 {
+    use ResolvesPublicTenant;
+
     /**
      * Form Login
      */
     public function login()
     {
-        $yayasan = Yayasan::first();
-
+        $yayasan = $this->currentYayasan();
         return view('ppdb.auth.login', compact('yayasan'));
     }
 
@@ -35,8 +36,17 @@ class PpdbAuthController extends Controller
         ]);
 
         $login = trim($request->login);
+        $yayasanId = $this->currentYayasanId();
 
-        $ppdb = Ppdb::where('nisn', $login)->first();
+        $query = Ppdb::where('nisn', $login);
+
+        if ($yayasanId) {
+            $query->whereHas('lembaga', function ($q) use ($yayasanId) {
+                $q->where('yayasan_id', $yayasanId);
+            });
+        }
+
+        $ppdb = $query->first();
 
         if (! $ppdb) {
             return back()->with('error', 'NISN tidak ditemukan');
@@ -59,7 +69,7 @@ class PpdbAuthController extends Controller
      */
     public function logout(Request $request)
     {
-        $request->session()->invalidate();
+        $request->session()->forget(['ppdb_id', 'ppdb_nama']);
         $request->session()->regenerateToken();
 
         return redirect()->route('role.login');
@@ -70,9 +80,16 @@ class PpdbAuthController extends Controller
      */
     public function register()
     {
-        $yayasan = Yayasan::first();
+        $yayasan = $this->currentYayasan();
+        $yayasanId = $this->currentYayasanId();
 
-        $lembagas = Lembaga::orderBy('nama')->get();
+        $lembagasQuery = Lembaga::orderBy('nama');
+
+        if ($yayasanId) {
+            $lembagasQuery->where('yayasan_id', $yayasanId);
+        }
+
+        $lembagas = $lembagasQuery->get();
 
         return view('ppdb.auth.register', compact(
             'yayasan',
@@ -85,37 +102,48 @@ class PpdbAuthController extends Controller
      */
     public function store(Request $request)
     {
+        $yayasanId = $this->currentYayasanId();
+
+        // NISN unik per-yayasan, bukan global lintas seluruh platform.
+        $lembagaIdsForUniqueCheck = $yayasanId
+            ? Lembaga::where('yayasan_id', $yayasanId)->pluck('id')
+            : collect();
+
         $request->validate([
             'lembaga_id' => [
                 'required',
-                'exists:lembagas,id',
+                Rule::exists('lembagas', 'id')->where(function ($query) use ($yayasanId) {
+                    if ($yayasanId) {
+                        $query->where('yayasan_id', $yayasanId);
+                    }
+                }),
             ],
-
             'nama_lengkap' => [
                 'required',
                 'string',
                 'max:255',
             ],
-
             'nisn' => [
                 'required',
                 'string',
                 'max:20',
-                Rule::unique((new Ppdb)->getTable(), 'nisn'),
+                Rule::unique((new Ppdb)->getTable(), 'nisn')
+                    ->where(function ($query) use ($yayasanId, $lembagaIdsForUniqueCheck) {
+                        if ($yayasanId) {
+                            $query->whereIn('lembaga_id', $lembagaIdsForUniqueCheck);
+                        }
+                    }),
             ],
-
             'wa_ayah' => [
                 'required',
                 'string',
                 'max:20',
             ],
-
             'asal_sekolah' => [
                 'required',
                 'string',
                 'max:255',
             ],
-
         ], [
             'lembaga_id.required' => 'Silakan pilih lembaga tujuan.',
             'lembaga_id.exists'   => 'Lembaga yang dipilih tidak valid.',
