@@ -493,18 +493,6 @@ class PembayaranResource extends BaseResource
                             'gagal' => 'Gagal',
                         ]),
 
-                    Tables\Filters\Filter::make('sembunyikan_alumni')
-                        ->label('Sembunyikan Alumni')
-                        ->toggle()
-                        ->default(true)
-                        ->query(fn ($query) =>
-                            $query->where(function ($q) {
-                                $q->whereDoesntHave('siswa')
-                                  ->orWhereHas('siswa', fn ($s) =>
-                                      $s->where('status_siswa', 'Aktif'));
-                            })
-                        ),
-
                 ])
 
                 ->actions([

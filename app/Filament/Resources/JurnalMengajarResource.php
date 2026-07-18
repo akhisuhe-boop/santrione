@@ -171,6 +171,7 @@ class JurnalMengajarResource extends BaseResource
                     */
                     $siswa = \App\Models\Siswa::query()
                         ->where('kelas_id', $jadwal->kelas_id)
+                        ->where('status_siswa', 'Aktif')
                         ->orderBy('nama_lengkap')
                         ->get()
                         ->map(fn ($item) => [
