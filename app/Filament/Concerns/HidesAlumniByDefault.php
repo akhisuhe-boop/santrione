@@ -11,19 +11,33 @@ use Illuminate\Database\Eloquent\Builder;
  *
  * Cara pakai:
  *   1. use HidesAlumniByDefault;
- *   2. Set $alumniRelation:
- *      - null kalau model List ini SENDIRI adalah Siswa (mis. ListSiswas)
- *      - 'siswa' (atau nama relasi lain) kalau model punya relasi ke Siswa
- *        (mis. ListTagihans -> relasi 'siswa')
+ *   2. Override method alumniRelation() kalau perlu:
+ *      - return null kalau model List ini SENDIRI adalah Siswa
+ *        (mis. ListSiswas)
+ *      - return 'siswa' (default, tidak perlu override) kalau model
+ *        punya relasi langsung ke Siswa (mis. ListTagihans)
+ *      - return 'wallet.siswa' dst kalau relasinya nested
  *   3. Panggil $this->alumniToggleAction() di getHeaderActions()
  *
  * Data alumni TIDAK PERNAH dihapus -- cuma disembunyikan dari query
  * default. Toggle-nya per-menu (session key beda tiap Resource), jadi
  * nyalain di 1 menu tidak mempengaruhi menu lain.
+ *
+ * CATATAN: sengaja pakai METHOD (bukan property class) untuk menentukan
+ * nama relasi -- PHP tidak mengizinkan class & trait yang dipakainya
+ * sama-sama deklarasi property dengan default value berbeda (fatal
+ * error "incompatible"). Method override tidak punya batasan itu.
  */
 trait HidesAlumniByDefault
 {
-    protected ?string $alumniRelation = 'siswa';
+    /**
+     * Nama relasi ke Siswa. Override di class yang pakai trait ini
+     * kalau bukan 'siswa' langsung (mis. null, atau 'wallet.siswa').
+     */
+    protected function alumniRelation(): ?string
+    {
+        return 'siswa';
+    }
 
     protected function alumniSessionKey(): string
     {
@@ -52,12 +66,12 @@ trait HidesAlumniByDefault
             return $query;
         }
 
+        $relation = $this->alumniRelation();
+
         // Model List ini sendiri adalah Siswa
-        if ($this->alumniRelation === null) {
+        if ($relation === null) {
             return $query->where('status_siswa', 'Aktif');
         }
-
-        $relation = $this->alumniRelation;
 
         return $query->where(function (Builder $q) use ($relation) {
             $q->whereDoesntHave($relation)

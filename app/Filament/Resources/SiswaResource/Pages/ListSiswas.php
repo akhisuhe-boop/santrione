@@ -15,7 +15,10 @@ class ListSiswas extends ListRecords
     protected static string $resource = SiswaResource::class;
 
     // Model List ini SENDIRI adalah Siswa
-    protected ?string $alumniRelation = null;
+    protected function alumniRelation(): ?string
+    {
+        return null;
+    }
 
     protected function getHeaderActions(): array
     {

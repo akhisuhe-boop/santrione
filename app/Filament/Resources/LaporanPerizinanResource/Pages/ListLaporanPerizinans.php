@@ -14,7 +14,10 @@ class ListLaporanPerizinans extends ListRecords
     protected static string $resource = LaporanPerizinanResource::class;
 
     // Model resource ini LANGSUNG Siswa
-    protected ?string $alumniRelation = null;
+    protected function alumniRelation(): ?string
+    {
+        return null;
+    }
 
     protected function getHeaderActions(): array
     {

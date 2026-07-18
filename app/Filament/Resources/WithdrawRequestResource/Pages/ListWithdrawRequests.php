@@ -14,7 +14,10 @@ class ListWithdrawRequests extends ListRecords
     protected static string $resource = WithdrawRequestResource::class;
 
     // Relasi ke Siswa lewat wallet dulu (nested)
-    protected ?string $alumniRelation = 'wallet.siswa';
+    protected function alumniRelation(): ?string
+    {
+        return 'wallet.siswa';
+    }
 
     protected function getHeaderActions(): array
     {
