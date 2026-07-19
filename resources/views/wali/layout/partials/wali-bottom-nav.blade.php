@@ -9,7 +9,7 @@
         <div class="grid grid-cols-5 h-16 relative">
 
             {{-- BERANDA --}}
-            <a href="{{ route('wali.dashboard') }}"
+            <a href="{{ route('wali.dashboard') }}" wire:navigate
                class="flex flex-col items-center justify-center relative
                {{ request()->routeIs('wali.dashboard') ? 'text-[#00A39D]' : 'text-gray-400' }}">
 
@@ -35,7 +35,7 @@
             </a>
 
             {{-- KEUANGAN --}}
-            <a href="{{ route('wali.keuangan') }}"
+            <a href="{{ route('wali.keuangan') }}" wire:navigate
                class="flex flex-col items-center justify-center relative
                {{ request()->routeIs('wali.keuangan') ? 'text-[#00A39D]' : 'text-gray-400' }}">
 
@@ -66,7 +66,7 @@
             <div class="relative flex justify-center">
 
                 {{-- ❗ DIPERBAIKI: -top-10 → -top-8 --}}
-                <a href="{{ route('wali.topup') }}"
+                <a href="{{ route('wali.topup') }}" wire:navigate
                     class="absolute -top-8
 
                         w-20 h-20
@@ -86,7 +86,7 @@
             </div>
 
             {{-- RAPORT --}}
-            <a href="{{ route('wali.raport') }}"
+            <a href="{{ route('wali.raport') }}" wire:navigate
                class="flex flex-col items-center justify-center relative
                {{ request()->routeIs('wali.raport') ? 'text-[#00A39D]' : 'text-gray-400' }}">
 
@@ -111,7 +111,7 @@
             </a>
 
             {{-- PROFIL --}}
-            <a href="{{ route('wali.profil') }}"
+            <a href="{{ route('wali.profil') }}" wire:navigate
                class="flex flex-col items-center justify-center text-gray-400 relative">
 
                 @if(request()->routeIs('wali.profil'))

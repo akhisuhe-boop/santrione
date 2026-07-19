@@ -37,7 +37,7 @@
     @else
         <link rel="icon" href="{{ asset('favicon.ico') }}">
     @endif
-    <link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="/manifest.json" crossorigin="use-credentials">
     <meta name="theme-color" content="#00A39D">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -268,9 +268,14 @@
 
                 <div class="flex items-center justify-between">
 
-                    <h3 class="text-sm font-semibold text-slate-900">
-                        Install SantriOne
-                    </h3>
+                    <div>
+                        <h3 class="text-sm font-semibold text-slate-900">
+                            Install {{ $yayasan->nama ?? 'Qinara App' }}
+                        </h3>
+                        <p class="text-[11px] text-slate-400">
+                            by Qinara Indonesia
+                        </p>
+                    </div>
 
                     <button
                         id="closeInstallPopup"
@@ -442,7 +447,7 @@ document
 // Setelah berhasil install
 window.addEventListener('appinstalled', () => {
 
-    console.log('SantriOne berhasil diinstall');
+    console.log('App berhasil diinstall');
 
     popup?.classList.add('hide-popup');
 
