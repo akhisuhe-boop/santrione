@@ -114,6 +114,12 @@ class TagihanResource extends BaseResource
                 Tables\Columns\TextColumn::make('kode')->searchable()->copyable(),
                 Tables\Columns\TextColumn::make('siswa.nama_lengkap')
                     ->label('Siswa')
+                    ->searchable(query: function ($query, string $search) {
+                        $query->where(function ($q) use ($search) {
+                            $q->whereHas('siswa', fn ($sq) => $sq->where('nama_lengkap', 'like', "%{$search}%"))
+                              ->orWhereHas('ppdb', fn ($pq) => $pq->where('nama_lengkap', 'like', "%{$search}%"));
+                        });
+                    })
                     ->getStateUsing(fn ($record) =>
                         $record->siswa?->nama_lengkap
                         ?? $record->ppdb?->nama_lengkap
