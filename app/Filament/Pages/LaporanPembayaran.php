@@ -137,8 +137,10 @@ class LaporanPembayaran extends Page implements HasForms
     {
         return Siswa::query()
             ->when($this->tahun_ajaran_id, fn ($q) =>
-                $q->whereHas('tagihans', fn ($q) =>
-                    $q->where('tahun_ajaran_id', $this->tahun_ajaran_id)))
+                $q->whereHas('tagihans', function ($q) {
+                    $q->where('tahun_ajaran_id', $this->tahun_ajaran_id)
+                      ->orWhere('periode_tahun_ajaran_id', $this->tahun_ajaran_id);
+                }))
 
             ->when($this->lembaga_id, fn ($q) =>
                 $q->where('lembaga_id', $this->lembaga_id))
