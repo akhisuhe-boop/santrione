@@ -177,7 +177,7 @@ public function getUmumData()
 
         // NON SPP
         ->whereHas('jenisTagihan', fn ($q) =>
-            $q->where('nama', '!=', 'SPP'))
+            $q->where('is_bulanan', false))
 
         ->when($this->jenis_tagihan_id, fn ($q) =>
             $q->where('jenis_tagihan_id', $this->jenis_tagihan_id)
