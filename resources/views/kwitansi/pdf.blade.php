@@ -40,7 +40,7 @@
         
             margin:0;
             padding:0;
-            font-family: DejaVu Sans, sans-serif;
+            font-family: 'Plus Jakarta Sans', sans-serif;
             color:#000;
             font-size:12px;
             line-height:1.2;
@@ -230,12 +230,12 @@
 
         <tr>
             <td>Tanggal</td>
-            <td>{{ optional($pembayaran->tanggal_bayar)->translatedFormat('d F Y H:i') }}</td>
+            <td>{{ optional($pembayaran->tanggal_bayar)->locale('id')->translatedFormat('d F Y H:i') }}</td>
         </tr>
 
         <tr>
             <td>Metode</td>
-            <td>{{ ucfirst($pembayaran->metode) }}</td>
+            <td>{{ $pembayaran->metode === 'admin' ? 'Tunai' : ucfirst($pembayaran->metode) }}</td>
         </tr>
 
     </table>
@@ -248,6 +248,12 @@
             <td>Nama</td>
             <td>{{ $pembayaran->siswa?->nama_lengkap ?? $pembayaran->ppdb?->nama_lengkap }}</td>
         </tr>
+        @if($pembayaran->siswa)
+        <tr>
+            <td>Kelas</td>
+            <td>{{ $pembayaran->siswa->kelas?->nama ?? '-' }}</td>
+        </tr>
+        @endif
 
         <tr>
             <td>Tagihan</td>
@@ -315,7 +321,7 @@
         </div>
     
         <div class="footer-text small">
-            Dicetak pada {{ now()->translatedFormat('d F Y H:i') }}
+            Dicetak pada {{ now()->locale('id')->translatedFormat('d F Y H:i') }}
         </div>
     
         <div class="footer-text small">

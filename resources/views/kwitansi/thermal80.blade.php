@@ -198,12 +198,12 @@
 
         <tr>
             <td>Tanggal</td>
-            <td>{{ optional($pembayaran->tanggal_bayar)->format('d/m/Y H:i') }}</td>
+            <td>{{ optional($pembayaran->tanggal_bayar)->locale('id')->translatedFormat('d F Y H:i') }}</td>
         </tr>
 
         <tr>
             <td>Metode</td>
-            <td>{{ ucfirst($pembayaran->metode) }}</td>
+            <td>{{ $pembayaran->metode === 'admin' ? 'Tunai' : ucfirst($pembayaran->metode) }}</td>
         </tr>
 
     </table>
@@ -214,6 +214,13 @@
             <td>Nama</td>
             <td>{{ $pembayaran->siswa?->nama_lengkap ?? $pembayaran->ppdb?->nama_lengkap }}</td>
         </tr>
+
+        @if($pembayaran->siswa)
+        <tr>
+            <td>Kelas</td>
+            <td>{{ $pembayaran->siswa->kelas?->nama ?? '-' }}</td>
+        </tr>
+        @endif
 
         <tr>
             <td>Tagihan</td>
@@ -276,7 +283,7 @@
         <br><br>
     
         <span style="font-size:10px;color:#777;">
-            Dicetak pada {{ now()->format('d/m/Y H:i') }}
+            Dicetak pada {{ now()->locale('id')->translatedFormat('d F Y H:i') }}
         </span>
     
         <br>
