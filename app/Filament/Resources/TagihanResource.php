@@ -310,7 +310,7 @@ class TagihanResource extends BaseResource
 
                     Select::make('tahun_ajaran_id')
                         ->default(fn () => \App\Models\TahunAjaran::aktif()?->id)
-                        ->options(\App\Models\TahunAjaran::pluck('nama', 'id'))
+                        ->options(\App\Models\TahunAjaran::get()->mapWithKeys(fn ($t) => [$t->id => "{$t->nama} ({$t->semester})"]))
                         ->label('Tahun Ajaran')
                         ->disabled()
                         ->dehydrated()

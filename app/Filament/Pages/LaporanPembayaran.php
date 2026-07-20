@@ -90,7 +90,7 @@ class LaporanPembayaran extends Page implements HasForms
                         ->label('Tahun Ajaran')
                         ->placeholder('Semua Tahun Ajaran')
                         ->searchable()
-                        ->options(\App\Models\TahunAjaran::pluck('nama', 'id'))
+                        ->options(\App\Models\TahunAjaran::get()->mapWithKeys(fn ($t) => [$t->id => "{$t->nama} ({$t->semester})"]))
                         ->live(),
 
                     Forms\Components\Select::make('lembaga_id')
