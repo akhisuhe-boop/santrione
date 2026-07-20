@@ -379,7 +379,13 @@ class TagihanResource extends BaseResource
 
                     $jenis = \App\Models\JenisTagihan::findOrFail($data['jenis_tagihan_id']);
                     $tahunAjaran = \App\Models\TahunAjaran::find($data['tahun_ajaran_id']);
-                    $tahun = (int) substr($tahunAjaran->nama, 0, 4);
+                    // Untuk tunggakan, dasar perhitungan tanggal jatuh tempo
+                    // pakai tahun ajaran ASAL utangnya (periode_tahun_ajaran_id),
+                    // bukan tahun ajaran aktif sekarang.
+                    $tahunUntukTanggal = (!empty($data['is_tunggakan']) && !empty($data['periode_tahun_ajaran_id']))
+                        ? \App\Models\TahunAjaran::find($data['periode_tahun_ajaran_id'])
+                        : $tahunAjaran;
+                    $tahun = (int) substr($tahunUntukTanggal->nama, 0, 4);
                     // 🔥 VALIDASI BULAN
                     if ($jenis->is_bulanan && empty($data['bulan'])) {
                         throw new \Exception('Bulan wajib dipilih untuk tagihan bulanan');
@@ -465,8 +471,11 @@ class TagihanResource extends BaseResource
                             $judul = $jenis->nama 
                                 . ($bulan ? ' - ' . $bulanNama[$bulan] : '');
 
+                            // Tahun ajaran berjalan Juli-Juni: bulan Jan-Jun masuk
+                            // tahun kalender KEDUA (tahun + 1), Jul-Des tahun PERTAMA.
+                            $tahunKalender = $bulan && (int) $bulan <= 6 ? $tahun + 1 : $tahun;
                             $jatuhTempo = $jenis->is_bulanan
-                            ? \Carbon\Carbon::createFromDate($tahun, (int) $bulan, 10)
+                            ? \Carbon\Carbon::createFromDate($tahunKalender, (int) $bulan, 10)
                             : $data['jatuh_tempo'];
 
                             Tagihan::create([
