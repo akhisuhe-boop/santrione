@@ -98,7 +98,7 @@
                                 @php
                                     $tagihans = $record->tagihans
                                         ->where('bulan', $num)
-                                        ->filter(fn($t)=> optional($t->jenisTagihan)->nama == 'SPP');
+                                        ->filter(fn($t)=> optional($t->jenisTagihan)->is_bulanan == true);
 
                                     $totalTagihan = $tagihans->sum('nominal');
                                     $totalBayar = $tagihans->flatMap->pembayarans->sum('nominal');
