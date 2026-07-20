@@ -98,7 +98,20 @@
                                 @php
                                     $tagihans = $record->tagihans
                                         ->where('bulan', $num)
-                                        ->filter(fn($t)=> optional($t->jenisTagihan)->is_bulanan == true && is_null($t->periode_tahun_ajaran_id));
+                                        ->filter(function ($t) {
+                                            if (! optional($t->jenisTagihan)->is_bulanan) return false;
+                                            if ($this->tahun_ajaran_id) {
+                                                // Filter tahun ajaran dipilih: cocokkan tunggakan
+                                                // (periode_tahun_ajaran_id) ATAU tagihan tahun
+                                                // berjalan yang sesuai filter.
+                                                return $t->periode_tahun_ajaran_id == $this->tahun_ajaran_id
+                                                    || (is_null($t->periode_tahun_ajaran_id) && $t->tahun_ajaran_id == $this->tahun_ajaran_id);
+                                            }
+                                            // Tanpa filter: hanya tagihan tahun berjalan (bukan
+                                            // tunggakan), supaya tidak dobel-hitung dengan bulan
+                                            // yang sama dari tahun lain.
+                                            return is_null($t->periode_tahun_ajaran_id);
+                                        });
 
                                     $totalTagihan = $tagihans->sum('nominal');
                                     $totalBayar = $tagihans->flatMap->pembayarans->sum('nominal');
