@@ -95,7 +95,7 @@ class MonitoringMengajarResource extends BaseResource
                 ->label('Mengajar')
                 ->getStateUsing(function ($record) {
                     return \App\Models\JurnalMengajar::query()
-                        ->where('pegawai_id', $record->id)
+                        ->where('jurnal_mengajars.pegawai_id', $record->id)
                         ->where('status', 'valid')
                         ->join('jadwal_pelajarans', 'jurnal_mengajars.jadwal_pelajaran_id', '=', 'jadwal_pelajarans.id')
                         ->sum('jadwal_pelajarans.durasi_jam') . ' JP';
@@ -115,7 +115,7 @@ class MonitoringMengajarResource extends BaseResource
                         ->sum('jumlah_jam_per_minggu');
 
                     $realisasi = \App\Models\JurnalMengajar::query()
-                        ->where('pegawai_id', $record->id)
+                        ->where('jurnal_mengajars.pegawai_id', $record->id)
                         ->where('status', 'valid')
                         ->join('jadwal_pelajarans', 'jurnal_mengajars.jadwal_pelajaran_id', '=', 'jadwal_pelajarans.id')
                         ->sum('jadwal_pelajarans.durasi_jam');
@@ -140,7 +140,7 @@ class MonitoringMengajarResource extends BaseResource
                             ->where('pegawai_id', $record->id)
                             ->sum('jumlah_jam_per_minggu');
                         $realisasi = \App\Models\JurnalMengajar::query()
-                            ->where('pegawai_id', $record->id)
+                            ->where('jurnal_mengajars.pegawai_id', $record->id)
                             ->where('status', 'valid')
                             ->join('jadwal_pelajarans', 'jurnal_mengajars.jadwal_pelajaran_id', '=', 'jadwal_pelajarans.id')
                             ->sum('jadwal_pelajarans.durasi_jam');
