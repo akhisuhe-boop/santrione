@@ -128,6 +128,7 @@ throw ValidationException::withMessages([
                 'keterangan' => 'Penyesuaian saldo - ' . $siswa['nama'] . ' - ' . $siswa['kelas'],
                 'penanggung_jawab' => $siswa['nama'] . ' - ' . $siswa['kelas'],
                 'lembaga_id' => $wallet->siswa->lembaga_id ?? null,
+                'diinput_oleh' => auth()->user()->name ?? null,
             ]);
         });
     }
@@ -173,6 +174,7 @@ throw ValidationException::withMessages([
                 'keterangan' => $siswa['nama'] . ' - ' . $siswa['kelas'],
                 'penanggung_jawab' => $siswa['nama'] . ' - ' . $siswa['kelas'],
                 'lembaga_id' => $wallet->siswa->lembaga_id ?? null,
+                'diinput_oleh' => auth()->user()->name ?? null,
             ]);
         });
     }
@@ -232,6 +234,7 @@ throw ValidationException::withMessages([
                 'keterangan' => 'Penarikan - ' . $siswa['nama'] . ' - ' . $siswa['kelas'],
                 'penanggung_jawab' => $siswa['nama'] . ' - ' . $siswa['kelas'],
                 'lembaga_id' => $wallet->siswa->lembaga_id ?? null,
+                'diinput_oleh' => auth()->user()->name ?? null,
             ]);
 
             DB::commit();

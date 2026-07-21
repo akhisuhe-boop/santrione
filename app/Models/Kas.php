@@ -25,6 +25,7 @@ class Kas extends Model
         'tanggal',
         'keterangan',
         'penanggung_jawab',
+        'diinput_oleh',
         'bukti',
         'lembaga_id',
     ];

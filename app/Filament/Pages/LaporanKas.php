@@ -431,7 +431,7 @@ class LaporanKas extends Page implements HasForms, HasTable
 
                 Tables\Columns\TextColumn::make('diinput_oleh')
                     ->label('Diinput Oleh')
-                    ->getStateUsing(fn ($record) => $record->pembayaran?->diinput_oleh ?? '-')
+                    ->getStateUsing(fn ($record) => $record->diinput_oleh ?? $record->pembayaran?->diinput_oleh ?? '-')
                     ->toggleable(),
 
                 Tables\Columns\TextColumn::make('diverifikasi_oleh')
