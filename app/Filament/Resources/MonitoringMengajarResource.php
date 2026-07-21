@@ -206,8 +206,7 @@ class MonitoringMengajarResource extends BaseResource
                 ->color('primary')
                 ->url(fn ($record) =>
                     route(
-                        'filament.admin.resources.monitoring-mengajars.detail',
-                        $record
+                        ['tenant' => \Filament\Facades\Filament::getTenant(), 'record' => $record]
                     )
                 ),
 
