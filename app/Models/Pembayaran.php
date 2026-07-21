@@ -250,9 +250,18 @@ class Pembayaran extends Model
     /**
      * 🧠 HANDLE DELETE
      */
+    static::deleting(function ($pembayaran) {
+        // Hapus Kas terkait DI SINI (sebelum baris pembayaran benar-benar
+        // dihapus) -- kolom kas.pembayaran_id punya FK ON DELETE SET NULL,
+        // jadi begitu baris pembayaran dihapus, MySQL sendiri langsung set
+        // pembayaran_id di kas jadi NULL duluan sebelum hook deleted() jalan.
+        // Kalau logic ini di deleted() (setelah terhapus), where('pembayaran_id',
+        // ...) sudah tidak nemu apa-apa -- kas jadi yatim, bukan ikut terhapus.
+        \App\Models\Kas::where('pembayaran_id', $pembayaran->id)->delete();
+    });
+
     static::deleted(function ($pembayaran) {
 
-        \App\Models\Kas::where('pembayaran_id', $pembayaran->id)->delete();
 
         $tagihan = $pembayaran->tagihan;
 
