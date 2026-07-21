@@ -37,7 +37,10 @@ class WalletResource extends BaseResource
             Forms\Components\TextInput::make('siswa.nama_lengkap')
                 ->label('Siswa')
                 ->disabled()
-                ->dehydrated(false),
+                ->dehydrated(false)
+                ->afterStateHydrated(function ($component, $record) {
+                    $component->state($record?->siswa?->nama_lengkap ?? '-');
+                }),
 
             Forms\Components\TextInput::make('saldo')
                 ->label('Saldo')
@@ -46,6 +49,10 @@ class WalletResource extends BaseResource
                 ->stripCharacters('.')
                 ->prefix('Rp')
                 ->required()
+                ->afterStateHydrated(function ($component, $record) {
+                    $component->state((int) ($record?->saldo ?? 0));
+                })
+                ->dehydrateStateUsing(fn ($state) => (int) preg_replace('/[^0-9]/', '', (string) $state))
                 ->helperText('Mengubah saldo di sini akan otomatis tercatat sebagai "Penyesuaian Saldo" di Kas, supaya tetap ada jejaknya -- BUKAN diam-diam berubah tanpa catatan.'),
 
         ]);
