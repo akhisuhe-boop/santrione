@@ -30,6 +30,21 @@ class ListJadwalPelajarans extends Page implements HasForms
         'filament.resources.jadwal-pelajaran-resource.pages.list-jadwal-pelajarans';
 
     /**
+     * Judul halaman & breadcrumb.
+     *
+     * Ini custom Page (bukan ListRecords bawaan Filament), jadi
+     * judulnya tidak otomatis ikut label Resource — kalau tidak
+     * di-set manual, Filament akan menebak dari nama class
+     * "ListJadwalPelajarans" apa adanya (ikut ada akhiran "s").
+     */
+    protected static ?string $title = 'Jadwal Pelajaran';
+
+    public function getBreadcrumb(): string
+    {
+        return 'Jadwal Pelajaran';
+    }
+
+    /**
      * ==========================================================
      * FILTER
      * ==========================================================
@@ -183,16 +198,64 @@ class ListJadwalPelajarans extends Page implements HasForms
 
                 $key = $h.'-'.$jam->id;
 
-                $row['hari'][$h] = optional(
-
-                    $jadwal->get($key)
-
-                )->first();
+                $row['hari'][$h] = [
+                    'record'  => optional($jadwal->get($key))->first(),
+                    'rowspan' => 1,
+                    'hide'    => false,
+                ];
 
             }
 
             $grid[] = $row;
 
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Gabungkan tampilan (rowspan) untuk 1 pertemuan yang JP-nya
+        | berurutan (mis. JP/Pertemuan = 2 -> 2 baris JP yang sama
+        | persis mapel & gurunya di hari yang sama), supaya tampil
+        | sebagai 1 kotak visual, bukan 2 kotak identik yang menumpuk.
+        |--------------------------------------------------------------------------
+        */
+
+        foreach ($hari as $h) {
+
+            for ($i = 0; $i < count($grid); $i++) {
+
+                $current = $grid[$i]['hari'][$h]['record'] ?? null;
+
+                if (! $current) {
+                    continue;
+                }
+
+                if ($grid[$i]['hari'][$h]['hide']) {
+                    continue;
+                }
+
+                $span = 1;
+
+                for ($j = $i + 1; $j < count($grid); $j++) {
+
+                    $next = $grid[$j]['hari'][$h]['record'] ?? null;
+
+                    if (
+                        ! $next ||
+                        $next->mata_pelajaran_id !== $current->mata_pelajaran_id ||
+                        $next->pegawai_id !== $current->pegawai_id
+                    ) {
+                        break;
+                    }
+
+                    $grid[$j]['hari'][$h]['hide'] = true;
+
+                    $span++;
+                }
+
+                $grid[$i]['hari'][$h]['rowspan'] = $span;
+
+                $i += ($span - 1);
+            }
         }
 
         $this->grid = $grid;
@@ -481,15 +544,54 @@ public function delete(
 
         DB::transaction(function () use ($hari, $jamId) {
 
-            JadwalPelajaran::query()
+            // Sel di grid bisa merepresentasikan 1 pertemuan yang
+            // berisi lebih dari 1 JP berurutan (rowspan). Klik hapus
+            // di sel itu harus menghapus SELURUH JP pertemuan tsb,
+            // bukan cuma baris JP yang paling atas.
 
+            $anchor = JadwalPelajaran::query()
                 ->where('kelas_id', $this->kelas_id)
-
                 ->where('hari', $hari)
-
                 ->where('jam_pelajaran_id', $jamId)
+                ->first();
 
-                ->delete();
+            if (! $anchor) {
+                return;
+            }
+
+            $jamUrutanList = JamPelajaran::query()
+                ->where('aktif', true)
+                ->orderBy('urutan')
+                ->pluck('id')
+                ->values();
+
+            $startIndex = $jamUrutanList->search($jamId);
+
+            $idsToDelete = [$anchor->id];
+
+            if ($startIndex !== false) {
+
+                for ($i = $startIndex + 1; $i < $jamUrutanList->count(); $i++) {
+
+                    $next = JadwalPelajaran::query()
+                        ->where('kelas_id', $this->kelas_id)
+                        ->where('hari', $hari)
+                        ->where('jam_pelajaran_id', $jamUrutanList[$i])
+                        ->first();
+
+                    if (
+                        ! $next ||
+                        $next->mata_pelajaran_id !== $anchor->mata_pelajaran_id ||
+                        $next->pegawai_id !== $anchor->pegawai_id
+                    ) {
+                        break;
+                    }
+
+                    $idsToDelete[] = $next->id;
+                }
+            }
+
+            JadwalPelajaran::whereIn('id', $idsToDelete)->delete();
 
         });
 

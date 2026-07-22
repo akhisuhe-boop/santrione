@@ -23,4 +23,44 @@ use Filament\Resources\Resource;
 abstract class BaseResource extends Resource
 {
     protected static bool $isScopedToTenant = false;
+
+    /**
+     * Default label (judul singular) untuk resource ini.
+     *
+     * Filament secara default menebak label dari nama class model
+     * (mis. "JurnalMengajar" -> "jurnal mengajar"). Di sini kita
+     * pakai Str::headline() supaya rapi jadi Title Case tanpa perlu
+     * mengisi $modelLabel manual di setiap Resource, tapi tetap
+     * menghormati $modelLabel kalau memang sudah didefinisikan.
+     */
+    public static function getModelLabel(): string
+    {
+        if (filled(static::$modelLabel)) {
+            return static::$modelLabel;
+        }
+
+        return str(class_basename(static::getModel()))
+            ->headline()
+            ->toString();
+    }
+
+    /**
+     * Default label jamak (judul di navigasi/List/breadcrumb).
+     *
+     * Bahasa Indonesia TIDAK menambahkan akhiran "s" untuk bentuk
+     * jamak (beda dengan Inggris). Filament bawaan otomatis
+     * melakukan Str::plural() pada model label, yang menghasilkan
+     * judul salah seperti "Jurnal Mengajars", "Asramas", dsb.
+     * Di sini kita override supaya bentuk jamak = bentuk singular,
+     * kecuali sebuah Resource memang sudah mengisi $pluralModelLabel
+     * sendiri secara eksplisit.
+     */
+    public static function getPluralModelLabel(): string
+    {
+        if (filled(static::$pluralModelLabel)) {
+            return static::$pluralModelLabel;
+        }
+
+        return static::getModelLabel();
+    }
 }

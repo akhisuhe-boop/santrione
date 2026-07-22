@@ -229,6 +229,38 @@ class JadwalGeneratorService
             ->slice($offset)
             ->concat($jamIds->take($offset))
             ->values();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Hindari 2 pertemuan mapel yang sama, di kelas yang sama,
+        | jatuh di hari yang sama dalam 1 minggu.
+        |--------------------------------------------------------------------------
+        |
+        | Tiap TeachingSession sudah membawa jam_pelajaran sebanyak
+        | jp_per_pertemuan (mis. 2 JP berurutan = 1 kali pertemuan).
+        | Yang TIDAK boleh terjadi adalah pertemuan lain dari mapel
+        | yang sama muncul lagi di hari yang sudah dipakai mapel itu
+        | minggu ini. Kalau semua hari sudah "terpakai" (kasus kelas
+        | dengan sangat sedikit hari aktif dibanding jumlah pertemuan),
+        | baru fallback membolehkan hari yang sama supaya generate
+        | tidak gagal total.
+        */
+
+        $usedDays = $this->constraint
+            ->getSchedule()
+            ->where('kelas_id', $session->kelasId)
+            ->where('mata_pelajaran_id', $session->mataPelajaranId)
+            ->pluck('hari')
+            ->unique()
+            ->all();
+
+        $preferredDays = array_values(
+            array_diff($days, $usedDays)
+        );
+
+        if (! empty($preferredDays)) {
+            $days = $preferredDays;
+        }
     
         $candidates = [];
     

@@ -53,6 +53,22 @@ class User extends Authenticatable implements FilamentUser, HasTenants
         ];
     }
 
+    protected static function booted(): void
+    {
+        // User baru yang dibuat lewat panel Filament (mis. resource
+        // Pengguna) wajib otomatis terikat ke Yayasan (tenant) yang
+        // sedang aktif saat itu. Tanpa ini, yayasan_id akan kosong
+        // dan canAccessPanel() akan SELALU menolak login user
+        // tersebut walau password/email sudah benar — karena user
+        // non-platform-admin wajib punya yayasan_id untuk bisa masuk.
+        static::creating(function (self $model) {
+            if (empty($model->yayasan_id)) {
+                $model->yayasan_id = \Filament\Facades\Filament::getTenant()?->id
+                    ?? auth()->user()?->yayasan_id;
+            }
+        });
+    }
+
     public function yayasan()
     {
         return $this->belongsTo(Yayasan::class);

@@ -54,7 +54,54 @@
         </script>
         
         @endif
-        
+
+        @if(session('success'))
+
+        <div
+            id="alertSuccess"
+            class="mt-4 mb-5 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+
+            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-100">
+
+                <x-heroicon-o-check-circle
+                    class="h-5 w-5 text-emerald-600"/>
+
+            </div>
+
+            <div class="flex-1">
+
+            <div class="text-[13px] font-semibold leading-none text-emerald-800">
+                Berhasil
+            </div>
+
+            <div class="mt-px text-[13px] leading-5 text-emerald-700">
+                {{ session('success') }}
+            </div>
+
+            </div>
+
+        </div>
+
+        <script>
+
+        setTimeout(() => {
+
+            const alert = document.getElementById('alertSuccess');
+
+            if (alert) {
+
+                alert.classList.add('opacity-0', '-translate-y-2');
+
+                setTimeout(() => alert.remove(), 500);
+
+            }
+
+        }, 5000);
+
+        </script>
+
+        @endif
+
         <div class="flex items-center justify-between px-3 py-2">
     
             {{-- INFORMASI GURU --}}

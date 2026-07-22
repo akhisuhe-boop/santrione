@@ -130,11 +130,24 @@
 
             @php
 
-                $item = $row['hari'][$hari] ?? null;
+                $cell = $row['hari'][$hari] ?? null;
+
+                $item = $cell['record'] ?? null;
+
+                $rowspan = $cell['rowspan'] ?? 1;
+
+                $hide = $cell['hide'] ?? false;
 
             @endphp
 
+            @if ($hide)
+
+                {{-- Sel ini sudah tergabung (rowspan) ke baris JP di atasnya --}}
+
+            @else
+
             <td
+                @if ($rowspan > 1) rowspan="{{ $rowspan }}" @endif
                 class="border border-gray-200 p-2 align-top">
 
                 @if ($item)
@@ -144,9 +157,23 @@
 
                         <div>
 
-                            <div class="font-semibold text-primary-700">
+                            <div class="flex items-start justify-between gap-2">
 
-                                {{ $item->mataPelajaran?->nama }}
+                                <div class="font-semibold text-primary-700">
+
+                                    {{ $item->mataPelajaran?->nama }}
+
+                                </div>
+
+                                @if ($rowspan > 1)
+
+                                    <span class="whitespace-nowrap rounded-full bg-primary-100 px-2 py-0.5 text-[10px] font-semibold text-primary-700">
+
+                                        {{ $rowspan }} JP
+
+                                    </span>
+
+                                @endif
 
                             </div>
 
@@ -193,6 +220,8 @@
                 @endif
 
             </td>
+
+            @endif
 
         @endforeach
 
