@@ -28,6 +28,7 @@ class Lembaga extends Model
     'logo',
     'npsn',
     'nss',
+    'tarif_pengganti_per_jp',
     ];
     
     protected static function booted()

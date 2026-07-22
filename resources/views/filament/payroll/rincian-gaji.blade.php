@@ -64,6 +64,7 @@
                     $jurnalList = \App\Models\JurnalMengajar::query()
                         ->with(['kelas', 'mataPelajaran', 'jamPelajaran'])
                         ->where('pegawai_lembaga_id', $item->pegawai_lembaga_id)
+                        ->where('status', 'valid')
                         ->whereMonth('tanggal', $payroll->bulan)
                         ->whereYear('tanggal', $payroll->tahun)
                         ->when(

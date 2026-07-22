@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\Pegawai;
 use App\Models\Payroll;
 use App\Models\PayrollItem;
+use App\Models\PayrollAdjustment;
+use App\Models\PayrollAdjustmentTemplate;
 use App\Models\JurnalMengajar;
 
 class PayrollService
@@ -212,6 +214,7 @@ class PayrollService
                     'jadwal_pelajarans.jam_pelajaran_id'
                 )
                 ->where('jurnal_mengajars.pegawai_lembaga_id', $jabatan->id)
+                ->where('jurnal_mengajars.status', 'valid')
                 ->whereMonth('jurnal_mengajars.tanggal', $payroll->bulan)
                 ->whereYear('jurnal_mengajars.tanggal', $payroll->tahun);
 
@@ -284,6 +287,40 @@ class PayrollService
                     $subtotal += $nominalPengganti;
                 }
             }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | TERAPKAN TUNJANGAN/POTONGAN TETAP (dari template, auto tiap bulan)
+        |--------------------------------------------------------------------------
+        |
+        | Ini yang "cukup sekali setting" (mis. Tunjangan Wali Kelas,
+        | Tunjangan Pembina Eskul) — beda dari adjustment dinamis yang
+        | diinput manual tiap bulan. firstOrCreate supaya aman dipanggil
+        | ulang (mis. saat regenerate) tanpa bikin baris duplikat.
+        */
+
+        $templates = PayrollAdjustmentTemplate::query()
+            ->where('pegawai_id', $pegawai->id)
+            ->where('is_active', true)
+            ->get();
+
+        foreach ($templates as $template) {
+
+            PayrollAdjustment::firstOrCreate(
+                [
+                    'payroll_id' => $payroll->id,
+                    'source_template_id' => $template->id,
+                ],
+                [
+                    'tipe' => $template->tipe,
+                    'nama_komponen' => $template->nama_komponen,
+                    'qty' => 1,
+                    'nominal' => $template->nominal,
+                    'subtotal' => $template->nominal,
+                    'catatan' => $template->catatan ?: 'Otomatis dari Tunjangan/Potongan Tetap',
+                ]
+            );
         }
 
                 /*

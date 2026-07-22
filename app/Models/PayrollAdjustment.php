@@ -18,6 +18,7 @@ class PayrollAdjustment extends Model
 
     protected $fillable = [
         'payroll_id',
+        'source_template_id',
         'tipe',
         'nama_komponen',
         'qty',
@@ -35,6 +36,11 @@ class PayrollAdjustment extends Model
     public function payroll()
     {
         return $this->belongsTo(Payroll::class);
+    }
+
+    public function sourceTemplate()
+    {
+        return $this->belongsTo(PayrollAdjustmentTemplate::class, 'source_template_id');
     }
 
     /*

@@ -258,67 +258,22 @@ class JadwalGeneratorService
             array_diff($days, $usedDays)
         );
 
-        if (! empty($preferredDays)) {
-            $days = $preferredDays;
-        }
-    
-        $candidates = [];
-    
-        foreach ($days as $hari) {
-    
-            foreach ($jamIds as $jam) {
+        $dayAttempts = ! empty($preferredDays)
+            ? [$preferredDays, $days]
+            : [$days];
 
-            if (! $this->constraint->canPlace(
+        $candidates = [];
+
+        foreach ($dayAttempts as $attemptDays) {
+
+            $candidates = $this->collectCandidates(
                 $session,
-                $hari,
-                $jam->id
-            )) {
-                continue;
-            }
-        
-            $score = 100;
-        
-            $dayCount = $this->constraint
-                ->getSchedule()
-                ->where('kelas_id', $session->kelasId)
-                ->where('hari', $hari)
-                ->count();
-        
-            $score -= ($dayCount * 5);
-        
-            $jpIndex = $jamIds->search(
-                fn ($item) => $item->id == $jam->id
+                $attemptDays,
+                $jamIds
             );
-        
-            if ($jpIndex !== false) {
-        
-                $middle = floor($jamIds->count() / 2);
-        
-                $score -= abs($middle - $jpIndex);
-            }
-        
-            $sameTeacher = $this->constraint
-                ->getSchedule()
-                ->where('pegawai_id', $session->pegawaiId)
-                ->where('hari', $hari)
-                ->count();
-        
-            $score -= ($sameTeacher * 8);
-        
-            $sameMapel = $this->constraint
-                ->getSchedule()
-                ->where('kelas_id', $session->kelasId)
-                ->where('mata_pelajaran_id', $session->mataPelajaranId)
-                ->where('hari', $hari)
-                ->count();
-        
-            $score -= ($sameMapel * 100);
-        
-            $candidates[] = [
-                'hari'  => $hari,
-                'jp'    => $jam->id,
-                'score' => $score,
-            ];
+
+            if (! empty($candidates)) {
+                break;
             }
         }
     
@@ -348,6 +303,83 @@ class JadwalGeneratorService
         );
     
         $this->lastPlacedDay[$key] = $best['hari'];
+    }
+
+    /**
+     * Kumpulkan semua kandidat (hari, jam, score) yang valid untuk
+     * sebuah session, dibatasi ke daftar $days yang diberikan.
+     *
+     * Dipisah dari placeSession() supaya bisa dipanggil 2x: pass
+     * pertama coba hari yang belum dipakai mapel ini, pass kedua
+     * (fallback) coba semua hari kalau pass pertama nihil.
+     */
+    protected function collectCandidates(
+        TeachingSession $session,
+        array $days,
+        Collection $jamIds
+    ): array {
+
+        $candidates = [];
+
+        foreach ($days as $hari) {
+
+            foreach ($jamIds as $jam) {
+
+                if (! $this->constraint->canPlace(
+                    $session,
+                    $hari,
+                    $jam->id
+                )) {
+                    continue;
+                }
+
+                $score = 100;
+
+                $dayCount = $this->constraint
+                    ->getSchedule()
+                    ->where('kelas_id', $session->kelasId)
+                    ->where('hari', $hari)
+                    ->count();
+
+                $score -= ($dayCount * 5);
+
+                $jpIndex = $jamIds->search(
+                    fn ($item) => $item->id == $jam->id
+                );
+
+                if ($jpIndex !== false) {
+
+                    $middle = floor($jamIds->count() / 2);
+
+                    $score -= abs($middle - $jpIndex);
+                }
+
+                $sameTeacher = $this->constraint
+                    ->getSchedule()
+                    ->where('pegawai_id', $session->pegawaiId)
+                    ->where('hari', $hari)
+                    ->count();
+
+                $score -= ($sameTeacher * 8);
+
+                $sameMapel = $this->constraint
+                    ->getSchedule()
+                    ->where('kelas_id', $session->kelasId)
+                    ->where('mata_pelajaran_id', $session->mataPelajaranId)
+                    ->where('hari', $hari)
+                    ->count();
+
+                $score -= ($sameMapel * 100);
+
+                $candidates[] = [
+                    'hari'  => $hari,
+                    'jp'    => $jam->id,
+                    'score' => $score,
+                ];
+            }
+        }
+
+        return $candidates;
     }
     
     /**

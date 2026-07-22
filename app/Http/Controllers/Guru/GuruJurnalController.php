@@ -174,12 +174,12 @@ class GuruJurnalController extends Controller
         $guru = Pegawai::findOrFail(session('guru_id'));
         $jadwal = JadwalPelajaran::findOrFail($request->jadwal_id);
 
-        // Tarif honor pengganti diambil dari Pengaturan Yayasan (berlaku
-        // untuk semua guru pengganti), bukan diisi manual di sini. Nilai
-        // ini disimpan sebagai snapshot saat jurnal dibuat, supaya kalau
-        // tarif globalnya diganti nanti, perhitungan gaji bulan-bulan
+        // Tarif honor pengganti diambil dari menu Keuangan > Honor Guru
+        // Pengganti (per lembaga), bukan diisi manual di sini. Nilai
+        // ini disimpan sebagai snapshot saat jurnal dibuat, supaya
+        // kalau tarifnya diganti nanti, perhitungan gaji bulan-bulan
         // sebelumnya tidak ikut berubah.
-        $yayasan = \App\Models\Yayasan::find(session('active_public_yayasan_id'));
+        $lembaga = $jadwal->kelas?->lembaga;
 
         $jurnal = JurnalMengajar::firstOrCreate(
             [
@@ -194,7 +194,7 @@ class GuruJurnalController extends Controller
                 'kelas_id'            => $jadwal->kelas_id,
                 'mata_pelajaran_id'   => $jadwal->mata_pelajaran_id,
                 'jam_pelajaran_id'    => $jadwal->jam_pelajaran_id,
-                'tarif_pengganti_per_jp' => $yayasan?->tarif_pengganti_per_jp,
+                'tarif_pengganti_per_jp' => $lembaga?->tarif_pengganti_per_jp,
                 'materi'              => '',
                 'status'              => 'draft',
             ]
@@ -237,14 +237,16 @@ class GuruJurnalController extends Controller
         $request->validate([
             'jurnal_id' => ['required'],
             'materi' => ['required'],
-            'status' => ['required'],
         ]);
     
         $jurnal = JurnalMengajar::findOrFail($request->jurnal_id);
     
+        // Guru cuma mengisi materi. Status jurnal tetap 'draft' sampai
+        // divalidasi admin (lihat aksi "Validasi" di JurnalMengajarResource)
+        // — guru tidak boleh memvalidasi jurnalnya sendiri, karena gaji
+        // per JP hanya dihitung dari jurnal yang statusnya 'valid'.
         $jurnal->update([
             'materi' => $request->materi,
-            'status' => $request->status,
         ]);
     
         return redirect()

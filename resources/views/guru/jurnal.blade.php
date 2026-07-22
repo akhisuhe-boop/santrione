@@ -79,7 +79,13 @@
     </div>
         <div class="mt-6 grid grid-cols-2 gap-4">
     </div>
-    
+
+    <form method="POST" action="{{ route('guru.jurnal.store') }}">
+
+        @csrf
+
+        <input type="hidden" name="jurnal_id" value="{{ $jurnal->id }}">
+
         <div class="mt-6 rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
 
         <div class="flex items-center justify-between">
@@ -328,11 +334,11 @@
 
                 <span
                     class="rounded-full px-3 py-1 text-xs font-semibold
-                    {{ ($jurnal->status ?? old('status')) == 'Selesai'
+                    {{ $jurnal->status === 'valid'
                         ? 'bg-emerald-100 text-emerald-700'
                         : 'bg-amber-100 text-amber-700' }}">
 
-                    {{ old('status', $jurnal->status) }}
+                    {{ $jurnal->status === 'valid' ? 'Sudah Divalidasi' : 'Menunggu Validasi' }}
 
                 </span>
 
