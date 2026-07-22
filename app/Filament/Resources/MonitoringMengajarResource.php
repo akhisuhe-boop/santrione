@@ -95,9 +95,10 @@ class MonitoringMengajarResource extends BaseResource
                 ->label('Mengajar')
                 ->getStateUsing(function ($record) {
                     return \App\Models\JurnalMengajar::query()
-                        ->where('pegawai_id', $record->id)
+                        ->where('jurnal_mengajars.pegawai_id', $record->id)
                         ->where('status', 'valid')
-                        ->sum('durasi_jam') . ' JP';
+                        ->join('jadwal_pelajarans', 'jurnal_mengajars.jadwal_pelajaran_id', '=', 'jadwal_pelajarans.id')
+                        ->sum('jadwal_pelajarans.durasi_jam') . ' JP';
                 })
                 ->color('success'),
                 /*
@@ -114,9 +115,10 @@ class MonitoringMengajarResource extends BaseResource
                         ->sum('jumlah_jam_per_minggu');
 
                     $realisasi = \App\Models\JurnalMengajar::query()
-                        ->where('pegawai_id', $record->id)
+                        ->where('jurnal_mengajars.pegawai_id', $record->id)
                         ->where('status', 'valid')
-                        ->sum('durasi_jam');
+                        ->join('jadwal_pelajarans', 'jurnal_mengajars.jadwal_pelajaran_id', '=', 'jadwal_pelajarans.id')
+                        ->sum('jadwal_pelajarans.durasi_jam');
 
                     return max($kewajiban - $realisasi, 0) . ' JP';
                 })
@@ -138,9 +140,10 @@ class MonitoringMengajarResource extends BaseResource
                             ->where('pegawai_id', $record->id)
                             ->sum('jumlah_jam_per_minggu');
                         $realisasi = \App\Models\JurnalMengajar::query()
-                            ->where('pegawai_id', $record->id)
+                            ->where('jurnal_mengajars.pegawai_id', $record->id)
                             ->where('status', 'valid')
-                            ->sum('durasi_jam');
+                            ->join('jadwal_pelajarans', 'jurnal_mengajars.jadwal_pelajaran_id', '=', 'jadwal_pelajarans.id')
+                            ->sum('jadwal_pelajarans.durasi_jam');
                         if ($kewajiban <= 0) {
                             return '0%';
                         }
@@ -204,7 +207,7 @@ class MonitoringMengajarResource extends BaseResource
                 ->url(fn ($record) =>
                     route(
                         'filament.admin.resources.monitoring-mengajars.detail',
-                        $record
+                        ['tenant' => \Filament\Facades\Filament::getTenant(), 'record' => $record]
                     )
                 ),
 

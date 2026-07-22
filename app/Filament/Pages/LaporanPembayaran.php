@@ -90,7 +90,7 @@ class LaporanPembayaran extends Page implements HasForms
                         ->label('Tahun Ajaran')
                         ->placeholder('Semua Tahun Ajaran')
                         ->searchable()
-                        ->options(\App\Models\TahunAjaran::pluck('nama', 'id'))
+                        ->options(\App\Models\TahunAjaran::get()->mapWithKeys(fn ($t) => [$t->id => "{$t->nama} ({$t->semester})"]))
                         ->live(),
 
                     Forms\Components\Select::make('lembaga_id')
@@ -137,8 +137,10 @@ class LaporanPembayaran extends Page implements HasForms
     {
         return Siswa::query()
             ->when($this->tahun_ajaran_id, fn ($q) =>
-                $q->whereHas('tagihans', fn ($q) =>
-                    $q->where('tahun_ajaran_id', $this->tahun_ajaran_id)))
+                $q->whereHas('tagihans', function ($q) {
+                    $q->where('tahun_ajaran_id', $this->tahun_ajaran_id)
+                      ->orWhere('periode_tahun_ajaran_id', $this->tahun_ajaran_id);
+                }))
 
             ->when($this->lembaga_id, fn ($q) =>
                 $q->where('lembaga_id', $this->lembaga_id))
@@ -177,7 +179,7 @@ public function getUmumData()
 
         // NON SPP
         ->whereHas('jenisTagihan', fn ($q) =>
-            $q->where('nama', '!=', 'SPP'))
+            $q->where('is_bulanan', false))
 
         ->when($this->jenis_tagihan_id, fn ($q) =>
             $q->where('jenis_tagihan_id', $this->jenis_tagihan_id)

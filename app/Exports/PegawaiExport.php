@@ -39,6 +39,7 @@ class PegawaiExport implements FromCollection, WithHeadings, ShouldAutoSize, Wit
                 $data[] = [
                     $no++,
                     $pegawai->nama,
+                    $pegawai->niy,
                     $pegawai->nik,
                     $pegawai->jenis_kelamin,
                     $pegawai->no_hp,
@@ -59,6 +60,7 @@ class PegawaiExport implements FromCollection, WithHeadings, ShouldAutoSize, Wit
         return [
             'No',
             'Nama',
+            'NIY',
             'NIK',
             'JK',
             'No HP',
@@ -78,12 +80,12 @@ class PegawaiExport implements FromCollection, WithHeadings, ShouldAutoSize, Wit
             $sheet = $event->sheet->getDelegate();
 
             // 🔥 JUDUL
-            $sheet->mergeCells('A1:J1');
+            $sheet->mergeCells('A1:K1');
             $sheet->setCellValue('A1', 'DATA GURU & PEGAWAI');
 
             $namaYayasan = (\Filament\Facades\Filament::getTenant()?->nama ?? auth()->user()?->yayasan?->nama ?? '-');
 
-            $sheet->mergeCells('A2:J2');
+            $sheet->mergeCells('A2:K2');
             $sheet->setCellValue('A2', strtoupper($namaYayasan));
 
             // 🔥 STYLE JUDUL
@@ -91,11 +93,11 @@ class PegawaiExport implements FromCollection, WithHeadings, ShouldAutoSize, Wit
             $sheet->getStyle('A1:A3')->getAlignment()->setHorizontal('center');
 
             // 🔥 HEADER (row 5 sekarang aman)
-            $sheet->getStyle('A5:J5')->getFont()->setBold(true);
+            $sheet->getStyle('A5:K5')->getFont()->setBold(true);
 
             // 🔥 BORDER
             $lastRow = $sheet->getHighestRow();
-            $sheet->getStyle("A5:J{$lastRow}")
+            $sheet->getStyle("A5:K{$lastRow}")
                 ->getBorders()
                 ->getAllBorders()
                 ->setBorderStyle('thin');

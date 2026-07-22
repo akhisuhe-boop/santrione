@@ -73,7 +73,23 @@ class ConstraintService
 |--------------------------------------------------------------------------
 */
 
-for ($i = 0; $i < $session->durasi; $i++) {
+// Aturan keras: mapel yang sama untuk kelas yang sama TIDAK
+        // boleh punya lebih dari 1 pertemuan di hari yang sama --
+        // walaupun JP/Pertemuan-nya lebih dari 1 (itu tetap 1
+        // pertemuan, boleh berurutan). Ini beda dari session yang
+        // SEDANG ditempatkan sekarang (durasi-nya sendiri memang
+        // boleh berurutan dalam 1 pertemuan itu).
+        if (
+            $this->isMapelSudahAdaDiHari(
+                $session->kelasId,
+                $session->mataPelajaranId,
+                $hari
+            )
+        ) {
+            return false;
+        }
+
+        for ($i = 0; $i < $session->durasi; $i++) {
 
             $jam = $this->jamIds[$index + $i];
 
@@ -102,6 +118,31 @@ for ($i = 0; $i < $session->durasi; $i++) {
         }
 
         return true;
+    }
+
+    /**
+     * Cek apakah mapel ini (untuk kelas ini) sudah punya
+     * pertemuan lain di hari yang sama.
+     */
+    protected function isMapelSudahAdaDiHari(
+        int $kelasId,
+        int $mataPelajaranId,
+        string $hari
+    ): bool {
+
+        $adaDiExisting = $this->existingSchedule
+            ->where('kelas_id', $kelasId)
+            ->where('mata_pelajaran_id', $mataPelajaranId)
+            ->where('hari', $hari)
+            ->isNotEmpty();
+
+        $adaDiGenerated = $this->generatedSchedule
+            ->where('kelas_id', $kelasId)
+            ->where('mata_pelajaran_id', $mataPelajaranId)
+            ->where('hari', $hari)
+            ->isNotEmpty();
+
+        return $adaDiExisting || $adaDiGenerated;
     }
 
     /**

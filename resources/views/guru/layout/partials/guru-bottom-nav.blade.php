@@ -8,7 +8,7 @@
         <div class="grid grid-cols-5 h-16 relative">
 
             {{-- DASHBOARD --}}
-            <a href="{{ route('guru.dashboard') }}"
+            <a href="{{ route('guru.dashboard') }}" wire:navigate
                class="flex flex-col items-center justify-center relative
                {{ request()->routeIs('guru.dashboard') ? 'text-[#00A39D]' : 'text-gray-400' }}">
 
@@ -25,7 +25,7 @@
             </a>
 
             {{-- JADWAL --}}
-            <a href="{{ route('guru.jadwal') }}"
+            <a href="{{ route('guru.jadwal') }}" wire:navigate
                class="flex flex-col items-center justify-center relative
                {{ request()->routeIs('guru.jadwal') ? 'text-[#00A39D]' : 'text-gray-400' }}">
 
@@ -44,7 +44,7 @@
             {{-- JURNAL --}}
             <div class="relative flex justify-center">
 
-                <a href="{{ route('guru.jurnal') }}"
+                <a href="{{ route('guru.jurnal') }}" wire:navigate
                    class="absolute -top-8
                           w-20 h-20
                           rounded-full
@@ -62,7 +62,7 @@
             </div>
 
             {{-- ABSENSI --}}
-            <a href="{{ route('guru.absensi') }}"
+            <a href="{{ route('guru.absensi') }}" wire:navigate
                class="flex flex-col items-center justify-center relative
                {{ request()->routeIs('guru.absensi') ? 'text-[#00A39D]' : 'text-gray-400' }}">
 
@@ -79,7 +79,7 @@
             </a>
 
             {{-- PROFIL --}}
-            <a href="{{ route('guru.profile') }}"
+            <a href="{{ route('guru.profile') }}" wire:navigate
                class="flex flex-col items-center justify-center relative
                {{ request()->routeIs('guru.profile') ? 'text-[#00A39D]' : 'text-gray-400' }}">
 

@@ -382,13 +382,13 @@ td:last-child{
             <tr>
                 <td>Tanggal Bayar</td>
                 <td>:</td>
-                <td>{{ optional($pembayaran->tanggal_bayar)->translatedFormat('d F Y H:i') }}</td>
+                <td>{{ optional($pembayaran->tanggal_bayar)->locale('id')->translatedFormat('d F Y H:i') }}</td>
             </tr>
 
             <tr>
                 <td>Metode</td>
                 <td>:</td>
-                <td>{{ ucfirst($pembayaran->metode) }}</td>
+                <td>{{ $pembayaran->metode === 'admin' ? 'Tunai' : ucfirst($pembayaran->metode) }}</td>
             </tr>
 
             <tr>
@@ -400,6 +400,12 @@ td:last-child{
             </tr>
 
             @if($pembayaran->siswa)
+
+            <tr>
+                <td>Kelas</td>
+                <td>:</td>
+                <td>{{ $pembayaran->siswa->kelas?->nama ?? '-' }}</td>
+            </tr>
 
             <tr>
                 <td>NIS</td>
@@ -553,7 +559,7 @@ td:last-child{
     <div class="footer-right">
 
         {{ $yayasan?->kota ?? 'Serang' }},
-        {{ now()->translatedFormat('l, d F Y') }}
+        {{ now()->locale('id')->translatedFormat('l, d F Y') }}
 
         <br><br>
 
@@ -587,7 +593,7 @@ td:last-child{
 
     &nbsp;•&nbsp;
 
-    Dicetak : {{ now()->translatedFormat('d F Y H:i') }}
+    Dicetak : {{ now()->locale('id')->translatedFormat('d F Y H:i') }}
 
     <br>
 

@@ -386,7 +386,7 @@ class PembayaranResource extends BaseResource
                         ->searchable()
                         ->sortable(),
 
-                    Tables\Columns\TextColumn::make('tagihan.nama')
+                    Tables\Columns\TextColumn::make('siswa.nama_lengkap')
                         ->label('Siswa')
                         ->searchable()
                         ->description(fn ($record) =>

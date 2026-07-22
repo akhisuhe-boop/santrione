@@ -88,6 +88,18 @@ class JurnalMengajarResource extends BaseResource
                     ->required()
                     ->reactive(),
 
+                ToggleButtons::make('is_pengganti')
+                    ->label('Guru Pengganti?')
+                    ->boolean()
+                    ->default(false)
+                    ->inline()
+                    ->reactive()
+                    ->dehydrated(false)
+                    ->afterStateUpdated(function (callable $set) {
+                        $set('jadwal_pelajaran_id', null);
+                        $set('pegawai_asli_id', null);
+                    }),
+
                 Select::make('jadwal_pelajaran_id')
                     ->label('Pilih Jadwal')
                     ->required()
@@ -115,6 +127,8 @@ class JurnalMengajarResource extends BaseResource
 
                         $hari = $hariMap[\Carbon\Carbon::parse($tanggal)->format('l')] ?? null;
 
+                        $isPengganti = $get('is_pengganti');
+
                         return \App\Models\JadwalPelajaran::query()
                         ->select('jadwal_pelajarans.*')
                         ->join(
@@ -123,7 +137,10 @@ class JurnalMengajarResource extends BaseResource
                             '=',
                             'jadwal_pelajarans.jam_pelajaran_id'
                         )
-                        ->where('jadwal_pelajarans.pegawai_id', $pegawaiId)
+                        ->when($isPengganti,
+                            fn ($q) => $q->where('jadwal_pelajarans.pegawai_id', '!=', $pegawaiId),
+                            fn ($q) => $q->where('jadwal_pelajarans.pegawai_id', $pegawaiId)
+                        )
                         ->where('jadwal_pelajarans.hari', $hari)
                         ->with([
                             'kelas',
@@ -134,12 +151,13 @@ class JurnalMengajarResource extends BaseResource
                         ->get()
                             ->mapWithKeys(fn ($j) => [
     $j->id => sprintf(
-        '%s (%s–%s) • %s • %s',
+        '%s (%s–%s) • %s • %s%s',
         $j->jamPelajaran->nama,
         date('H:i', strtotime($j->jamPelajaran->jam_mulai)),
         date('H:i', strtotime($j->jamPelajaran->jam_selesai)),
         $j->kelas->nama,
         $j->mataPelajaran->nama,
+        $j->guru ? ' • Guru: ' . $j->guru->nama : '',
     ),
 ]);
                     })
@@ -164,6 +182,7 @@ class JurnalMengajarResource extends BaseResource
                     $set('jam_ke', $jadwal->jamPelajaran->urutan);
                     $set('durasi_jam', $jadwal->jamPelajaran->durasi_jp);
                     $set('jam_pelajaran_id', $jadwal->jam_pelajaran_id);
+                    $set('pegawai_asli_id', $jadwal->pegawai_id);
                     /*
                     |--------------------------------------------------------------------------
                     | GENERATE ABSENSI SISWA
@@ -194,6 +213,15 @@ class JurnalMengajarResource extends BaseResource
                 
                 Hidden::make('durasi_jam')
                     ->dehydrated(false),
+
+                Hidden::make('pegawai_asli_id'),
+
+                TextInput::make('tarif_pengganti_per_jp')
+                    ->label('Tarif Pengganti per JP (kosongkan = pakai tarif normal guru)')
+                    ->numeric()
+                    ->prefix('Rp')
+                    ->visible(fn (callable $get) => $get('is_pengganti'))
+                    ->columnSpanFull(),
 
                 // 📝 Materi
                 Textarea::make('materi')
@@ -283,7 +311,10 @@ class JurnalMengajarResource extends BaseResource
     {
         return $table
             ->columns([
-                TextColumn::make('pegawai.nama')->label('Guru')->searchable(),
+                TextColumn::make('pegawai.nama')->label('Guru')->searchable()
+                    ->description(fn ($record) => $record->pegawaiAsli
+                        ? 'Pengganti untuk ' . $record->pegawaiAsli->nama
+                        : null),
                 TextColumn::make('tanggal')
                 ->label('Tanggal')
                 ->formatStateUsing(fn ($state) => \Carbon\Carbon::parse($state)

@@ -9,7 +9,7 @@
         <div class="grid grid-cols-5 h-16 relative">
 
             {{-- BERANDA --}}
-            <a href="{{ route('ppdb.dashboard') }}"
+            <a href="{{ route('ppdb.dashboard') }}" wire:navigate
                class="flex flex-col items-center justify-center relative
                {{ request()->routeIs('ppdb.dashboard') ? 'text-[#00A39D]' : 'text-slate-400' }}">
 
@@ -26,7 +26,7 @@
             </a>
 
             {{-- FORMULIR --}}
-            <a href="{{ route('ppdb.formulir') }}"
+            <a href="{{ route('ppdb.formulir') }}" wire:navigate
                class="flex flex-col items-center justify-center relative
                {{ request()->routeIs('ppdb.formulir') ? 'text-[#00A39D]' : 'text-slate-400' }}">
 
@@ -45,7 +45,7 @@
             {{-- PEMBAYARAN (CENTER ACTION) --}}
             <div class="relative flex justify-center">
 
-                <a href="{{ route('ppdb.pembayaran') }}"
+                <a href="{{ route('ppdb.pembayaran') }}" wire:navigate
                    class="absolute -top-8
                           w-20 h-20
                           rounded-full
@@ -64,7 +64,7 @@
             </div>
 
             {{-- INFORMASI --}}
-            <a href="{{ route('ppdb.pengumuman') }}"
+            <a href="{{ route('ppdb.pengumuman') }}" wire:navigate
                class="flex flex-col items-center justify-center relative
                {{ request()->routeIs('ppdb.pengumuman*') ? 'text-[#00A39D]' : 'text-slate-400' }}">
 
@@ -81,7 +81,7 @@
             </a>
 
             {{-- PROFIL --}}
-            <a href="{{ route('ppdb.profil') }}"
+            <a href="{{ route('ppdb.profil') }}" wire:navigate
                class="flex flex-col items-center justify-center relative
                {{ request()->routeIs('ppdb.profil') ? 'text-[#00A39D]' : 'text-slate-400' }}">
 

@@ -59,6 +59,13 @@ class GuruAuthController extends Controller
             'guru_nama' => $guru->nama,
         ]);
 
+        if (! session('active_public_yayasan_id')) {
+            $lembaga = $guru->lembagas()->first();
+            if ($lembaga) {
+                session(['active_public_yayasan_id' => $lembaga->yayasan_id]);
+            }
+        }
+
         return redirect()->route('guru.dashboard');
     }
 

@@ -21,6 +21,7 @@ use App\Http\Controllers\DuitkuController;
 use App\Http\Controllers\TopupController;
 use App\Http\Controllers\PerizinanController;
 use App\Http\Controllers\RoleLoginController;
+use App\Http\Controllers\ManifestController;
 use App\Http\Controllers\AnnouncementController;
 
 use App\Http\Controllers\Guru\GuruAuthController;
@@ -48,6 +49,7 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+Route::get('/manifest.json', [ManifestController::class, 'show'])->name('manifest');
 Route::get('/login', function () {
     return view('auth.role-login');
 })->name('login');
@@ -300,6 +302,12 @@ Route::prefix('wali')->group(function () {
         
     Route::post('/jurnal', [GuruJurnalController::class, 'store'])
     ->name('guru.jurnal.store');
+
+    Route::get('/jurnal-pengganti', [GuruJurnalController::class, 'pengganti'])
+        ->name('guru.jurnal.pengganti');
+
+    Route::post('/jurnal-pengganti', [GuruJurnalController::class, 'isiPengganti'])
+        ->name('guru.jurnal.pengganti.isi');
 
     // Absensi
     Route::get('/absensi', [GuruAbsensiController::class, 'index'])

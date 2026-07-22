@@ -71,9 +71,21 @@ class KwitansiController extends Controller
     {
         $pembayaran = $this->pembayaran($pembayaran);
     
-        return Pdf::loadView('kwitansi.pdf', [
+        $pdf = Pdf::loadView('kwitansi.pdf', [
             'pembayaran' => $pembayaran,
-        ])
+        ]);
+
+        $fontMetrics = $pdf->getDomPDF()->getFontMetrics();
+        $fontMetrics->registerFont(
+            ['family' => 'Plus Jakarta Sans', 'style' => 'normal', 'weight' => 'normal'],
+            storage_path('fonts/PlusJakartaSans-Regular.ttf')
+        );
+        $fontMetrics->registerFont(
+            ['family' => 'Plus Jakarta Sans', 'style' => 'normal', 'weight' => 'bold'],
+            storage_path('fonts/PlusJakartaSans-Bold.ttf')
+        );
+
+        return $pdf
         ->setPaper([0, 0, 226.77, 540])
         ->stream('Kwitansi-'.$pembayaran->kode.'.pdf');
     

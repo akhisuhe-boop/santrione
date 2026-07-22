@@ -7,7 +7,7 @@
     
     <x-favicon />
 
-    <title>Portal Wali Santri</title>
+    <title>Portal Guru</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
 
@@ -54,6 +54,7 @@
     </style>
 
     @stack('styles')
+    @livewireStyles
 </head>
 
 <body>
@@ -76,5 +77,6 @@
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 @stack('scripts')
 
+    @livewireScripts
 </body>
 </html>
