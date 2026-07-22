@@ -7,7 +7,7 @@
     
     <x-favicon />
 
-    <title>Portal Wali Santri</title>
+    <title>Portal Guru</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
 

@@ -30,6 +30,8 @@ class JurnalMengajar extends Model
         'mata_pelajaran_id',
         'jam_pelajaran_id',
         'jadwal_pelajaran_id',
+        'pegawai_asli_id',
+        'tarif_pengganti_per_jp',
         'tanggal',
         'materi',
         'status',
@@ -40,6 +42,11 @@ class JurnalMengajar extends Model
     // ======================
     // RELASI
     // ======================
+
+    public function pegawaiAsli()
+    {
+        return $this->belongsTo(Pegawai::class, 'pegawai_asli_id');
+    }
 
     public function pegawai()
     {

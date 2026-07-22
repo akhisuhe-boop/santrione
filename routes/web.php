@@ -303,6 +303,12 @@ Route::prefix('wali')->group(function () {
     Route::post('/jurnal', [GuruJurnalController::class, 'store'])
     ->name('guru.jurnal.store');
 
+    Route::get('/jurnal-pengganti', [GuruJurnalController::class, 'pengganti'])
+        ->name('guru.jurnal.pengganti');
+
+    Route::post('/jurnal-pengganti', [GuruJurnalController::class, 'isiPengganti'])
+        ->name('guru.jurnal.pengganti.isi');
+
     // Absensi
     Route::get('/absensi', [GuruAbsensiController::class, 'index'])
         ->name('guru.absensi');

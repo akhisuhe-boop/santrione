@@ -640,21 +640,29 @@
             {{-- JURNAL --}}
             <a href="{{ route('guru.jurnal') }}"
                class="group p-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-teal-50 to-white hover:shadow-md transition">
-
                 <div class="w-10 h-10 rounded-xl bg-teal-100 flex items-center justify-center mb-2">
                     <x-heroicon-o-document-text class="w-5 h-5 text-teal-600"/>
                 </div>
-
                 <div class="font-semibold text-sm text-slate-900">
                     Jurnal
                 </div>
-
                 <div class="text-[11px] text-slate-500 mt-1">
                     Jurnal mengajar
                 </div>
-
             </a>
-
+            {{-- JURNAL PENGGANTI --}}
+            <a href="{{ route('guru.jurnal.pengganti') }}"
+               class="group p-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-amber-50 to-white hover:shadow-md transition">
+                <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center mb-2">
+                    <x-heroicon-o-user-group class="w-5 h-5 text-amber-600"/>
+                </div>
+                <div class="font-semibold text-sm text-slate-900">
+                    Jurnal Pengganti
+                </div>
+                <div class="text-[11px] text-slate-500 mt-1">
+                    Gantikan guru lain
+                </div>
+            </a>
             {{-- ABSENSI --}}
             <a href="{{ route('guru.absensi') }}"
                class="group p-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-emerald-50 to-white hover:shadow-md transition">
@@ -709,23 +717,6 @@
             
             </a>
             
-            {{-- PROFIL --}}
-            <a href="{{ route('guru.profile') }}"
-               class="group p-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-indigo-50 to-white hover:shadow-md transition">
-            
-                <div class="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center mb-2">
-                    <x-heroicon-o-user class="w-5 h-5 text-indigo-600"/>
-                </div>
-            
-                <div class="font-semibold text-sm text-slate-900">
-                    Profil
-                </div>
-            
-                <div class="text-[11px] text-slate-500 mt-1">
-                    Data & password
-                </div>
-            
-            </a>
 
         </div>
 

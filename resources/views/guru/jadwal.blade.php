@@ -554,7 +554,7 @@ $totalJP = $jadwal->sum(fn ($item) => $item->jamPelajaran?->durasi_jp ?? 0);
 
                                 Jadwal mengajar ditampilkan berdasarkan data yang telah
                                 ditentukan oleh operator sekolah. Jika terdapat perubahan
-                                jadwal atau kelas, silakan hubungi administrator SantriOne.
+                                jadwal atau kelas, silakan hubungi admin sekolah.
 
                             </div>
 
