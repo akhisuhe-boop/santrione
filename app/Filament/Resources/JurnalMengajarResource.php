@@ -183,6 +183,17 @@ class JurnalMengajarResource extends BaseResource
                     $set('durasi_jam', $jadwal->jamPelajaran->durasi_jp);
                     $set('jam_pelajaran_id', $jadwal->jam_pelajaran_id);
                     $set('pegawai_asli_id', $jadwal->pegawai_id);
+
+                    // Tarif honor pengganti sekarang di-set GLOBAL 1x di
+                    // Pengaturan Yayasan (berlaku otomatis untuk semua),
+                    // bukan diisi manual tiap kali bikin jurnal. Kalau
+                    // yayasan belum mengisi tarif globalnya, biarkan
+                    // null supaya PayrollService fallback ke tarif per
+                    // JP guru pengganti itu sendiri.
+                    $set(
+                        'tarif_pengganti_per_jp',
+                        \Filament\Facades\Filament::getTenant()?->tarif_pengganti_per_jp
+                    );
                     /*
                     |--------------------------------------------------------------------------
                     | GENERATE ABSENSI SISWA
@@ -216,11 +227,24 @@ class JurnalMengajarResource extends BaseResource
 
                 Hidden::make('pegawai_asli_id'),
 
-                TextInput::make('tarif_pengganti_per_jp')
-                    ->label('Tarif Pengganti per JP (kosongkan = pakai tarif normal guru)')
-                    ->numeric()
-                    ->prefix('Rp')
+                // Tarif honor pengganti sekarang otomatis dari Pengaturan
+                // Yayasan (lihat resource Yayasan > "Honor Guru
+                // Pengganti"), tidak diisi manual di sini lagi. Field ini
+                // tetap disimpan sebagai SNAPSHOT nominal yang berlaku
+                // saat jurnal ini dibuat, supaya perhitungan gaji bulan
+                // lalu tidak berubah kalau tarif globalnya diganti nanti.
+                Hidden::make('tarif_pengganti_per_jp'),
+
+                Placeholder::make('info_tarif_pengganti')
+                    ->label('Tarif Honor Pengganti')
                     ->visible(fn (callable $get) => $get('is_pengganti'))
+                    ->content(function () {
+                        $tarif = \Filament\Facades\Filament::getTenant()?->tarif_pengganti_per_jp;
+
+                        return $tarif
+                            ? 'Rp ' . number_format($tarif, 0, ',', '.') . ' / JP (dari Pengaturan Yayasan)'
+                            : 'Belum diatur di Pengaturan Yayasan — akan memakai tarif per JP guru pengganti itu sendiri.';
+                    })
                     ->columnSpanFull(),
 
                 // 📝 Materi

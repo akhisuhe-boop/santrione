@@ -56,6 +56,7 @@ class Yayasan extends Model implements HasName
     'telepon',
     'email',
     'website',
+    'tarif_pengganti_per_jp',
     ];
 
     public function lembagas()

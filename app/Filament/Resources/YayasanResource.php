@@ -85,6 +85,20 @@ class YayasanResource extends BaseResource
     
                     ])
                     ->columns(3),
+
+                Section::make('Honor Guru Pengganti')
+                    ->description('Tarif ini berlaku otomatis untuk SEMUA guru pengganti di seluruh yayasan. Tidak perlu diisi manual lagi setiap kali mengisi jurnal mengajar pengganti.')
+                    ->icon('heroicon-o-banknotes')
+                    ->schema([
+
+                        TextInput::make('tarif_pengganti_per_jp')
+                            ->label('Tarif per JP (Guru Pengganti)')
+                            ->numeric()
+                            ->prefix('Rp')
+                            ->helperText('Kosongkan kalau ingin guru pengganti tetap dibayar memakai tarif per JP miliknya sendiri.'),
+
+                    ])
+                    ->columns(1),
     
             ]);
     }

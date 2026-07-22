@@ -11,7 +11,7 @@
                     Isi Jurnal Pengganti
                 </div>
                 <div class="mt-1 text-sm text-slate-500">
-                    {{ now()->translatedFormat('l, d F Y') }} — Pilih kelas yang mau kamu gantikan
+                    {{ now()->locale('id')->translatedFormat('l, d F Y') }} — Pilih kelas yang mau kamu gantikan
                 </div>
             </div>
             <a href="{{ route('guru.dashboard') }}"

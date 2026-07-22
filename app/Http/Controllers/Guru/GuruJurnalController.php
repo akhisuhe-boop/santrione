@@ -174,6 +174,13 @@ class GuruJurnalController extends Controller
         $guru = Pegawai::findOrFail(session('guru_id'));
         $jadwal = JadwalPelajaran::findOrFail($request->jadwal_id);
 
+        // Tarif honor pengganti diambil dari Pengaturan Yayasan (berlaku
+        // untuk semua guru pengganti), bukan diisi manual di sini. Nilai
+        // ini disimpan sebagai snapshot saat jurnal dibuat, supaya kalau
+        // tarif globalnya diganti nanti, perhitungan gaji bulan-bulan
+        // sebelumnya tidak ikut berubah.
+        $yayasan = \App\Models\Yayasan::find(session('active_public_yayasan_id'));
+
         $jurnal = JurnalMengajar::firstOrCreate(
             [
                 'jadwal_pelajaran_id' => $jadwal->id,
@@ -187,6 +194,7 @@ class GuruJurnalController extends Controller
                 'kelas_id'            => $jadwal->kelas_id,
                 'mata_pelajaran_id'   => $jadwal->mata_pelajaran_id,
                 'jam_pelajaran_id'    => $jadwal->jam_pelajaran_id,
+                'tarif_pengganti_per_jp' => $yayasan?->tarif_pengganti_per_jp,
                 'materi'              => '',
                 'status'              => 'draft',
             ]
