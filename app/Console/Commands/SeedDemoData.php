@@ -228,18 +228,54 @@ class SeedDemoData extends Command
 
         /*
         |--------------------------------------------------------------------------
-        | AKUN STAF ADMIN PANEL (buat re-test bug login)
+        | ROLE "ADMIN SEKOLAH" (role global, dipakai ulang di tenant manapun —
+        | akses penuh KECUALI hal-hal khusus platform admin, tetap terkunci
+        | ke 1 yayasan lewat yayasan_id akunnya, bukan lewat role ini)
         |--------------------------------------------------------------------------
         */
 
-        User::create([
-            'name' => 'Staf Testing',
-            'email' => 'staf@testing-dev.local',
+        // Permission di-generate lewat Shield (per Resource/Page/Widget).
+        // Kalau belum pernah di-generate sama sekali (tabel permissions
+        // masih kosong), generate dulu di sini supaya command ini aman
+        // dipakai langsung setelah migrate:fresh tanpa langkah manual lain.
+        if (\Spatie\Permission\Models\Permission::count() === 0) {
+
+            $this->line('  (permission belum ada, menjalankan shield:generate dulu...)');
+
+            $this->call('shield:generate', [
+                '--all' => true,
+                '--panel' => 'admin',
+            ]);
+        }
+
+        $roleAdminSekolah = \Spatie\Permission\Models\Role::firstOrCreate([
+            'name' => 'Admin Sekolah',
+            'guard_name' => 'web',
+        ]);
+
+        $roleAdminSekolah->syncPermissions(
+            \Spatie\Permission\Models\Permission::all()
+        );
+
+        $this->line('  ✓ Role "Admin Sekolah" siap (akses penuh, tapi tetap terkunci ke 1 yayasan — bukan platform admin)');
+
+        /*
+        |--------------------------------------------------------------------------
+        | AKUN ADMIN TENANT (buat re-test bug login & testing dari sudut
+        | pandang admin sekolah biasa, bukan platform admin)
+        |--------------------------------------------------------------------------
+        */
+
+        $adminTenant = User::create([
+            'name' => 'Admin Testing',
+            'email' => 'admin@testing.com',
             'password' => Hash::make('staf12345'),
             'yayasan_id' => $yayasan->id,
         ]);
 
-        $this->line('  ✓ Akun staf admin panel: staf@testing-dev.local / staf12345');
+        $adminTenant->assignRole($roleAdminSekolah);
+
+        $this->line('  ✓ Akun admin tenant: admin@testing.com / staf12345 (role: Admin Sekolah)');
 
         /*
         |--------------------------------------------------------------------------
@@ -263,7 +299,8 @@ class SeedDemoData extends Command
         $this->newLine();
         $this->info('Selesai! Data demo siap dipakai.');
         $this->newLine();
-        $this->line('Login admin: staf@testing-dev.local / staf12345 (atau admin@admin.com / 123456 kalau baru migrate:fresh)');
+        $this->line('Login admin tenant (1 yayasan saja): admin@testing.com / staf12345');
+        $this->line('Login platform admin (semua yayasan): admin@admin.com / 123456 (kalau baru migrate:fresh)');
         $this->line('Login guru (portal guru, pakai NIY): GURU001 / guru123, GURU002 / guru123, GURU003 / guru123');
 
         return self::SUCCESS;
