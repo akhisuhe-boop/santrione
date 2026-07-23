@@ -214,6 +214,13 @@ class AdminPanelProvider extends PanelProvider
         ->plugins([
             FilamentShieldPlugin::make(),
         ])
+        ->navigationItems([
+            \Filament\Navigation\NavigationItem::make('Langganan')
+                ->icon('heroicon-o-credit-card')
+                ->url('/langganan')
+                ->sort(-1)
+                ->visible(fn () => auth()->check() && ! auth()->user()->is_platform_admin),
+        ])
 
         ->authMiddleware([
             Authenticate::class,

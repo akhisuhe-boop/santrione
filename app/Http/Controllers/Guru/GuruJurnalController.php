@@ -146,6 +146,14 @@ class GuruJurnalController extends Controller
     
     public function pengganti()
     {
+        $yayasan = \App\Models\Yayasan::find(session('active_public_yayasan_id'));
+
+        if (! $yayasan?->hasFeature(\App\Support\FeatureGate::GURU_PENGGANTI)) {
+            return redirect()
+                ->route('guru.dashboard')
+                ->with('warning', 'Fitur Guru Pengganti belum aktif untuk yayasan ini. Hubungi admin sekolah untuk upgrade paket.');
+        }
+
         $guru = Pegawai::findOrFail(session('guru_id'));
         $hari = now()->locale('id')->translatedFormat('l');
 
@@ -169,6 +177,14 @@ class GuruJurnalController extends Controller
 
     public function isiPengganti(Request $request)
     {
+        $yayasan = \App\Models\Yayasan::find(session('active_public_yayasan_id'));
+
+        abort_unless(
+            $yayasan?->hasFeature(\App\Support\FeatureGate::GURU_PENGGANTI),
+            403,
+            'Fitur Guru Pengganti belum aktif untuk yayasan ini.'
+        );
+
         $request->validate(['jadwal_id' => ['required']]);
 
         $guru = Pegawai::findOrFail(session('guru_id'));

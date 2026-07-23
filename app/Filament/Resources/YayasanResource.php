@@ -86,19 +86,40 @@ class YayasanResource extends BaseResource
                     ])
                     ->columns(3),
 
-                Section::make('Honor Guru Pengganti')
-                    ->description('Tarif ini berlaku otomatis untuk SEMUA guru pengganti di seluruh yayasan. Tidak perlu diisi manual lagi setiap kali mengisi jurnal mengajar pengganti.')
-                    ->icon('heroicon-o-banknotes')
+                Section::make('Domain Custom')
+                    ->description('Fitur premium — kalau diisi, portal publik (Wali/Guru/PPDB) yayasan ini bisa diakses lewat domain sendiri, bukan cuma subdomain default.')
+                    ->icon('heroicon-o-globe-alt')
+                    ->visible(fn () => auth()->user()?->is_platform_admin
+                        || \Filament\Facades\Filament::getTenant()?->hasFeature(\App\Support\FeatureGate::CUSTOM_DOMAIN))
                     ->schema([
 
-                        TextInput::make('tarif_pengganti_per_jp')
-                            ->label('Tarif per JP (Guru Pengganti)')
-                            ->numeric()
-                            ->prefix('Rp')
-                            ->helperText('Kosongkan kalau ingin guru pengganti tetap dibayar memakai tarif per JP miliknya sendiri.'),
+                        TextInput::make('domain')
+                            ->label('Domain')
+                            ->placeholder('contoh: sekolahku.sch.id')
+                            ->helperText('Arahkan DNS domain ini ke server aplikasi dulu sebelum diisi di sini.')
+                            ->unique(ignoreRecord: true),
 
                     ])
                     ->columns(1),
+
+                Section::make('Akun Admin Awal')
+                    ->description('Opsional — isi kalau mau langsung dibuatkan 1 akun admin panel untuk yayasan ini. Password akan digenerate otomatis dan cuma ditampilkan SEKALI setelah yayasan disimpan (catat baik-baik). Kalau dikosongkan, akun admin bisa dibuat manual belakangan lewat menu Pengguna.')
+                    ->icon('heroicon-o-user-plus')
+                    ->visibleOn('create')
+                    ->schema([
+
+                        TextInput::make('admin_nama')
+                            ->label('Nama Admin')
+                            ->maxLength(255),
+
+                        TextInput::make('admin_email')
+                            ->label('Email Admin')
+                            ->email()
+                            ->maxLength(150)
+                            ->unique('users', 'email'),
+
+                    ])
+                    ->columns(2),
     
             ]);
     }
@@ -121,6 +142,23 @@ class YayasanResource extends BaseResource
             Tables\Columns\TextColumn::make('ketua')
                 ->label('Ketua')
                 ->searchable(),
+
+            Tables\Columns\BadgeColumn::make('status')
+                ->label('Status Langganan')
+                ->colors([
+                    'warning' => 'trial',
+                    'success' => 'active',
+                    'danger' => fn ($state) => in_array($state, ['suspended', 'cancelled']),
+                ])
+                ->formatStateUsing(function ($state, $record) {
+                    if ($state === 'trial') {
+                        return $record->isOnTrial()
+                            ? 'Trial (' . $record->trialDaysLeft() . ' hari lagi)'
+                            : 'Trial Habis';
+                    }
+
+                    return ucfirst($state);
+                }),
         
             Tables\Columns\TextColumn::make('telepon')
                 ->label('Telepon')

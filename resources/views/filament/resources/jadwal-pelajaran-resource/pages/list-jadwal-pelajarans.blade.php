@@ -34,15 +34,30 @@
 
         </div>
 
-        <x-filament::button
-            color="primary"
-            icon="heroicon-o-bolt"
-            wire:click="generate"
-            :disabled="!$kelas_id">
+        @php
+            $bisaGenerateOtomatis = auth()->user()?->is_platform_admin
+                || \Filament\Facades\Filament::getTenant()?->hasFeature(\App\Support\FeatureGate::JADWAL_GENERATOR);
+        @endphp
 
-            Generate Jadwal
+        @if ($bisaGenerateOtomatis)
 
-        </x-filament::button>
+            <x-filament::button
+                color="primary"
+                icon="heroicon-o-bolt"
+                wire:click="generate"
+                :disabled="!$kelas_id">
+
+                Generate Jadwal
+
+            </x-filament::button>
+
+        @else
+
+            <x-filament::badge color="warning" icon="heroicon-o-lock-closed">
+                Generate Otomatis — Fitur Premium
+            </x-filament::badge>
+
+        @endif
 
     </div>
 

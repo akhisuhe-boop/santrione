@@ -63,4 +63,28 @@ abstract class BaseResource extends Resource
 
         return static::getModelLabel();
     }
+
+    /**
+     * Helper buat Resource yang fiturnya dikunci per paket langganan
+     * (lihat App\Support\FeatureGate). Platform admin selalu bisa
+     * lihat (perlu buat support), tenant biasa ngikut fitur yang
+     * dibuka paket yayasan mereka.
+     *
+     * Dipakai di Resource yang perlu dikunci, contoh:
+     *
+     *   public static function canViewAny(): bool
+     *   {
+     *       return static::tenantHasFeature(\App\Support\FeatureGate::PAYROLL);
+     *   }
+     */
+    protected static function tenantHasFeature(string $key): bool
+    {
+        if (auth()->user()?->is_platform_admin) {
+            return true;
+        }
+
+        $tenant = \Filament\Facades\Filament::getTenant();
+
+        return (bool) $tenant?->hasFeature($key);
+    }
 }

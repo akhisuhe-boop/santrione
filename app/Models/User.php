@@ -76,19 +76,24 @@ class User extends Authenticatable implements FilamentUser, HasTenants
 
     /**
      * Allow user to access Filament panel.
-     *
-     * TODO Fase 5: tambahkan cek status subscription yayasan di sini
-     * (redirect/block kalau status suspended karena belum bayar).
      */
     public function canAccessPanel(Panel $panel): bool
     {
-        // Platform admin selalu boleh masuk.
+        // Platform admin selalu boleh masuk (perlu buat support & monitoring
+        // lintas yayasan, termasuk yayasan yang lagi di-suspend).
         if ($this->is_platform_admin) {
             return true;
         }
 
         // User biasa WAJIB terhubung ke sebuah yayasan untuk bisa masuk.
-        return ! empty($this->yayasan_id);
+        if (empty($this->yayasan_id)) {
+            return false;
+        }
+
+        // Yayasan yang masa trial-nya habis / langganannya tidak aktif
+        // (belum bayar lewat masa tenggang) dikunci aksesnya — data
+        // TIDAK dihapus, cuma tidak bisa login sampai berlangganan lagi.
+        return (bool) $this->yayasan?->hasAccess();
     }
 
     /**

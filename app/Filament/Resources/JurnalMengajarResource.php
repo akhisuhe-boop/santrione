@@ -95,6 +95,8 @@ class JurnalMengajarResource extends BaseResource
                     ->inline()
                     ->reactive()
                     ->dehydrated(false)
+                    ->visible(fn () => auth()->user()?->is_platform_admin
+                        || \Filament\Facades\Filament::getTenant()?->hasFeature(\App\Support\FeatureGate::GURU_PENGGANTI))
                     ->afterStateUpdated(function (callable $set) {
                         $set('jadwal_pelajaran_id', null);
                         $set('pegawai_asli_id', null);

@@ -268,6 +268,20 @@ class ListJadwalPelajarans extends Page implements HasForms
  */
 public function generate(): void
 {
+    if (
+        ! auth()->user()?->is_platform_admin
+        && ! \Filament\Facades\Filament::getTenant()?->hasFeature(\App\Support\FeatureGate::JADWAL_GENERATOR)
+    ) {
+
+        Notification::make()
+            ->title('Fitur Generate Jadwal Otomatis belum aktif di paket Anda.')
+            ->body('Silakan upgrade paket langganan untuk membuka fitur ini, atau susun jadwal secara manual lewat tombol "+" di setiap slot.')
+            ->warning()
+            ->send();
+
+        return;
+    }
+
     if (!$this->kelas_id) {
 
         Notification::make()

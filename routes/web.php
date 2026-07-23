@@ -18,6 +18,9 @@ use App\Http\Controllers\WaliAuthController;
 use App\Http\Controllers\PrintRaportController;
 use App\Http\Controllers\WaliDashboardController;
 use App\Http\Controllers\DuitkuController;
+use App\Http\Controllers\PublicRegistrationController;
+use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\MidtransWebhookController;
 use App\Http\Controllers\TopupController;
 use App\Http\Controllers\PerizinanController;
 use App\Http\Controllers\RoleLoginController;
@@ -53,6 +56,26 @@ Route::get('/manifest.json', [ManifestController::class, 'show'])->name('manifes
 Route::get('/login', function () {
     return view('auth.role-login');
 })->name('login');
+
+// ==========================
+// PENDAFTARAN YAYASAN BARU (SaaS self-service signup)
+// ==========================
+Route::get('/daftar', [PublicRegistrationController::class, 'create'])->name('public.daftar');
+Route::post('/daftar', [PublicRegistrationController::class, 'store'])->name('public.daftar.store');
+
+// Webhook Midtrans (dipanggil server Midtrans, bukan browser user —
+// tidak pakai auth/CSRF, verifikasi lewat signature key di dalam
+// controller-nya sendiri).
+Route::post('/webhooks/midtrans', [MidtransWebhookController::class, 'handle'])->name('webhooks.midtrans');
+
+// Halaman langganan tenant (lihat status trial/aktif, upload bukti
+// transfer manual, atau bayar via Midtrans kalau sudah dikonfigurasi).
+Route::middleware(['auth'])->group(function () {
+    Route::get('/langganan', [SubscriptionController::class, 'show'])->name('subscription.show');
+    Route::post('/langganan/{plan}/manual', [SubscriptionController::class, 'payManual'])->name('subscription.pay-manual');
+    Route::post('/langganan/{plan}/duitku', [SubscriptionController::class, 'payDuitku'])->name('subscription.pay-duitku');
+    Route::post('/langganan/{plan}/midtrans', [SubscriptionController::class, 'payMidtrans'])->name('subscription.pay-midtrans');
+});
 
 Route::get('/y/{slug}', function (string $slug) {
     $yayasan = \App\Models\Yayasan::withoutGlobalScopes()

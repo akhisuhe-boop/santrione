@@ -20,6 +20,11 @@ class PayrollAdjustmentTemplateResource extends BaseResource
     protected static ?string $navigationIcon = 'heroicon-o-arrow-path-rounded-square';
     protected static ?int $navigationSort = 5;
 
+    public static function canViewAny(): bool
+    {
+        return static::tenantHasFeature(\App\Support\FeatureGate::PAYROLL);
+    }
+
     public static function form(Form $form): Form
     {
         return $form

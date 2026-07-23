@@ -82,6 +82,16 @@ class DuitkuController extends Controller
             return response('INVALID SIGNATURE', 400);
         }
 
+        // Callback pembayaran LANGGANAN (SaaS billing) — order id-nya
+        // sengaja diberi prefix "SUB-" saat dibuat di
+        // DuitkuSubscriptionService, supaya bisa dibedakan dari
+        // callback top-up wallet di bawah tanpa perlu URL callback
+        // terpisah (1 callback URL yang sama sudah terdaftar di
+        // dashboard Duitku).
+        if (str_starts_with((string) $request->merchantOrderId, 'SUB-')) {
+            return $this->handleSubscriptionCallback($request);
+        }
+
         DB::beginTransaction();
 
         try {
@@ -140,6 +150,66 @@ class DuitkuController extends Controller
                 'message' => $e->getMessage(),
                 'line'    => $e->getLine(),
                 'file'    => $e->getFile(),
+            ]);
+
+            DB::rollBack();
+
+            return response('ERROR: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Callback khusus untuk pembayaran LANGGANAN (SaaS billing).
+     * Signature sudah diverifikasi oleh pemanggil (callback() di atas)
+     * sebelum method ini dipanggil.
+     */
+    protected function handleSubscriptionCallback(Request $request)
+    {
+        $payment = \App\Models\SubscriptionPayment::where(
+            'gateway_order_id',
+            $request->merchantOrderId
+        )->first();
+
+        if (! $payment) {
+            return response('NOT FOUND', 404);
+        }
+
+        DB::beginTransaction();
+
+        try {
+
+            $payment->update([
+                'gateway_transaction_id' => $request->reference ?? null,
+                'gateway_raw_response' => $request->all(),
+            ]);
+
+            if ((string) $request->resultCode === '00') {
+
+                $payment->update(['status' => 'berhasil']);
+
+                $subscription = $payment->subscription;
+
+                $subscription->update([
+                    'status' => 'active',
+                    'mulai_pada' => now(),
+                    'berakhir_pada' => now()->addMonth(),
+                ]);
+
+                $subscription->yayasan->update(['status' => 'active']);
+
+            } else {
+                $payment->update(['status' => 'gagal']);
+            }
+
+            DB::commit();
+            return response('OK');
+
+        } catch (\Exception $e) {
+
+            \Log::error('DUITKU SUBSCRIPTION CALLBACK ERROR', [
+                'message' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
             ]);
 
             DB::rollBack();
