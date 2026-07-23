@@ -35,12 +35,16 @@ class Lembaga extends Model
     {
         static::creating(function ($lembaga) {
 
-            // Isi otomatis dari user yang sedang login (konteks tenant aktif),
-            // BUKAN dari yayasan pertama di database.
-            // Untuk multi-tenant, yayasan_id WAJIB eksplisit (dari user login
-            // atau dari form) sebelum record boleh dibuat.
-            if (empty($lembaga->yayasan_id) && auth()->check()) {
-                $lembaga->yayasan_id = auth()->user()->yayasan_id;
+            // Isi otomatis dari TENANT YANG SEDANG AKTIF di panel (bukan
+            // langsung dari auth()->user()->yayasan_id) — soalnya Super
+            // Admin platform (is_platform_admin) yayasan_id akunnya
+            // sendiri kosong, dia kerja lewat tenant yang lagi
+            // diimpersonate/dipilih. Untuk user biasa (bukan platform
+            // admin), Filament::getTenant() pada dasarnya sama saja
+            // dengan yayasan_id mereka sendiri.
+            if (empty($lembaga->yayasan_id)) {
+                $lembaga->yayasan_id = \Filament\Facades\Filament::getTenant()?->id
+                    ?? auth()->user()?->yayasan_id;
             }
 
             if (empty($lembaga->yayasan_id)) {
