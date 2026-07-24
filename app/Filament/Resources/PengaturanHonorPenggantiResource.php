@@ -20,11 +20,6 @@ class PengaturanHonorPenggantiResource extends BaseResource
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
     protected static ?int $navigationSort = 4;
 
-    public static function canViewAny(): bool
-    {
-        return static::tenantHasFeature(\App\Support\FeatureGate::GURU_PENGGANTI);
-    }
-
     // Lembaga sudah dikelola di resource Lembaga sendiri — di sini
     // cuma untuk atur 1 nilai tarifnya, bukan bikin/hapus lembaga.
     public static function canCreate(): bool

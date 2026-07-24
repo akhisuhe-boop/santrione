@@ -651,7 +651,7 @@
                 </div>
             </a>
             {{-- JURNAL PENGGANTI --}}
-            @if (\App\Models\Yayasan::find(session('active_public_yayasan_id'))?->hasFeature(\App\Support\FeatureGate::GURU_PENGGANTI))
+            @if (\App\Models\Yayasan::find(session('active_public_yayasan_id'))?->hasFeature(\App\Support\FeatureGate::AKADEMIK))
             <a href="{{ route('guru.jurnal.pengganti') }}"
                class="group p-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-amber-50 to-white hover:shadow-md transition">
                 <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center mb-2">

@@ -668,6 +668,21 @@
 
             </a>
 
+            {{-- KANTIN --}}
+            @if (\App\Models\Yayasan::find(session('active_public_yayasan_id'))?->hasFeature(\App\Support\FeatureGate::E_KANTIN))
+            <a href="{{ route('wali.kantin') }}"
+               class="group p-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-rose-50 to-white hover:shadow-md transition">
+
+                <div class="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center mb-2">
+                    <x-heroicon-o-shopping-bag class="w-5 h-5 text-rose-600" />
+                </div>
+
+                <div class="font-semibold text-sm text-slate-900">Kantin</div>
+                <div class="text-[11px] text-slate-500 mt-1">Riwayat & limit belanja</div>
+
+            </a>
+            @endif
+
         </div>
     </div>
 </div>

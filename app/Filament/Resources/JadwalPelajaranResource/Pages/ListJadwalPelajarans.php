@@ -270,7 +270,7 @@ public function generate(): void
 {
     if (
         ! auth()->user()?->is_platform_admin
-        && ! \Filament\Facades\Filament::getTenant()?->hasFeature(\App\Support\FeatureGate::JADWAL_GENERATOR)
+        && ! \Filament\Facades\Filament::getTenant()?->hasFeature(\App\Support\FeatureGate::AKADEMIK)
     ) {
 
         Notification::make()

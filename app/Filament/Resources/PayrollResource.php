@@ -23,10 +23,6 @@ class PayrollResource extends BaseResource
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
     protected static ?int $navigationSort = 4;
 
-    public static function canViewAny(): bool
-    {
-        return static::tenantHasFeature(\App\Support\FeatureGate::PAYROLL);
-    }
 
     public static function canCreate(): bool
     {

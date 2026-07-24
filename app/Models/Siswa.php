@@ -67,6 +67,7 @@ class Siswa extends Model
         'tanggal_pindah',
         'password',
         'pin',
+        'limit_harian_kantin',
     ];
 
     protected $casts = [

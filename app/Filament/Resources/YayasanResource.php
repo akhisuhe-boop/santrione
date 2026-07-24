@@ -45,7 +45,19 @@ class YayasanResource extends BaseResource
                         TextInput::make('ketua')
                             ->label('Ketua Yayasan')
                             ->maxLength(255),
-    
+
+                        \Filament\Forms\Components\Select::make('status')
+                            ->label('Status Langganan')
+                            ->options([
+                                'trial' => 'Trial',
+                                'active' => 'Active',
+                                'suspended' => 'Suspended (kunci akses, data aman)',
+                                'cancelled' => 'Cancelled (kunci akses, data aman)',
+                            ])
+                            ->visibleOn('edit')
+                            ->disabled(fn () => ! auth()->user()?->is_platform_admin)
+                            ->helperText('Ubah manual di sini kalau mau suspend/aktifkan tanpa lewat alur pembayaran. Data TIDAK pernah terhapus lewat perubahan status.'),
+
                         FileUpload::make('logo')
                             ->label('Logo Yayasan')
                             ->image()
@@ -87,10 +99,8 @@ class YayasanResource extends BaseResource
                     ->columns(3),
 
                 Section::make('Domain Custom')
-                    ->description('Fitur premium — kalau diisi, portal publik (Wali/Guru/PPDB) yayasan ini bisa diakses lewat domain sendiri, bukan cuma subdomain default.')
+                    ->description('Kalau diisi, portal publik (Wali/Guru/PPDB) yayasan ini bisa diakses lewat domain sendiri, bukan cuma subdomain default.')
                     ->icon('heroicon-o-globe-alt')
-                    ->visible(fn () => auth()->user()?->is_platform_admin
-                        || \Filament\Facades\Filament::getTenant()?->hasFeature(\App\Support\FeatureGate::CUSTOM_DOMAIN))
                     ->schema([
 
                         TextInput::make('domain')

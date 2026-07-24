@@ -24,10 +24,6 @@ class PengaturanGajiResource extends BaseResource
     protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
     protected static ?int $navigationSort = 3;
 
-    public static function canViewAny(): bool
-    {
-        return static::tenantHasFeature(\App\Support\FeatureGate::PAYROLL);
-    }
 
     public static function canCreate(): bool
     {

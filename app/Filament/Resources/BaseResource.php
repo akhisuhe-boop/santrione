@@ -65,21 +65,25 @@ abstract class BaseResource extends Resource
     }
 
     /**
-     * Helper buat Resource yang fiturnya dikunci per paket langganan
-     * (lihat App\Support\FeatureGate). Platform admin selalu bisa
-     * lihat (perlu buat support), tenant biasa ngikut fitur yang
-     * dibuka paket yayasan mereka.
-     *
-     * Dipakai di Resource yang perlu dikunci, contoh:
-     *
-     *   public static function canViewAny(): bool
-     *   {
-     *       return static::tenantHasFeature(\App\Support\FeatureGate::PAYROLL);
-     *   }
+     * Gate default berbasis GRUP MENU sidebar (lihat App\Support\FeatureGate).
+     * Semua Resource otomatis kena aturan ini lewat pewarisan — kalau
+     * suatu Resource butuh aturan akses BEDA (mis. resource khusus
+     * Platform Admin seperti Paket Langganan), override canViewAny()
+     * sendiri di Resource itu, itu akan menang dan baris ini tidak
+     * kepakai untuk Resource tsb.
      */
-    protected static function tenantHasFeature(string $key): bool
+    public static function canViewAny(): bool
     {
         if (auth()->user()?->is_platform_admin) {
+            return true;
+        }
+
+        $key = \App\Support\FeatureGate::keyForNavigationGroup(static::$navigationGroup);
+
+        // Grup yang tidak terdaftar di FeatureGate (atau Resource tanpa
+        // navigationGroup) dianggap TIDAK dikunci sama sekali — supaya
+        // tidak ada yang tiba-tiba hilang gara-gara lupa didaftarkan.
+        if ($key === null) {
             return true;
         }
 

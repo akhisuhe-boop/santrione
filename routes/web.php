@@ -225,6 +225,8 @@ Route::prefix('wali')->group(function () {
         Route::get('/dashboard', [WaliDashboardController::class, 'index'])->name('wali.dashboard');
         Route::get('/pengumuman', [WaliDashboardController::class, 'pengumuman'])->name('wali.pengumuman');
         Route::get('/keuangan', [WaliDashboardController::class, 'keuangan'])->name('wali.keuangan');
+        Route::get('/kantin', [WaliDashboardController::class, 'kantin'])->name('wali.kantin');
+        Route::post('/kantin/limit', [WaliDashboardController::class, 'updateLimitKantin'])->name('wali.kantin.limit');
         Route::get('/akademik', [WaliDashboardController::class, 'akademik'])->name('wali.akademik');
         Route::get('/tahfidz', [WaliDashboardController::class, 'tahfidz'])->name('wali.tahfidz');
         Route::get('/absensi', [WaliDashboardController::class, 'absensi'])->name('wali.absensi');

@@ -18,10 +18,6 @@ class WhatsappSettingResource extends BaseResource
     protected static ?int $navigationSort = 4;
     protected static ?string $navigationIcon = 'heroicon-o-chat-bubble-left-right';
 
-    public static function canViewAny(): bool
-    {
-        return static::tenantHasFeature(\App\Support\FeatureGate::WHATSAPP);
-    }
 
     public static function form(Form $form): Form
     {

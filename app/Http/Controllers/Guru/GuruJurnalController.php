@@ -148,7 +148,7 @@ class GuruJurnalController extends Controller
     {
         $yayasan = \App\Models\Yayasan::find(session('active_public_yayasan_id'));
 
-        if (! $yayasan?->hasFeature(\App\Support\FeatureGate::GURU_PENGGANTI)) {
+        if (! $yayasan?->hasFeature(\App\Support\FeatureGate::AKADEMIK)) {
             return redirect()
                 ->route('guru.dashboard')
                 ->with('warning', 'Fitur Guru Pengganti belum aktif untuk yayasan ini. Hubungi admin sekolah untuk upgrade paket.');
@@ -180,7 +180,7 @@ class GuruJurnalController extends Controller
         $yayasan = \App\Models\Yayasan::find(session('active_public_yayasan_id'));
 
         abort_unless(
-            $yayasan?->hasFeature(\App\Support\FeatureGate::GURU_PENGGANTI),
+            $yayasan?->hasFeature(\App\Support\FeatureGate::AKADEMIK),
             403,
             'Fitur Guru Pengganti belum aktif untuk yayasan ini.'
         );

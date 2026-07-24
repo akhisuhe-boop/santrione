@@ -59,6 +59,62 @@ class Yayasan extends Model implements HasName
                 );
             }
         });
+
+        /*
+        |--------------------------------------------------------------------------
+        | HARD DELETE BERSIH
+        |--------------------------------------------------------------------------
+        |
+        | Foreign key di database ini campuran cascade/nullOnDelete —
+        | sebagian tabel (Lembaga, Kelas, Siswa, dst) otomatis ikut
+        | kehapus lewat cascade bawaan, tapi beberapa tabel LAIN
+        | (User, Pegawai, Kas, Asrama, Ppdb) sengaja di-set nullOnDelete
+        | supaya tidak gagal migrasi dulu — efeknya kalau dibiarkan,
+        | baris itu jadi "nyangkut" (yayasan_id/lembaga_id kosong) tanpa
+        | pernah kehapus, numpuk di server tanpa guna.
+        |
+        | Hook ini membersihkan SEMUA sisa itu secara eksplisit SEBELUM
+        | proses delete utama jalan, supaya hard-delete Yayasan benar-
+        | benar bersih tanpa sisa sama sekali.
+        */
+        static::deleting(function (self $yayasan) {
+
+            $lembagaIds = $yayasan->lembagas()->pluck('id');
+
+            // Pegawai yang kerja di lembaga2 yayasan ini (pegawai hanya
+            // boleh kerja dalam 1 yayasan yang sama, lihat catatan di
+            // Pegawai::applyTenantScope) — aman dihapus bersama.
+            $pegawaiIds = \Illuminate\Support\Facades\DB::table('pegawai_lembaga')
+                ->whereIn('lembaga_id', $lembagaIds)
+                ->pluck('pegawai_id')
+                ->unique();
+
+            \App\Models\Pegawai::withoutGlobalScopes()
+                ->whereIn('id', $pegawaiIds)
+                ->get()
+                ->each(fn ($p) => $p->delete());
+
+            // User (akun admin panel) yang terhubung ke yayasan ini.
+            \App\Models\User::withoutGlobalScopes()
+                ->where('yayasan_id', $yayasan->id)
+                ->delete();
+
+            // Tabel yang FK-nya nullOnDelete ke lembaga — hapus manual
+            // dulu selagi lembaga_id-nya masih terisi.
+            foreach (['kas', 'asramas', 'ppdbs'] as $table) {
+                \Illuminate\Support\Facades\DB::table($table)
+                    ->whereIn('lembaga_id', $lembagaIds)
+                    ->delete();
+            }
+
+            // Data langganan/pembayaran yayasan ini (riwayat billing) —
+            // ikut dibersihkan juga supaya benar2 tuntas.
+            $subscriptionIds = $yayasan->subscriptions()->pluck('id');
+            \Illuminate\Support\Facades\DB::table('subscription_payments')
+                ->whereIn('subscription_id', $subscriptionIds)
+                ->delete();
+            $yayasan->subscriptions()->delete();
+        });
     }
 
     protected $fillable = [

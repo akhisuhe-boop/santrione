@@ -161,6 +161,48 @@ class WaliDashboardController extends Controller
         );
     }
 
+    public function kantin()
+    {
+        $siswa = Siswa::findOrFail(session('siswa_id'));
+
+        $yayasan = \App\Models\Yayasan::find(session('active_public_yayasan_id'));
+
+        abort_unless(
+            $yayasan?->hasFeature(\App\Support\FeatureGate::E_KANTIN),
+            403,
+            'Fitur Kantin belum aktif untuk yayasan ini.'
+        );
+
+        $riwayatKantin = \App\Models\KantinTransaksi::withoutGlobalScopes()
+            ->with('items')
+            ->where('siswa_id', $siswa->id)
+            ->latest('tanggal')
+            ->paginate(15);
+
+        $belanjaHariIni = \App\Models\KantinTransaksi::withoutGlobalScopes()
+            ->where('siswa_id', $siswa->id)
+            ->where('metode', 'wallet')
+            ->whereDate('tanggal', today())
+            ->sum('total');
+
+        return view('wali.kantin', compact('siswa', 'riwayatKantin', 'belanjaHariIni'));
+    }
+
+    public function updateLimitKantin(\Illuminate\Http\Request $request)
+    {
+        $siswa = Siswa::findOrFail(session('siswa_id'));
+
+        $request->validate([
+            'limit_harian_kantin' => ['nullable', 'numeric', 'min:0'],
+        ]);
+
+        $siswa->update([
+            'limit_harian_kantin' => $request->limit_harian_kantin ?: null,
+        ]);
+
+        return back()->with('success', 'Limit belanja harian berhasil diperbarui.');
+    }
+
     public function absensi()
     {
         $siswa = Siswa::with([
