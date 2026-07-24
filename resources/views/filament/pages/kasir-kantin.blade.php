@@ -2,6 +2,11 @@
 
     <script src="https://unpkg.com/html5-qrcode"></script>
 
+    <style>
+        #reader video { width: 100% !important; height: 100% !important; object-fit: cover !important; }
+        #reader img { width: 100% !important; }
+    </style>
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         {{-- ================================================= --}}
@@ -20,7 +25,7 @@
                         </div>
                     </x-slot>
 
-                    <div id="reader" class="rounded-2xl overflow-hidden max-w-sm mx-auto aspect-square bg-gray-950 [&_video]:!w-full [&_video]:!h-full [&_video]:!object-cover"></div>
+                    <div id="reader" class="rounded-2xl overflow-hidden bg-gray-950" style="width:320px;height:320px;max-width:100%;margin:0 auto;"></div>
 
                     <div class="mt-3 flex items-center gap-2">
                         <x-filament::input.wrapper class="flex-1">
@@ -47,9 +52,9 @@
                         <div class="flex items-center gap-4">
 
                             @if ($siswaTerpilih['foto'])
-                                <img src="{{ asset('storage/' . $siswaTerpilih['foto']) }}" class="w-24 h-24 rounded-2xl object-cover shrink-0">
+                                <img src="{{ asset('storage/' . $siswaTerpilih['foto']) }}" class="rounded-2xl" style="width:96px;height:96px;min-width:96px;object-fit:cover;">
                             @else
-                                <div class="w-24 h-24 rounded-2xl bg-primary-50 dark:bg-primary-500/10 flex items-center justify-center text-primary-500 shrink-0">
+                                <div class="rounded-2xl bg-primary-50 dark:bg-primary-500/10 flex items-center justify-center text-primary-500" style="width:96px;height:96px;min-width:96px;">
                                     <x-heroicon-o-user class="w-10 h-10" />
                                 </div>
                             @endif
@@ -83,7 +88,7 @@
                         </div>
                     </x-slot>
 
-                    <div id="reader" class="rounded-2xl overflow-hidden max-w-sm mx-auto aspect-square bg-gray-950 [&_video]:!w-full [&_video]:!h-full [&_video]:!object-cover"></div>
+                    <div id="reader" class="rounded-2xl overflow-hidden bg-gray-950" style="width:320px;height:320px;max-width:100%;margin:0 auto;"></div>
 
                     <div class="mt-3">
                         <x-filament::input.wrapper>
@@ -100,9 +105,9 @@
                         <div class="mt-4 flex items-center gap-3 rounded-2xl border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 p-3">
 
                             @if ($previewProduk['gambar'])
-                                <img src="{{ asset('storage/' . $previewProduk['gambar']) }}" class="w-12 h-12 rounded-xl object-cover shrink-0">
+                                <img src="{{ asset('storage/' . $previewProduk['gambar']) }}" class="rounded-xl" style="width:56px;height:56px;min-width:56px;object-fit:cover;">
                             @else
-                                <div class="w-12 h-12 rounded-xl bg-white dark:bg-white/10 flex items-center justify-center text-emerald-500 shrink-0">
+                                <div class="rounded-xl bg-white dark:bg-white/10 flex items-center justify-center text-emerald-500" style="width:56px;height:56px;min-width:56px;">
                                     <x-heroicon-o-check-circle class="w-6 h-6" />
                                 </div>
                             @endif
