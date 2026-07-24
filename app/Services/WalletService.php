@@ -104,24 +104,36 @@ class WalletService
     // =========================
     // ✏️ PENYESUAIAN SALDO MANUAL (dari halaman Edit Wallet)
     // =========================
-    // Dipanggil SETELAH kolom saldo sudah ter-update oleh Filament --
-    // fungsi ini cuma mencatat jejaknya (WalletTransaction + Kas),
-    // TIDAK mengubah saldo lagi (supaya tidak dobel).
-    public function logAdjustment($wallet, $diff)
+    // PENTING: method ini yang MENGUBAH saldo (bukan Filament secara
+    // langsung) — supaya perubahan saldo dan jejak pencatatannya
+    // (WalletTransaction + Kas) SELALU atomic dalam 1 transaksi
+    // database: kalau pencatatan gagal karena sebab apapun, saldo
+    // ikut batal berubah juga (tidak pernah nyangkut di tengah
+    // seperti yang sempat terjadi sebelumnya).
+    public function applyAdjustment($wallet, $saldoBaru)
     {
-        if ($diff == 0) return;
+        return DB::transaction(function () use ($wallet, $saldoBaru) {
 
-        DB::transaction(function () use ($wallet, $diff) {
+            $wallet = Wallet::lockForUpdate()
+                ->with('siswa.kelas')
+                ->findOrFail($wallet->id);
 
-            $wallet = $wallet->fresh(['siswa.kelas']);
+            $diff = $saldoBaru - $wallet->saldo;
+
+            if ($diff == 0) {
+                return $wallet;
+            }
+
             $siswa = $this->getSiswaInfo($wallet);
+
+            $wallet->update(['saldo' => $saldoBaru]);
 
             WalletTransaction::create([
                 'wallet_id' => $wallet->id,
                 'type' => 'adjustment',
                 'amount' => abs($diff),
                 'status' => 'success',
-                'description' => 'Penyesuaian saldo manual oleh admin',
+                'description' => 'Penyesuaian saldo manual oleh admin (' . ($diff > 0 ? '+' : '-') . 'Rp ' . number_format(abs($diff), 0, ',', '.') . ')',
             ]);
 
             Kas::create([
@@ -136,7 +148,21 @@ class WalletService
                 'lembaga_id' => $wallet->siswa->lembaga_id ?? null,
                 'diinput_oleh' => auth()->user()->name ?? null,
             ]);
+
+            return $wallet->fresh();
         });
+    }
+
+    /**
+     * @deprecated Dipertahankan supaya kode lama yang masih manggil
+     * logAdjustment() tidak fatal error — tapi method ini TIDAK LAGI
+     * dipakai oleh alur Edit Wallet (lihat applyAdjustment() di atas).
+     */
+    public function logAdjustment($wallet, $diff)
+    {
+        if ($diff == 0) return;
+
+        $this->applyAdjustment($wallet, $wallet->saldo + $diff);
     }
 
     // =========================
