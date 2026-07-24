@@ -32,7 +32,7 @@ class LaporanKas extends Page implements HasForms, HasTable
     protected static ?string $navigationLabel = 'Laporan Kas';
     protected static ?string $navigationIcon = 'heroicon-o-chart-bar';
     protected static ?string $navigationGroup = 'Keuangan';
-    protected static ?int $navigationSort = 10;
+    protected static ?int $navigationSort = 14;
 
     protected static string $view = 'filament.pages.laporan-kas';
     public static function canAccess(): bool
@@ -203,12 +203,14 @@ class LaporanKas extends Page implements HasForms, HasTable
                     Forms\Components\Select::make('rekening_id')
                         ->label('Rekening')
                         ->options(fn ($get) =>
-                            \App\Models\Rekening::query()
+                            \App\Models\Rekening::with('lembaga')
                                 ->when($get('lembaga_id'), fn ($q) =>
                                     $q->where('lembaga_id', $get('lembaga_id')))
                                 ->get()
                                 ->mapWithKeys(fn ($r) => [
-                                    $r->id => $r->nama . ' - ' . $r->bank . ' (' . $r->no_rekening . ')'
+                                    $r->id => $r->nama
+                                        . (filled($r->bank) || filled($r->no_rekening) ? ' - ' . $r->bank . ' (' . $r->no_rekening . ')' : '')
+                                        . ' — ' . ($r->lembaga->nama ?? 'Semua Lembaga')
                                 ])
                         )
                         ->searchable()

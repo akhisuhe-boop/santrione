@@ -23,7 +23,7 @@ class WalletResource extends BaseResource
     protected static ?string $model = Wallet::class;
     protected static ?string $navigationGroup = 'Keuangan';
     protected static ?string $navigationLabel = 'Top Up Saldo';
-    protected static ?int $navigationSort = 7;
+    protected static ?int $navigationSort = 11;
     protected static ?string $navigationIcon = 'heroicon-o-arrow-up-circle';
 
     public static function canCreate(): bool

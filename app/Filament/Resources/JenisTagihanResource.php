@@ -21,7 +21,7 @@ class JenisTagihanResource extends BaseResource
     protected static ?string $navigationIcon = 'heroicon-o-tag';
     protected static ?string $label = 'Tagihan Umum';
     protected static ?string $pluralLabel = 'Tagihan Umum';
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 7;
 
     public static function form(Form $form): Form
     {
@@ -34,7 +34,7 @@ class JenisTagihanResource extends BaseResource
                         Forms\Components\TextInput::make('nama')
                             ->label('Jenis Tagihan')
                             ->required()
-                            ->reactive()
+                            ->live(onBlur: true)
                             ->afterStateUpdated(function ($state, callable $set) {
                                 $set('kode', \Illuminate\Support\Str::slug($state, '_'));
                             })

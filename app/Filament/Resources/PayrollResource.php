@@ -21,7 +21,7 @@ class PayrollResource extends BaseResource
     protected static ?string $modelLabel = 'Penggajian';
     protected static ?string $pluralModelLabel = 'Penggajian';
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 6;
 
 
     public static function canCreate(): bool

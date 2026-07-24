@@ -21,7 +21,7 @@ class SettingNominalTagihanResource extends BaseResource
     protected static ?string $navigationIcon = 'heroicon-o-tag';
     protected static ?string $label = 'Tagihan Khusus';
     protected static ?string $pluralLabel = 'Tagihan Khusus';
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 9;
 
     public static function form(Form $form): Form
     {

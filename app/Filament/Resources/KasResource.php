@@ -21,7 +21,7 @@ class KasResource extends BaseResource
     protected static ?string $model = Kas::class;
     protected static ?string $navigationGroup = 'Keuangan';
     protected static ?string $navigationLabel = 'Input Kas';
-    protected static ?int $navigationSort = 9;
+    protected static ?int $navigationSort = 13;
     protected static ?string $navigationIcon = 'heroicon-o-arrows-right-left';
 
     public static function form(Form $form): Form

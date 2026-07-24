@@ -20,7 +20,7 @@ class WithdrawRequestResource extends BaseResource
     protected static ?string $model = WithdrawRequest::class;
     protected static ?string $navigationGroup = 'Keuangan';
     protected static ?string $navigationLabel = 'Penarikan Saldo';
-    protected static ?int $navigationSort = 8;
+    protected static ?int $navigationSort = 12;
     protected static ?string $navigationIcon = 'heroicon-o-arrow-down-circle';
 
     // =========================

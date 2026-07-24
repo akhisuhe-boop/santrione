@@ -22,7 +22,7 @@ class LaporanPembayaran extends Page implements HasForms
 
     protected static ?string $navigationIcon = 'heroicon-o-table-cells';
     protected static ?string $navigationGroup = 'Keuangan';
-    protected static ?int $navigationSort = 10;
+    protected static ?int $navigationSort = 15;
     protected static ?string $navigationLabel = 'Laporan Pembayaran';
     protected static string $view = 'filament.pages.laporan-pembayaran';
 

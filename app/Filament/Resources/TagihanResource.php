@@ -22,7 +22,7 @@ class TagihanResource extends BaseResource
     protected static ?string $model = Tagihan::class;
     protected static ?string $navigationGroup = 'Keuangan';
     protected static ?string $navigationLabel = 'Generate Tagihan';
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 8;
     protected static ?string $navigationIcon = 'heroicon-o-calculator';
     protected static ?string $label = 'Generate Tagihan';
     protected static ?string $pluralLabel = 'Generate Tagihan';
@@ -93,9 +93,11 @@ class TagihanResource extends BaseResource
                     Select::make('rekening_id')
                         ->label('Rekening')
                         ->options(
-                            \App\Models\Rekening::get()
+                            \App\Models\Rekening::with('lembaga')->get()
                                 ->mapWithKeys(fn ($r) => [
-                                    $r->id => $r->nama . ' - ' . $r->bank . ' (' . $r->no_rekening . ')'
+                                    $r->id => $r->nama
+                                        . (filled($r->bank) || filled($r->no_rekening) ? ' - ' . $r->bank . ' (' . $r->no_rekening . ')' : '')
+                                        . ' — ' . ($r->lembaga->nama ?? 'Semua Lembaga')
                                 ])
                         )
                         ->searchable()
@@ -346,9 +348,11 @@ class TagihanResource extends BaseResource
                     Select::make('rekening_id')
                         ->label('Rekening')
                         ->options(
-                            \App\Models\Rekening::get()
+                            \App\Models\Rekening::with('lembaga')->get()
                                 ->mapWithKeys(fn ($r) => [
-                                    $r->id => $r->nama . ' - ' . $r->bank . ' (' . $r->no_rekening . ')'
+                                    $r->id => $r->nama
+                                        . (filled($r->bank) || filled($r->no_rekening) ? ' - ' . $r->bank . ' (' . $r->no_rekening . ')' : '')
+                                        . ' — ' . ($r->lembaga->nama ?? 'Semua Lembaga')
                                 ])
                         )
                         ->searchable()
@@ -436,6 +440,16 @@ class TagihanResource extends BaseResource
 
                             $nominal = $setting?->nominal ?? $jenis->default_nominal;
 
+                            // Tahun ajaran berjalan Juli-Juni: bulan Jan-Jun masuk
+                            // tahun kalender KEDUA (tahun + 1), Jul-Des tahun PERTAMA.
+                            // Dihitung di sini (sebelum cek existing) supaya bisa
+                            // dipakai juga untuk MEMBETULKAN jatuh_tempo tagihan
+                            // lama yang sempat salah (dibuat sebelum fix ini ada).
+                            $tahunKalender = $bulan && (int) $bulan <= 6 ? $tahun + 1 : $tahun;
+                            $jatuhTempoBaru = $jenis->is_bulanan
+                                ? \Carbon\Carbon::createFromDate($tahunKalender, (int) $bulan, 10)
+                                : $data['jatuh_tempo'];
+
                             // 🔥 CEK APAKAH TAGIHAN INI SUDAH PERNAH DIBUAT
                             $existing = Tagihan::where([
                                     'siswa_id' => $siswa->id,
@@ -447,8 +461,8 @@ class TagihanResource extends BaseResource
 
                             if ($existing) {
 
-                                // REGENERATE: hanya update nominal kalau tagihan
-                                // BELUM ADA PEMBAYARAN SAMA SEKALI. Tagihan yang
+                                // REGENERATE: hanya update nominal & jatuh_tempo kalau
+                                // tagihan BELUM ADA PEMBAYARAN SAMA SEKALI. Tagihan yang
                                 // sudah dicicil/lunas tidak pernah disentuh --
                                 // supaya riwayat pembayaran tetap konsisten.
                                 if (
@@ -459,6 +473,7 @@ class TagihanResource extends BaseResource
                                     $existing->update([
                                         'nominal' => $nominal,
                                         'rekening_id' => $data['rekening_id'],
+                                        'jatuh_tempo' => $jatuhTempoBaru,
                                     ]);
                                     $diupdate++;
                                 } else {
@@ -471,12 +486,7 @@ class TagihanResource extends BaseResource
                             $judul = $jenis->nama 
                                 . ($bulan ? ' - ' . $bulanNama[$bulan] : '');
 
-                            // Tahun ajaran berjalan Juli-Juni: bulan Jan-Jun masuk
-                            // tahun kalender KEDUA (tahun + 1), Jul-Des tahun PERTAMA.
-                            $tahunKalender = $bulan && (int) $bulan <= 6 ? $tahun + 1 : $tahun;
-                            $jatuhTempo = $jenis->is_bulanan
-                            ? \Carbon\Carbon::createFromDate($tahunKalender, (int) $bulan, 10)
-                            : $data['jatuh_tempo'];
+                            $jatuhTempo = $jatuhTempoBaru;
 
                             Tagihan::create([
                                 'siswa_id' => $siswa->id,

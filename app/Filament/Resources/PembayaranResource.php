@@ -22,7 +22,7 @@ class PembayaranResource extends BaseResource
     protected static ?string $navigationLabel = 'Input Pembayaran';
     protected static ?string $label = 'Input Pembayaran';
     protected static ?string $pluralLabel = 'Input Pembayaran';
-    protected static ?int $navigationSort = 6;
+    protected static ?int $navigationSort = 10;
     protected static ?string $navigationIcon = 'heroicon-o-credit-card';
 
     public static function form(Form $form): Form
