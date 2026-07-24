@@ -29,7 +29,7 @@
         .kk-name { font-weight: 700; font-size: 17px; color: #111827; }
         .dark .kk-name { color: #fff; }
         .kk-meta { font-size: 13px; color: #6b7280; margin-top: 3px; }
-        .kk-saldo { font-size: 14px; font-weight: 700; color: #00A39D; margin-top: 6px; }
+        .kk-saldo { font-size: 16px; font-weight: 800; color: #00A39D; margin-top: 6px; }
 
         .kk-cart-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 14px; padding: 8px 0; }
         .kk-qty-btn {
@@ -38,9 +38,9 @@
         }
 
         .kk-scan-icon {
-            width: 56px; height: 56px; border-radius: 16px; background: #f0fdfa;
+            width: 52px; height: 52px; border-radius: 14px; background: #f0fdfa;
             color: #00A39D; display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 16px auto;
+            flex-shrink: 0;
         }
 
         .kk-grid { display: grid; grid-template-columns: 1fr; gap: 24px; }
@@ -64,18 +64,24 @@
                         </div>
                     </x-slot>
 
-                    <div class="kk-section-body" style="text-align:center; padding-top:16px; padding-bottom:8px;">
+                    <div class="kk-section-body" style="padding-top:12px; padding-bottom:8px;">
 
-                        <div class="kk-scan-icon">
-                            <x-heroicon-o-qr-code style="width:28px;height:28px;" />
+                        <div class="kk-row kk-gap-3">
+
+                            <div class="kk-scan-icon">
+                                <x-heroicon-o-qr-code style="width:26px;height:26px;" />
+                            </div>
+
+                            <div style="flex:1;">
+                                <input
+                                    type="text"
+                                    id="input-siswa"
+                                    class="kk-input"
+                                    autocomplete="off"
+                                    placeholder="Ketik / scan NIS siswa, lalu Enter...">
+                            </div>
+
                         </div>
-
-                        <input
-                            type="text"
-                            id="input-siswa"
-                            class="kk-input"
-                            autocomplete="off"
-                            placeholder="Ketik / scan NIS siswa, lalu Enter...">
 
                         <p class="kk-hint">Kursor sudah otomatis aktif di kolom ini — tinggal scan pakai barcode scanner, atau ketik NIS manual lalu tekan Enter.</p>
 
@@ -125,18 +131,24 @@
                         </div>
                     </x-slot>
 
-                    <div class="kk-section-body" style="text-align:center; padding-top:16px; padding-bottom:8px;">
+                    <div class="kk-section-body" style="padding-top:12px; padding-bottom:8px;">
 
-                        <div class="kk-scan-icon">
-                            <x-heroicon-o-shopping-bag style="width:28px;height:28px;" />
+                        <div class="kk-row kk-gap-3">
+
+                            <div class="kk-scan-icon">
+                                <x-heroicon-o-shopping-bag style="width:26px;height:26px;" />
+                            </div>
+
+                            <div style="flex:1;">
+                                <input
+                                    type="text"
+                                    id="input-produk"
+                                    class="kk-input"
+                                    autocomplete="off"
+                                    placeholder="Ketik / scan barcode produk, lalu Enter...">
+                            </div>
+
                         </div>
-
-                        <input
-                            type="text"
-                            id="input-produk"
-                            class="kk-input"
-                            autocomplete="off"
-                            placeholder="Ketik / scan barcode produk, lalu Enter...">
 
                         <p class="kk-hint">Scan barcode produk satu-satu — tiap scan otomatis masuk keranjang di kanan.</p>
 
