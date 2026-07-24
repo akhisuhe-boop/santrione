@@ -29,11 +29,10 @@ class ProdukTerlarisKantin extends BaseWidget
                     ->whereHas('transaksi', fn ($q) => $q->withoutGlobalScopes()->whereIn('lembaga_id', $lembagaIds))
                     ->whereMonth('created_at', now()->month)
                     ->whereYear('created_at', now()->year)
-                    ->selectRaw('nama_produk, SUM(qty) as total_qty, SUM(subtotal) as total_omzet')
+                    ->selectRaw('MIN(id) as id, nama_produk, SUM(qty) as total_qty, SUM(subtotal) as total_omzet')
                     ->groupBy('nama_produk')
                     ->orderByDesc('total_qty')
             )
-            ->recordKey(fn ($record) => $record->nama_produk)
             ->columns([
 
                 Tables\Columns\TextColumn::make('nama_produk')
