@@ -33,6 +33,7 @@ class ProdukTerlarisKantin extends BaseWidget
                     ->groupBy('nama_produk')
                     ->orderByDesc('total_qty')
             )
+            ->recordKey(fn ($record) => $record->nama_produk)
             ->columns([
 
                 Tables\Columns\TextColumn::make('nama_produk')
