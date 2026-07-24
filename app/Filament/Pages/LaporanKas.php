@@ -45,6 +45,7 @@ class LaporanKas extends Page implements HasForms, HasTable
     public $tipe;
     public $kategori_id;
     public $lembaga_id;
+    public $kelas_id;
     public $rekening_id;
     public $diinput_oleh;
     public $tampilkan_alumni = false;
@@ -63,6 +64,7 @@ class LaporanKas extends Page implements HasForms, HasTable
                 'tipe' => $this->tipe,
                 'kategori_id' => $this->kategori_id,
                 'lembaga_id' => $this->lembaga_id,
+                        'kelas_id' => $this->kelas_id,
                         'rekening_id' => $this->rekening_id,
                         'diinput_oleh' => $this->diinput_oleh,
                         'tampilkan_alumni' => $this->tampilkan_alumni,
@@ -93,6 +95,7 @@ class LaporanKas extends Page implements HasForms, HasTable
                             'tipe' => $this->tipe,
                             'kategori_id' => $this->kategori_id,
                             'lembaga_id' => $this->lembaga_id,
+                        'kelas_id' => $this->kelas_id,
                         'rekening_id' => $this->rekening_id,
                         'diinput_oleh' => $this->diinput_oleh,
                         'tampilkan_alumni' => $this->tampilkan_alumni,
@@ -113,6 +116,7 @@ class LaporanKas extends Page implements HasForms, HasTable
                         'tipe' => $this->tipe,
                         'kategori_id' => $this->kategori_id,
                         'lembaga_id' => $this->lembaga_id,
+                        'kelas_id' => $this->kelas_id,
                         'rekening_id' => $this->rekening_id,
                         'diinput_oleh' => $this->diinput_oleh,
                         'tampilkan_alumni' => $this->tampilkan_alumni,
@@ -152,7 +156,7 @@ class LaporanKas extends Page implements HasForms, HasTable
     protected function getFormSchema(): array
     {
         return [
-            Forms\Components\Grid::make(6)
+            Forms\Components\Grid::make(4)
                 ->schema([
 
                     Forms\Components\DatePicker::make('dari')
@@ -200,6 +204,19 @@ class LaporanKas extends Page implements HasForms, HasTable
                     Forms\Components\Select::make('lembaga_id')
                         ->label('Lembaga')
                         ->options(Lembaga::pluck('nama', 'id'))
+                        ->searchable()
+                        ->preload()
+                        ->live(debounce: 400)
+                        ->afterStateUpdated(fn ($set) => $set('kelas_id', null)),
+
+                    Forms\Components\Select::make('kelas_id')
+                        ->label('Kelas')
+                        ->options(fn ($get) =>
+                            \App\Models\Kelas::query()
+                                ->when($get('lembaga_id'), fn ($q) =>
+                                    $q->where('lembaga_id', $get('lembaga_id')))
+                                ->pluck('nama', 'id')
+                        )
                         ->searchable()
                         ->preload()
                         ->live(debounce: 400),
@@ -260,6 +277,10 @@ class LaporanKas extends Page implements HasForms, HasTable
 
             ->when($this->rekening_id, fn ($q) =>
                 $q->where('rekening_id', $this->rekening_id))
+
+            ->when($this->kelas_id, fn ($q) =>
+                $q->whereHas('pembayaran.siswa', fn ($s) =>
+                    $s->where('kelas_id', $this->kelas_id)))
 
             ->when($this->diinput_oleh, fn ($q) =>
                 $q->where('diinput_oleh', $this->diinput_oleh))
@@ -322,6 +343,10 @@ class LaporanKas extends Page implements HasForms, HasTable
 
                     ->when($this->rekening_id, fn ($q) =>
                         $q->where('rekening_id', $this->rekening_id))
+
+                    ->when($this->kelas_id, fn ($q) =>
+                        $q->whereHas('pembayaran.siswa', fn ($s) =>
+                            $s->where('kelas_id', $this->kelas_id)))
 
                     ->when($this->diinput_oleh, fn ($q) =>
                         $q->where('diinput_oleh', $this->diinput_oleh))

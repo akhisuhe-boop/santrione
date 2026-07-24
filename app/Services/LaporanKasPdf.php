@@ -41,6 +41,10 @@ class LaporanKasPdf
             ->when($filters['diinput_oleh'] ?? null, fn ($q) =>
                 $q->where('diinput_oleh', $filters['diinput_oleh']))
 
+            ->when($filters['kelas_id'] ?? null, fn ($q) =>
+                $q->whereHas('pembayaran.siswa', fn ($s) =>
+                    $s->where('kelas_id', $filters['kelas_id'])))
+
             ->when(empty($filters['tampilkan_alumni']), fn ($q) =>
                 $q->where(function ($sub) {
                     $sub->whereDoesntHave('pembayaran.siswa')

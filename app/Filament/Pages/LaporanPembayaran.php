@@ -84,7 +84,7 @@ class LaporanPembayaran extends Page implements HasForms
     protected function getFormSchema(): array
     {
         return [
-            Forms\Components\Grid::make(5)
+            Forms\Components\Grid::make(3)
                 ->schema([
 
                     Forms\Components\Select::make('tahun_ajaran_id')
