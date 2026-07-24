@@ -27,7 +27,7 @@
     <style>
 
         @page{
-            margin:8mm;
+            margin: 14mm 8mm;
         }
 
         *{
@@ -62,7 +62,7 @@
 
             width:65px;
             height:65px;
-            margin:0 auto 8px;
+            margin:6px auto 8px;
             object-fit:contain;
 
         }
