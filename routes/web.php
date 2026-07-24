@@ -153,6 +153,10 @@ Route::middleware(['auth'])->group(function () {
         return Excel::download(new PegawaiTemplateExport, 'template-pegawai.xlsx');
     })->name('pegawai.template');
 
+    Route::get('/kantin-produk-template', function () {
+        return Excel::download(new \App\Exports\KantinProdukTemplateExport, 'template-kantin-produk.xlsx');
+    })->name('kantin-produk.template');
+
     Route::get('/kartu-pegawai', [KartuController::class, 'cetakPegawai'])
         ->name('kartu.pegawai');
 

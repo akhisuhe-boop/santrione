@@ -23,61 +23,75 @@ class KantinProdukResource extends BaseResource
         return $form
             ->schema([
 
-                Forms\Components\Select::make('lembaga_id')
-                    ->label('Lembaga')
-                    ->relationship('lembaga', 'nama', fn ($query) => $query->where(
-                        'yayasan_id',
-                        \Filament\Facades\Filament::getTenant()?->id
-                    ))
-                    ->required()
-                    ->searchable()
-                    ->preload(),
+                Forms\Components\Section::make('Produk Kantin')
+                    ->description('Data dasar produk yang dijual di kantin.')
+                    ->icon('heroicon-o-shopping-bag')
+                    ->schema([
 
-                Forms\Components\TextInput::make('nama')
-                    ->label('Nama Produk')
-                    ->required()
-                    ->maxLength(255),
+                        Forms\Components\Select::make('lembaga_id')
+                            ->label('Lembaga')
+                            ->relationship('lembaga', 'nama', fn ($query) => $query->where(
+                                'yayasan_id',
+                                \Filament\Facades\Filament::getTenant()?->id
+                            ))
+                            ->required()
+                            ->searchable()
+                            ->preload(),
 
-                Forms\Components\TextInput::make('barcode')
-                    ->label('Barcode / Kode Scan')
-                    ->unique(ignoreRecord: true)
-                    ->suffixAction(
-                        Forms\Components\Actions\Action::make('generate')
-                            ->icon('heroicon-o-qr-code')
-                            ->action(fn ($set) => $set('barcode', 'PRD-' . strtoupper(\Illuminate\Support\Str::random(8))))
-                    )
-                    ->helperText('Kode unik buat di-scan di halaman Kasir. Kosongkan lalu klik ikon di kanan untuk generate otomatis, atau isi manual sesuai barcode kemasan produk.'),
+                        Forms\Components\TextInput::make('nama')
+                            ->label('Nama Produk')
+                            ->required()
+                            ->maxLength(255),
 
-                Forms\Components\TextInput::make('kategori')
-                    ->label('Kategori')
-                    ->placeholder('Makanan / Minuman / Snack / dll')
-                    ->maxLength(100),
+                        Forms\Components\TextInput::make('barcode')
+                            ->label('Barcode / Kode Scan')
+                            ->unique(ignoreRecord: true)
+                            ->suffixAction(
+                                Forms\Components\Actions\Action::make('generate')
+                                    ->icon('heroicon-o-qr-code')
+                                    ->action(fn ($set) => $set('barcode', 'PRD-' . strtoupper(\Illuminate\Support\Str::random(8))))
+                            )
+                            ->helperText('Kode unik buat di-scan di halaman Kasir. Kosongkan lalu klik ikon di kanan untuk generate otomatis, atau isi manual sesuai barcode kemasan produk.'),
 
-                Forms\Components\TextInput::make('harga')
-                    ->label('Harga')
-                    ->numeric()
-                    ->mask(RawJs::make("\$money(\$input, ',', '.')"))
-                    ->stripCharacters('.')
-                    ->prefix('Rp')
-                    ->required(),
+                        Forms\Components\TextInput::make('kategori')
+                            ->label('Kategori')
+                            ->placeholder('Makanan / Minuman / Snack / dll')
+                            ->maxLength(100),
 
-                Forms\Components\TextInput::make('stok')
-                    ->label('Stok')
-                    ->numeric()
-                    ->helperText('Kosongkan kalau tidak mau lacak stok (mis. produk buatan langsung/tidak terbatas).'),
+                        Forms\Components\TextInput::make('harga')
+                            ->label('Harga')
+                            ->numeric()
+                            ->mask(RawJs::make("\$money(\$input, ',', '.')"))
+                            ->stripCharacters('.')
+                            ->prefix('Rp')
+                            ->required(),
 
-                Forms\Components\FileUpload::make('gambar')
-                    ->label('Gambar')
-                    ->image()
-                    ->directory('kantin-produk')
-                    ->disk('public'),
+                        Forms\Components\TextInput::make('stok')
+                            ->label('Stok')
+                            ->numeric()
+                            ->helperText('Kosongkan kalau tidak mau lacak stok (mis. produk buatan langsung/tidak terbatas).'),
 
-                Forms\Components\Toggle::make('is_active')
-                    ->label('Aktif (bisa dijual)')
-                    ->default(true),
+                        Forms\Components\Toggle::make('is_active')
+                            ->label('Aktif (bisa dijual)')
+                            ->default(true),
 
-            ])
-            ->columns(2);
+                    ])
+                    ->columns(2),
+
+                Forms\Components\Section::make('Gambar Produk')
+                    ->icon('heroicon-o-photo')
+                    ->schema([
+
+                        Forms\Components\FileUpload::make('gambar')
+                            ->label('Gambar')
+                            ->image()
+                            ->directory('kantin-produk')
+                            ->disk('public')
+                            ->columnSpanFull(),
+
+                    ]),
+
+            ]);
     }
 
     public static function table(Table $table): Table
@@ -124,6 +138,49 @@ class KantinProdukResource extends BaseResource
                     ->relationship('lembaga', 'nama')
                     ->label('Lembaga'),
                 Tables\Filters\TernaryFilter::make('is_active')->label('Status Aktif'),
+            ])
+            ->headerActions([
+
+                Tables\Actions\Action::make('export')
+                    ->label('Export Excel')
+                    ->icon('heroicon-o-arrow-down-circle')
+                    ->color('warning')
+                    ->action(fn () => \Maatwebsite\Excel\Facades\Excel::download(
+                        new \App\Exports\KantinProdukExport,
+                        'kantin-produk.xlsx'
+                    )),
+
+                Tables\Actions\Action::make('import')
+                    ->label('Import Excel')
+                    ->modalSubmitActionLabel('Upload')
+                    ->icon('heroicon-o-arrow-up-circle')
+                    ->color('success')
+                    ->form([
+
+                        Forms\Components\Placeholder::make('download_template')
+                            ->label('Download Template')
+                            ->content(new \Illuminate\Support\HtmlString(
+                                '<a href="' . route('kantin-produk.template') . '" target="_blank" style="color:#16a34a;font-weight:bold;">
+                                    ⬇️ Download Template Excel
+                                </a>'
+                            )),
+
+                        Forms\Components\FileUpload::make('file')
+                            ->disk('public')
+                            ->directory('imports')
+                            ->required(),
+
+                    ])
+                    ->action(function (array $data) {
+
+                        $path = storage_path('app/public/' . $data['file']);
+
+                        \Maatwebsite\Excel\Facades\Excel::import(
+                            new \App\Imports\KantinProdukImport,
+                            $path
+                        );
+                    }),
+
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
