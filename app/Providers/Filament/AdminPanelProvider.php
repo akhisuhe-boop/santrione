@@ -145,6 +145,9 @@ class AdminPanelProvider extends PanelProvider
         ->sidebarCollapsibleOnDesktop()
 
         ->navigationGroups([
+            NavigationGroup::make('Platform (SaaS)')
+                ->icon('heroicon-o-building-office-2'),
+
             NavigationGroup::make('Master Data')
                 ->icon('heroicon-o-folder'),
 
@@ -156,6 +159,9 @@ class AdminPanelProvider extends PanelProvider
 
             NavigationGroup::make('Keuangan')
                 ->icon('heroicon-o-banknotes'),
+
+            NavigationGroup::make('e-Kantin')
+                ->icon('heroicon-o-shopping-bag'),
 
             NavigationGroup::make('Akademik')
                 ->icon('heroicon-o-academic-cap'),
