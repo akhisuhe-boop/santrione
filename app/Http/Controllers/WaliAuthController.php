@@ -60,6 +60,16 @@ class WaliAuthController extends Controller
             'wali_nama' => $siswa->nama_ayah ?? $siswa->nama,
         ]);
 
+        // Sama seperti login Guru — tanpa ini, nama yayasan di header
+        // portal tidak muncul (placeholder "Nama Yayasan"), dan semua
+        // pengecekan fitur premium (mis. kartu menu Kantin) gagal
+        // karena tidak ketemu yayasan aktifnya.
+        $lembaga = $siswa->lembaga;
+
+        if ($lembaga) {
+            session(['active_public_yayasan_id' => $lembaga->yayasan_id]);
+        }
+
         return redirect()->route('wali.dashboard');
     }
 
@@ -68,7 +78,7 @@ class WaliAuthController extends Controller
      */
     public function logout(Request $request)
     {
-        $request->session()->forget(['siswa_id', 'wali_nama']);
+        $request->session()->forget(['siswa_id', 'wali_nama', 'active_public_yayasan_id']);
         $request->session()->regenerateToken();
 
         return redirect()->route('role.login');
