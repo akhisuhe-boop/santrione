@@ -348,16 +348,22 @@ class MigrateAlMubarokData extends Command
     {
         $rows = $this->src()->table('absensi')->get();
         $count = 0;
+        $skipped = 0;
         foreach ($rows as $row) {
+            $newJadwalKegiatanId = $this->map['jadwal_kegiatan'][$row->jadwal_kegiatan_id] ?? null;
+            if (!$newJadwalKegiatanId) {
+                $skipped++;
+                continue;
+            }
             $data = $this->copyRow($row, [
-                'jadwal_kegiatan_id' => $this->map['jadwal_kegiatan'][$row->jadwal_kegiatan_id] ?? null,
+                'jadwal_kegiatan_id' => $newJadwalKegiatanId,
                 'siswa_id' => $row->siswa_id ? ($this->map['siswa'][$row->siswa_id] ?? null) : null,
                 'pegawai_id' => $row->pegawai_id ? ($this->map['pegawai'][$row->pegawai_id] ?? null) : null,
             ]);
             DB::table('absensi')->insert($data);
             $count++;
         }
-        $this->info("absensi: $count baris");
+        $this->info("absensi: $count baris ($skipped di-skip karena jadwal_kegiatan_id tidak valid)");
     }
 
     protected function migrateAnnouncements()
