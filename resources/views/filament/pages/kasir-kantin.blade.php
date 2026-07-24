@@ -2,213 +2,271 @@
 
     <script src="https://unpkg.com/html5-qrcode"></script>
 
+    {{--
+        PENTING: halaman ini pakai <style> CSS polos (bukan Tailwind
+        utility classes) untuk semua spacing/ukuran/layout krusial.
+        Alasannya: Tailwind di Filament di-compile sekali lewat build
+        step (bukan CDN), jadi class baru di file blade baru tidak
+        otomatis "hidup" sampai di-build ulang. CSS polos di bawah ini
+        selalu jalan di browser manapun tanpa perlu build apapun.
+    --}}
     <style>
-        #reader video { width: 100% !important; height: 100% !important; object-fit: cover !important; }
-        #reader img { width: 100% !important; }
+        .kk-section-body { padding: 4px 0; }
+        .kk-gap-sm { margin-top: 10px; }
+        .kk-gap-md { margin-top: 16px; }
+        .kk-gap-lg { margin-top: 24px; }
+        .kk-hint { font-size: 12px; color: #9ca3af; margin-top: 8px; }
+        .kk-input {
+            width: 100%; box-sizing: border-box; padding: 10px 14px;
+            border: 1px solid #e5e7eb; border-radius: 12px; font-size: 14px;
+            background: transparent;
+        }
+        .dark .kk-input { border-color: rgba(255,255,255,.1); color: #fff; }
+
+        #reader-siswa, #reader-produk {
+            width: 280px; height: 280px; max-width: 100%;
+            margin: 0 auto; border-radius: 16px; overflow: hidden;
+            background: #0f172a; display: flex; align-items: center; justify-content: center;
+        }
+        #reader-siswa video, #reader-produk video { width: 100% !important; height: 100% !important; object-fit: cover !important; }
+        .kk-reader-placeholder { color: #64748b; font-size: 12px; text-align: center; padding: 12px; }
+
+        .kk-row { display: flex; align-items: center; }
+        .kk-row-between { display: flex; align-items: center; justify-content: space-between; }
+        .kk-gap-3 { gap: 12px; }
+        .kk-gap-2 { gap: 8px; }
+
+        .kk-card {
+            border: 1px solid #e5e7eb; border-radius: 16px; padding: 16px;
+            background: #fff;
+        }
+        .dark .kk-card { border-color: rgba(255,255,255,.1); background: #1a1f2e; }
+
+        .kk-card-highlight {
+            border: 1px solid #a7f3d0; border-radius: 16px; padding: 12px;
+            background: #ecfdf5; display: flex; align-items: center; gap: 12px;
+        }
+        .dark .kk-card-highlight { border-color: rgba(16,185,129,.3); background: rgba(16,185,129,.08); }
+
+        .kk-avatar { border-radius: 16px; object-fit: cover; flex-shrink: 0; }
+        .kk-name { font-weight: 700; font-size: 17px; color: #111827; }
+        .dark .kk-name { color: #fff; }
+        .kk-meta { font-size: 13px; color: #6b7280; margin-top: 3px; }
+        .kk-saldo { font-size: 14px; font-weight: 700; color: #00A39D; margin-top: 6px; }
+        .kk-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: 11px; font-weight: 600; padding: 3px 10px;
+            border-radius: 999px; background: #f0fdfa; color: #00A39D;
+            border: 1px solid #ccfbf1;
+        }
+
+        .kk-cart-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 14px; padding: 8px 0; }
+        .kk-qty-btn {
+            width: 28px; height: 28px; border-radius: 999px; display: flex;
+            align-items: center; justify-content: center; border: none; cursor: pointer;
+        }
+
+        .kk-grid { display: grid; grid-template-columns: 1fr; gap: 24px; }
+        @media (min-width: 1024px) {
+            .kk-grid { grid-template-columns: 2fr 1fr; }
+        }
     </style>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="kk-grid">
 
-        {{-- ================================================= --}}
-        {{-- SCANNER + SISWA + PREVIEW PRODUK --}}
-        {{-- ================================================= --}}
-        <div class="lg:col-span-2 space-y-4">
+        <div style="display:grid; gap:16px;">
 
             @if (! $siswaTerpilih)
 
-                {{-- BELUM ADA SISWA — minta scan kartu siswa dulu --}}
+                {{-- BELUM ADA SISWA --}}
                 <x-filament::section>
                     <x-slot name="heading">
-                        <div class="flex items-center gap-2">
-                            <x-heroicon-o-qr-code class="w-5 h-5" />
+                        <div class="kk-row kk-gap-2">
+                            <x-heroicon-o-qr-code style="width:20px;height:20px;" />
                             Scan Kartu Siswa
                         </div>
                     </x-slot>
 
-                    <div id="reader" class="rounded-2xl overflow-hidden bg-gray-950" style="width:320px;height:320px;max-width:100%;margin:0 auto;"></div>
+                    <div class="kk-section-body">
 
-                    <div class="mt-3 flex items-center gap-2">
-                        <x-filament::input.wrapper class="flex-1">
-                            <x-filament::input
+                        <div id="reader-siswa">
+                            <div class="kk-reader-placeholder" id="reader-siswa-placeholder">Mengaktifkan kamera...</div>
+                        </div>
+
+                        <div class="kk-gap-md">
+                            <input
                                 type="text"
-                                id="manual-input"
-                                placeholder="Atau ketik NIS / kode manual, lalu Enter..."
-                            />
-                        </x-filament::input.wrapper>
-                    </div>
+                                id="manual-input-siswa"
+                                class="kk-input"
+                                placeholder="Atau ketik NIS / kode manual, lalu Enter...">
+                        </div>
 
-                    <p class="text-xs text-gray-400 mt-2">
-                        Arahkan kartu/QR siswa ke kamera. Kalau kamera tidak tersedia, ketik NIS manual di atas.
-                    </p>
+                        <p class="kk-hint">Arahkan kartu/QR siswa ke kamera. Kalau kamera tidak tersedia, ketik NIS manual di atas.</p>
+
+                    </div>
                 </x-filament::section>
 
             @else
 
                 {{-- SISWA SUDAH DIPILIH --}}
                 <x-filament::section>
+                    <div class="kk-section-body">
+                        <div class="kk-row-between">
 
-                    <div class="flex items-center justify-between gap-4">
+                            <div class="kk-row kk-gap-3">
 
-                        <div class="flex items-center gap-4">
+                                @if ($siswaTerpilih['foto'])
+                                    <img src="{{ asset('storage/' . $siswaTerpilih['foto']) }}" class="kk-avatar" style="width:88px;height:88px;">
+                                @else
+                                    <div class="kk-avatar" style="width:88px;height:88px;background:#f0fdfa;display:flex;align-items:center;justify-content:center;color:#00A39D;">
+                                        <x-heroicon-o-user style="width:36px;height:36px;" />
+                                    </div>
+                                @endif
 
-                            @if ($siswaTerpilih['foto'])
-                                <img src="{{ asset('storage/' . $siswaTerpilih['foto']) }}" class="rounded-2xl" style="width:96px;height:96px;min-width:96px;object-fit:cover;">
-                            @else
-                                <div class="rounded-2xl bg-primary-50 dark:bg-primary-500/10 flex items-center justify-center text-primary-500" style="width:96px;height:96px;min-width:96px;">
-                                    <x-heroicon-o-user class="w-10 h-10" />
+                                <div>
+                                    <div class="kk-name">{{ $siswaTerpilih['nama'] }}</div>
+                                    <div class="kk-meta">NIS {{ $siswaTerpilih['nis'] }}</div>
+                                    <div class="kk-meta">{{ $siswaTerpilih['kelas'] }} &middot; {{ $siswaTerpilih['lembaga'] }}</div>
+                                    <div class="kk-saldo">Saldo: Rp {{ number_format($siswaTerpilih['saldo'], 0, ',', '.') }}</div>
                                 </div>
-                            @endif
 
-                            <div>
-                                <div class="font-bold text-lg text-gray-900 dark:text-white">{{ $siswaTerpilih['nama'] }}</div>
-                                <div class="text-sm text-gray-500 mt-1">NIS {{ $siswaTerpilih['nis'] }}</div>
-                                <div class="text-sm text-gray-500">{{ $siswaTerpilih['kelas'] }}</div>
-                                <div class="text-sm text-gray-500">{{ $siswaTerpilih['lembaga'] }}</div>
-                                <div class="text-sm font-semibold text-primary-600 mt-1">
-                                    Saldo: Rp {{ number_format($siswaTerpilih['saldo'], 0, ',', '.') }}
-                                </div>
                             </div>
 
+                            <x-filament::button color="gray" outlined wire:click="gantiSiswa" icon="heroicon-o-arrow-path">
+                                Ganti Siswa
+                            </x-filament::button>
+
                         </div>
-
-                        <x-filament::button color="gray" outlined wire:click="gantiSiswa" icon="heroicon-o-arrow-path">
-                            Ganti Siswa
-                        </x-filament::button>
-
                     </div>
-
                 </x-filament::section>
 
                 {{-- SCAN PRODUK --}}
                 <x-filament::section>
                     <x-slot name="heading">
-                        <div class="flex items-center gap-2">
-                            <x-heroicon-o-shopping-bag class="w-5 h-5" />
+                        <div class="kk-row kk-gap-2">
+                            <x-heroicon-o-shopping-bag style="width:20px;height:20px;" />
                             Scan Produk
                         </div>
                     </x-slot>
 
-                    <div id="reader" class="rounded-2xl overflow-hidden bg-gray-950" style="width:320px;height:320px;max-width:100%;margin:0 auto;"></div>
+                    <div class="kk-section-body">
 
-                    <div class="mt-3">
-                        <x-filament::input.wrapper>
-                            <x-filament::input
-                                type="text"
-                                id="manual-input"
-                                placeholder="Atau ketik barcode produk manual, lalu Enter..."
-                            />
-                        </x-filament::input.wrapper>
-                    </div>
-
-                    {{-- PREVIEW SCAN TERAKHIR --}}
-                    @if ($previewProduk)
-                        <div class="mt-4 flex items-center gap-3 rounded-2xl border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 p-3">
-
-                            @if ($previewProduk['gambar'])
-                                <img src="{{ asset('storage/' . $previewProduk['gambar']) }}" class="rounded-xl" style="width:56px;height:56px;min-width:56px;object-fit:cover;">
-                            @else
-                                <div class="rounded-xl bg-white dark:bg-white/10 flex items-center justify-center text-emerald-500" style="width:56px;height:56px;min-width:56px;">
-                                    <x-heroicon-o-check-circle class="w-6 h-6" />
-                                </div>
-                            @endif
-
-                            <div class="flex-1">
-                                <div class="text-sm font-semibold text-emerald-800 dark:text-emerald-300">{{ $previewProduk['nama'] }} ditambahkan</div>
-                                <div class="text-xs text-emerald-600 dark:text-emerald-400">
-                                    Rp {{ number_format($previewProduk['harga'], 0, ',', '.') }}
-                                    @if ($previewProduk['stok'] !== null)
-                                        &middot; sisa stok {{ $previewProduk['stok'] }}
-                                    @endif
-                                </div>
-                            </div>
-
+                        <div id="reader-produk">
+                            <div class="kk-reader-placeholder" id="reader-produk-placeholder">Mengaktifkan kamera...</div>
                         </div>
-                    @endif
 
+                        <div class="kk-gap-md">
+                            <input
+                                type="text"
+                                id="manual-input-produk"
+                                class="kk-input"
+                                placeholder="Atau ketik barcode produk manual, lalu Enter...">
+                        </div>
+
+                        @if ($previewProduk)
+                            <div class="kk-gap-md kk-card-highlight">
+
+                                @if ($previewProduk['gambar'])
+                                    <img src="{{ asset('storage/' . $previewProduk['gambar']) }}" style="width:52px;height:52px;border-radius:12px;object-fit:cover;flex-shrink:0;">
+                                @else
+                                    <div style="width:52px;height:52px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;color:#10b981;flex-shrink:0;">
+                                        <x-heroicon-o-check-circle style="width:24px;height:24px;" />
+                                    </div>
+                                @endif
+
+                                <div>
+                                    <div style="font-size:14px;font-weight:600;color:#065f46;">{{ $previewProduk['nama'] }} ditambahkan</div>
+                                    <div style="font-size:12px;color:#059669;margin-top:2px;">
+                                        Rp {{ number_format($previewProduk['harga'], 0, ',', '.') }}
+                                        @if ($previewProduk['stok'] !== null)
+                                            &middot; sisa stok {{ $previewProduk['stok'] }}
+                                        @endif
+                                    </div>
+                                </div>
+
+                            </div>
+                        @endif
+
+                    </div>
                 </x-filament::section>
 
             @endif
 
         </div>
 
-        {{-- ================================================= --}}
         {{-- KERANJANG --}}
-        {{-- ================================================= --}}
         <div>
 
-            <x-filament::section class="sticky top-4">
+            <x-filament::section>
 
                 <x-slot name="heading">
-                    <div class="flex items-center gap-2">
-                        <x-heroicon-o-shopping-cart class="w-5 h-5" />
+                    <div class="kk-row kk-gap-2">
+                        <x-heroicon-o-shopping-cart style="width:20px;height:20px;" />
                         Keranjang
                     </div>
                 </x-slot>
 
-                <div class="space-y-3 mb-4 {{ count($cart) > 4 ? 'max-h-72 overflow-y-auto pr-1' : '' }}">
+                <div class="kk-section-body">
 
-                    @forelse ($cart as $item)
+                    <div style="max-height:280px; overflow-y:auto;">
 
-                        <div class="flex items-center justify-between gap-3 text-sm">
+                        @forelse ($cart as $item)
 
-                            <div class="flex-1 min-w-0">
-                                <div class="font-medium text-gray-900 dark:text-white truncate">{{ $item['nama'] }}</div>
-                                <div class="text-xs text-gray-400">Rp {{ number_format($item['harga'], 0, ',', '.') }}</div>
+                            <div class="kk-cart-item">
+
+                                <div style="flex:1; min-width:0;">
+                                    <div style="font-weight:500; color:#111827;" class="dark:text-white">{{ $item['nama'] }}</div>
+                                    <div style="font-size:12px; color:#9ca3af;">Rp {{ number_format($item['harga'], 0, ',', '.') }}</div>
+                                </div>
+
+                                <div class="kk-row kk-gap-2">
+                                    <button type="button" wire:click="kurangiKeranjang({{ $item['id'] }})" class="kk-qty-btn" style="background:#f3f4f6;color:#374151;">
+                                        <x-heroicon-o-minus style="width:14px;height:14px;" />
+                                    </button>
+
+                                    <span style="width:22px; text-align:center; font-weight:600; font-size:14px;">{{ $item['qty'] }}</span>
+
+                                    <button type="button" wire:click="tambahKeranjang({{ $item['id'] }})" class="kk-qty-btn" style="background:#f0fdfa;color:#00A39D;">
+                                        <x-heroicon-o-plus style="width:14px;height:14px;" />
+                                    </button>
+                                </div>
+
                             </div>
 
-                            <div class="flex items-center gap-1.5 shrink-0">
-                                <button
-                                    type="button"
-                                    wire:click="kurangiKeranjang({{ $item['id'] }})"
-                                    class="w-7 h-7 rounded-full flex items-center justify-center bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/20 transition">
-                                    <x-heroicon-o-minus class="w-3.5 h-3.5" />
-                                </button>
+                        @empty
 
-                                <span class="w-6 text-center font-semibold text-sm">{{ $item['qty'] }}</span>
-
-                                <button
-                                    type="button"
-                                    wire:click="tambahKeranjang({{ $item['id'] }})"
-                                    class="w-7 h-7 rounded-full flex items-center justify-center bg-primary-50 dark:bg-primary-500/10 text-primary-600 hover:bg-primary-100 dark:hover:bg-primary-500/20 transition">
-                                    <x-heroicon-o-plus class="w-3.5 h-3.5" />
-                                </button>
-                            </div>
-
-                        </div>
-
-                    @empty
-
-                        <div class="flex flex-col items-center justify-center py-8 text-center">
-                            <x-heroicon-o-shopping-cart class="w-8 h-8 text-gray-300 dark:text-gray-600 mb-2" />
-                            <div class="text-xs text-gray-400">
+                            <div style="text-align:center; padding:24px 0; color:#9ca3af; font-size:12px;">
                                 {{ $siswaTerpilih ? 'Scan produk untuk menambahkan.' : 'Scan kartu siswa dulu.' }}
                             </div>
-                        </div>
 
-                    @endforelse
+                        @endforelse
 
-                </div>
-
-                <div class="flex items-center justify-between font-semibold text-base border-t border-gray-100 dark:border-white/10 pt-4 mb-4">
-                    <span class="text-gray-500 text-sm font-medium">Total Bayar</span>
-                    <span class="text-primary-600 text-lg">Rp {{ number_format($this->total, 0, ',', '.') }}</span>
-                </div>
-
-                @if ($siswaTerpilih && $this->total > $siswaTerpilih['saldo'])
-                    <div class="mb-4 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 p-3 text-xs text-red-600 dark:text-red-400">
-                        Saldo tidak cukup — kurang Rp {{ number_format($this->total - $siswaTerpilih['saldo'], 0, ',', '.') }}
                     </div>
-                @endif
 
-                <x-filament::button
-                    wire:click="checkout"
-                    icon="heroicon-o-check-circle"
-                    color="primary"
-                    size="lg"
-                    :disabled="! $siswaTerpilih || empty($cart)"
-                    class="w-full justify-center">
-                    Bayar (Wallet)
-                </x-filament::button>
+                    <div class="kk-row-between kk-gap-md" style="border-top:1px solid #f3f4f6; padding-top:16px;">
+                        <span style="font-size:13px; color:#6b7280; font-weight:500;">Total Bayar</span>
+                        <span style="font-size:18px; font-weight:700; color:#00A39D;">Rp {{ number_format($this->total, 0, ',', '.') }}</span>
+                    </div>
+
+                    @if ($siswaTerpilih && $this->total > $siswaTerpilih['saldo'])
+                        <div class="kk-gap-md" style="border-radius:12px; background:#fef2f2; border:1px solid #fecaca; padding:10px 12px; font-size:12px; color:#dc2626;">
+                            Saldo tidak cukup — kurang Rp {{ number_format($this->total - $siswaTerpilih['saldo'], 0, ',', '.') }}
+                        </div>
+                    @endif
+
+                    <div class="kk-gap-md">
+                        <x-filament::button
+                            wire:click="checkout"
+                            icon="heroicon-o-check-circle"
+                            color="primary"
+                            size="lg"
+                            :disabled="! $siswaTerpilih || empty($cart)"
+                            style="width:100%; justify-content:center;">
+                            Bayar (Wallet)
+                        </x-filament::button>
+                    </div>
+
+                </div>
 
             </x-filament::section>
 
@@ -220,34 +278,37 @@
         document.addEventListener('livewire:init', () => {
 
             let scanner = null;
-            let scanning = false;
+            let currentReaderId = null;
             let lastScan = '';
             let lastScanTime = 0;
 
-            async function startScanner() {
+            async function startScanner(readerId) {
 
-                const readerEl = document.getElementById('reader');
-                if (!readerEl || scanning) return;
+                const readerEl = document.getElementById(readerId);
+                if (!readerEl) return;
+
+                const placeholder = document.getElementById(readerId + '-placeholder');
 
                 try {
 
                     const cameras = await Html5Qrcode.getCameras();
-                    if (!cameras.length) return;
 
-                    scanner = new Html5Qrcode('reader');
-                    scanning = true;
+                    if (!cameras.length) {
+                        if (placeholder) placeholder.textContent = 'Kamera tidak ditemukan — pakai input manual.';
+                        return;
+                    }
+
+                    scanner = new Html5Qrcode(readerId);
+                    currentReaderId = readerId;
 
                     await scanner.start(
                         cameras[0].id,
-                        { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.7778 },
+                        { fps: 10, qrbox: { width: 220, height: 220 }, aspectRatio: 1 },
                         (decoded) => {
                             const now = Date.now();
-                            // Debounce: jangan proses kode yang sama dalam 3 detik
-                            // (kamera bisa baca kode yang sama berkali-kali per detik).
                             if (decoded === lastScan && (now - lastScanTime) < 3000) return;
                             lastScan = decoded;
                             lastScanTime = now;
-
                             @this.call('handleScan', decoded);
                         },
                         () => {}
@@ -255,19 +316,20 @@
 
                 } catch (e) {
                     console.warn('Kamera tidak tersedia, pakai input manual saja.', e);
+                    if (placeholder) placeholder.textContent = 'Kamera tidak tersedia — pakai input manual.';
                 }
             }
 
             function stopScanner() {
-                if (scanner && scanning) {
-                    scanner.stop().catch(() => {});
-                    scanning = false;
+                if (scanner) {
+                    try { scanner.stop().catch(() => {}); } catch (e) {}
                     scanner = null;
+                    currentReaderId = null;
                 }
             }
 
-            function bindManualInput() {
-                const input = document.getElementById('manual-input');
+            function bindManualInput(inputId) {
+                const input = document.getElementById(inputId);
                 if (!input) return;
 
                 input.addEventListener('keydown', (e) => {
@@ -278,18 +340,23 @@
                 });
             }
 
-            // Restart scanner tiap kali Livewire re-render (mis. setelah
-            // scan siswa, DOM #reader diganti karena section-nya beda).
-            Livewire.hook('morph.updated', () => {
+            function boot() {
                 stopScanner();
-                setTimeout(() => {
-                    startScanner();
-                    bindManualInput();
-                }, 300);
-            });
 
-            startScanner();
-            bindManualInput();
+                setTimeout(() => {
+                    if (document.getElementById('reader-siswa')) {
+                        startScanner('reader-siswa');
+                        bindManualInput('manual-input-siswa');
+                    } else if (document.getElementById('reader-produk')) {
+                        startScanner('reader-produk');
+                        bindManualInput('manual-input-produk');
+                    }
+                }, 300);
+            }
+
+            Livewire.hook('morph.updated', () => boot());
+
+            boot();
         });
     </script>
 
