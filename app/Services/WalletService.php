@@ -27,20 +27,26 @@ class WalletService
             ->first();
 
         if (!$kategori) {
-            Log::warning("Kategori kas belum dibuat", [
-    'nama' => $nama,
-    'kode' => $kode,
-]);
 
-Notification::make()
-    ->title('Kategori Kas Belum Dibuat')
-    ->body("Kategori \"{$nama}\" belum tersedia. Silakan buat terlebih dahulu di menu kategori kas.")
-    ->danger()
-    ->send();
+            // Sebelumnya method ini langsung nge-block (throw
+            // ValidationException) kalau kategori spesifik (nama+tipe)
+            // belum ada — masalahnya, kategori seperti "Penyesuaian
+            // Saldo" cuma pernah dibuat untuk 1 arah (mis. 'keluar'
+            // saja), jadi begitu ada penyesuaian ke arah SEBALIKNYA
+            // (mis. saldo dinaikkan, butuh versi 'masuk'), user selalu
+            // ketemu error meski tidak salah apa-apa. Sekarang
+            // auto-create kategorinya (sama seperti pola yang dipakai
+            // fitur e-Kantin), supaya operasional tidak macet.
+            Log::info("Kategori kas belum ada, membuat otomatis", [
+                'nama' => $nama,
+                'kode' => $kode,
+            ]);
 
-throw ValidationException::withMessages([
-    'kategori' => "Kategori {$nama} belum dibuat.",
-]);
+            $kategori = KategoriKas::create([
+                'nama' => $nama,
+                'tipe' => $tipe,
+                'is_active' => true,
+            ]);
         }
 
         return $kategori->id;

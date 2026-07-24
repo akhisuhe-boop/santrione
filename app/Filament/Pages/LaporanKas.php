@@ -384,11 +384,23 @@ class LaporanKas extends Page implements HasForms, HasTable
 
                 Tables\Columns\TextColumn::make('rekening.nama')
                     ->label('Rekening')
-                    ->formatStateUsing(fn ($record) =>
-                        $record->rekening
-                            ? "{$record->rekening->bank} ({$record->rekening->no_rekening})"
-                            : '-'
-                    ),
+                    ->formatStateUsing(function ($record) {
+
+                        $rekening = $record->rekening;
+
+                        if (! $rekening) {
+                            return '-';
+                        }
+
+                        if (filled($rekening->bank) || filled($rekening->no_rekening)) {
+                            return "{$rekening->bank} ({$rekening->no_rekening})";
+                        }
+
+                        // Rekening tipe e-wallet biasanya tidak punya
+                        // bank/no_rekening beneran — tampilkan namanya
+                        // saja daripada "()" kosong.
+                        return $rekening->nama ?: '-';
+                    }),
 
                 Tables\Columns\TextColumn::make('keterangan')
                 ->label('Keterangan')
