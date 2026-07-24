@@ -94,6 +94,12 @@ class KasirKantin extends Page
 
     protected function pilihSiswa(Siswa $siswa): void
     {
+        $terpakaiHariIni = \App\Models\KantinTransaksi::withoutGlobalScopes()
+            ->where('siswa_id', $siswa->id)
+            ->where('metode', 'wallet')
+            ->whereDate('tanggal', today())
+            ->sum('total');
+
         $this->siswaTerpilih = [
             'id' => $siswa->id,
             'nama' => $siswa->nama_lengkap,
@@ -102,6 +108,8 @@ class KasirKantin extends Page
             'kelas' => $siswa->kelas->nama ?? '-',
             'lembaga' => $siswa->lembaga->nama ?? '-',
             'saldo' => $siswa->wallet->saldo ?? 0,
+            'limit_harian' => $siswa->limit_harian_kantin,
+            'terpakai_hari_ini' => $terpakaiHariIni,
         ];
     }
 

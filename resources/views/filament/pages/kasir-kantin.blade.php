@@ -119,6 +119,41 @@
                             </x-filament::button>
 
                         </div>
+
+                        @if ($siswaTerpilih['limit_harian'])
+
+                            @php
+                                $limit = $siswaTerpilih['limit_harian'];
+                                $terpakai = $siswaTerpilih['terpakai_hari_ini'];
+                                $sisaSaatIni = max(0, $limit - $terpakai);
+                                $sisaSetelahKeranjang = $sisaSaatIni - $this->total;
+                                $persen = $limit > 0 ? min(100, round((($terpakai + $this->total) / $limit) * 100)) : 0;
+                                $warna = $sisaSetelahKeranjang < 0 ? '#dc2626' : ($persen >= 80 ? '#d97706' : '#00A39D');
+                            @endphp
+
+                            <div class="kk-gap-md" style="border-radius:14px; background:#f8fafc; border:1px solid #e5e7eb; padding:12px 14px;">
+
+                                <div class="kk-row-between" style="font-size:12px; color:#6b7280; margin-bottom:6px;">
+                                    <span>Limit Belanja Harian</span>
+                                    <span style="font-weight:700; color:{{ $warna }};">
+                                        Sisa Rp {{ number_format($sisaSetelahKeranjang, 0, ',', '.') }}
+                                    </span>
+                                </div>
+
+                                <div style="height:6px; border-radius:999px; background:#e5e7eb; overflow:hidden;">
+                                    <div style="height:100%; width:{{ $persen }}%; background:{{ $warna }}; border-radius:999px; transition:width .2s;"></div>
+                                </div>
+
+                                <div style="font-size:11px; color:#9ca3af; margin-top:6px;">
+                                    Sudah dipakai hari ini Rp {{ number_format($terpakai, 0, ',', '.') }} dari limit Rp {{ number_format($limit, 0, ',', '.') }}
+                                    @if ($sisaSetelahKeranjang < 0)
+                                        <span style="color:#dc2626; font-weight:600;"> — keranjang ini melebihi limit!</span>
+                                    @endif
+                                </div>
+
+                            </div>
+
+                        @endif
                     </div>
                 </x-filament::section>
 
