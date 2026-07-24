@@ -20,7 +20,7 @@
                         </div>
                     </x-slot>
 
-                    <div id="reader" class="rounded-2xl overflow-hidden"></div>
+                    <div id="reader" class="rounded-2xl overflow-hidden max-w-sm mx-auto aspect-square bg-gray-950 [&_video]:!w-full [&_video]:!h-full [&_video]:!object-cover"></div>
 
                     <div class="mt-3 flex items-center gap-2">
                         <x-filament::input.wrapper class="flex-1">
@@ -47,16 +47,18 @@
                         <div class="flex items-center gap-4">
 
                             @if ($siswaTerpilih['foto'])
-                                <img src="{{ asset('storage/' . $siswaTerpilih['foto']) }}" class="w-16 h-16 rounded-2xl object-cover">
+                                <img src="{{ asset('storage/' . $siswaTerpilih['foto']) }}" class="w-24 h-24 rounded-2xl object-cover shrink-0">
                             @else
-                                <div class="w-16 h-16 rounded-2xl bg-primary-50 dark:bg-primary-500/10 flex items-center justify-center text-primary-500">
-                                    <x-heroicon-o-user class="w-8 h-8" />
+                                <div class="w-24 h-24 rounded-2xl bg-primary-50 dark:bg-primary-500/10 flex items-center justify-center text-primary-500 shrink-0">
+                                    <x-heroicon-o-user class="w-10 h-10" />
                                 </div>
                             @endif
 
                             <div>
                                 <div class="font-bold text-lg text-gray-900 dark:text-white">{{ $siswaTerpilih['nama'] }}</div>
-                                <div class="text-sm text-gray-500">NIS {{ $siswaTerpilih['nis'] }} &middot; {{ $siswaTerpilih['kelas'] }} &middot; {{ $siswaTerpilih['lembaga'] }}</div>
+                                <div class="text-sm text-gray-500 mt-1">NIS {{ $siswaTerpilih['nis'] }}</div>
+                                <div class="text-sm text-gray-500">{{ $siswaTerpilih['kelas'] }}</div>
+                                <div class="text-sm text-gray-500">{{ $siswaTerpilih['lembaga'] }}</div>
                                 <div class="text-sm font-semibold text-primary-600 mt-1">
                                     Saldo: Rp {{ number_format($siswaTerpilih['saldo'], 0, ',', '.') }}
                                 </div>
@@ -81,7 +83,7 @@
                         </div>
                     </x-slot>
 
-                    <div id="reader" class="rounded-2xl overflow-hidden"></div>
+                    <div id="reader" class="rounded-2xl overflow-hidden max-w-sm mx-auto aspect-square bg-gray-950 [&_video]:!w-full [&_video]:!h-full [&_video]:!object-cover"></div>
 
                     <div class="mt-3">
                         <x-filament::input.wrapper>
@@ -98,9 +100,9 @@
                         <div class="mt-4 flex items-center gap-3 rounded-2xl border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 p-3">
 
                             @if ($previewProduk['gambar'])
-                                <img src="{{ asset('storage/' . $previewProduk['gambar']) }}" class="w-12 h-12 rounded-xl object-cover">
+                                <img src="{{ asset('storage/' . $previewProduk['gambar']) }}" class="w-12 h-12 rounded-xl object-cover shrink-0">
                             @else
-                                <div class="w-12 h-12 rounded-xl bg-white dark:bg-white/10 flex items-center justify-center text-emerald-500">
+                                <div class="w-12 h-12 rounded-xl bg-white dark:bg-white/10 flex items-center justify-center text-emerald-500 shrink-0">
                                     <x-heroicon-o-check-circle class="w-6 h-6" />
                                 </div>
                             @endif
