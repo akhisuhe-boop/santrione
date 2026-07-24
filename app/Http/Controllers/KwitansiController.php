@@ -86,7 +86,7 @@ class KwitansiController extends Controller
         );
 
         return $pdf
-        ->setPaper([0, 0, 226.77, 610])
+        ->setPaper([0, 0, 226.77, 560])
         ->stream('Kwitansi-'.$pembayaran->kode.'.pdf');
     
         // Kalau ingin tampil di browser, ganti menjadi:

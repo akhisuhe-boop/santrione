@@ -46,6 +46,7 @@ class LaporanKas extends Page implements HasForms, HasTable
     public $kategori_id;
     public $lembaga_id;
     public $rekening_id;
+    public $diinput_oleh;
     public $tampilkan_alumni = false;
 
     public function mount(): void
@@ -63,6 +64,7 @@ class LaporanKas extends Page implements HasForms, HasTable
                 'kategori_id' => $this->kategori_id,
                 'lembaga_id' => $this->lembaga_id,
                         'rekening_id' => $this->rekening_id,
+                        'diinput_oleh' => $this->diinput_oleh,
                         'tampilkan_alumni' => $this->tampilkan_alumni,
             ]),
             'laporan-kas.xlsx'
@@ -92,6 +94,7 @@ class LaporanKas extends Page implements HasForms, HasTable
                             'kategori_id' => $this->kategori_id,
                             'lembaga_id' => $this->lembaga_id,
                         'rekening_id' => $this->rekening_id,
+                        'diinput_oleh' => $this->diinput_oleh,
                         'tampilkan_alumni' => $this->tampilkan_alumni,
                         ]),
                         'laporan-kas.xlsx'
@@ -111,6 +114,7 @@ class LaporanKas extends Page implements HasForms, HasTable
                         'kategori_id' => $this->kategori_id,
                         'lembaga_id' => $this->lembaga_id,
                         'rekening_id' => $this->rekening_id,
+                        'diinput_oleh' => $this->diinput_oleh,
                         'tampilkan_alumni' => $this->tampilkan_alumni,
                     ]);
 
@@ -216,6 +220,19 @@ class LaporanKas extends Page implements HasForms, HasTable
                         ->searchable()
                         ->preload()
                         ->live(debounce: 400),
+
+                    Forms\Components\Select::make('diinput_oleh')
+                        ->label('Kasir')
+                        ->options(fn () =>
+                            \App\Models\Kas::query()
+                                ->whereNotNull('diinput_oleh')
+                                ->distinct()
+                                ->orderBy('diinput_oleh')
+                                ->pluck('diinput_oleh', 'diinput_oleh')
+                        )
+                        ->searchable()
+                        ->preload()
+                        ->live(debounce: 400),
                 ])
         ];
     }
@@ -243,6 +260,9 @@ class LaporanKas extends Page implements HasForms, HasTable
 
             ->when($this->rekening_id, fn ($q) =>
                 $q->where('rekening_id', $this->rekening_id))
+
+            ->when($this->diinput_oleh, fn ($q) =>
+                $q->where('diinput_oleh', $this->diinput_oleh))
 
             ->when(! $this->tampilkan_alumni, fn ($q) =>
                 $q->where(function ($sub) {
@@ -302,6 +322,9 @@ class LaporanKas extends Page implements HasForms, HasTable
 
                     ->when($this->rekening_id, fn ($q) =>
                         $q->where('rekening_id', $this->rekening_id))
+
+                    ->when($this->diinput_oleh, fn ($q) =>
+                        $q->where('diinput_oleh', $this->diinput_oleh))
 
                     ->when(! $this->tampilkan_alumni, fn ($q) =>
                         $q->where(function ($sub) {

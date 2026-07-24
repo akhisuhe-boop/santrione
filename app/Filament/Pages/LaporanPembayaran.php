@@ -39,6 +39,7 @@ class LaporanPembayaran extends Page implements HasForms
     public $kelas_id;
     public $siswa_id;
     public $jenis_tagihan_id;
+    public $diinput_oleh;
     public $tampilkan_alumni = false;
 
     // 🔥 MODAL
@@ -120,6 +121,19 @@ class LaporanPembayaran extends Page implements HasForms
                         ->searchable()
                         ->options(\App\Models\JenisTagihan::pluck('nama', 'id'))
                         ->live(),
+
+                    Forms\Components\Select::make('diinput_oleh')
+                        ->label('Kasir')
+                        ->placeholder('Semua Kasir')
+                        ->searchable()
+                        ->options(fn () =>
+                            \App\Models\Pembayaran::query()
+                                ->whereNotNull('diinput_oleh')
+                                ->distinct()
+                                ->orderBy('diinput_oleh')
+                                ->pluck('diinput_oleh', 'diinput_oleh')
+                        )
+                        ->live(),
                 ])
                 ->columnSpanFull(),
         ];
@@ -150,6 +164,10 @@ class LaporanPembayaran extends Page implements HasForms
 
             ->when($this->siswa_id, fn ($q) =>
                 $q->where('id', $this->siswa_id))
+
+            ->when($this->diinput_oleh, fn ($q) =>
+                $q->whereHas('tagihans.pembayarans', fn ($p) =>
+                    $p->where('diinput_oleh', $this->diinput_oleh)))
 
             ->when(! $this->tampilkan_alumni, fn ($q) =>
                 $q->where('status_siswa', 'Aktif'))
@@ -207,6 +225,11 @@ public function getUmumData()
         // FILTER SISWA
         ->when($this->siswa_id, fn ($q) =>
             $q->where('siswa_id', $this->siswa_id))
+
+        // FILTER KASIR
+        ->when($this->diinput_oleh, fn ($q) =>
+            $q->whereHas('pembayarans', fn ($p) =>
+                $p->where('diinput_oleh', $this->diinput_oleh)))
 
         // Sembunyikan alumni secara default -- tagihan PPDB (belum
         // punya siswa) tetap selalu tampil, bukan bagian dari alumni.
