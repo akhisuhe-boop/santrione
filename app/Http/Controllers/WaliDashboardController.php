@@ -163,7 +163,7 @@ class WaliDashboardController extends Controller
 
     public function kantin()
     {
-        $siswa = Siswa::findOrFail(session('siswa_id'));
+        $siswa = Siswa::with('wallet')->findOrFail(session('siswa_id'));
 
         $yayasan = \App\Models\Yayasan::find(session('active_public_yayasan_id'));
 

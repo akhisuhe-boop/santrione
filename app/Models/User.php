@@ -16,6 +16,14 @@ class User extends Authenticatable implements FilamentUser, HasTenants
 {
     use HasFactory, Notifiable, HasRoles;
 
+    // PENTING: User model SENGAJA tidak pakai trait BelongsToTenant
+    // seperti model lain — kalau dipasang, global scope-nya akan
+    // memanggil Auth::user() di dalam proses Laravel me-resolve
+    // Auth::user() itu sendiri (query User saat login/tiap request
+    // auth), menyebabkan infinite recursion dan aplikasi crash.
+    // Scoping tenant untuk resource Pengguna dilakukan di level
+    // UserResource::getEloquentQuery() saja, lihat file itu.
+
     /**
      * The attributes that are mass assignable.
      *

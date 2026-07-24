@@ -36,9 +36,28 @@ trait BelongsToTenant
                 return;
             }
 
-            // Platform admin (kamu, pemilik SaaS) bebas dari scope — perlu untuk
-            // keperluan support & monitoring lintas yayasan.
+            // Platform admin (kamu, pemilik SaaS): kalau lagi "masuk" ke
+            // 1 yayasan tertentu lewat dropdown tenant di panel, data
+            // yang tampil DIBATASI ke yayasan itu saja juga — supaya
+            // monitoring per-yayasan akurat (sama seperti user biasa
+            // saat itu). Cuma dibebaskan dari scope kalau memang belum
+            // ada tenant yang dipilih (mis. buka resource lintas-tenant
+            // atau proses command/queue), untuk keperluan support.
             if ($user->is_platform_admin) {
+
+                $tenant = null;
+
+                try {
+                    $tenant = \Filament\Facades\Filament::getTenant();
+                } catch (\Throwable $e) {
+                    // Bukan lagi di dalam request panel Filament (mis.
+                    // command/queue) — anggap tidak ada tenant terpilih.
+                }
+
+                if ($tenant) {
+                    static::applyTenantScope($builder, $tenant->id);
+                }
+
                 return;
             }
 

@@ -29,11 +29,14 @@ class KasirKantin extends Page
     }
 
     public ?int $lembaga_id = null;
-    public ?int $siswa_id = null;
-    public string $metode = 'wallet';
-    public string $search = '';
 
-    /** @var array<int, array{id:int,nama:string,harga:int,qty:int}> */
+    // Data siswa yang lagi discan (null = belum ada siswa dipilih)
+    public ?array $siswaTerpilih = null;
+
+    // Preview produk terakhir yang berhasil discan (buat feedback visual)
+    public ?array $previewProduk = null;
+
+    /** @var array<int, array{id:int,nama:string,harga:int,qty:int,gambar:?string}> */
     public array $cart = [];
 
     public function mount(): void
@@ -44,46 +47,100 @@ class KasirKantin extends Page
             ->value('id');
     }
 
-    public function getProdukProperty()
+    /**
+     * Dipanggil dari JS (html5-qrcode) tiap kali kamera berhasil baca
+     * kode — dicoba dulu sebagai siswa, kalau tidak ketemu baru dicoba
+     * sebagai produk. Jadi kasir tinggal scan APAPUN (kartu siswa atau
+     * label produk) tanpa perlu pilih mode dulu.
+     */
+    public function handleScan(string $code): void
     {
-        return KantinProduk::query()
-            ->where('lembaga_id', $this->lembaga_id)
-            ->where('is_active', true)
-            ->when($this->search, fn ($q) => $q->where('nama', 'like', "%{$this->search}%"))
-            ->orderBy('nama')
-            ->get();
-    }
+        $code = trim($code);
 
-    public function getSiswaOptionsProperty()
-    {
-        if (blank($this->search) && ! $this->siswa_id) {
-            return collect();
-        }
-
-        return Siswa::query()
-            ->where('lembaga_id', $this->lembaga_id)
-            ->where('status_siswa', 'Aktif')
-            ->get();
-    }
-
-    public function tambahKeKeranjang(int $produkId): void
-    {
-        $produk = KantinProduk::find($produkId);
-
-        if (! $produk) {
+        if ($code === '') {
             return;
         }
 
-        if (isset($this->cart[$produkId])) {
-            $this->cart[$produkId]['qty']++;
+        $siswa = Siswa::with(['wallet', 'kelas', 'lembaga'])
+            ->where('lembaga_id', $this->lembaga_id)
+            ->where(function ($q) use ($code) {
+                $q->where('nis', $code)
+                    ->orWhere('nisn', $code)
+                    ->orWhere('rfid_code', $code)
+                    ->orWhere('qr_code', $code);
+            })
+            ->first();
+
+        if ($siswa) {
+            $this->pilihSiswa($siswa);
+            return;
+        }
+
+        $produk = KantinProduk::where('lembaga_id', $this->lembaga_id)
+            ->where('barcode', $code)
+            ->first();
+
+        if ($produk) {
+            $this->scanProduk($produk);
+            return;
+        }
+
+        Notification::make()
+            ->title('Kode tidak dikenali')
+            ->body('Tidak ada siswa atau produk dengan kode: ' . $code)
+            ->warning()
+            ->send();
+    }
+
+    protected function pilihSiswa(Siswa $siswa): void
+    {
+        $this->siswaTerpilih = [
+            'id' => $siswa->id,
+            'nama' => $siswa->nama_lengkap,
+            'nis' => $siswa->nis,
+            'foto' => $siswa->foto,
+            'kelas' => $siswa->kelas->nama ?? '-',
+            'lembaga' => $siswa->lembaga->nama ?? '-',
+            'saldo' => $siswa->wallet->saldo ?? 0,
+        ];
+    }
+
+    public function gantiSiswa(): void
+    {
+        $this->siswaTerpilih = null;
+        $this->cart = [];
+    }
+
+    protected function scanProduk(KantinProduk $produk): void
+    {
+        if (! $produk->is_active) {
+            Notification::make()->title($produk->nama . ' sedang tidak dijual.')->warning()->send();
+            return;
+        }
+
+        if ($produk->habisStok()) {
+            Notification::make()->title($produk->nama . ' stoknya habis.')->danger()->send();
+            return;
+        }
+
+        if (isset($this->cart[$produk->id])) {
+            $this->cart[$produk->id]['qty']++;
         } else {
-            $this->cart[$produkId] = [
+            $this->cart[$produk->id] = [
                 'id' => $produk->id,
                 'nama' => $produk->nama,
                 'harga' => $produk->harga,
                 'qty' => 1,
+                'gambar' => $produk->gambar,
             ];
         }
+
+        $this->previewProduk = [
+            'nama' => $produk->nama,
+            'harga' => $produk->harga,
+            'gambar' => $produk->gambar,
+            'stok' => $produk->stok,
+        ];
     }
 
     public function kurangiKeranjang(int $produkId): void
@@ -99,6 +156,13 @@ class KasirKantin extends Page
         }
     }
 
+    public function tambahKeranjang(int $produkId): void
+    {
+        if (isset($this->cart[$produkId])) {
+            $this->cart[$produkId]['qty']++;
+        }
+    }
+
     public function hapusDariKeranjang(int $produkId): void
     {
         unset($this->cart[$produkId]);
@@ -111,6 +175,11 @@ class KasirKantin extends Page
 
     public function checkout(): void
     {
+        if (! $this->siswaTerpilih) {
+            Notification::make()->title('Scan kartu siswa dulu sebelum bayar.')->warning()->send();
+            return;
+        }
+
         if (empty($this->cart)) {
             Notification::make()->title('Keranjang masih kosong.')->warning()->send();
             return;
@@ -125,19 +194,21 @@ class KasirKantin extends Page
 
             $trx = app(KantinService::class)->checkout(
                 $this->lembaga_id,
-                $this->siswa_id,
-                $this->metode,
+                $this->siswaTerpilih['id'],
+                'wallet',
                 $items,
-                null // kasir dicatat lewat 'diinput_oleh' di baris Kas; User admin panel tidak terhubung ke Pegawai
+                null
             );
 
             Notification::make()
                 ->title('Transaksi berhasil — ' . $trx->kode)
+                ->body('Sisa saldo: Rp ' . number_format($this->siswaTerpilih['saldo'] - $this->total, 0, ',', '.'))
                 ->success()
                 ->send();
 
             $this->cart = [];
-            $this->siswa_id = null;
+            $this->previewProduk = null;
+            $this->siswaTerpilih = null; // siap buat siswa berikutnya
 
         } catch (\Illuminate\Validation\ValidationException $e) {
 

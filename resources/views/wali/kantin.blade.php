@@ -19,6 +19,19 @@
         Kantin
     </div>
 
+    {{-- SALDO WALLET --}}
+    <div class="bg-gradient-to-br from-[#00A39D] to-[#008b86] rounded-[24px] shadow-sm p-5 mb-4 text-white">
+
+        <div class="text-xs text-white/80">Saldo Wallet {{ $siswa->nama_lengkap }}</div>
+        <div class="text-3xl font-bold mt-1">
+            Rp {{ number_format($siswa->wallet->saldo ?? 0, 0, ',', '.') }}
+        </div>
+        <div class="text-xs text-white/70 mt-1">
+            Belanja kantin di sekolah 100% cashless — potong otomatis dari saldo ini.
+        </div>
+
+    </div>
+
     {{-- LIMIT HARIAN --}}
     <div class="bg-white rounded-[24px] shadow-sm p-5 mb-4">
 

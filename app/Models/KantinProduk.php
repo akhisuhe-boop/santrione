@@ -18,6 +18,7 @@ class KantinProduk extends Model
     protected $fillable = [
         'lembaga_id',
         'nama',
+        'barcode',
         'kategori',
         'harga',
         'stok',

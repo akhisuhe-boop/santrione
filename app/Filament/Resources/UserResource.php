@@ -32,6 +32,39 @@ class UserResource extends BaseResource
     protected static ?int $navigationSort = 1;
     protected static ?string $navigationIcon = 'heroicon-o-users';
 
+    /**
+     * User model sengaja TIDAK pakai trait BelongsToTenant (lihat
+     * catatan di App\Models\User) — jadi scoping tenant untuk resource
+     * ini dilakukan manual di sini. Sebelum ini, resource Pengguna
+     * tidak ter-scope SAMA SEKALI: siapapun yang login bisa lihat user
+     * dari SEMUA yayasan lain. Ini menutup celah itu.
+     */
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        $user = auth()->user();
+
+        if (! $user) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        if ($user->is_platform_admin) {
+
+            $tenant = \Filament\Facades\Filament::getTenant();
+
+            return $tenant
+                ? $query->where('yayasan_id', $tenant->id)
+                : $query;
+        }
+
+        if (empty($user->yayasan_id)) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query->where('yayasan_id', $user->yayasan_id);
+    }
+
 public static function form(Form $form): Form
 {
     return $form

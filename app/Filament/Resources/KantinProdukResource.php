@@ -38,6 +38,16 @@ class KantinProdukResource extends BaseResource
                     ->required()
                     ->maxLength(255),
 
+                Forms\Components\TextInput::make('barcode')
+                    ->label('Barcode / Kode Scan')
+                    ->unique(ignoreRecord: true)
+                    ->suffixAction(
+                        Forms\Components\Actions\Action::make('generate')
+                            ->icon('heroicon-o-qr-code')
+                            ->action(fn ($set) => $set('barcode', 'PRD-' . strtoupper(\Illuminate\Support\Str::random(8))))
+                    )
+                    ->helperText('Kode unik buat di-scan di halaman Kasir. Kosongkan lalu klik ikon di kanan untuk generate otomatis, atau isi manual sesuai barcode kemasan produk.'),
+
                 Forms\Components\TextInput::make('kategori')
                     ->label('Kategori')
                     ->placeholder('Makanan / Minuman / Snack / dll')
@@ -82,6 +92,12 @@ class KantinProdukResource extends BaseResource
                 Tables\Columns\TextColumn::make('nama')
                     ->label('Nama Produk')
                     ->searchable(),
+
+                Tables\Columns\TextColumn::make('barcode')
+                    ->label('Barcode')
+                    ->copyable()
+                    ->badge()
+                    ->color('gray'),
 
                 Tables\Columns\TextColumn::make('lembaga.nama')
                     ->label('Lembaga'),
