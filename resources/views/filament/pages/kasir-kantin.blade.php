@@ -1,15 +1,5 @@
 <x-filament-panels::page>
 
-    <script src="https://unpkg.com/html5-qrcode"></script>
-
-    {{--
-        PENTING: halaman ini pakai <style> CSS polos (bukan Tailwind
-        utility classes) untuk semua spacing/ukuran/layout krusial.
-        Alasannya: Tailwind di Filament di-compile sekali lewat build
-        step (bukan CDN), jadi class baru di file blade baru tidak
-        otomatis "hidup" sampai di-build ulang. CSS polos di bawah ini
-        selalu jalan di browser manapun tanpa perlu build apapun.
-    --}}
     <style>
         .kk-section-body { padding: 4px 0; }
         .kk-gap-sm { margin-top: 10px; }
@@ -17,30 +7,17 @@
         .kk-gap-lg { margin-top: 24px; }
         .kk-hint { font-size: 12px; color: #9ca3af; margin-top: 8px; }
         .kk-input {
-            width: 100%; box-sizing: border-box; padding: 10px 14px;
-            border: 1px solid #e5e7eb; border-radius: 12px; font-size: 14px;
+            width: 100%; box-sizing: border-box; padding: 14px 16px;
+            border: 2px solid #e5e7eb; border-radius: 12px; font-size: 16px;
             background: transparent;
         }
-        .dark .kk-input { border-color: rgba(255,255,255,.1); color: #fff; }
-
-        #reader-siswa, #reader-produk {
-            width: 280px; height: 280px; max-width: 100%;
-            margin: 0 auto; border-radius: 16px; overflow: hidden;
-            background: #0f172a; display: flex; align-items: center; justify-content: center;
-        }
-        #reader-siswa video, #reader-produk video { width: 100% !important; height: 100% !important; object-fit: cover !important; }
-        .kk-reader-placeholder { color: #64748b; font-size: 12px; text-align: center; padding: 12px; }
+        .kk-input:focus { outline: none; border-color: #00A39D; }
+        .dark .kk-input { border-color: rgba(255,255,255,.15); color: #fff; }
 
         .kk-row { display: flex; align-items: center; }
         .kk-row-between { display: flex; align-items: center; justify-content: space-between; }
         .kk-gap-3 { gap: 12px; }
         .kk-gap-2 { gap: 8px; }
-
-        .kk-card {
-            border: 1px solid #e5e7eb; border-radius: 16px; padding: 16px;
-            background: #fff;
-        }
-        .dark .kk-card { border-color: rgba(255,255,255,.1); background: #1a1f2e; }
 
         .kk-card-highlight {
             border: 1px solid #a7f3d0; border-radius: 16px; padding: 12px;
@@ -53,17 +30,17 @@
         .dark .kk-name { color: #fff; }
         .kk-meta { font-size: 13px; color: #6b7280; margin-top: 3px; }
         .kk-saldo { font-size: 14px; font-weight: 700; color: #00A39D; margin-top: 6px; }
-        .kk-badge {
-            display: inline-flex; align-items: center; gap: 4px;
-            font-size: 11px; font-weight: 600; padding: 3px 10px;
-            border-radius: 999px; background: #f0fdfa; color: #00A39D;
-            border: 1px solid #ccfbf1;
-        }
 
         .kk-cart-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 14px; padding: 8px 0; }
         .kk-qty-btn {
             width: 28px; height: 28px; border-radius: 999px; display: flex;
             align-items: center; justify-content: center; border: none; cursor: pointer;
+        }
+
+        .kk-scan-icon {
+            width: 56px; height: 56px; border-radius: 16px; background: #f0fdfa;
+            color: #00A39D; display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 16px auto;
         }
 
         .kk-grid { display: grid; grid-template-columns: 1fr; gap: 24px; }
@@ -82,26 +59,25 @@
                 <x-filament::section>
                     <x-slot name="heading">
                         <div class="kk-row kk-gap-2">
-                            <x-heroicon-o-qr-code style="width:20px;height:20px;" />
-                            Scan Kartu Siswa
+                            <x-heroicon-o-identification style="width:20px;height:20px;" />
+                            Input / Scan Kartu Siswa
                         </div>
                     </x-slot>
 
-                    <div class="kk-section-body">
+                    <div class="kk-section-body" style="text-align:center; padding-top:16px; padding-bottom:8px;">
 
-                        <div id="reader-siswa">
-                            <div class="kk-reader-placeholder" id="reader-siswa-placeholder">Mengaktifkan kamera...</div>
+                        <div class="kk-scan-icon">
+                            <x-heroicon-o-qr-code style="width:28px;height:28px;" />
                         </div>
 
-                        <div class="kk-gap-md">
-                            <input
-                                type="text"
-                                id="manual-input-siswa"
-                                class="kk-input"
-                                placeholder="Atau ketik NIS / kode manual, lalu Enter...">
-                        </div>
+                        <input
+                            type="text"
+                            id="input-siswa"
+                            class="kk-input"
+                            autocomplete="off"
+                            placeholder="Ketik / scan NIS siswa, lalu Enter...">
 
-                        <p class="kk-hint">Arahkan kartu/QR siswa ke kamera. Kalau kamera tidak tersedia, ketik NIS manual di atas.</p>
+                        <p class="kk-hint">Kursor sudah otomatis aktif di kolom ini — tinggal scan pakai barcode scanner, atau ketik NIS manual lalu tekan Enter.</p>
 
                     </div>
                 </x-filament::section>
@@ -145,26 +121,27 @@
                     <x-slot name="heading">
                         <div class="kk-row kk-gap-2">
                             <x-heroicon-o-shopping-bag style="width:20px;height:20px;" />
-                            Scan Produk
+                            Input / Scan Produk
                         </div>
                     </x-slot>
 
-                    <div class="kk-section-body">
+                    <div class="kk-section-body" style="text-align:center; padding-top:16px; padding-bottom:8px;">
 
-                        <div id="reader-produk">
-                            <div class="kk-reader-placeholder" id="reader-produk-placeholder">Mengaktifkan kamera...</div>
+                        <div class="kk-scan-icon">
+                            <x-heroicon-o-shopping-bag style="width:28px;height:28px;" />
                         </div>
 
-                        <div class="kk-gap-md">
-                            <input
-                                type="text"
-                                id="manual-input-produk"
-                                class="kk-input"
-                                placeholder="Atau ketik barcode produk manual, lalu Enter...">
-                        </div>
+                        <input
+                            type="text"
+                            id="input-produk"
+                            class="kk-input"
+                            autocomplete="off"
+                            placeholder="Ketik / scan barcode produk, lalu Enter...">
+
+                        <p class="kk-hint">Scan barcode produk satu-satu — tiap scan otomatis masuk keranjang di kanan.</p>
 
                         @if ($previewProduk)
-                            <div class="kk-gap-md kk-card-highlight">
+                            <div class="kk-gap-md kk-card-highlight" style="text-align:left;">
 
                                 @if ($previewProduk['gambar'])
                                     <img src="{{ asset('storage/' . $previewProduk['gambar']) }}" style="width:52px;height:52px;border-radius:12px;object-fit:cover;flex-shrink:0;">
@@ -277,60 +254,11 @@
     <script>
         document.addEventListener('livewire:init', () => {
 
-            let scanner = null;
-            let currentReaderId = null;
-            let lastScan = '';
-            let lastScanTime = 0;
-
-            async function startScanner(readerId) {
-
-                const readerEl = document.getElementById(readerId);
-                if (!readerEl) return;
-
-                const placeholder = document.getElementById(readerId + '-placeholder');
-
-                try {
-
-                    const cameras = await Html5Qrcode.getCameras();
-
-                    if (!cameras.length) {
-                        if (placeholder) placeholder.textContent = 'Kamera tidak ditemukan — pakai input manual.';
-                        return;
-                    }
-
-                    scanner = new Html5Qrcode(readerId);
-                    currentReaderId = readerId;
-
-                    await scanner.start(
-                        cameras[0].id,
-                        { fps: 10, qrbox: { width: 220, height: 220 }, aspectRatio: 1 },
-                        (decoded) => {
-                            const now = Date.now();
-                            if (decoded === lastScan && (now - lastScanTime) < 3000) return;
-                            lastScan = decoded;
-                            lastScanTime = now;
-                            @this.call('handleScan', decoded);
-                        },
-                        () => {}
-                    );
-
-                } catch (e) {
-                    console.warn('Kamera tidak tersedia, pakai input manual saja.', e);
-                    if (placeholder) placeholder.textContent = 'Kamera tidak tersedia — pakai input manual.';
-                }
-            }
-
-            function stopScanner() {
-                if (scanner) {
-                    try { scanner.stop().catch(() => {}); } catch (e) {}
-                    scanner = null;
-                    currentReaderId = null;
-                }
-            }
-
-            function bindManualInput(inputId) {
+            function bindInput(inputId) {
                 const input = document.getElementById(inputId);
-                if (!input) return;
+                if (!input) return false;
+
+                input.focus();
 
                 input.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter' && input.value.trim() !== '') {
@@ -338,23 +266,20 @@
                         input.value = '';
                     }
                 });
+
+                return true;
             }
 
             function boot() {
-                stopScanner();
-
-                setTimeout(() => {
-                    if (document.getElementById('reader-siswa')) {
-                        startScanner('reader-siswa');
-                        bindManualInput('manual-input-siswa');
-                    } else if (document.getElementById('reader-produk')) {
-                        startScanner('reader-produk');
-                        bindManualInput('manual-input-produk');
-                    }
-                }, 300);
+                if (!bindInput('input-siswa')) {
+                    bindInput('input-produk');
+                }
             }
 
-            Livewire.hook('morph.updated', () => boot());
+            // Auto-focus lagi tiap Livewire selesai re-render (mis.
+            // setelah siswa/produk berhasil discan), supaya kasir bisa
+            // langsung lanjut scan berikutnya tanpa klik kolom lagi.
+            Livewire.hook('morph.updated', () => setTimeout(boot, 100));
 
             boot();
         });
