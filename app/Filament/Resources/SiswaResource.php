@@ -413,13 +413,22 @@ class SiswaResource extends BaseResource
             ]),
     ])
                 ->action(function (array $data) {
-                
+
                     $path = \Illuminate\Support\Facades\Storage::disk('local')->path($data['file']);
-                
+
                     \Maatwebsite\Excel\Facades\Excel::import(
                         new \App\Imports\SiswaImport,
                         $path
                     );
+
+                    // SiswaImport sekarang ShouldQueue + WithChunkReading, jadi
+                    // proses import berjalan di background worker, bukan
+                    // langsung selesai di request ini.
+                    \Filament\Notifications\Notification::make()
+                        ->title('Import sedang diproses')
+                        ->body('Data siswa sedang diimport di background. Silakan refresh halaman ini dalam beberapa saat.')
+                        ->success()
+                        ->send();
                 }),
                 
                 Action::make('export')

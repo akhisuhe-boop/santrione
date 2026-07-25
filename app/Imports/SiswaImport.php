@@ -4,16 +4,42 @@ namespace App\Imports;
 
 use App\Models\Siswa;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
-use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
 
-class SiswaImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFailure
+class SiswaImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFailure, ShouldQueue, WithChunkReading
 {
     use SkipsFailures;
+
+    /**
+     * Password default di-hash SEKALI saat class ini di-instantiate
+     * (bukan di dalam model() yang dipanggil per-baris), karena semua
+     * siswa hasil import memang diberi password default yang sama.
+     * Ini yang tadinya bikin proses lambat: bcrypt dipanggil ratusan kali
+     * untuk hasil yang sebenarnya sama saja.
+     */
+    protected string $defaultPasswordHash;
+
+    public function __construct()
+    {
+        $this->defaultPasswordHash = Hash::make('12345678');
+    }
+
+    /**
+     * Wajib ada karena implements WithChunkReading.
+     * File Excel akan dibaca & diproses 100 baris per job,
+     * bukan semua baris sekaligus dalam satu request.
+     */
+    public function chunkSize(): int
+    {
+        return 100;
+    }
 
     public function model(array $row)
     {
@@ -93,7 +119,7 @@ class SiswaImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFai
                 'foto' => is_string($fotoPath) ? $fotoPath : null,
 
                 // AUTO AKUN ORTU & siswa
-                'password' => Hash::make('12345678'),
+                'password' => $this->defaultPasswordHash,
                 'pin' => '123456',
             ]
         );
