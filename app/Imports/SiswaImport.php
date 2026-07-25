@@ -3,6 +3,7 @@
 namespace App\Imports;
 
 use App\Models\Siswa;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -26,8 +27,21 @@ class SiswaImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFai
      */
     protected string $defaultPasswordHash;
 
-    public function __construct()
+    /**
+     * ID user yang melakukan import. WAJIB dikirim dari luar (lihat
+     * SiswaResource) karena SiswaImport sekarang ShouldQueue: job-nya
+     * jalan di queue worker, di mana Auth::user() selalu null (tidak
+     * ada session HTTP). Model Siswa pakai trait BelongsToTenant yang
+     * scope query-nya berdasarkan Auth::user() — kalau tidak di-restore
+     * manual, scope tenant tidak diterapkan sama sekali di dalam job,
+     * dan updateOrCreate(['nis' => ...]) bisa salah menimpa siswa milik
+     * yayasan lain kalau NIS-nya kebetulan sama.
+     */
+    protected int $userId;
+
+    public function __construct(int $userId)
     {
+        $this->userId = $userId;
         $this->defaultPasswordHash = Hash::make('12345678');
     }
 
@@ -43,6 +57,13 @@ class SiswaImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFai
 
     public function model(array $row)
     {
+        // Restore tenant context: job ini jalan di queue worker (tanpa
+        // session HTTP), jadi Auth::user() default-nya null. Baris ini
+        // mengembalikan identitas user yang upload untuk 1 kali resolve
+        // Auth::user(), supaya global scope tenant di model Siswa
+        // (trait BelongsToTenant) aktif seperti biasa.
+        Auth::onceUsingId($this->userId);
+
         if (empty($row['nama_lengkap'])) {
             return null;
         }

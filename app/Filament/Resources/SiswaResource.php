@@ -417,7 +417,7 @@ class SiswaResource extends BaseResource
                     $path = \Illuminate\Support\Facades\Storage::disk('local')->path($data['file']);
 
                     \Maatwebsite\Excel\Facades\Excel::import(
-                        new \App\Imports\SiswaImport,
+                        new \App\Imports\SiswaImport(auth()->id()),
                         $path
                     );
 
