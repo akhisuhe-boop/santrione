@@ -225,7 +225,9 @@ class AdminPanelProvider extends PanelProvider
                 ->icon('heroicon-o-credit-card')
                 ->url('/langganan')
                 ->sort(-1)
-                ->visible(fn () => auth()->check() && ! auth()->user()->is_platform_admin),
+                ->visible(fn () => auth()->check()
+                    && ! auth()->user()->is_platform_admin
+                    && auth()->user()->hasRole('Admin Yayasan')),
         ])
 
         ->authMiddleware([

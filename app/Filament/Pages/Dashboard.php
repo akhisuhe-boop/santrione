@@ -6,6 +6,49 @@ use Filament\Pages\Dashboard as BaseDashboard;
 
 class Dashboard extends BaseDashboard
 {
+    /**
+     * Dashboard cuma tampil kalau role user PUNYA setidaknya 1
+     * permission yang dipakai widget-widget di bawah — supaya role
+     * yang dibatasi total ke 1 modul saja (mis. "Kantin") tidak lihat
+     * halaman Dashboard yang isinya bakal kosong melompong.
+     */
+    public static function canAccess(): bool
+    {
+        if (auth()->user()?->is_platform_admin) {
+            return true;
+        }
+
+        return static::hasAnyDashboardPermission();
+    }
+
+    protected static function hasAnyDashboardPermission(): bool
+    {
+        $user = auth()->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        return $user->can('view_any_siswa')
+            || $user->can('page_InputNilai')
+            || $user->can('page_RekapNilai')
+            || $user->can('page_RaportSiswa')
+            || $user->can('view_any_kas')
+            || $user->can('page_LaporanKas')
+            || $user->can('page_LaporanPembayaran')
+            || $user->can('view_any_prestasi')
+            || $user->can('view_any_prestasi::siswa')
+            || $user->can('view_any_laporan::prestasi')
+            || $user->can('view_any_pelanggaran')
+            || $user->can('view_any_pelanggaran::siswa')
+            || $user->can('view_any_laporan::pelanggaran')
+            || $user->can('view_any_perizinan')
+            || $user->can('view_any_laporan::perizinan')
+            || $user->can('view_any_tahfidz::setoran')
+            || $user->can('view_any_tahfidz::target')
+            || $user->can('view_any_laporan::tahfidz');
+    }
+
     public function getColumns(): int | string | array
     {
         return 2;
