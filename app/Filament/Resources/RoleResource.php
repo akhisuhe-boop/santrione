@@ -61,6 +61,19 @@ class RoleResource extends BaseRoleResource
         return static::canEdit($record);
     }
 
+    /**
+     * Bulk "Delete selected" dihapus total — checkbox pilih-banyak itu
+     * gampang kepencet tanpa sadar dan sebelumnya tetap kelihatan
+     * aktif untuk role global (Admin Yayasan/Super Admin) walau
+     * secara policy sebenarnya sudah ditolak. Daripada mengandalkan
+     * itu, tombolnya langsung dihilangkan dari halaman ini.
+     */
+    public static function table(\Filament\Tables\Table $table): \Filament\Tables\Table
+    {
+        return parent::table($table)
+            ->bulkActions([]);
+    }
+
     public static function getPages(): array
     {
         $pages = parent::getPages();
