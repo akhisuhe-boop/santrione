@@ -25,7 +25,11 @@ class KasirKantin extends Page
             return true;
         }
 
-        return (bool) Filament::getTenant()?->hasFeature(\App\Support\FeatureGate::E_KANTIN);
+        if (! Filament::getTenant()?->hasFeature(\App\Support\FeatureGate::E_KANTIN)) {
+            return false;
+        }
+
+        return parent::canAccess();
     }
 
     public ?int $lembaga_id = null;

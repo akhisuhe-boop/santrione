@@ -80,15 +80,24 @@ abstract class BaseResource extends Resource
 
         $key = \App\Support\FeatureGate::keyForNavigationGroup(static::$navigationGroup);
 
-        // Grup yang tidak terdaftar di FeatureGate (atau Resource tanpa
-        // navigationGroup) dianggap TIDAK dikunci sama sekali — supaya
-        // tidak ada yang tiba-tiba hilang gara-gara lupa didaftarkan.
-        if ($key === null) {
-            return true;
+        // Grup yang butuh fitur premium tertentu: kalau paket
+        // langganan yayasan ini TIDAK termasuk fitur itu, langsung
+        // tolak — tidak peduli permission role-nya apa.
+        if ($key !== null) {
+
+            $tenant = \Filament\Facades\Filament::getTenant();
+
+            if (! $tenant?->hasFeature($key)) {
+                return false;
+            }
         }
 
-        $tenant = \Filament\Facades\Filament::getTenant();
-
-        return (bool) $tenant?->hasFeature($key);
+        // Fitur/paket-nya oke -> baru dicek permission ASLI dari Shield
+        // (apakah ROLE user ini memang dikasih akses ke resource ini).
+        // Sebelumnya baris ini tidak pernah dipanggil sama sekali —
+        // itu sebabnya role custom manapun (mis. "Kantin") selalu bisa
+        // lihat SEMUA menu selama paketnya buka fitur itu, walau
+        // permission role-nya sendiri dibatasi cuma beberapa.
+        return parent::canViewAny();
     }
 }
