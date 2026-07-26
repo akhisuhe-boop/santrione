@@ -249,7 +249,7 @@ class SeedDemoData extends Command
         }
 
         $roleAdminSekolah = \Spatie\Permission\Models\Role::firstOrCreate([
-            'name' => 'Admin Sekolah',
+            'name' => 'Admin Yayasan',
             'guard_name' => 'web',
         ]);
 
@@ -257,7 +257,7 @@ class SeedDemoData extends Command
             \Spatie\Permission\Models\Permission::all()
         );
 
-        $this->line('  ✓ Role "Admin Sekolah" siap (akses penuh, tapi tetap terkunci ke 1 yayasan — bukan platform admin)');
+        $this->line('  ✓ Role "Admin Yayasan" siap (akses penuh, tapi tetap terkunci ke 1 yayasan — bukan platform admin)');
 
         /*
         |--------------------------------------------------------------------------
@@ -275,7 +275,7 @@ class SeedDemoData extends Command
 
         $adminTenant->assignRole($roleAdminSekolah);
 
-        $this->line('  ✓ Akun admin tenant: admin@testing.com / staf12345 (role: Admin Sekolah)');
+        $this->line('  ✓ Akun admin tenant: admin@testing.com / staf12345 (role: Admin Yayasan)');
 
         /*
         |--------------------------------------------------------------------------

@@ -50,7 +50,7 @@ class CreateYayasan extends CreateRecord
             'yayasan_id' => $yayasan->id,
         ]);
 
-        // Role "Admin Sekolah" dipakai ulang lintas yayasan (bukan
+        // Role "Admin Yayasan" dipakai ulang lintas yayasan (bukan
         // dibuat per-yayasan). Kalau belum pernah ada sama sekali,
         // buat sekali + sync semua permission yang sudah di-generate
         // Shield. Kalau sudah ada, JANGAN di-sync ulang di sini —
@@ -58,7 +58,7 @@ class CreateYayasan extends CreateRecord
         // manual sebelumnya untuk role ini tidak ke-reset tiap kali
         // ada yayasan baru dibuat.
         $role = Role::firstOrCreate([
-            'name' => 'Admin Sekolah',
+            'name' => 'Admin Yayasan',
             'guard_name' => 'web',
         ]);
 
@@ -72,7 +72,7 @@ class CreateYayasan extends CreateRecord
 
             Notification::make()
                 ->title('Yayasan & akun admin dibuat, tapi permission belum pernah di-generate')
-                ->body("Login: {$this->pendingAdminEmail} / {$password}\n\nJalankan \"php artisan shield:generate --all --panel=admin\" dulu di server, lalu buka menu Pengguna > edit akun ini > pilih ulang role \"Admin Sekolah\" supaya permission-nya benar-benar aktif.")
+                ->body("Login: {$this->pendingAdminEmail} / {$password}\n\nJalankan \"php artisan shield:generate --all --panel=admin\" dulu di server, lalu buka menu Pengguna > edit akun ini > pilih ulang role \"Admin Yayasan\" supaya permission-nya benar-benar aktif.")
                 ->warning()
                 ->persistent()
                 ->send();

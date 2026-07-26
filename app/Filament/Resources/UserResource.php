@@ -105,7 +105,19 @@ public static function form(Form $form): Form
 
                     Select::make('roles')
                         ->label('Role')
-                        ->relationship('roles', 'name')
+                        ->relationship(
+                            'roles',
+                            'name',
+                            fn ($query) => auth()->user()?->is_platform_admin
+                                ? $query
+                                : $query->where(function ($q) {
+                                    $q->whereNull('yayasan_id');
+
+                                    if ($tenant = \Filament\Facades\Filament::getTenant()) {
+                                        $q->orWhere('yayasan_id', $tenant->id);
+                                    }
+                                })
+                        )
                         ->multiple(false)
                         ->preload()
                         ->searchable()

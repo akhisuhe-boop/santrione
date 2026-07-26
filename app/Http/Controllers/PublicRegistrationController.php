@@ -61,11 +61,11 @@ class PublicRegistrationController extends Controller
                 'yayasan_id' => $yayasan->id,
             ]);
 
-            // Role "Admin Sekolah" dipakai ulang lintas yayasan (sama
+            // Role "Admin Yayasan" dipakai ulang lintas yayasan (sama
             // seperti alur bikin Yayasan manual dari admin panel) —
             // lihat catatan lebih lengkap di CreateYayasan::afterCreate().
             $role = Role::firstOrCreate([
-                'name' => 'Admin Sekolah',
+                'name' => 'Admin Yayasan',
                 'guard_name' => 'web',
             ]);
 
