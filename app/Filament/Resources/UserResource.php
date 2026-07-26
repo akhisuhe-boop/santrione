@@ -117,6 +117,12 @@ public static function form(Form $form): Form
                                         $q->orWhere('yayasan_id', $tenant->id);
                                     }
                                 })
+                                // "super_admin" itu nama role SPESIAL bagi
+                                // Shield — otomatis bypass SEMUA permission
+                                // tanpa terkecuali, apapun isi centangannya.
+                                // Jangan sampai tenant biasa bisa assign
+                                // role ini ke staff-nya sendiri.
+                                ->where('name', '!=', 'super_admin')
                         )
                         ->multiple(false)
                         ->preload()
