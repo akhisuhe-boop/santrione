@@ -11,6 +11,12 @@ class CreateRole extends BaseCreateRole
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
+        // PENTING: panggil dulu logic asli Shield (bersihkan field
+        // semacam "select_all"/checkbox permission yang bukan kolom
+        // tabel roles) sebelum nambahin yayasan_id sendiri. Kalau
+        // tidak, data mentah ke-kirim ke database dan bikin 500.
+        $data = parent::mutateFormDataBeforeCreate($data);
+
         // Role baru yang dibuat dari dalam konteks 1 yayasan otomatis
         // ditandai milik yayasan itu saja (tidak ikut nongol/kepakai
         // di yayasan lain). Platform Admin yang bikin role TANPA
