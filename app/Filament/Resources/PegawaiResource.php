@@ -54,10 +54,12 @@ class PegawaiResource extends BaseResource
                     ->unique(ignoreRecord: true),
 
                     Forms\Components\Select::make('jenis_kelamin')
+                        ->label('Jenis Kelamin')
                         ->options([
                             'L' => 'Laki-laki',
                             'P' => 'Perempuan',
-                        ]),
+                        ])
+                        ->required(),
 
                     Forms\Components\TextInput::make('no_hp')
                     ->label('No HP / WA')
@@ -252,6 +254,32 @@ class PegawaiResource extends BaseResource
 
             ->actions([
                 Tables\Actions\EditAction::make(),
+
+                Tables\Actions\Action::make('reset_password')
+                ->label('Reset Password')
+                ->icon('heroicon-o-key')
+                ->color('warning')
+                ->visible(fn ($record) => filled($record->niy))
+                ->requiresConfirmation()
+                ->modalHeading('Reset Password ke NIY')
+                ->modalDescription(fn ($record) =>
+                    'Password login "' . $record->nama . '" akan direset ke NIY-nya sendiri ('
+                    . $record->niy . '). Pegawai bisa langsung login pakai NIY itu sebagai password.'
+                )
+                ->modalSubmitActionLabel('Ya, Reset')
+                ->action(function ($record) {
+
+                    $record->update([
+                        'password' => \Illuminate\Support\Facades\Hash::make($record->niy),
+                    ]);
+
+                    \Filament\Notifications\Notification::make()
+                        ->title('Password berhasil direset')
+                        ->body('Password "' . $record->nama . '" sudah kembali ke NIY (' . $record->niy . ').')
+                        ->success()
+                        ->send();
+                }),
+
                 Tables\Actions\Action::make('cetak')
                 ->label('Cetak ID')
                 ->icon('heroicon-o-printer')
