@@ -60,9 +60,16 @@ class GuruAuthController extends Controller
         ]);
 
         if (! session('active_public_yayasan_id')) {
-            $lembaga = $guru->lembagas()->first();
-            if ($lembaga) {
-                session(['active_public_yayasan_id' => $lembaga->yayasan_id]);
+
+            // Pakai yayasan_id langsung dari pegawai (selalu terisi,
+            // termasuk untuk pengurus pesantren yang tidak terikat 1
+            // lembaga tertentu) — bukan lagi cuma dari relasi lembaga,
+            // yang kosong buat kasus itu dan bikin session ini gagal
+            // ke-set sama sekali.
+            $yayasanId = $guru->yayasan_id ?? $guru->lembagas()->first()?->yayasan_id;
+
+            if ($yayasanId) {
+                session(['active_public_yayasan_id' => $yayasanId]);
             }
         }
 

@@ -181,12 +181,16 @@ class PegawaiResource extends BaseResource
                 Tables\Columns\TextColumn::make('lembaga_list')
                     ->label('Lembaga')
                     ->badge()
-                    ->getStateUsing(fn ($record) => $record->lembagas->pluck('nama')->join(', ') ?: 'Yayasan/Pesantren')
+                    ->getStateUsing(fn ($record) =>
+                        $record->pegawaiLembagas
+                            ->map(fn ($pl) => $pl->lembaga?->nama ?? 'Yayasan/Pesantren')
+                            ->join(', ')
+                    )
                     ->wrap(),
 
                 Tables\Columns\TextColumn::make('jabatan_list')
                     ->label('Jabatan')
-                    ->getStateUsing(fn ($record) => $record->lembagas->pluck('pivot.jabatan')->filter()->join(', ')),    
+                    ->getStateUsing(fn ($record) => $record->pegawaiLembagas->pluck('jabatan')->filter()->join(', ')),    
 
                 Tables\Columns\TextColumn::make('pendidikan')
                     ->label('Pendidikan'),
@@ -198,7 +202,7 @@ class PegawaiResource extends BaseResource
 
                 Tables\Columns\TextColumn::make('status_list')
                     ->label('Status')
-                    ->getStateUsing(fn ($record) => $record->lembagas->pluck('pivot.status')->filter()->join(', ')),
+                    ->getStateUsing(fn ($record) => $record->pegawaiLembagas->pluck('status')->filter()->join(', ')),
 
                 Tables\Columns\IconColumn::make('is_active')
                     ->boolean()

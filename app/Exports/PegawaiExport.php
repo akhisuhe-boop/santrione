@@ -32,10 +32,10 @@ class PegawaiExport implements FromCollection, WithHeadings, ShouldAutoSize, Wit
         $data = [];
         $no = 1;
 
-        $pegawais = Pegawai::with('lembagas')->get();
+        $pegawais = Pegawai::with('pegawaiLembagas.lembaga')->get();
 
         foreach ($pegawais as $pegawai) {
-            foreach ($pegawai->lembagas as $lembaga) {
+            foreach ($pegawai->pegawaiLembagas as $pl) {
                 $data[] = [
                     $no++,
                     $pegawai->nama,
@@ -45,9 +45,9 @@ class PegawaiExport implements FromCollection, WithHeadings, ShouldAutoSize, Wit
                     $pegawai->no_hp,
                     $pegawai->pendidikan,
                     $pegawai->universitas,
-                    $lembaga->nama,
-                    $lembaga->pivot->jabatan,
-                    $lembaga->pivot->status,
+                    $pl->lembaga?->nama ?? 'Yayasan/Pesantren',
+                    $pl->jabatan,
+                    $pl->status,
                 ];
             }
         }
