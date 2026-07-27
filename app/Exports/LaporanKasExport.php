@@ -140,7 +140,7 @@ class LaporanKasExport implements FromCollection, WithHeadings, WithStyles, Shou
                 'lembaga' =>
                     $item->pembayaran?->tagihan?->lembaga_nama
                     ?? $item->lembaga?->nama
-                    ?? '-',
+                    ?? 'Yayasan/Pesantren',
 
                 'kategori' => $kategori,
 

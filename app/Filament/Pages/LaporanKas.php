@@ -394,7 +394,7 @@ class LaporanKas extends Page implements HasForms, HasTable
                 ->getStateUsing(fn ($record) =>
                     $record->pembayaran?->tagihan?->lembaga_nama
                     ?? $record->lembaga?->nama
-                    ?? '-'
+                    ?? 'Yayasan/Pesantren'
                 ),
 
                 Tables\Columns\TextColumn::make('kategori.nama')

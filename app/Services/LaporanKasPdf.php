@@ -93,7 +93,7 @@ class LaporanKasPdf
                 'lembaga' =>
                     $item->pembayaran?->tagihan?->lembaga_nama
                     ?? $item->lembaga?->nama
-                    ?? '-',
+                    ?? 'Yayasan/Pesantren',
                 'kategori' => $kategori,
                 'tanggal' => Carbon::parse($item->tanggal)->format('d-m-Y'),
                 'masuk' => $item->tipe === 'masuk' ? $item->nominal : 0,
