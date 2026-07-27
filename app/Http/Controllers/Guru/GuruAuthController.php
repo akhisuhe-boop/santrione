@@ -36,12 +36,13 @@ class GuruAuthController extends Controller
 
         $query = Pegawai::where('niy', trim($request->login));
 
-        // Kalau ada context tenant (dari /y/{slug}), scope ketat ke yayasan itu
-        // lewat relasi many-to-many pegawai <-> lembaga.
+        // Kalau ada context tenant (dari /y/{slug}), scope ketat ke
+        // yayasan itu lewat yayasan_id LANGSUNG di pegawai (bukan lagi
+        // lewat relasi lembaga — itu bikin pengurus pesantren yang
+        // tidak terikat 1 lembaga tertentu selalu gagal ketemu waktu
+        // login, walau NIY dan password-nya benar).
         if ($yayasanId) {
-            $query->whereHas('lembagas', function ($q) use ($yayasanId) {
-                $q->where('yayasan_id', $yayasanId);
-            });
+            $query->where('yayasan_id', $yayasanId);
         }
 
         $guru = $query->first();

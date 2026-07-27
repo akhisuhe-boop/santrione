@@ -382,7 +382,7 @@
                 truncate
             ">
 
-            {{ $guru->jabatan ?? 'Guru' }}
+            {{ $guru->pegawaiLembagas->pluck('jabatan')->filter()->first() ?? 'Guru' }}
 
         </div>
 
@@ -419,7 +419,7 @@
                 truncate
             ">
 
-            {{ $guru->lembagas->first()?->nama ?? '-' }}
+            {{ $guru->pegawaiLembagas->first()?->lembaga?->nama ?? 'Yayasan/Pesantren' }}
 
         </div>
 
