@@ -62,8 +62,9 @@ class KasResource extends BaseResource
                 Forms\Components\Select::make('lembaga_id')
                 ->label('Lembaga')
                 ->relationship('lembaga', 'nama')
-                ->preload()
-                ->required(),
+                ->placeholder('Kosongkan = level Yayasan/Pesantren (bukan milik 1 lembaga tertentu)')
+                ->helperText('Kosongkan kalau transaksi ini untuk keperluan yayasan/pesantren secara umum, bukan 1 lembaga spesifik (mis. MTs/SDIT/SMA/SMPIT).')
+                ->preload(),
 
                 Forms\Components\Select::make('rekening_id')
                 ->label('Rekening')
@@ -174,7 +175,7 @@ class KasResource extends BaseResource
                     ->getStateUsing(fn ($record) =>
                         $record->pembayaran?->siswa?->lembaga?->nama
                         ?? $record->lembaga?->nama
-                        ?? '-'
+                        ?? 'Yayasan/Pesantren'
                     ),
 
                 Tables\Columns\TextColumn::make('kategori.nama')
