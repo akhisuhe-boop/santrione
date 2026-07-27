@@ -28,11 +28,34 @@ class Kas extends Model
         'diinput_oleh',
         'bukti',
         'lembaga_id',
+        'yayasan_id',
     ];
 
     protected $casts = [
         'tanggal' => 'date',
     ];
+
+    /**
+     * Scoping tenant sekarang LANGSUNG lewat kolom yayasan_id (bukan
+     * lagi whereHas('lembaga', ...) bawaan trait) — supaya transaksi
+     * level yayasan/pesantren (lembaga_id kosong) tetap kelihatan
+     * oleh yayasan yang bikin, bukannya malah hilang tak kelihatan
+     * siapapun.
+     */
+    protected static function applyTenantScope($builder, int $yayasanId): void
+    {
+        $builder->where('yayasan_id', $yayasanId);
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $kas) {
+            if (empty($kas->yayasan_id)) {
+                $kas->yayasan_id = \Filament\Facades\Filament::getTenant()?->id
+                    ?? auth()->user()?->yayasan_id;
+            }
+        });
+    }
 
     // 🔗 relasi ke rekening
     public function rekening()

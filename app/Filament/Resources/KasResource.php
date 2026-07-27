@@ -62,8 +62,7 @@ class KasResource extends BaseResource
                 Forms\Components\Select::make('lembaga_id')
                 ->label('Lembaga')
                 ->relationship('lembaga', 'nama')
-                ->placeholder('Kosongkan = level Yayasan/Pesantren (bukan milik 1 lembaga tertentu)')
-                ->helperText('Kosongkan kalau transaksi ini untuk keperluan yayasan/pesantren secara umum, bukan 1 lembaga spesifik (mis. MTs/SDIT/SMA/SMPIT).')
+                ->placeholder('Yayasan/Pesantren (semua lembaga)')
                 ->preload(),
 
                 Forms\Components\Select::make('rekening_id')
