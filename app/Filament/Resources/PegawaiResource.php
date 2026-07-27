@@ -129,11 +129,11 @@ class PegawaiResource extends BaseResource
                         ->schema([
                         Forms\Components\Select::make('lembaga_id')
                             ->label('Lembaga')
+                            ->placeholder('Yayasan/Pesantren (bukan 1 lembaga tertentu)')
                             ->options(
                                 \App\Models\Lembaga::orderBy('nama')
                                     ->pluck('nama', 'id')
-                            )
-                            ->required(),
+                            ),
 
                         Forms\Components\TextInput::make('jabatan')
                             ->placeholder('Guru / TU / Kepala')
@@ -179,7 +179,7 @@ class PegawaiResource extends BaseResource
                 Tables\Columns\TextColumn::make('lembaga_list')
                     ->label('Lembaga')
                     ->badge()
-                    ->getStateUsing(fn ($record) => $record->lembagas->pluck('nama')->join(', '))
+                    ->getStateUsing(fn ($record) => $record->lembagas->pluck('nama')->join(', ') ?: 'Yayasan/Pesantren')
                     ->wrap(),
 
                 Tables\Columns\TextColumn::make('jabatan_list')

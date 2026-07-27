@@ -12,11 +12,13 @@ class Pegawai extends Authenticatable
 {
     use Notifiable, BelongsToTenant;
 
-    // Pegawai bisa kerja di lebih dari 1 lembaga (many-to-many), tapi
-    // tetap harus dalam 1 yayasan yang sama — cukup cek salah satu match.
+    // Sebelumnya scoping lewat whereHas('lembagas', ...) -- tapi itu
+    // bikin pegawai level pesantren (tidak terikat 1 lembaga
+    // spesifik, lembaga_id kosong) jadi tidak kelihatan oleh yayasan
+    // manapun. Sekarang scoping langsung lewat kolom yayasan_id.
     protected static function applyTenantScope(Builder $builder, int $yayasanId): void
     {
-        $builder->whereHas('lembagas', fn ($q) => $q->where('yayasan_id', $yayasanId));
+        $builder->where('yayasan_id', $yayasanId);
     }
 
     protected static function booted(): void
@@ -28,6 +30,11 @@ class Pegawai extends Authenticatable
                 $pegawai->password = Hash::make($pegawai->niy);
             }
 
+            if (empty($pegawai->yayasan_id)) {
+                $pegawai->yayasan_id = \Filament\Facades\Filament::getTenant()?->id
+                    ?? auth()->user()?->yayasan_id;
+            }
+
         });
     }
     
@@ -37,6 +44,7 @@ class Pegawai extends Authenticatable
     ];
     
     protected $fillable = [
+    'yayasan_id',
     'nama',
     'niy',
     'nik',

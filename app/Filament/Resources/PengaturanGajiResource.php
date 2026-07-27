@@ -146,6 +146,7 @@ class PengaturanGajiResource extends BaseResource
 
             Tables\Columns\TextColumn::make('lembaga.nama')
                 ->badge()
+                ->formatStateUsing(fn ($state) => $state ?? 'Yayasan/Pesantren')
                 ->color(function ($record) {
                     return match ($record->lembaga_id) {
                         1 => 'success',
