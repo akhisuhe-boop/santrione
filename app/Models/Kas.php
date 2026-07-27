@@ -47,16 +47,6 @@ class Kas extends Model
         $builder->where('yayasan_id', $yayasanId);
     }
 
-    protected static function booted(): void
-    {
-        static::creating(function (self $kas) {
-            if (empty($kas->yayasan_id)) {
-                $kas->yayasan_id = \Filament\Facades\Filament::getTenant()?->id
-                    ?? auth()->user()?->yayasan_id;
-            }
-        });
-    }
-
     // 🔗 relasi ke rekening
     public function rekening()
     {
@@ -72,6 +62,17 @@ class Kas extends Model
     protected static function booted()
     {
         parent::booted();
+
+        // =========================
+        // AUTO ISI YAYASAN_ID
+        // =========================
+        static::creating(function ($kas) {
+
+            if (empty($kas->yayasan_id)) {
+                $kas->yayasan_id = \Filament\Facades\Filament::getTenant()?->id
+                    ?? auth()->user()?->yayasan_id;
+            }
+        });
 
         // =========================
         // AUTO GENERATE KODE
