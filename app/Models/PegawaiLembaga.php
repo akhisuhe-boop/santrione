@@ -12,6 +12,18 @@ class PegawaiLembaga extends Model
 
     protected $table = 'pegawai_lembaga';
 
+    /**
+     * Sebelumnya scoping ikut default trait (lewat whereHas('lembaga',
+     * ...)) — itu bikin baris penugasan pesantren (lembaga_id kosong)
+     * ke-saring habis SEBELUM sempat ditampilkan dimanapun, walau
+     * kolom tabelnya sendiri sudah benar. Sekarang scoping lewat
+     * yayasan_id milik pegawai-nya langsung (selalu terisi).
+     */
+    protected static function applyTenantScope(\Illuminate\Database\Eloquent\Builder $builder, int $yayasanId): void
+    {
+        $builder->whereHas('pegawai', fn ($q) => $q->where('yayasan_id', $yayasanId));
+    }
+
     protected $fillable = [
 
         'pegawai_id',
