@@ -14,6 +14,11 @@ class CreatePembayaran extends CreateRecord
     {
         $data['tanggal_bayar'] = now();
 
+        // Sebelumnya kolom ini tidak pernah diisi dari form Input
+        // Pembayaran manual -> selalu tampil "-" di Laporan Pembayaran
+        // dan bikin filter "Kasir" tidak punya pilihan apa-apa.
+        $data['diinput_oleh'] = auth()->user()?->name;
+
         return $data;
     }
 
