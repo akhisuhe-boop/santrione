@@ -409,13 +409,17 @@ public function save(): void
             return;
         }
 
-        DB::transaction(function () use ($existing) {
+        $jam = JamPelajaran::find($this->jam_id);
+
+        DB::transaction(function () use ($existing, $jam) {
 
             if ($existing) {
         
                 $existing->update([
                     'pegawai_id'        => $this->guru_id,
                     'mata_pelajaran_id' => $this->mapel_id,
+                    'jam_ke'            => $jam?->urutan,
+                    'durasi_jam'        => $jam?->durasi_jp,
                 ]);
         
             } else {
@@ -426,6 +430,8 @@ public function save(): void
                     'jam_pelajaran_id'  => $this->jam_id,
                     'pegawai_id'        => $this->guru_id,
                     'mata_pelajaran_id' => $this->mapel_id,
+                    'jam_ke'            => $jam?->urutan,
+                    'durasi_jam'        => $jam?->durasi_jp,
                 ]);
         
             }

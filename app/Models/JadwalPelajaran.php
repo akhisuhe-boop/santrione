@@ -24,6 +24,8 @@ class JadwalPelajaran extends Model
         'hari',
         'mata_pelajaran_id',
         'jam_pelajaran_id',
+        'jam_ke',
+        'durasi_jam',
     ];
 
     public function guru()
