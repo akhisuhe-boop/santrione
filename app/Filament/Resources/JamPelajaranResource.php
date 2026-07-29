@@ -48,11 +48,15 @@ class JamPelajaranResource extends BaseResource
                     Forms\Components\TimePicker::make('jam_mulai')
                         ->label('Jam Mulai')
                         ->seconds(false)
+                        ->displayFormat('H:i')
+                        ->native(false)
                         ->required(),
 
                     Forms\Components\TimePicker::make('jam_selesai')
                         ->label('Jam Selesai')
                         ->seconds(false)
+                        ->displayFormat('H:i')
+                        ->native(false)
                         ->required()
                         ->after('jam_mulai'),
 
