@@ -257,8 +257,8 @@ class PpdbResource extends BaseResource
             ->defaultSort('created_at', 'desc')
             ->columns([
                 Tables\Columns\ImageColumn::make('foto')
-                ->getStateUsing(fn ($record) => $record->foto ? asset('storage/'.$record->foto) : null)
                 ->label('Foto')
+		->disk('r2-public')
                 ->circular()
                 ->size(40),
                 Tables\Columns\TextColumn::make('nama_lengkap')

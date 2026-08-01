@@ -301,7 +301,7 @@ class SiswaResource extends BaseResource
             ->columns([
                 Tables\Columns\ImageColumn::make('foto')
                 ->label('Foto')
-                ->disk('public')
+                ->disk('r2-public')
                 ->circular()
                 ->size(40),
 

@@ -46,7 +46,7 @@ class ImportFotoSiswa extends Command
 
             $ext = strtolower($file->getExtension());
             $nameWithoutExt = $file->getBasename('.' . $file->getExtension());
-            $nis = str_replace('.', '', $nameWithoutExt);
+            $nis = $nameWithoutExt;
 
             if ($ext === 'heic') {
                 $skippedHeic[] = $nis;
