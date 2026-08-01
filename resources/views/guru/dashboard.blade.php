@@ -205,7 +205,7 @@
                         @if($guru->foto)
     
                             <img
-                                src="{{ asset('storage/' . $guru->foto) }}"
+                                src="{{ Storage::disk('r2-public')->url($guru->foto) }}"
                                 alt="{{ $guru->nama }}"
                                 class="w-full h-full object-cover">
                         

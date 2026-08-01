@@ -57,14 +57,14 @@ class KartuTemplateResource extends BaseResource
                 FileUpload::make('background_depan')
                 ->label('Background Kartu Depan')
                 ->image()
-                ->disk('public')                
+                ->disk('r2-public')
                 ->directory('kartu-template')
                 ->required(),
 
                 FileUpload::make('background_belakang')
                 ->label('Background Kartu Belakang')
                 ->image()
-                ->disk('public')
+                ->disk('r2-public')
                 ->directory('kartu-template')
                 ->required(),
                 ])->columns(3),
@@ -94,11 +94,11 @@ class KartuTemplateResource extends BaseResource
 
                 ImageColumn::make('background_depan')
                 ->label('Depan')
-                ->disk('public'),
+                ->disk('r2-public'),
 
                 ImageColumn::make('background_belakang')
                 ->label('Belakang')
-                ->disk('public'),
+                ->disk('r2-public'),
             ])
             ->filters([
                 //

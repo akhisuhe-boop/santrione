@@ -217,9 +217,9 @@ td:last-child{
 <div class="center">
 
     @if($lembaga?->logo)
-        <img src="{{ asset('storage/'.$lembaga->logo) }}" class="logo">
+        <img src="{{ Storage::disk('r2-public')->url($lembaga->logo) }}" class="logo">
     @elseif($yayasan?->logo)
-        <img src="{{ asset('storage/'.$yayasan->logo) }}" class="logo">
+        <img src="{{ Storage::disk('r2-public')->url($yayasan->logo) }}" class="logo">
     @endif
 
     <div class="yayasan">

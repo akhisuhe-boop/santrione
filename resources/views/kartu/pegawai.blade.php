@@ -97,6 +97,21 @@ td{
 
 <body>
 
+@php
+    $bgDepanBase64 = null;
+    $bgBelakangBase64 = null;
+    try {
+        if ($template?->background_depan) {
+            $bgDepanBase64 = 'data:image/png;base64,' . base64_encode(\Storage::disk('r2-public')->get($template->background_depan));
+        }
+        if ($template?->background_belakang) {
+            $bgBelakangBase64 = 'data:image/png;base64,' . base64_encode(\Storage::disk('r2-public')->get($template->background_belakang));
+        }
+    } catch (\Throwable $e) {
+        // biarkan null kalau gagal ambil dari R2, kartu tetap tercetak tanpa background
+    }
+@endphp
+
 {{-- ================= KARTU DEPAN ================= --}}
 @foreach($pegawais->chunk(10) as $chunk)
 
@@ -108,13 +123,23 @@ td{
 <div class="card">
 
 {{-- BACKGROUND --}}
-@if($template && $template->background_depan)
-<img class="bg" src="{{ public_path('storage/'.$template->background_depan) }}">
+@if($bgDepanBase64)
+<img class="bg" src="{{ $bgDepanBase64 }}">
 @endif
 
 {{-- FOTO --}}
-@if($pegawai->foto)
-<img class="foto" src="{{ public_path('storage/'.$pegawai->foto) }}">
+@php
+    $fotoBase64 = null;
+    if ($pegawai->foto) {
+        try {
+            $fotoBase64 = 'data:image/png;base64,' . base64_encode(\Storage::disk('r2-public')->get($pegawai->foto));
+        } catch (\Throwable $e) {
+            $fotoBase64 = null;
+        }
+    }
+@endphp
+@if($fotoBase64)
+<img class="foto" src="{{ $fotoBase64 }}">
 @endif
 
 {{-- NAMA --}}
@@ -171,8 +196,8 @@ NIY : {{ $pegawai->niy }}
 <td>
 <div class="card">
 
-@if($template && $template->background_belakang)
-<img class="bg" src="{{ public_path('storage/'.$template->background_belakang) }}">
+@if($bgBelakangBase64)
+<img class="bg" src="{{ $bgBelakangBase64 }}">
 @endif
 
 </div>

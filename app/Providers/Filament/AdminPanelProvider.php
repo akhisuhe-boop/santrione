@@ -119,7 +119,7 @@ class AdminPanelProvider extends PanelProvider
             $yayasan = $this->resolveYayasanForBranding();
 
             $logo = $yayasan?->logo
-                ? asset('storage/' . $yayasan->logo)
+                ? \Storage::disk('r2-public')->url($yayasan->logo)
                 : null;
 
             $nama = $yayasan?->nama ?? 'Qinara App';
@@ -138,7 +138,7 @@ class AdminPanelProvider extends PanelProvider
             $yayasan = $this->resolveYayasanForBranding();
 
             return $yayasan?->logo
-                ? asset('storage/' . $yayasan->logo)
+                ? \Storage::disk('r2-public')->url($yayasan->logo)
                 : asset('favicon.ico');
         })
 

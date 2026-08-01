@@ -20,7 +20,7 @@ class ManifestController extends Controller
         ];
 
         if ($yayasan?->logo) {
-            $logoUrl = asset("storage/" . $yayasan->logo);
+            $logoUrl = \Storage::disk('r2-public')->url($yayasan->logo);
             $icons = [
                 ["src" => $logoUrl, "sizes" => "192x192", "type" => "image/png"],
                 ["src" => $logoUrl, "sizes" => "512x512", "type" => "image/png"],

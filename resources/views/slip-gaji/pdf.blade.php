@@ -7,6 +7,16 @@
     $lembaga = $pegawai?->lembagas?->first();
     $yayasan = $lembaga?->yayasan;
 
+    $logoPath = $lembaga?->logo ?? $yayasan?->logo;
+    $logoBase64 = null;
+    if ($logoPath) {
+        try {
+            $logoBase64 = 'data:image/png;base64,' . base64_encode(\Storage::disk('r2-public')->get($logoPath));
+        } catch (\Throwable $e) {
+            $logoBase64 = null;
+        }
+    }
+
 @endphp
 
 <head>
@@ -184,16 +194,10 @@ td:last-child{
 
     <div class="center">
 
-        @if($lembaga?->logo)
+        @if($logoBase64)
 
             <img
-                src="{{ public_path('storage/'.$lembaga->logo) }}"
-                class="logo">
-
-        @elseif($yayasan?->logo)
-
-            <img
-                src="{{ public_path('storage/'.$yayasan->logo) }}"
+                src="{{ $logoBase64 }}"
                 class="logo">
 
         @endif

@@ -35,7 +35,7 @@
             {{-- FOTO --}}
             <div class="w-20 h-20 rounded-2xl overflow-hidden border-2 border-white/30 bg-white/10 shrink-0">
                 @if($siswa->foto)
-                    <img src="{{ asset('storage/'.$siswa->foto) }}" class="w-full h-full object-cover">
+                    <img src="{{ Storage::disk('r2-public')->url($siswa->foto) }}" class="w-full h-full object-cover">
                 @else
                     <div class="w-full h-full flex items-center justify-center text-xs text-white/80">
                         No Photo

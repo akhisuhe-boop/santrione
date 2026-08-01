@@ -582,7 +582,7 @@ class WaliDashboardController extends Controller
             ->file('bukti_transfer')
             ->store(
                 'bukti-transfer',
-                'public'
+                'r2-private'
             );
 
         Pembayaran::create([
@@ -703,7 +703,7 @@ class WaliDashboardController extends Controller
                 ->file('bukti_transfer')
                 ->store(
                     'bukti-transfer',
-                    'public'
+                    'r2-private'
                 );
 
             $pembayaran->update([

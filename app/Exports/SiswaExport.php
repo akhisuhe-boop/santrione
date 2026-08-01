@@ -97,11 +97,27 @@ class SiswaExport implements
                 // LOGO YAYASAN
                 // ======================
                 if ($this->lembaga?->yayasan?->logo) {
-                    $drawing = new Drawing();
-                    $drawing->setPath(public_path('storage/'.$this->lembaga->yayasan->logo));
-                    $drawing->setHeight(60);
-                    $drawing->setCoordinates('A1');
-                    $drawing->setWorksheet($sheet);
+                    $logoPath = $this->lembaga->yayasan->logo;
+                    $tmpLogoFile = null;
+
+                    try {
+                        $tmpLogoFile = tempnam(sys_get_temp_dir(), 'logo_') . '.png';
+                        file_put_contents($tmpLogoFile, \Storage::disk('r2-public')->get($logoPath));
+
+                        $drawing = new Drawing();
+                        $drawing->setPath($tmpLogoFile);
+                        $drawing->setHeight(60);
+                        $drawing->setCoordinates('A1');
+                        $drawing->setWorksheet($sheet);
+
+                        register_shutdown_function(function () use ($tmpLogoFile) {
+                            if (file_exists($tmpLogoFile)) {
+                                @unlink($tmpLogoFile);
+                            }
+                        });
+                    } catch (\Throwable $e) {
+                        // logo gagal diambil dari R2, lanjut tanpa logo di export
+                    }
                 }
 
                 // ======================

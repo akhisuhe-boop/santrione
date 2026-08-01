@@ -146,7 +146,7 @@ switch ($ppdb->status) {
                             @if($ppdb->foto)
                     
                                 <img
-                                    src="{{ asset('storage/' . $ppdb->foto) }}"
+                                    src="{{ Storage::disk('r2-public')->url($ppdb->foto) }}"
                                     alt="{{ $ppdb->nama_lengkap }}"
                                     class="w-full h-full object-cover">
                     

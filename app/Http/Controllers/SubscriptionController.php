@@ -53,7 +53,7 @@ class SubscriptionController extends Controller
 
         abort_if(! $yayasan, 404);
 
-        $path = $request->file('bukti_transfer')->store('bukti-transfer', 'public');
+        $path = $request->file('bukti_transfer')->store('bukti-transfer', 'r2-private');
 
         $subscription = $yayasan->subscriptions()->create([
             'subscription_plan_id' => $plan->id,

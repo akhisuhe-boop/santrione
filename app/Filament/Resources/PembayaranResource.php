@@ -236,7 +236,7 @@ class PembayaranResource extends BaseResource
                                 if (!$siswa) return '-';
 
                                 $foto = $siswa->foto
-                                    ? asset('storage/' . $siswa->foto)
+                                    ? \Storage::disk('r2-public')->url($siswa->foto)
                                     : 'https://ui-avatars.com/api/?name=' . urlencode($siswa->nama_lengkap);
 
                                 $nama = $siswa->nama_lengkap;
@@ -258,7 +258,7 @@ class PembayaranResource extends BaseResource
                                 if (!$ppdb) return '-';
 
                                 $foto = $ppdb->foto
-                                    ? asset('storage/' . $ppdb->foto)
+                                    ? \Storage::disk('r2-public')->url($ppdb->foto)
                                     : 'https://ui-avatars.com/api/?name=' . urlencode($ppdb->nama_lengkap);
 
                                 $nama = $ppdb->nama_lengkap;

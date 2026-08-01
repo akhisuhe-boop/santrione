@@ -67,7 +67,7 @@
                     @if($pegawai->foto)
 
                         <img
-                            src="{{ asset('storage/'.$pegawai->foto) }}"
+                            src="{{ Storage::disk('r2-public')->url($pegawai->foto) }}"
                             class="w-full h-full object-cover">
 
                     @else

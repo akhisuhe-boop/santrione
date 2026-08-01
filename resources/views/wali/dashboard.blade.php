@@ -102,7 +102,7 @@
                     @if($siswa->foto)
 
                         <img
-                            src="{{ asset('storage/' . $siswa->foto) }}"
+                            src="{{ Storage::disk('r2-public')->url($siswa->foto) }}"
                             alt="{{ $siswa->nama_lengkap }}"
                             class="w-full h-full object-cover"
                         >

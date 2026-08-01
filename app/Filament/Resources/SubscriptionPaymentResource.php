@@ -104,7 +104,7 @@ class SubscriptionPaymentResource extends BaseResource
                 Tables\Actions\Action::make('lihat_bukti')
                     ->label('Lihat Bukti')
                     ->icon('heroicon-o-photo')
-                    ->url(fn (SubscriptionPayment $record) => $record->bukti_transfer ? asset('storage/' . $record->bukti_transfer) : null)
+                    ->url(fn (SubscriptionPayment $record) => $record->bukti_transfer ? \Storage::disk('r2-private')->temporaryUrl($record->bukti_transfer, now()->addMinutes(10)) : null)
                     ->openUrlInNewTab()
                     ->visible(fn (SubscriptionPayment $record) => filled($record->bukti_transfer)),
 

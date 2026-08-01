@@ -213,10 +213,10 @@ class AbsensiController extends Controller
 
                     'foto' => $siswa
                         ? ($siswa->foto
-                            ? asset('storage/' . $siswa->foto)
+                            ? \Storage::disk('r2-public')->url($siswa->foto)
                             : null)
                         : ($pegawai->foto
-                            ? asset('storage/' . $pegawai->foto)
+                            ? \Storage::disk('r2-public')->url($pegawai->foto)
                             : null),
 
                     'message' => 'Sudah absen sebelumnya'
@@ -309,7 +309,7 @@ class AbsensiController extends Controller
                         $nama = $r->siswa->nama_lengkap;
 
                         $foto = $r->siswa->foto
-                            ? asset('storage/' . $r->siswa->foto)
+                            ? \Storage::disk('r2-public')->url($r->siswa->foto)
                             : '';
 
                     } elseif ($r->tipe == 'guru' && $r->pegawai) {
@@ -317,7 +317,7 @@ class AbsensiController extends Controller
                         $nama = $r->pegawai->nama;
 
                         $foto = $r->pegawai->foto
-                            ? asset('storage/' . $r->pegawai->foto)
+                            ? \Storage::disk('r2-public')->url($r->pegawai->foto)
                             : '';
                     }
 
@@ -345,10 +345,10 @@ class AbsensiController extends Controller
 
                 'foto' => $siswa
                     ? ($siswa->foto
-                        ? asset('storage/' . $siswa->foto)
+                        ? \Storage::disk('r2-public')->url($siswa->foto)
                         : null)
                     : ($pegawai->foto
-                        ? asset('storage/' . $pegawai->foto)
+                        ? \Storage::disk('r2-public')->url($pegawai->foto)
                         : null),
 
                 'message' => $status,

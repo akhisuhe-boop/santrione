@@ -98,7 +98,7 @@
                             <div class="kk-row kk-gap-3">
 
                                 @if ($siswaTerpilih['foto'])
-                                    <img src="{{ asset('storage/' . $siswaTerpilih['foto']) }}" class="kk-avatar" style="width:88px;height:88px;">
+                                    <img src="{{ Storage::disk('r2-public')->url($siswaTerpilih['foto']) }}" class="kk-avatar" style="width:88px;height:88px;">
                                 @else
                                     <div class="kk-avatar" style="width:88px;height:88px;background:#f0fdfa;display:flex;align-items:center;justify-content:center;color:#00A39D;">
                                         <x-heroicon-o-user style="width:36px;height:36px;" />
@@ -191,7 +191,7 @@
                             <div class="kk-gap-md kk-card-highlight" style="text-align:left;">
 
                                 @if ($previewProduk['gambar'])
-                                    <img src="{{ asset('storage/' . $previewProduk['gambar']) }}" style="width:52px;height:52px;border-radius:12px;object-fit:cover;flex-shrink:0;">
+                                    <img src="{{ Storage::disk('r2-public')->url($previewProduk['gambar']) }}" style="width:52px;height:52px;border-radius:12px;object-fit:cover;flex-shrink:0;">
                                 @else
                                     <div style="width:52px;height:52px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;color:#10b981;flex-shrink:0;">
                                         <x-heroicon-o-check-circle style="width:24px;height:24px;" />

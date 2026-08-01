@@ -61,9 +61,8 @@ class YayasanResource extends BaseResource
                         FileUpload::make('logo')
                             ->label('Logo Yayasan')
                             ->image()
-                            ->disk('public')
+                            ->disk('r2-public')
                             ->directory('yayasan')
-                            ->visibility('public')
                             ->imageEditor(),
     
                     ])
@@ -141,6 +140,7 @@ class YayasanResource extends BaseResource
 
             Tables\Columns\ImageColumn::make('logo')
                 ->label('Logo')
+                ->disk('r2-public')
                 ->circular()
                 ->size(45),
         

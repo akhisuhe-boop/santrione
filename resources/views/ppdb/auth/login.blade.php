@@ -43,7 +43,7 @@
                 <div class="flex justify-center mb-3">
         
                     <img
-                        src="{{ asset('storage/'.$yayasan->logo) }}"
+                        src="{{ Storage::disk('r2-public')->url($yayasan->logo) }}"
                         alt="{{ $yayasan->nama }}"
                         class="w-24 h-24 object-contain">
         

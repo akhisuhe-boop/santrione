@@ -58,6 +58,7 @@ class LembagaResource extends BaseResource
                         FileUpload::make('logo')
                             ->label('Logo Lembaga')
                             ->image()
+                            ->disk('r2-public')
                             ->directory('lembaga')
                             ->imageEditor(),
     
@@ -115,6 +116,7 @@ class LembagaResource extends BaseResource
 
                 Tables\Columns\ImageColumn::make('logo')
                     ->label('Logo')
+                    ->disk('r2-public')
                     ->circular()
                     ->size(40),
             

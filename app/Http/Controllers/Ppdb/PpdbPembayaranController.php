@@ -113,7 +113,7 @@ class PpdbPembayaranController extends Controller
         // Upload bukti transfer
         $path = $request
             ->file('bukti_transfer_ppdb')
-            ->store('ppdb-transfer', 'public');
+            ->store('ppdb-transfer', 'r2-private');
     
         // Simpan pembayaran
         Pembayaran::create([
