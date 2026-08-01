@@ -85,8 +85,19 @@ class KantinProdukResource extends BaseResource
                         Forms\Components\FileUpload::make('gambar')
                             ->label('Gambar')
                             ->image()
-                            ->directory('kantin-produk')
-                            ->disk('public')
+                            ->disk('r2-public')
+                            ->maxSize(2048)
+                            ->saveUploadedFileUsing(function ($file) {
+                                $webp = \Intervention\Image\Laravel\Facades\Image::decode(file_get_contents($file->getRealPath()))
+                                    ->cover(800, 800)
+                                    ->encodeUsingFileExtension('webp', quality: 80);
+
+                                $filename = 'kantin-produk/' . uniqid() . '.webp';
+
+                                \Storage::disk('r2-public')->put($filename, (string) $webp);
+
+                                return $filename;
+                            })
                             ->columnSpanFull(),
 
                     ]),
@@ -101,6 +112,7 @@ class KantinProdukResource extends BaseResource
 
                 Tables\Columns\ImageColumn::make('gambar')
                     ->label('')
+                    ->disk('r2-public')
                     ->circular(),
 
                 Tables\Columns\TextColumn::make('nama')
