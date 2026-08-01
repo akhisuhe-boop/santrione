@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Builder;
 use App\Services\NotificationService;
 use Illuminate\Support\Facades\Hash;
+use Intervention\Image\Laravel\Facades\Image;
 
 class PpdbResource extends BaseResource
 {
@@ -190,11 +191,42 @@ class PpdbResource extends BaseResource
             // DOKUMEN
             // ======================
             Section::make('Dokumen')->schema([
-                FileUpload::make('foto')->image()->required(),
-                FileUpload::make('scan_kk')
-                ->label('Scan Kartu Keluarga')->required(),
-                FileUpload::make('scan_akta')->label('Scan Akta Kelahiran')->required(),
-                FileUpload::make('scan_ijazah')->label('Scan Ijazah'),
+	    FileUpload::make('foto')
+	    ->image()
+	    ->disk('r2-public')
+	    ->maxSize(2048)
+	    ->saveUploadedFileUsing(function ($file) {
+	        $webp = Image::decode(file_get_contents($file->getRealPath()))
+	            ->cover(800, 1000)
+	            ->encodeUsingFileExtension('webp', quality: 80);
+
+	        $filename = 'siswa-photos/' . uniqid() . '.webp';
+
+	        \Storage::disk('r2-public')->put($filename, (string) $webp);
+
+	        return $filename;
+	    })
+	    ->required(),
+
+		FileUpload::make('scan_kk')
+    		->label('Scan Kartu Keluarga')
+    		->disk('r2-private')
+		->maxSize(2048)
+    		->directory('ppdb/scan-kk')
+    		->required(),
+
+		FileUpload::make('scan_akta')
+    		->label('Scan Akta Kelahiran')
+    		->disk('r2-private')
+		->maxSize(2048)
+    		->directory('ppdb/scan-akta')
+    		->required(),
+
+		FileUpload::make('scan_ijazah')
+    		->label('Scan Ijazah')
+    		->disk('r2-private')
+		->maxSize(2048)
+    		->directory('ppdb/scan-ijazah'),		
             ])->columns(2),
 
             // ======================
@@ -220,7 +252,7 @@ class PpdbResource extends BaseResource
     }
 
     public static function table(Table $table): Table
-    {
+   {
         return $table
             ->defaultSort('created_at', 'desc')
             ->columns([

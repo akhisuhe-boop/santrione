@@ -56,7 +56,31 @@ return [
         'throw' => false,
         'report' => false,
     ],
+    
+    'r2-private' => [
+        'driver' => 's3',
+        'key' => env('R2_ACCESS_KEY_ID'),
+        'secret' => env('R2_SECRET_ACCESS_KEY'),
+        'region' => 'auto',
+        'bucket' => 'qinara-storage',
+        'endpoint' => env('R2_ENDPOINT'),
+        'use_path_style_endpoint' => true,
+        'visibility' => 'private',
+        'throw' => true,
+    ],
 
+    'r2-public' => [
+        'driver' => 's3',
+        'key' => env('R2_ACCESS_KEY_ID'),
+        'secret' => env('R2_SECRET_ACCESS_KEY'),
+        'region' => 'auto',
+        'bucket' => 'qinara-public',
+        'endpoint' => env('R2_ENDPOINT'),
+        'url' => 'https://storage.qinaraindonesia.id',
+        'use_path_style_endpoint' => true,
+        'visibility' => 'public',
+        'throw' => true,
+    ],
 ],
 
     /*

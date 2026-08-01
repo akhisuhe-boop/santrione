@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Filament\Tables\Actions\Action;
 use Maatwebsite\Excel\Facades\Excel;
+use Intervention\Image\Laravel\Facades\Image;
 use App\Imports\PegawaiImport;
 use App\Exports\PegawaiExport;
 use App\Exports\PegawaiTemplateExport;
@@ -102,15 +103,28 @@ class PegawaiResource extends BaseResource
 
                 // 🔥 FOTO
                 Forms\Components\FileUpload::make('foto')
-                    ->image()
-                    ->disk('public')
-                    ->directory('foto-pegawai')
-                    ->imagePreviewHeight('100'),
+		    ->image()
+		    ->disk('r2-public')
+		    ->maxSize(2048)
+		    ->imagePreviewHeight('100')
+		    ->saveUploadedFileUsing(function ($file) {
+		        $webp = Image::decode(file_get_contents($file->getRealPath()))
+		            ->cover(800, 1000)
+		            ->encodeUsingFileExtension('webp', quality: 80);
+
+		        $filename = 'pegawai-photos/' . uniqid() . '.webp';
+
+		        \Storage::disk('r2-public')->put($filename, (string) $webp);
+
+		        return $filename;
+		    }),
 
                 // 🔥 IJAZAH
                 Forms\Components\FileUpload::make('file_ijazah')
                     ->label('Fotocopy Ijazah')
-                    ->directory('ijazah-pegawai')
+		    ->disk('r2-private')
+		    ->maxSize(2048)
+                    ->directory('pegawai/ijazah')
                     ->acceptedFileTypes(['application/pdf','image/*'])
                     ->maxSize(2048),
 
@@ -160,7 +174,7 @@ class PegawaiResource extends BaseResource
             ->columns([
 
                 Tables\Columns\ImageColumn::make('foto')
-                ->disk('public')
+                ->disk('r2-public')
                 ->circular()
                 ->size(40),
 

@@ -29,6 +29,7 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Storage;
 use App\Exports\SiswaPdfExport;
 use Illuminate\Database\Eloquent\Builder;
+use Intervention\Image\Laravel\Facades\Image;
 
 class SiswaResource extends BaseResource
 {
@@ -214,26 +215,40 @@ class SiswaResource extends BaseResource
             ])->columns(4),
 
             Section::make('Dokumen')->schema([
-                FileUpload::make('foto')
-                    ->label('Foto')
-                    ->image()
-                    ->disk('public')
-                    ->directory('foto-siswa'),
-            
+		FileUpload::make('foto')
+    		->label('Foto')
+    		->image()
+    		->disk('r2-public')
+    		->maxSize(2048)
+    		->saveUploadedFileUsing(function ($file) {
+        	$webp = Image::decode(file_get_contents($file->getRealPath()))
+    		->cover(800, 1000)
+    		->encodeUsingFileExtension('webp', quality: 80);
+
+        	$filename = 'siswa-photos/' . uniqid() . '.webp';
+
+	        \Storage::disk('r2-public')->put($filename, (string) $webp);
+
+        	return $filename;
+    		}),
+
                 FileUpload::make('scan_kk')
                     ->label('Scan Kartu Keluarga')
-                    ->disk('public')
-                    ->directory('scan-kk'),
+                    ->disk('r2-private')
+		    ->maxSize(2048)
+                    ->directory('ppdb/scan-kk'),
             
                 FileUpload::make('scan_akta')
                     ->label('Scan Akta Kelahiran')
-                    ->disk('public')
-                    ->directory('scan-akta'),
+                    ->disk('r2-private')
+		    ->maxSize(2048)
+                    ->directory('ppdb/scan-akta'),
             
                 FileUpload::make('scan_ijazah')
                     ->label('Scan Ijazah')
-                    ->disk('public')
-                    ->directory('scan-ijazah'),
+                    ->disk('r2-private')
+                    ->maxSize(2048)
+		    ->directory('ppdb/scan-ijazah'),
             ])->columns(2),
 
             Section::make('Status')->schema([
