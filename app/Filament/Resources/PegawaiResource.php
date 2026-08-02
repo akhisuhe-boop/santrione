@@ -313,6 +313,7 @@ class PegawaiResource extends BaseResource
                 ->label('Cetak Kartu ID')
                 ->icon('heroicon-o-identification')
                 ->color('success')
+                ->visible(fn () => (bool) auth()->user()?->is_platform_admin)
                 ->action(function ($records) {
 
                     $ids = $records->pluck('id')->join(',');

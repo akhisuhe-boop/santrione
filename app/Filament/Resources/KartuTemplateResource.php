@@ -24,6 +24,32 @@ class KartuTemplateResource extends BaseResource
     protected static ?string $navigationGroup = 'Master Setting';
     protected static ?int $navigationSort = 3;
     protected static ?string $navigationIcon = 'heroicon-o-identification';
+
+    // Template kartu adalah aset desain level platform — cuma Platform Admin yang boleh kelola ini.
+    public static function shouldRegisterNavigation(): bool
+    {
+        return (bool) auth()->user()?->is_platform_admin;
+    }
+
+    public static function canViewAny(): bool
+    {
+        return (bool) auth()->user()?->is_platform_admin;
+    }
+
+    public static function canCreate(): bool
+    {
+        return (bool) auth()->user()?->is_platform_admin;
+    }
+
+    public static function canEdit($record = null): bool
+    {
+        return (bool) auth()->user()?->is_platform_admin;
+    }
+
+    public static function canDelete($record = null): bool
+    {
+        return (bool) auth()->user()?->is_platform_admin;
+    }
     
     public static function form(Form $form): Form
     {
@@ -67,7 +93,7 @@ class KartuTemplateResource extends BaseResource
                 ->disk('r2-public')
                 ->directory('kartu-template')
                 ->required(),
-                ])->columns(3),
+                ])->columns(2),
             ]);
     }
 

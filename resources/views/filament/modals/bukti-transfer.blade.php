@@ -3,7 +3,7 @@
     @if($record->bukti_transfer)
 
         <img
-            src="{{ Storage::disk('r2-private')->temporaryUrl($record->bukti_transfer, now()->addMinutes(10)) }}"
+            src="{{ \App\Support\FileUrlResolver::private($record->bukti_transfer) }}"
             class="w-full rounded-xl border">
 
     @else

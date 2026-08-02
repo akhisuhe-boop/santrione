@@ -7,9 +7,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     {{-- Favicon --}}
     @if(!empty($yayasan?->logo))
-        <link rel="icon" type="image/png" href="{{ Storage::disk('r2-public')->url($yayasan->logo) }}">
-        <link rel="shortcut icon" href="{{ Storage::disk('r2-public')->url($yayasan->logo) }}">
-        <link rel="apple-touch-icon" href="{{ Storage::disk('r2-public')->url($yayasan->logo) }}">
+        <link rel="icon" type="image/png" href="{{ App\Support\FileUrlResolver::public($yayasan->logo) }}">
+        <link rel="shortcut icon" href="{{ App\Support\FileUrlResolver::public($yayasan->logo) }}">
+        <link rel="apple-touch-icon" href="{{ App\Support\FileUrlResolver::public($yayasan->logo) }}">
     @else
         <link rel="icon" href="{{ asset('favicon.ico') }}">
     @endif
@@ -50,7 +50,7 @@
                 <div class="flex justify-center mb-3">
         
                     <img
-                        src="{{ Storage::disk('r2-public')->url($yayasan->logo) }}"
+                        src="{{ App\Support\FileUrlResolver::public($yayasan->logo) }}"
                         alt="{{ $yayasan->nama }}"
                         class="w-24 h-24 object-contain">
         

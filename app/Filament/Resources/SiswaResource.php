@@ -615,6 +615,7 @@ class SiswaResource extends BaseResource
     ->label('Cetak Kartu Massal')
     ->icon('heroicon-o-printer')
     ->color('success')
+    ->visible(fn () => (bool) auth()->user()?->is_platform_admin)
 
     ->action(function ($records) {
 

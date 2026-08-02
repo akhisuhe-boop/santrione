@@ -32,8 +32,8 @@
     </style>
     {{-- Favicon --}}
     @if($yayasan && $yayasan->logo)
-        <link rel="icon" type="image/png" href="{{ Storage::disk('r2-public')->url($yayasan->logo) }}">
-        <link rel="apple-touch-icon" href="{{ Storage::disk('r2-public')->url($yayasan->logo) }}">
+        <link rel="icon" type="image/png" href="{{ App\Support\FileUrlResolver::public($yayasan->logo) }}">
+        <link rel="apple-touch-icon" href="{{ App\Support\FileUrlResolver::public($yayasan->logo) }}">
     @else
         <link rel="icon" href="{{ asset('favicon.ico') }}">
     @endif
@@ -58,7 +58,7 @@
         @if($yayasan && $yayasan->logo)
             <div class="flex justify-center mt-4 mb-4">
                 <img
-                    src="{{ Storage::disk('r2-public')->url($yayasan->logo) }}"
+                    src="{{ App\Support\FileUrlResolver::public($yayasan->logo) }}"
                     alt="{{ $yayasan->nama ?? 'Qinara App' }}"
                     class="h-24 md:h-28 w-auto object-contain"
                 >

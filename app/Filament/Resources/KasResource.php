@@ -245,11 +245,11 @@ class KasResource extends BaseResource
                 ->url(function ($record) {
 
                     if ($record->pembayaran?->bukti_transfer) {
-                        return \Storage::disk('r2-private')->temporaryUrl($record->pembayaran->bukti_transfer, now()->addMinutes(10));
+                        return \App\Support\FileUrlResolver::private($record->pembayaran->bukti_transfer);
                     }
 
                     if ($record->bukti) {
-                        return \Storage::disk('r2-private')->temporaryUrl($record->bukti, now()->addMinutes(10));
+                        return \App\Support\FileUrlResolver::private($record->bukti);
                     }
 
                     return null;
