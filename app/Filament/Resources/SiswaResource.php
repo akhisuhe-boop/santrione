@@ -298,6 +298,7 @@ class SiswaResource extends BaseResource
     public static function table(Table $table): Table
     {
         return $table
+            ->paginationPageOptions([10, 25, 50])
             ->columns([
                 Tables\Columns\ImageColumn::make('foto')
                 ->label('Foto')
