@@ -100,6 +100,9 @@ Route::post('/whatsapp/test', [WhatsappSettingController::class, 'test']);
 Route::get('/absensi', [AbsensiController::class, 'index']);
 Route::post('/absensi/scan', [AbsensiController::class, 'scan'])->name('absensi.scan');
 
+Route::get('/absensi-harian', [\App\Http\Controllers\AbsensiHarianController::class, 'index'])->name('absensi-harian.index');
+Route::post('/absensi-harian/scan', [\App\Http\Controllers\AbsensiHarianController::class, 'scan'])->name('absensi-harian.scan');
+
 Route::get('/kartu/siswa-massal', function () {
 
     $ids = request('ids');

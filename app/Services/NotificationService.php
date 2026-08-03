@@ -100,6 +100,39 @@ class NotificationService
         self::wa($nomorAdmin, $pesan, $kegiatan->templateKegiatan->lembaga_id ?? null);
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | ABSENSI HARIAN (MASUK / PULANG)
+    |--------------------------------------------------------------------------
+    */
+
+    public static function sendAbsensiHarian(
+        $siswa,
+        string $jenis,   // 'masuk' | 'pulang'
+        string $status,  // Hadir/Terlambat/Pulang/Pulang Awal
+        $waktu,
+        ?int $lembagaId = null
+    ) {
+        $nomor = $siswa->wa_ayah ?? $siswa->wa_ibu;
+        if (!$nomor) {
+            return;
+        }
+
+        $nomor = self::formatPhone($nomor);
+        $jam = Carbon::parse($waktu)->format('H:i');
+        $label = $jenis === 'masuk' ? 'MASUK SEKOLAH' : 'PULANG SEKOLAH';
+
+        $pesan =
+            "*ABSENSI {$label}*\n\n" .
+            "Ananda telah melakukan absensi {$jenis}\n\n" .
+            "Nama : *{$siswa->nama_lengkap}*\n" .
+            "Status : *{$status}*\n" .
+            "Jam : *{$jam}*\n\n" .
+            "Terima kasih";
+
+        self::wa($nomor, $pesan, $lembagaId ?? $siswa->lembaga_id);
+    }
+
      /*
     |--------------------------------------------------------------------------
     | PELANGGARAN

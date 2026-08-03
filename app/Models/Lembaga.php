@@ -29,6 +29,11 @@ class Lembaga extends Model
     'npsn',
     'nss',
     'tarif_pengganti_per_jp',
+    'jam_masuk_siswa',
+    'jam_pulang_siswa',
+    'jam_masuk_guru',
+    'jam_pulang_guru',
+    'toleransi_telat_menit',
     ];
     
     protected static function booted()
