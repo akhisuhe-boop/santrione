@@ -135,6 +135,19 @@ class AbsensiHarianController extends Controller
                         $absen->jam_masuk,
                         $lembaga?->id
                     );
+                } else {
+                    $setting = \App\Models\WhatsappSetting::where('lembaga_id', $lembaga?->id)
+                        ->where('is_active', 1)
+                        ->first();
+
+                    NotificationService::sendAbsensiHarianGuru(
+                        $pegawai,
+                        'masuk',
+                        $status,
+                        $absen->jam_masuk,
+                        $setting?->no_admin_absensi,
+                        $lembaga?->id
+                    );
                 }
 
                 $message = $status;
@@ -188,6 +201,19 @@ class AbsensiHarianController extends Controller
                         'pulang',
                         $status,
                         $absen->jam_pulang,
+                        $lembaga?->id
+                    );
+                } else {
+                    $setting = \App\Models\WhatsappSetting::where('lembaga_id', $lembaga?->id)
+                        ->where('is_active', 1)
+                        ->first();
+
+                    NotificationService::sendAbsensiHarianGuru(
+                        $pegawai,
+                        'pulang',
+                        $status,
+                        $absen->jam_pulang,
+                        $setting?->no_admin_absensi,
                         $lembaga?->id
                     );
                 }

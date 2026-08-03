@@ -133,6 +133,34 @@ class NotificationService
         self::wa($nomor, $pesan, $lembagaId ?? $siswa->lembaga_id);
     }
 
+    public static function sendAbsensiHarianGuru(
+        $pegawai,
+        string $jenis,   // 'masuk' | 'pulang'
+        string $status,
+        $waktu,
+        ?string $nomorAdmin,
+        ?int $lembagaId = null
+    ) {
+        if (!$nomorAdmin) {
+            return;
+        }
+
+        $nomorAdmin = self::formatPhone($nomorAdmin);
+        $jam = Carbon::parse($waktu)->format('H:i');
+        $label = $jenis === 'masuk' ? 'MASUK' : 'PULANG';
+
+        $pesan =
+            "*ABSENSI GURU/PEGAWAI - {$label}*\n\n" .
+            "Guru/Pegawai telah melakukan absensi {$jenis}\n\n" .
+            "Nama : *{$pegawai->nama}*\n" .
+            "NIY : *{$pegawai->niy}*\n" .
+            "Status : *{$status}*\n" .
+            "Jam : *{$jam}*\n\n" .
+            "Terima kasih";
+
+        self::wa($nomorAdmin, $pesan, $lembagaId);
+    }
+
      /*
     |--------------------------------------------------------------------------
     | PELANGGARAN
