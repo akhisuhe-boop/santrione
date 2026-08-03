@@ -142,21 +142,24 @@ class PengaturanKurikulum extends Page implements HasForms, HasTable
                             ->description('Total JP mengajar seorang guru per minggu, dijumlahkan dari semua kelas & mapel yang diampu. Kosongkan untuk tanpa batas.')
                             ->icon('heroicon-o-user')
                             ->columnSpan(1)
+                            ->columns(2)
                             ->schema([
 
                                 TextInput::make('max_jp_guru_per_minggu')
-                                    ->label('Maksimal JP Guru / Minggu (batas keras, ditolak jika lebih)')
+                                    ->label('Maksimal JP / Minggu')
                                     ->numeric()
                                     ->minValue(1)
                                     ->nullable()
-                                    ->suffix('JP'),
+                                    ->suffix('JP')
+                                    ->helperText('Batas keras, ditolak jika lebih.'),
 
                                 TextInput::make('warning_jp_guru_per_minggu')
-                                    ->label('Ambang Peringatan JP Guru / Minggu (cuma peringatan, tetap bisa disimpan)')
+                                    ->label('Ambang Peringatan')
                                     ->numeric()
                                     ->minValue(1)
                                     ->nullable()
-                                    ->suffix('JP'),
+                                    ->suffix('JP')
+                                    ->helperText('Cuma peringatan, tetap bisa disimpan.'),
 
                             ]),
 
