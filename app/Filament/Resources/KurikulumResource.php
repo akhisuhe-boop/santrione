@@ -107,14 +107,15 @@ class KurikulumResource extends BaseResource
                         }
                     }
 
-                    // 🔹 TOTAL JAM PER GURU (HARD LIMIT)
+                    // 🔹 TOTAL JAM PER GURU (batas dinamis per lembaga, kosong = tanpa batas)
+                    $maxGuru = $kelas?->lembaga?->max_jp_guru_per_minggu;
+                    $warningGuru = $kelas?->lembaga?->warning_jp_guru_per_minggu;
+
                     $totalGuru = \App\Models\Kurikulum::where('pegawai_id', $pegawaiId)
                         ->when($get('id'), fn ($q) => $q->where('id', '!=', $get('id')))
                         ->sum('jumlah_jam_per_minggu') - (int) ($get('jumlah_jam_per_minggu') ?? 0);
 
-                    $maxGuru = 40;
-
-                    if (($totalGuru + $state) > $maxGuru) {
+                    if ($maxGuru && ($totalGuru + $state) > $maxGuru) {
                         \Filament\Notifications\Notification::make()
                             ->title('Jam guru overload!')
                             ->body("Maksimal $maxGuru JP per minggu")
@@ -126,10 +127,10 @@ class KurikulumResource extends BaseResource
                     }
 
                     // 🔸 WARNING (tidak blok)
-                    if (($totalGuru + $state) > 24) {
+                    if ($warningGuru && ($totalGuru + $state) > $warningGuru) {
                         \Filament\Notifications\Notification::make()
                             ->title('Jam guru tinggi')
-                            ->body('Disarankan maksimal 24 JP per minggu')
+                            ->body("Disarankan maksimal $warningGuru JP per minggu")
                             ->warning()
                             ->send();
                     }
