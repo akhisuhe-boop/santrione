@@ -106,35 +106,6 @@ class LembagaResource extends BaseResource
                     ])
                     ->columns(3),
 
-                Section::make('Jam Absensi Masuk & Pulang')
-                    ->description('Dipakai untuk menentukan status Terlambat pada fitur Absensi Masuk & Pulang')
-                    ->icon('heroicon-o-clock')
-                    ->schema([
-
-                        Forms\Components\TimePicker::make('jam_masuk_siswa')
-                            ->label('Jam Masuk Siswa')
-                            ->seconds(false),
-
-                        Forms\Components\TimePicker::make('jam_pulang_siswa')
-                            ->label('Jam Pulang Siswa')
-                            ->seconds(false),
-
-                        TextInput::make('toleransi_telat_menit')
-                            ->label('Toleransi Terlambat (menit)')
-                            ->numeric()
-                            ->default(15)
-                            ->suffix('menit'),
-
-                        Forms\Components\TimePicker::make('jam_masuk_guru')
-                            ->label('Jam Masuk Guru/Pegawai')
-                            ->seconds(false),
-
-                        Forms\Components\TimePicker::make('jam_pulang_guru')
-                            ->label('Jam Pulang Guru/Pegawai')
-                            ->seconds(false),
-
-                    ])
-                    ->columns(3),
     
             ]);
     }

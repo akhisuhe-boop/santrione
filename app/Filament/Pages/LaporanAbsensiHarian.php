@@ -88,6 +88,13 @@ class LaporanAbsensiHarian extends Page implements HasTable, HasForms
                         'guru' => 'Guru / Pegawai',
                     ]),
 
+                Select::make('lembaga')
+                    ->label('Lembaga')
+                    ->placeholder('Semua Lembaga')
+                    ->searchable()
+                    ->preload()
+                    ->options(Lembaga::orderBy('nama')->pluck('nama', 'id')),
+
                 Select::make('kelas')
                     ->label('Kelas')
                     ->searchable()
@@ -116,7 +123,7 @@ class LaporanAbsensiHarian extends Page implements HasTable, HasForms
 
             ])
             ->statePath('formData')
-            ->columns(5);
+            ->columns(6);
     }
 
     public function table(Table $table): Table
@@ -139,6 +146,14 @@ class LaporanAbsensiHarian extends Page implements HasTable, HasForms
                     ->when(
                         $this->formData['tipe'] ?? null,
                         fn ($q, $v) => $q->where('tipe', $v)
+                    )
+
+                    ->when(
+                        $this->formData['lembaga'] ?? null,
+                        fn ($q, $v) => $q->where(function ($sub) use ($v) {
+                            $sub->whereHas('siswa', fn ($s) => $s->where('lembaga_id', $v))
+                                ->orWhereHas('pegawai.lembagas', fn ($p) => $p->where('lembagas.id', $v));
+                        })
                     )
 
                     ->when(
@@ -178,6 +193,13 @@ class LaporanAbsensiHarian extends Page implements HasTable, HasForms
                     ->label('Kelas')
                     ->badge()
                     ->placeholder('-'),
+
+                TextColumn::make('lembaga')
+                    ->label('Lembaga')
+                    ->getStateUsing(fn ($record) => $record->tipe === 'siswa'
+                        ? ($record->siswa?->lembaga?->nama ?? '-')
+                        : ($record->pegawai?->lembagas?->first()?->nama ?? '-')
+                    ),
 
                 TextColumn::make('jam_masuk')
                     ->label('Jam Masuk')

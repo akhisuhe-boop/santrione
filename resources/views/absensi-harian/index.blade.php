@@ -15,8 +15,8 @@
 <style>
 
 :root{
-    --primary:#0ea5e9;
-    --primary-dark:#0369a1;
+    --primary:#00A39D;
+    --primary-dark:#00857f;
     --success:#22c55e;
     --warning:#f59e0b;
     --danger:#ef4444;
@@ -40,9 +40,9 @@ body{
     padding:28px;
     color:var(--text);
     background:
-        radial-gradient(circle at top left,#0ea5e9 0%,transparent 35%),
-        radial-gradient(circle at bottom right,#0c4a6e 0%,transparent 40%),
-        linear-gradient(135deg,#0c4a6e,#0369a1,#0284c7);
+        radial-gradient(circle at top left,#14C8C0 0%,transparent 35%),
+        radial-gradient(circle at bottom right,#00595a 0%,transparent 40%),
+        linear-gradient(135deg,#00595a,#00857f,#00A39D);
 }
 
 .container{
@@ -62,6 +62,7 @@ body{
     padding:28px;
 }
 
+.page-title{text-align:center;}
 .page-title h1{font-size:26px;font-weight:700;line-height:1.2;}
 .page-title p{margin-top:4px;font-size:14px;color:var(--muted);}
 .icon-md{width:22px;height:22px;}
@@ -204,7 +205,7 @@ body{
 
         <div class="clock-wrapper">
             <div id="clock" class="clock">--:--:--</div>
-            <div id="tanggal" class="clock-date">{{ now()->translatedFormat('l, d F Y') }}</div>
+            <div id="tanggal" class="clock-date">{{ now()->locale('id')->translatedFormat('l, d F Y') }}</div>
         </div>
 
         <div class="jenis-group">
