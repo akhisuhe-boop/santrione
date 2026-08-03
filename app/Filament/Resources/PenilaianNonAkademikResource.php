@@ -25,7 +25,7 @@ class PenilaianNonAkademikResource extends BaseResource
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document';
     protected static ?string $navigationGroup = 'Akademik';
     protected static ?string $navigationLabel = 'Input Nilai Non-Akademik';
-    protected static ?int $navigationSort = 7;
+    protected static ?int $navigationSort = 9;
     public static function form(Form $form): Form
     {
         return $form

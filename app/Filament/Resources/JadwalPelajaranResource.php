@@ -22,7 +22,7 @@ class JadwalPelajaranResource extends BaseResource
 
     protected static ?string $pluralModelLabel = 'Jadwal Pelajaran';
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 5;
 
     /**
      * Resource ini menggunakan Custom Page,

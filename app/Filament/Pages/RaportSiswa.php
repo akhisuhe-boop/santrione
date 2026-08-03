@@ -22,7 +22,7 @@ class RaportSiswa extends Page implements Forms\Contracts\HasForms
         'Akademik';
     protected static ?string $navigationLabel =
         'Raport Siswa';
-    protected static ?int $navigationSort = 9;
+    protected static ?int $navigationSort = 11;
     protected static string $view =
         'filament.pages.raport-siswa';
 

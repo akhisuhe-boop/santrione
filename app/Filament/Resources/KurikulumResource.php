@@ -24,7 +24,7 @@ class KurikulumResource extends BaseResource
     protected static ?string $model = Kurikulum::class;
     protected static ?string $navigationGroup = 'Akademik';
     protected static ?string $navigationLabel = 'Kurikulum';
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 4;
     protected static ?string $navigationIcon = 'heroicon-o-calendar-date-range';
 
     public static function form(Form $form): Form

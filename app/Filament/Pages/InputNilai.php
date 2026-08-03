@@ -25,7 +25,7 @@ class InputNilai extends Page implements Forms\Contracts\HasForms
         'Akademik';
     protected static ?string $navigationLabel =
         'Input Nilai';
-    protected static ?int $navigationSort = 6;
+    protected static ?int $navigationSort = 8;
 
     protected static string $view =
         'filament.pages.input-nilai';

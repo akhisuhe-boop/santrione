@@ -17,7 +17,7 @@ class RekapNilai extends Page implements Forms\Contracts\HasForms
     protected static ?string $navigationIcon = 'heroicon-o-table-cells';
     protected static ?string $navigationGroup = 'Akademik';
     protected static ?string $navigationLabel = 'Rekap Nilai';
-    protected static ?int $navigationSort = 8;
+    protected static ?int $navigationSort = 10;
     protected static string $view = 'filament.pages.rekap-nilai';
 
     public static function canAccess(): bool

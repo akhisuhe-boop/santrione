@@ -34,7 +34,7 @@ class JurnalMengajarResource extends BaseResource
     protected static ?string $model = JurnalMengajar::class;
     protected static ?string $navigationGroup = 'Akademik';
     protected static ?string $navigationLabel = 'Jurnal Mengajar Guru';
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 6;
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
     public static function form(Form $form): Form

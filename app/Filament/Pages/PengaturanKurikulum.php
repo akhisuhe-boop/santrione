@@ -36,7 +36,7 @@ class PengaturanKurikulum extends Page implements HasForms, HasTable
 
     protected static ?string $navigationLabel = 'Pengaturan Kurikulum';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 3;
 
     public static function canAccess(): bool
     {
@@ -119,43 +119,46 @@ class PengaturanKurikulum extends Page implements HasForms, HasTable
                             ->preload(),
                     ]),
 
-                Section::make('Batas JP per Kelas')
-                    ->description('Total JP semua mata pelajaran dalam satu kelas per minggu. Kosongkan untuk tanpa batas.')
-                    ->icon('heroicon-o-book-open')
+                \Filament\Forms\Components\Grid::make(2)
                     ->schema([
 
-                        TextInput::make('max_jp_kelas_per_minggu')
-                            ->label('Maksimal JP per Kelas / Minggu')
-                            ->numeric()
-                            ->minValue(1)
-                            ->nullable()
-                            ->suffix('JP')
-                            ->helperText('Contoh: SMA/SMK biasanya 40-56 JP, SD/MI biasanya 24-36 JP.'),
+                        Section::make('Batas JP per Kelas')
+                            ->description('Total JP semua mata pelajaran dalam satu kelas per minggu. Kosongkan untuk tanpa batas.')
+                            ->icon('heroicon-o-book-open')
+                            ->schema([
 
-                    ])
-                    ->columns(1),
+                                TextInput::make('max_jp_kelas_per_minggu')
+                                    ->label('Maksimal JP per Kelas / Minggu')
+                                    ->numeric()
+                                    ->minValue(1)
+                                    ->nullable()
+                                    ->suffix('JP')
+                                    ->helperText('Contoh: SMA/SMK biasanya 40-56 JP, SD/MI biasanya 24-36 JP.'),
 
-                Section::make('Batas JP per Guru')
-                    ->description('Total JP mengajar seorang guru per minggu, dijumlahkan dari semua kelas & mapel yang diampu. Kosongkan untuk tanpa batas.')
-                    ->icon('heroicon-o-user')
-                    ->schema([
+                            ]),
 
-                        TextInput::make('max_jp_guru_per_minggu')
-                            ->label('Maksimal JP Guru / Minggu (batas keras, ditolak jika lebih)')
-                            ->numeric()
-                            ->minValue(1)
-                            ->nullable()
-                            ->suffix('JP'),
+                        Section::make('Batas JP per Guru')
+                            ->description('Total JP mengajar seorang guru per minggu, dijumlahkan dari semua kelas & mapel yang diampu. Kosongkan untuk tanpa batas.')
+                            ->icon('heroicon-o-user')
+                            ->schema([
 
-                        TextInput::make('warning_jp_guru_per_minggu')
-                            ->label('Ambang Peringatan JP Guru / Minggu (cuma peringatan, tetap bisa disimpan)')
-                            ->numeric()
-                            ->minValue(1)
-                            ->nullable()
-                            ->suffix('JP'),
+                                TextInput::make('max_jp_guru_per_minggu')
+                                    ->label('Maksimal JP Guru / Minggu (batas keras, ditolak jika lebih)')
+                                    ->numeric()
+                                    ->minValue(1)
+                                    ->nullable()
+                                    ->suffix('JP'),
 
-                    ])
-                    ->columns(2),
+                                TextInput::make('warning_jp_guru_per_minggu')
+                                    ->label('Ambang Peringatan JP Guru / Minggu (cuma peringatan, tetap bisa disimpan)')
+                                    ->numeric()
+                                    ->minValue(1)
+                                    ->nullable()
+                                    ->suffix('JP'),
+
+                            ]),
+
+                    ]),
 
             ])
             ->statePath('data');
