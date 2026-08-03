@@ -106,6 +106,22 @@ class LembagaResource extends BaseResource
                     ])
                     ->columns(3),
 
+                Section::make('Pengaturan Kurikulum')
+                    ->description('Batas maksimal total JP (jam pelajaran) per kelas per minggu. Kosongkan jika tidak ingin dibatasi.')
+                    ->icon('heroicon-o-book-open')
+                    ->schema([
+
+                        TextInput::make('max_jp_kelas_per_minggu')
+                            ->label('Maksimal JP per Kelas / Minggu')
+                            ->numeric()
+                            ->minValue(1)
+                            ->nullable()
+                            ->suffix('JP')
+                            ->helperText('Contoh: SMA/SMK biasanya 40-56 JP, SD/MI biasanya 24-36 JP. Kosongkan untuk tanpa batas.'),
+
+                    ])
+                    ->columns(1),
+
     
             ]);
     }

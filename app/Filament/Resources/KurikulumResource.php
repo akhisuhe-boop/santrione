@@ -85,22 +85,26 @@ class KurikulumResource extends BaseResource
 
                     if (!$kelasId || !$pegawaiId) return;
 
-                    // 🔹 TOTAL JAM PER KELAS
-                    $totalKelas = \App\Models\Kurikulum::where('kelas_id', $kelasId)
-                        ->when($get('id'), fn ($q) => $q->where('id', '!=', $get('id')))
-                        ->sum('jumlah_jam_per_minggu') - (int) ($get('jumlah_jam_per_minggu') ?? 0);
+                    // 🔹 TOTAL JAM PER KELAS (batas dinamis per lembaga, kosong = tanpa batas)
+                    $kelas = \App\Models\Kelas::find($kelasId);
+                    $maxKelas = $kelas?->lembaga?->max_jp_kelas_per_minggu;
 
-                    $maxKelas = 30;
+                    if ($maxKelas) {
 
-                    if (($totalKelas + $state) > $maxKelas) {
-                        \Filament\Notifications\Notification::make()
-                            ->title('Total jam kelas melebihi batas!')
-                            ->body("Maksimal $maxKelas JP per minggu")
-                            ->danger()
-                            ->send();
+                        $totalKelas = \App\Models\Kurikulum::where('kelas_id', $kelasId)
+                            ->when($get('id'), fn ($q) => $q->where('id', '!=', $get('id')))
+                            ->sum('jumlah_jam_per_minggu') - (int) ($get('jumlah_jam_per_minggu') ?? 0);
 
-                        $set('jumlah_jam_per_minggu', null);
-                        return;
+                        if (($totalKelas + $state) > $maxKelas) {
+                            \Filament\Notifications\Notification::make()
+                                ->title('Total jam kelas melebihi batas!')
+                                ->body("Maksimal $maxKelas JP per minggu")
+                                ->danger()
+                                ->send();
+
+                            $set('jumlah_jam_per_minggu', null);
+                            return;
+                        }
                     }
 
                     // 🔹 TOTAL JAM PER GURU (HARD LIMIT)

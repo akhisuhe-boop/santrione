@@ -34,6 +34,7 @@ class Lembaga extends Model
     'jam_masuk_guru',
     'jam_pulang_guru',
     'toleransi_telat_menit',
+    'max_jp_kelas_per_minggu',
     ];
     
     protected static function booted()
