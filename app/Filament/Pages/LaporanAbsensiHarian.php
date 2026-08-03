@@ -209,7 +209,14 @@ class LaporanAbsensiHarian extends Page implements HasTable, HasForms
                 TextColumn::make('status_masuk')
                     ->label('Status Masuk')
                     ->badge()
-                    ->color(fn ($state) => $state === 'Terlambat' ? 'danger' : 'success')
+                    ->color(fn ($state) => match ($state) {
+                        'Hadir' => 'success',
+                        'Terlambat' => 'danger',
+                        'Izin' => 'warning',
+                        'Sakit' => 'info',
+                        'Alpa' => 'gray',
+                        default => 'gray',
+                    })
                     ->placeholder('-'),
 
                 TextColumn::make('jam_pulang')

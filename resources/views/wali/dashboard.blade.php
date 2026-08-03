@@ -652,6 +652,22 @@
 
             </a>
 
+            {{-- IZIN TIDAK MASUK --}}
+            <a href="{{ route('wali.izin-tidak-masuk') }}"
+               class="group p-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-amber-50 to-white hover:shadow-md transition">
+
+                <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center mb-2">
+                    <svg class="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+
+                <div class="font-semibold text-sm text-slate-900">Izin Sekolah</div>
+                <div class="text-[11px] text-slate-500 mt-1">Tidak masuk sekolah</div>
+
+            </a>
+
             {{-- RAPORT --}}
             <a href="{{ route('wali.raport') }}"
                class="group p-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-emerald-50 to-white hover:shadow-md transition">

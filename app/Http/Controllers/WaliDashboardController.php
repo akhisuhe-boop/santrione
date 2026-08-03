@@ -259,6 +259,51 @@ class WaliDashboardController extends Controller
             ->with('success', 'Izin berhasil diajukan');
     }
 
+    public function izinTidakMasuk()
+    {
+        $siswa = Siswa::findOrFail(session('siswa_id'));
+
+        $izinHarians = \App\Models\IzinHarian::where('siswa_id', $siswa->id)
+            ->where('tipe', 'siswa')
+            ->latest()
+            ->get();
+
+        return view('wali.izin-tidak-masuk', compact('siswa', 'izinHarians'));
+    }
+
+    public function storeIzinTidakMasuk(Request $request)
+    {
+        $request->validate([
+            'jenis' => 'required|in:Izin,Sakit',
+            'tanggal_mulai' => 'required|date',
+            'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
+            'keterangan' => 'required|string',
+            'lampiran' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+        ]);
+
+        $path = null;
+
+        if ($request->hasFile('lampiran')) {
+            $path = $request->file('lampiran')->store('izin-harian', 'r2-private');
+        }
+
+        \App\Models\IzinHarian::create([
+            'siswa_id' => session('siswa_id'),
+            'tipe' => 'siswa',
+            'jenis' => $request->jenis,
+            'tanggal_mulai' => $request->tanggal_mulai,
+            'tanggal_selesai' => $request->tanggal_selesai,
+            'keterangan' => $request->keterangan,
+            'lampiran' => $path,
+            'status' => 'pending',
+            'diajukan_oleh' => auth()->id(),
+        ]);
+
+        return redirect()
+            ->route('wali.izin-tidak-masuk')
+            ->with('success', 'Pengajuan izin berhasil dikirim, menunggu persetujuan admin');
+    }
+
     public function pelanggaran()
     {
         $siswa = Siswa::with([

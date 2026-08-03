@@ -683,6 +683,24 @@
 
             </a>
 
+            {{-- IZIN --}}
+            <a href="{{ route('guru.izin') }}"
+               class="group p-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-amber-50 to-white hover:shadow-md transition">
+
+                <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center mb-2">
+                    <x-heroicon-o-document-text class="w-5 h-5 text-amber-600"/>
+                </div>
+
+                <div class="font-semibold text-sm text-slate-900">
+                    Izin Sekolah
+                </div>
+
+                <div class="text-[11px] text-slate-500 mt-1">
+                    Tidak masuk mengajar
+                </div>
+
+            </a>
+
             {{-- NILAI --}}
             <a href="{{ route('guru.nilai') }}"
                class="group p-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-yellow-50 to-white hover:shadow-md transition">

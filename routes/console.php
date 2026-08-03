@@ -11,3 +11,7 @@ Artisan::command('inspire', function () {
 // Cek tiap hari jam 01:00 — suspend yayasan yang trial-nya habis atau
 // langganannya lewat masa tenggang tanpa diperpanjang.
 Schedule::command('subscription:check-expired')->dailyAt('01:00');
+
+// Tandai Alpa tiap hari jam 16:00 — siswa/guru yang punya jadwal hari itu
+// tapi tidak scan absensi masuk dan tidak ada izin/sakit yang disetujui.
+Schedule::command('absensi:tandai-alpa')->dailyAt('16:00');

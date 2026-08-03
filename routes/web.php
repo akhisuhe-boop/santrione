@@ -241,6 +241,9 @@ Route::prefix('wali')->group(function () {
         Route::get('/perizinan', [WaliDashboardController::class, 'perizinan'])->name('wali.perizinan');
         Route::post('/perizinan', [WaliDashboardController::class, 'storePerizinan'])->name('wali.perizinan.store');
 
+        Route::get('/izin-tidak-masuk', [WaliDashboardController::class, 'izinTidakMasuk'])->name('wali.izin-tidak-masuk');
+        Route::post('/izin-tidak-masuk', [WaliDashboardController::class, 'storeIzinTidakMasuk'])->name('wali.izin-tidak-masuk.store');
+
         Route::get('/topup', [TopupController::class, 'index'])->name('wali.topup');
         Route::post('/topup', [TopupController::class, 'store'])->name('wali.topup.store');
 
@@ -344,6 +347,13 @@ Route::prefix('wali')->group(function () {
     // Absensi
     Route::get('/absensi', [GuruAbsensiController::class, 'index'])
         ->name('guru.absensi');
+
+    // Izin / Sakit (tidak masuk)
+    Route::get('/izin', [\App\Http\Controllers\Guru\GuruIzinController::class, 'index'])
+        ->name('guru.izin');
+
+    Route::post('/izin', [\App\Http\Controllers\Guru\GuruIzinController::class, 'store'])
+        ->name('guru.izin.store');
 
     Route::get('/nilai', [GuruNilaiController::class,'index'])
     ->name('guru.nilai');

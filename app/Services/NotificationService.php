@@ -737,5 +737,56 @@ class NotificationService
         $nomor = self::formatPhone($nomor);
         self::wa($nomor, $message, $lembagaId);
     }
-    
+
+    /*
+    |--------------------------------------------------------------------------
+    | IZIN HARIAN (TIDAK MASUK SEKOLAH - IZIN/SAKIT)
+    |--------------------------------------------------------------------------
+    */
+
+    public static function sendIzinHarianDiproses($izin)
+    {
+        $statusLabel = $izin->status === 'approved' ? 'DISETUJUI' : 'DITOLAK';
+
+        if ($izin->tipe === 'siswa') {
+
+            $siswa = $izin->siswa;
+            if (!$siswa) return;
+
+            $nomor = $siswa->wa_ayah ?? $siswa->wa_ibu;
+            if (!$nomor) return;
+
+            $nomor = self::formatPhone($nomor);
+
+            $pesan =
+                "*PENGAJUAN {$izin->jenis} {$statusLabel}*\n\n" .
+                "Pengajuan {$izin->jenis} untuk ananda telah {$statusLabel}.\n\n" .
+                "Nama : *{$siswa->nama_lengkap}*\n" .
+                "Jenis : *{$izin->jenis}*\n" .
+                "Tanggal : *" . Carbon::parse($izin->tanggal_mulai)->format('d M Y') . " - " . Carbon::parse($izin->tanggal_selesai)->format('d M Y') . "*\n" .
+                ($izin->status === 'ditolak' && $izin->catatan_admin ? "Alasan : *{$izin->catatan_admin}*\n" : "") .
+                "\nTerima kasih.";
+
+            self::wa($nomor, $pesan, $siswa->lembaga_id);
+
+        } else {
+
+            $pegawai = $izin->pegawai;
+            if (!$pegawai || !$pegawai->no_hp) return;
+
+            $nomor = self::formatPhone($pegawai->no_hp);
+
+            $pesan =
+                "*PENGAJUAN {$izin->jenis} {$statusLabel}*\n\n" .
+                "Pengajuan {$izin->jenis} Anda telah {$statusLabel}.\n\n" .
+                "Nama : *{$pegawai->nama}*\n" .
+                "Jenis : *{$izin->jenis}*\n" .
+                "Tanggal : *" . Carbon::parse($izin->tanggal_mulai)->format('d M Y') . " - " . Carbon::parse($izin->tanggal_selesai)->format('d M Y') . "*\n" .
+                ($izin->status === 'ditolak' && $izin->catatan_admin ? "Alasan : *{$izin->catatan_admin}*\n" : "") .
+                "\nTerima kasih.";
+
+            self::wa($nomor, $pesan, $pegawai->lembagas?->first()?->id);
+        }
+    }
+
 }

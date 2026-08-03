@@ -620,9 +620,19 @@
 
                 <div class="flex flex-col items-end gap-1">
 
+                    @php
+                        $warnaMasuk = match($item->status_masuk) {
+                            'Hadir' => 'bg-emerald-50 text-emerald-600',
+                            'Terlambat' => 'bg-indigo-50 text-indigo-600',
+                            'Izin' => 'bg-amber-50 text-amber-600',
+                            'Sakit' => 'bg-sky-50 text-sky-600',
+                            'Alpa' => 'bg-rose-50 text-rose-600',
+                            default => 'bg-slate-100 text-slate-500',
+                        };
+                    @endphp
+
                     @if($item->status_masuk)
-                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full
-                            {{ $item->status_masuk === 'Terlambat' ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600' }}">
+                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full {{ $warnaMasuk }}">
                             {{ $item->status_masuk }}
                         </span>
                     @endif
