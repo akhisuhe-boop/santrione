@@ -5,11 +5,10 @@ namespace App\Filament\Resources;
 use App\Models\IzinHarian;
 use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 
-class IzinHarianResource extends Resource
+class IzinHarianResource extends BaseResource
 {
     protected static ?string $model = IzinHarian::class;
 
