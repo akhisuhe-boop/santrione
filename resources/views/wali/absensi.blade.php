@@ -202,300 +202,7 @@
     </div>
 </div>
 
-{{-- ABSENSI KEGIATAN --}}
-
-@php
-$absensiKegiatan = $siswa->absensis
-->sortByDesc('waktu')
-->values();
-@endphp
-
-<div
-    x-data="{ showAllKegiatan:false }"
-    class="
-        bg-white
-        rounded-[30px]
-        border border-slate-200
-        overflow-hidden
-        shadow-sm
-    ">
-
-{{-- HEADER --}}
-<div class="px-4 py-3 border-b border-slate-100">
-
-    <div class="flex items-center justify-between">
-
-        <div>
-
-            <h3
-                class="
-                    font-bold
-                    text-slate-900
-                ">
-
-                Absensi Kegiatan
-
-            </h3>
-
-            <p
-                class="
-                    text-xs
-                    text-slate-500
-                    mt-1
-                ">
-
-                Kehadiran kegiatan pondok
-
-            </p>
-
-        </div>
-
-        <div
-            class="
-                inline-flex
-                items-center
-                gap-2
-                px-2.5 py-1.5
-                rounded-2xl
-                bg-slate-50
-                text-slate-500
-                text-xs
-            ">
-
-            <x-heroicon-o-calendar
-                class="w-4 h-4" />
-
-            {{ $absensiKegiatan->count() }}
-            Absensi
-
-        </div>
-
-    </div>
-
-</div>
-
-{{-- LIST --}}
-@forelse($absensiKegiatan as $index => $absensi)
-
-    @php
-
-        $statusColor = match($absensi->status){
-
-            'Hadir'
-                => 'bg-emerald-50 text-emerald-600',
-
-            'Izin'
-                => 'bg-amber-50 text-amber-600',
-
-            'Sakit'
-                => 'bg-sky-50 text-sky-600',
-
-            default
-                => 'bg-rose-50 text-rose-600',
-        };
-
-    @endphp
-
-    <div
-        x-show="showAllKegiatan || {{ $index }} < 5"
-        x-transition.duration.200ms
-        class="
-            px-4 py-3
-            hover:bg-slate-50/80
-            transition
-            {{ !$loop->last ? 'border-b border-slate-100' : '' }}
-        ">
-
-        <div class="flex items-center justify-between">
-
-            <div class="flex items-center gap-3">
-
-                <div
-                    class="
-                        w-10 h-10
-                        rounded-xl
-                        bg-[#00A39D]/10
-                        flex items-center justify-center
-                        shrink-0
-                    ">
-
-                    <x-heroicon-o-check-badge
-                        class="
-                            w-5 h-5
-                            text-[#00A39D]
-                        " />
-
-                </div>
-
-                <div>
-
-                    <div
-                        class="
-                            font-semibold
-                            text-sm
-                            text-slate-900
-                        ">
-
-                        {{
-                            $absensi->jadwalKegiatan
-                                ?->template
-                                ?->nama
-                            ?? $absensi->tipe
-                            ?? 'Kegiatan Pondok'
-                        }}
-
-                    </div>
-                    <div
-                        class="
-                            text-sm
-                            text-slate-500
-                            mt-1
-                        ">
-                        Metode Absensi :
-                        {{ $absensi->metode ?? 'Manual' }}
-
-                    </div>
-
-                    <div
-                        class="
-                            flex
-                            items-center
-                            gap-1
-                            text-xs
-                            text-slate-400
-                            mt-1
-                        ">
-
-                        <x-heroicon-o-calendar
-                            class="w-3 h-3" />
-
-                        {{
-                            \Carbon\Carbon::parse(
-                                $absensi->waktu
-                            )->format('d M Y H:i')
-                        }}
-
-                    </div>
-
-                </div>
-
-            </div>
-
-            <div class="text-right">
-
-                <span
-                    class="
-                        px-3 py-1
-                        rounded-xl
-                        text-xs
-                        font-semibold
-                        {{ $statusColor }}
-                    ">
-
-                    {{ $absensi->status }}
-
-                </span>
-
-            </div>
-
-        </div>
-
-    </div>
-
-@empty
-
-    <div class="p-10">
-
-        <div class="text-center">
-
-            <div
-                class="
-                    w-16 h-16
-                    rounded-3xl
-                    bg-emerald-50
-                    mx-auto
-                    flex items-center justify-center
-                ">
-
-                <x-heroicon-o-check-circle
-                    class="
-                        w-8 h-8
-                        text-emerald-500
-                    " />
-
-            </div>
-
-            <div
-                class="
-                    font-bold
-                    text-slate-900
-                    mt-4
-                ">
-
-                Belum Ada Absensi
-
-            </div>
-
-            <div
-                class="
-                    text-sm
-                    text-slate-500
-                    mt-2
-                ">
-
-                Data absensi kegiatan belum tersedia.
-
-            </div>
-
-        </div>
-
-    </div>
-
-@endforelse
-
-@if($absensiKegiatan->count() > 5)
-
-    <div
-        class="
-            p-4
-            border-t border-slate-100
-            bg-slate-50/50
-        ">
-
-        <button
-            x-on:click="
-                showAllKegiatan =
-                !showAllKegiatan
-            "
-            class="
-                w-full
-                py-3
-                rounded-2xl
-                bg-[#00A39D]/10
-                hover:bg-[#00A39D]/15
-                text-[#00A39D]
-                font-medium
-                text-sm
-                transition
-            ">
-
-            <span x-show="!showAllKegiatan">
-                Lihat Semua Absensi Kegiatan
-            </span>
-
-            <span x-show="showAllKegiatan">
-                Tampilkan Lebih Sedikit
-            </span>
-
-        </button>
-
-    </div>
-
-@endif
-
-</div>
-
-{{-- ABSENSI MASUK & PULANG --}}
+{{-- ABSENSI SEKOLAH --}}
 
 @php
 $absensiHarian = $siswa->absensiHarians;
@@ -509,7 +216,6 @@ $absensiHarian = $siswa->absensiHarians;
         border border-slate-200
         overflow-hidden
         shadow-sm
-        mt-5
     ">
 
 {{-- HEADER --}}
@@ -520,7 +226,7 @@ $absensiHarian = $siswa->absensiHarians;
         <div>
 
             <h3 class="font-bold text-slate-900">
-                Absensi Masuk & Pulang
+                Absensi Sekolah
             </h3>
 
             <p class="text-xs text-slate-500 mt-1">
@@ -624,8 +330,51 @@ $absensiHarian = $siswa->absensiHarians;
 
 @empty
 
-    <div class="px-4 py-8 text-center text-sm text-slate-400">
-        Belum ada riwayat absensi masuk & pulang.
+    <div class="p-10">
+
+        <div class="text-center">
+
+            <div
+                class="
+                    w-16 h-16
+                    rounded-3xl
+                    bg-[#00A39D]/10
+                    mx-auto
+                    flex items-center justify-center
+                ">
+
+                <x-heroicon-o-finger-print
+                    class="
+                        w-8 h-8
+                        text-[#00A39D]
+                    " />
+
+            </div>
+
+            <div
+                class="
+                    font-bold
+                    text-slate-900
+                    mt-4
+                ">
+
+                Belum Ada Absensi
+
+            </div>
+
+            <div
+                class="
+                    text-sm
+                    text-slate-500
+                    mt-2
+                ">
+
+                Data absensi sekolah belum tersedia.
+
+            </div>
+
+        </div>
+
     </div>
 
 @endforelse
@@ -646,7 +395,7 @@ $absensiHarian = $siswa->absensiHarians;
             ">
 
             <span x-show="!showAllHarian">
-                Lihat Semua Absensi Masuk & Pulang
+                Lihat Semua Absensi Sekolah
             </span>
 
             <span x-show="showAllHarian">
@@ -965,6 +714,300 @@ $absensiMapel = $siswa->absensiMapels
             </span>
 
             <span x-show="showAllMapel">
+                Tampilkan Lebih Sedikit
+            </span>
+
+        </button>
+
+    </div>
+
+@endif
+
+</div>
+
+{{-- ABSENSI KEGIATAN --}}
+
+@php
+$absensiKegiatan = $siswa->absensis
+->sortByDesc('waktu')
+->values();
+@endphp
+
+<div
+    x-data="{ showAllKegiatan:false }"
+    class="
+        bg-white
+        rounded-[30px]
+        border border-slate-200
+        overflow-hidden
+        shadow-sm
+        mt-6
+    ">
+
+{{-- HEADER --}}
+<div class="px-4 py-3 border-b border-slate-100">
+
+    <div class="flex items-center justify-between">
+
+        <div>
+
+            <h3
+                class="
+                    font-bold
+                    text-slate-900
+                ">
+
+                Absensi Kegiatan
+
+            </h3>
+
+            <p
+                class="
+                    text-xs
+                    text-slate-500
+                    mt-1
+                ">
+
+                Kehadiran kegiatan pondok
+
+            </p>
+
+        </div>
+
+        <div
+            class="
+                inline-flex
+                items-center
+                gap-2
+                px-2.5 py-1.5
+                rounded-2xl
+                bg-slate-50
+                text-slate-500
+                text-xs
+            ">
+
+            <x-heroicon-o-calendar
+                class="w-4 h-4" />
+
+            {{ $absensiKegiatan->count() }}
+            Absensi
+
+        </div>
+
+    </div>
+
+</div>
+
+{{-- LIST --}}
+@forelse($absensiKegiatan as $index => $absensi)
+
+    @php
+
+        $statusColor = match($absensi->status){
+
+            'Hadir'
+                => 'bg-emerald-50 text-emerald-600',
+
+            'Izin'
+                => 'bg-amber-50 text-amber-600',
+
+            'Sakit'
+                => 'bg-sky-50 text-sky-600',
+
+            default
+                => 'bg-rose-50 text-rose-600',
+        };
+
+    @endphp
+
+    <div
+        x-show="showAllKegiatan || {{ $index }} < 5"
+        x-transition.duration.200ms
+        class="
+            px-4 py-3
+            hover:bg-slate-50/80
+            transition
+            {{ !$loop->last ? 'border-b border-slate-100' : '' }}
+        ">
+
+        <div class="flex items-center justify-between">
+
+            <div class="flex items-center gap-3">
+
+                <div
+                    class="
+                        w-10 h-10
+                        rounded-xl
+                        bg-[#00A39D]/10
+                        flex items-center justify-center
+                        shrink-0
+                    ">
+
+                    <x-heroicon-o-check-badge
+                        class="
+                            w-5 h-5
+                            text-[#00A39D]
+                        " />
+
+                </div>
+
+                <div>
+
+                    <div
+                        class="
+                            font-semibold
+                            text-sm
+                            text-slate-900
+                        ">
+
+                        {{
+                            $absensi->jadwalKegiatan
+                                ?->template
+                                ?->nama
+                            ?? $absensi->tipe
+                            ?? 'Kegiatan Pondok'
+                        }}
+
+                    </div>
+                    <div
+                        class="
+                            text-sm
+                            text-slate-500
+                            mt-1
+                        ">
+                        Metode Absensi :
+                        {{ $absensi->metode ?? 'Manual' }}
+
+                    </div>
+
+                    <div
+                        class="
+                            flex
+                            items-center
+                            gap-1
+                            text-xs
+                            text-slate-400
+                            mt-1
+                        ">
+
+                        <x-heroicon-o-calendar
+                            class="w-3 h-3" />
+
+                        {{
+                            \Carbon\Carbon::parse(
+                                $absensi->waktu
+                            )->format('d M Y H:i')
+                        }}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="text-right">
+
+                <span
+                    class="
+                        px-3 py-1
+                        rounded-xl
+                        text-xs
+                        font-semibold
+                        {{ $statusColor }}
+                    ">
+
+                    {{ $absensi->status }}
+
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+@empty
+
+    <div class="p-10">
+
+        <div class="text-center">
+
+            <div
+                class="
+                    w-16 h-16
+                    rounded-3xl
+                    bg-emerald-50
+                    mx-auto
+                    flex items-center justify-center
+                ">
+
+                <x-heroicon-o-check-circle
+                    class="
+                        w-8 h-8
+                        text-emerald-500
+                    " />
+
+            </div>
+
+            <div
+                class="
+                    font-bold
+                    text-slate-900
+                    mt-4
+                ">
+
+                Belum Ada Absensi
+
+            </div>
+
+            <div
+                class="
+                    text-sm
+                    text-slate-500
+                    mt-2
+                ">
+
+                Data absensi kegiatan belum tersedia.
+
+            </div>
+
+        </div>
+
+    </div>
+
+@endforelse
+
+@if($absensiKegiatan->count() > 5)
+
+    <div
+        class="
+            p-4
+            border-t border-slate-100
+            bg-slate-50/50
+        ">
+
+        <button
+            x-on:click="
+                showAllKegiatan =
+                !showAllKegiatan
+            "
+            class="
+                w-full
+                py-3
+                rounded-2xl
+                bg-[#00A39D]/10
+                hover:bg-[#00A39D]/15
+                text-[#00A39D]
+                font-medium
+                text-sm
+                transition
+            ">
+
+            <span x-show="!showAllKegiatan">
+                Lihat Semua Absensi Kegiatan
+            </span>
+
+            <span x-show="showAllKegiatan">
                 Tampilkan Lebih Sedikit
             </span>
 
