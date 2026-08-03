@@ -542,6 +542,143 @@
 
 </div>
 
+{{-- ================= ABSENSI MASUK & PULANG ================= --}}
+@php
+    $riwayatHarian = $pegawai->absensiHarians;
+@endphp
+
+<div
+    x-data="{ showAllHarian:false }"
+    class="bg-white
+           border
+           border-slate-200
+           rounded-3xl
+           overflow-hidden
+           shadow-sm
+           mb-6">
+
+    <div class="px-4 py-3 border-b border-slate-100">
+
+        <div class="flex items-center justify-between">
+
+            <div>
+                <h3 class="font-bold text-slate-900">
+                    Absensi Masuk & Pulang
+                </h3>
+                <p class="text-xs text-slate-500 mt-1">
+                    Riwayat absen masuk & pulang sekolah
+                </p>
+            </div>
+
+            <div class="
+                    inline-flex
+                    items-center
+                    gap-2
+                    px-2.5 py-1.5
+                    rounded-2xl
+                    bg-slate-50
+                    text-slate-500
+                    text-xs
+                ">
+                <x-heroicon-o-finger-print class="w-4 h-4" />
+                {{ $riwayatHarian->count() }}
+                Hari
+            </div>
+
+        </div>
+
+    </div>
+
+    @forelse($riwayatHarian as $index => $item)
+
+        <div
+            x-show="showAllHarian || {{ $index }} < 5"
+            x-transition.duration.200ms
+            class="px-4 py-3 hover:bg-slate-50/80 transition
+                {{ !$loop->last ? 'border-b border-slate-100' : '' }}">
+
+            <div class="flex items-center justify-between">
+
+                <div class="flex items-center gap-3">
+
+                    <div class="w-10 h-10 rounded-xl bg-[#00A39D]/10 flex items-center justify-center shrink-0">
+                        <x-heroicon-o-finger-print class="w-5 h-5 text-[#00A39D]" />
+                    </div>
+
+                    <div>
+                        <div class="font-semibold text-sm text-slate-900">
+                            {{ \Carbon\Carbon::parse($item->tanggal)->locale('id')->translatedFormat('d F Y') }}
+                        </div>
+                        <div class="text-xs text-slate-500 mt-0.5">
+                            Masuk: {{ $item->jam_masuk ? \Carbon\Carbon::parse($item->jam_masuk)->format('H:i') : '-' }}
+                            &nbsp;•&nbsp;
+                            Pulang: {{ $item->jam_pulang ? \Carbon\Carbon::parse($item->jam_pulang)->format('H:i') : '-' }}
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="flex flex-col items-end gap-1">
+
+                    @if($item->status_masuk)
+                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full
+                            {{ $item->status_masuk === 'Terlambat' ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600' }}">
+                            {{ $item->status_masuk }}
+                        </span>
+                    @endif
+
+                    @if($item->status_pulang)
+                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full
+                            {{ $item->status_pulang === 'Pulang Awal' ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600' }}">
+                            {{ $item->status_pulang }}
+                        </span>
+                    @endif
+
+                </div>
+
+            </div>
+
+        </div>
+
+    @empty
+
+        <div class="px-4 py-8 text-center text-sm text-slate-400">
+            Belum ada riwayat absensi masuk & pulang.
+        </div>
+
+    @endforelse
+
+    @if($riwayatHarian->count() > 5)
+
+        <div class="px-4 py-3 border-t border-slate-100">
+
+            <button
+                @click="showAllHarian = !showAllHarian"
+                class="w-full text-center py-2.5
+                    rounded-2xl
+                    bg-[#00A39D]/10
+                    hover:bg-[#00A39D]/20
+                    text-[#00A39D]
+                    font-medium
+                    text-sm
+                    transition">
+
+                <span x-show="!showAllHarian">
+                    Lihat Semua Absensi Masuk & Pulang
+                </span>
+
+                <span x-show="showAllHarian">
+                    Tampilkan Lebih Sedikit
+                </span>
+
+            </button>
+
+        </div>
+
+    @endif
+
+</div>
+
 {{-- ================= RIWAYAT JURNAL MENGAJAR ================= --}}
 @php
     $riwayatJurnal = $jurnals

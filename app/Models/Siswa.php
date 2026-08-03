@@ -152,6 +152,12 @@ class Siswa extends Model
         return $this->hasMany(AbsensiMapel::class);
     }
 
+    // Relasi ke AbsensiHarian (absensi masuk & pulang)
+    public function absensiHarians()
+    {
+        return $this->hasMany(AbsensiHarian::class)->latest('tanggal');
+    }
+
     public function getProgressTahfidzAttribute()
 {
     $target = $this->targetTahfidz;

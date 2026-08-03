@@ -212,6 +212,8 @@ class WaliDashboardController extends Controller
             'absensiMapels.jadwalPelajaran.mataPelajaran',
             'absensiMapels.jadwalPelajaran.guru',
 
+            'absensiHarians',
+
         ])->findOrFail(session('siswa_id'));
 
         return view(

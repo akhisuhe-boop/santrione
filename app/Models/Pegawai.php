@@ -77,6 +77,12 @@ class Pegawai extends Authenticatable
         return $this->hasMany(TahfidzSetoran::class);
     }
 
+    // Relasi ke AbsensiHarian (absensi masuk & pulang)
+    public function absensiHarians()
+    {
+        return $this->hasMany(AbsensiHarian::class)->latest('tanggal');
+    }
+
     public function payrolls()
     {
         return $this->hasMany(Payroll::class);

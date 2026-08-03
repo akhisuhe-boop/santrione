@@ -20,6 +20,8 @@ class GuruAbsensiController extends Controller
             ->latest('waktu')
             ->get();
 
+        $absensiHarians = $pegawai->absensiHarians()->get();
+
         $jurnals = JurnalMengajar::with([
                 'kelas',
                 'mataPelajaran',
@@ -32,6 +34,7 @@ class GuruAbsensiController extends Controller
         return view('guru.absensi', compact(
             'pegawai',
             'absensis',
+            'absensiHarians',
             'jurnals'
         ));
     }
