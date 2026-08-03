@@ -125,6 +125,7 @@ class PengaturanKurikulum extends Page implements HasForms, HasTable
                         Section::make('Batas JP per Kelas')
                             ->description('Total JP semua mata pelajaran dalam satu kelas per minggu. Kosongkan untuk tanpa batas.')
                             ->icon('heroicon-o-book-open')
+                            ->columnSpan(1)
                             ->schema([
 
                                 TextInput::make('max_jp_kelas_per_minggu')
@@ -140,6 +141,7 @@ class PengaturanKurikulum extends Page implements HasForms, HasTable
                         Section::make('Batas JP per Guru')
                             ->description('Total JP mengajar seorang guru per minggu, dijumlahkan dari semua kelas & mapel yang diampu. Kosongkan untuk tanpa batas.')
                             ->icon('heroicon-o-user')
+                            ->columnSpan(1)
                             ->schema([
 
                                 TextInput::make('max_jp_guru_per_minggu')
