@@ -14,11 +14,18 @@ use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Section;
 
+use Filament\Tables\Table;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Actions\Action as TableAction;
+
 use Filament\Notifications\Notification;
 
-class PengaturanAbsensi extends Page implements HasForms
+class PengaturanAbsensi extends Page implements HasForms, HasTable
 {
     use InteractsWithForms;
+    use InteractsWithTable;
 
     protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
 
@@ -56,6 +63,55 @@ class PengaturanAbsensi extends Page implements HasForms
             'jam_pulang_guru' => $lembaga?->jam_pulang_guru,
             'toleransi_telat_menit' => $lembaga?->toleransi_telat_menit ?? 15,
         ]);
+    }
+
+    public function table(Table $table): Table
+    {
+        return $table
+            ->query(Lembaga::query()->orderBy('nama'))
+            ->columns([
+
+                TextColumn::make('nama')
+                    ->label('Lembaga')
+                    ->searchable(),
+
+                TextColumn::make('jam_masuk_siswa')
+                    ->label('Masuk Siswa')
+                    ->time('H:i')
+                    ->placeholder('Belum diatur'),
+
+                TextColumn::make('jam_pulang_siswa')
+                    ->label('Pulang Siswa')
+                    ->time('H:i')
+                    ->placeholder('Belum diatur'),
+
+                TextColumn::make('jam_masuk_guru')
+                    ->label('Masuk Guru')
+                    ->time('H:i')
+                    ->placeholder('Belum diatur'),
+
+                TextColumn::make('jam_pulang_guru')
+                    ->label('Pulang Guru')
+                    ->time('H:i')
+                    ->placeholder('Belum diatur'),
+
+                TextColumn::make('toleransi_telat_menit')
+                    ->label('Toleransi')
+                    ->suffix(' menit'),
+
+            ])
+            ->actions([
+
+                TableAction::make('atur')
+                    ->label('Atur')
+                    ->icon('heroicon-o-pencil-square')
+                    ->color('primary')
+                    ->action(function (Lembaga $record) {
+                        $this->fillFromLembaga($record);
+                    }),
+
+            ])
+            ->paginated(false);
     }
 
     public function form(Form $form): Form

@@ -1,15 +1,23 @@
 <x-filament::page>
 
-    <form wire:submit="save">
+    <x-filament::section heading="Daftar Lembaga">
+        {{ $this->table }}
+    </x-filament::section>
 
-        {{ $this->form }}
+    <div class="mt-6">
 
-        <div class="mt-6">
-            <x-filament::button type="submit">
-                Simpan Pengaturan
-            </x-filament::button>
-        </div>
+        <form wire:submit="save">
 
-    </form>
+            {{ $this->form }}
+
+            <div class="mt-6">
+                <x-filament::button type="submit">
+                    Simpan Pengaturan
+                </x-filament::button>
+            </div>
+
+        </form>
+
+    </div>
 
 </x-filament::page>
