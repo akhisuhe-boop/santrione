@@ -15,11 +15,17 @@ class KartuController extends Controller
     // ======================
     public function cetakSatu($id)
     {
+        set_time_limit(120);
+        ini_set('memory_limit', '256M');
+
         $siswas = Siswa::with('lembaga')
                     ->where('id', $id)
                     ->get();
 
-        $template = KartuTemplate::first();
+        $template = KartuTemplate::where('jenis', 'siswa')
+            ->where('lembaga_id', $siswas->first()?->lembaga_id)
+            ->first()
+            ?? KartuTemplate::where('jenis', 'siswa')->first();
 
         $pdf = Pdf::loadView('kartu.siswa', [
             'siswas'   => $siswas,
@@ -34,6 +40,9 @@ class KartuController extends Controller
     // ======================
     public function cetakMassal(Request $request)
     {
+        set_time_limit(180);
+        ini_set('memory_limit', '512M');
+
         $ids = explode(',', $request->ids);
 
         $siswas = Siswa::with('lembaga')
@@ -41,7 +50,10 @@ class KartuController extends Controller
             ->orderBy('nama_lengkap') // optional biar rapi
             ->get();
 
-        $template = KartuTemplate::first();
+        $template = KartuTemplate::where('jenis', 'siswa')
+            ->where('lembaga_id', $siswas->first()?->lembaga_id)
+            ->first()
+            ?? KartuTemplate::where('jenis', 'siswa')->first();
 
         $pdf = Pdf::loadView('kartu.siswa', [
             'siswas'   => $siswas,
@@ -56,6 +68,9 @@ class KartuController extends Controller
     // ======================
     public function cetakPegawai(Request $request)
     {
+        set_time_limit(180);
+        ini_set('memory_limit', '512M');
+
         $ids = explode(',', $request->ids);
 
         $pegawais = Pegawai::with('lembagas')
@@ -63,7 +78,12 @@ class KartuController extends Controller
             ->orderBy('nama')
             ->get();
 
-        $template = \App\Models\KartuTemplate::where('jenis', 'pegawai')->first();
+        $lembagaId = $pegawais->first()?->lembagas?->first()?->id;
+
+        $template = \App\Models\KartuTemplate::where('jenis', 'pegawai')
+            ->where('lembaga_id', $lembagaId)
+            ->first()
+            ?? \App\Models\KartuTemplate::where('jenis', 'pegawai')->first();
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('kartu.pegawai', [
             'pegawais' => $pegawais,
