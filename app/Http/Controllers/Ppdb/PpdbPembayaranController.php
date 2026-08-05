@@ -23,7 +23,28 @@ class PpdbPembayaranController extends Controller
             ])
             ->where('ppdb_id', $ppdb->id)
             ->latest()
-            ->firstOrFail();
+            ->first();
+
+        // Fallback untuk pendaftar lama yang belum sempat punya tagihan
+        // otomatis (didaftarkan sebelum fitur ini ada, atau Jenis Tagihan
+        // "Biaya Pendaftaran PPDB" baru diisi setelah pendaftar itu daftar).
+        if (!$tagihan) {
+
+            $jenisTagihanPendaftaran = \App\Models\JenisTagihan::where('tipe_sistem', 'pendaftaran_ppdb')->first();
+
+            abort_if(!$jenisTagihanPendaftaran, 404, 'Tagihan biaya pendaftaran belum tersedia. Silakan hubungi admin sekolah.');
+
+            $tagihan = Tagihan::create([
+                'ppdb_id'          => $ppdb->id,
+                'jenis_tagihan_id' => $jenisTagihanPendaftaran->id,
+                'judul'            => $jenisTagihanPendaftaran->nama,
+                'nominal'          => $jenisTagihanPendaftaran->default_nominal,
+                'nominal_terbayar' => 0,
+                'status'           => 'belum',
+                'jatuh_tempo'      => now()->addDays(7),
+                'tahun_ajaran_id'  => $ppdb->tahun_ajaran_id,
+            ])->load(['jenisTagihan', 'rekening']);
+        }
 
         $isCicilan = optional($tagihan->jenisTagihan)->is_cicilan ?? false;
 

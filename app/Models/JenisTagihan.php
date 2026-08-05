@@ -26,6 +26,7 @@ class JenisTagihan extends Model
         'is_bulanan',
         'is_cicilan',
         'kategori_kas_id',
+        'tipe_sistem',
     ];
 
     protected $casts = [

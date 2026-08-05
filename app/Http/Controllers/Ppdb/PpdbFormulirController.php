@@ -10,11 +10,45 @@ use Illuminate\Support\Facades\Storage;
 class PpdbFormulirController extends Controller
 {
     /**
+     * Pastikan biaya pendaftaran (tipe_sistem = pendaftaran_ppdb) sudah
+     * lunas sebelum boleh mengakses Formulir / Upload Berkas. Kalau
+     * lembaga ini tidak mengaktifkan Jenis Tagihan pendaftaran sama
+     * sekali, akses tetap dibolehkan (tidak ada yang perlu dibayar).
+     */
+    private function pastikanSudahBayarFormulir(Ppdb $ppdb)
+    {
+        $adaTagihanPendaftaran = \App\Models\Tagihan::where('ppdb_id', $ppdb->id)
+            ->whereHas('jenisTagihan', fn ($q) => $q->where('tipe_sistem', 'pendaftaran_ppdb'))
+            ->exists();
+
+        if (!$adaTagihanPendaftaran) {
+            return null; // tidak ada tagihan pendaftaran → tidak perlu dikunci
+        }
+
+        $sudahLunas = \App\Models\Tagihan::where('ppdb_id', $ppdb->id)
+            ->whereHas('jenisTagihan', fn ($q) => $q->where('tipe_sistem', 'pendaftaran_ppdb'))
+            ->where('status', 'lunas')
+            ->exists();
+
+        if (!$sudahLunas) {
+            return redirect()
+                ->route('ppdb.pembayaran')
+                ->with('error', 'Silakan selesaikan pembayaran formulir pendaftaran terlebih dahulu.');
+        }
+
+        return null;
+    }
+
+    /**
      * Tampilkan Formulir PPDB
      */
     public function index()
     {
         $ppdb = Ppdb::findOrFail(session('ppdb_id'));
+
+        if ($redirect = $this->pastikanSudahBayarFormulir($ppdb)) {
+            return $redirect;
+        }
 
         return view('ppdb.formulir', compact('ppdb'));
     }
@@ -25,6 +59,10 @@ class PpdbFormulirController extends Controller
     public function store(Request $request)
     {
         $ppdb = Ppdb::findOrFail(session('ppdb_id'));
+
+        if ($redirect = $this->pastikanSudahBayarFormulir($ppdb)) {
+            return $redirect;
+        }
 
         $rules = [
 
@@ -156,6 +194,10 @@ class PpdbFormulirController extends Controller
     {
         $ppdb = Ppdb::findOrFail(session('ppdb_id'));
 
+        if ($redirect = $this->pastikanSudahBayarFormulir($ppdb)) {
+            return $redirect;
+        }
+
         return view('ppdb.upload-berkas', compact('ppdb'));
     }
 
@@ -165,6 +207,10 @@ class PpdbFormulirController extends Controller
     public function storeBerkas(Request $request)
     {
         $ppdb = Ppdb::findOrFail(session('ppdb_id'));
+
+        if ($redirect = $this->pastikanSudahBayarFormulir($ppdb)) {
+            return $redirect;
+        }
 
         $validated = $request->validate([
             'scan_kk'      => 'required|mimes:jpg,jpeg,png,pdf|max:2048',

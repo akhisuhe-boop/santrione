@@ -5,6 +5,17 @@
 $totalStep = count($progress['steps']);
 $currentStep = $progress['current'] + 1;
 $percent = intval(($currentStep / $totalStep) * 100);
+
+// Formulir & Berkas terkunci sampai biaya pendaftaran (kalau ada) lunas
+$adaTagihanPendaftaran = \App\Models\Tagihan::where('ppdb_id', $ppdb->id)
+    ->whereHas('jenisTagihan', fn ($q) => $q->where('tipe_sistem', 'pendaftaran_ppdb'))
+    ->exists();
+
+$sudahBayarFormulir = !$adaTagihanPendaftaran || \App\Models\Tagihan::where('ppdb_id', $ppdb->id)
+    ->whereHas('jenisTagihan', fn ($q) => $q->where('tipe_sistem', 'pendaftaran_ppdb'))
+    ->where('status', 'lunas')
+    ->exists();
+
 switch ($ppdb->status) {
     case 'draft':
         $statusTitle = 'Akun Berhasil Dibuat';
@@ -293,14 +304,17 @@ switch ($ppdb->status) {
         <div class="grid grid-cols-3 gap-3">
         
             {{-- Formulir --}}
-            <a href="{{ route('ppdb.formulir') }}"
+            <a href="{{ $sudahBayarFormulir ? route('ppdb.formulir') : route('ppdb.pembayaran') }}"
                class="group rounded-2xl border border-slate-200/70
-                      bg-gradient-to-br from-sky-50 to-white
-                      p-4 transition-all duration-300
-                      hover:-translate-y-1
-                      hover:shadow-md
-                      hover:border-sky-200">
-        
+                      {{ $sudahBayarFormulir ? 'bg-gradient-to-br from-sky-50 to-white hover:-translate-y-1 hover:shadow-md hover:border-sky-200' : 'bg-slate-50 opacity-60' }}
+                      p-4 transition-all duration-300 relative">
+
+                @unless($sudahBayarFormulir)
+                    <div class="absolute top-3 right-3">
+                        <x-heroicon-o-lock-closed class="h-4 w-4 text-slate-400"/>
+                    </div>
+                @endunless
+
                 <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-sky-100">
                     <x-heroicon-o-document-text class="h-5 w-5 text-sky-600"/>
                 </div>
@@ -311,21 +325,24 @@ switch ($ppdb->status) {
                     </h3>
         
                     <p class="mt-1 text-xs text-slate-500">
-                        Biodata peserta
+                        {{ $sudahBayarFormulir ? 'Biodata peserta' : 'Bayar formulir dulu' }}
                     </p>
                 </div>
         
             </a>
         
             {{-- Berkas --}}
-            <a href="{{ route('ppdb.formulir') }}"
+            <a href="{{ $sudahBayarFormulir ? route('ppdb.upload-berkas') : route('ppdb.pembayaran') }}"
                class="group rounded-2xl border border-slate-200/70
-                      bg-gradient-to-br from-violet-50 to-white
-                      p-4 transition-all duration-300
-                      hover:-translate-y-1
-                      hover:shadow-md
-                      hover:border-violet-200">
-        
+                      {{ $sudahBayarFormulir ? 'bg-gradient-to-br from-violet-50 to-white hover:-translate-y-1 hover:shadow-md hover:border-violet-200' : 'bg-slate-50 opacity-60' }}
+                      p-4 transition-all duration-300 relative">
+
+                @unless($sudahBayarFormulir)
+                    <div class="absolute top-3 right-3">
+                        <x-heroicon-o-lock-closed class="h-4 w-4 text-slate-400"/>
+                    </div>
+                @endunless
+
                 <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-100">
                     <x-heroicon-o-folder-open class="h-5 w-5 text-violet-600"/>
                 </div>
@@ -336,7 +353,7 @@ switch ($ppdb->status) {
                     </h3>
         
                     <p class="mt-1 text-xs text-slate-500">
-                        Upload dokumen
+                        {{ $sudahBayarFormulir ? 'Upload dokumen' : 'Bayar formulir dulu' }}
                     </p>
                 </div>
         
