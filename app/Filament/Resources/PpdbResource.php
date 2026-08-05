@@ -29,6 +29,7 @@ class PpdbResource extends BaseResource
     protected static ?string $model = Ppdb::class;
 
     protected static ?string $navigationGroup = 'PSB';
+    protected static ?int $navigationSort = 1;
     protected static ?string $navigationIcon = 'heroicon-o-user-plus';
     protected static ?string $navigationLabel = 'Pendaftaran Siswa Baru';
     protected static ?string $modelLabel = 'Pendaftaran Siswa Baru';
