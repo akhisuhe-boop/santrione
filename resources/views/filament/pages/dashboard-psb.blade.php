@@ -7,14 +7,7 @@
     </x-filament::section>
 
     {{-- ================= STAT UTAMA ================= --}}
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
-
-        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-            <div class="text-xs text-slate-500">Total Pendaftar</div>
-            <div class="text-3xl font-bold text-slate-900 mt-1">
-                {{ $this->totalPendaftar }}
-            </div>
-        </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-top:1rem;">
 
         @php
             $lulus = collect($this->statusBreakdown)->firstWhere('key', 'lulus')['total'] ?? 0;
@@ -22,140 +15,127 @@
             $aktif = collect($this->statusBreakdown)->firstWhere('key', 'aktif')['total'] ?? 0;
         @endphp
 
-        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-            <div class="text-xs text-slate-500">Lulus Seleksi</div>
-            <div class="text-3xl font-bold text-emerald-600 mt-1">
-                {{ $lulus }}
-            </div>
-        </div>
+        <x-filament::section>
+            <div style="font-size:.75rem;color:rgb(100 116 139);">Total Pendaftar</div>
+            <div style="font-size:1.875rem;font-weight:700;margin-top:.25rem;">{{ $this->totalPendaftar }}</div>
+        </x-filament::section>
 
-        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-            <div class="text-xs text-slate-500">Sudah Jadi Siswa Aktif</div>
-            <div class="text-3xl font-bold text-sky-600 mt-1">
-                {{ $aktif }}
-            </div>
-        </div>
+        <x-filament::section>
+            <div style="font-size:.75rem;color:rgb(100 116 139);">Lulus Seleksi</div>
+            <div style="font-size:1.875rem;font-weight:700;margin-top:.25rem;color:rgb(5 150 105);">{{ $lulus }}</div>
+        </x-filament::section>
 
-        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-            <div class="text-xs text-slate-500">Tidak Lulus</div>
-            <div class="text-3xl font-bold text-rose-600 mt-1">
-                {{ $tidakLulus }}
-            </div>
-        </div>
+        <x-filament::section>
+            <div style="font-size:.75rem;color:rgb(100 116 139);">Sudah Jadi Siswa Aktif</div>
+            <div style="font-size:1.875rem;font-weight:700;margin-top:.25rem;color:rgb(2 132 199);">{{ $aktif }}</div>
+        </x-filament::section>
+
+        <x-filament::section>
+            <div style="font-size:.75rem;color:rgb(100 116 139);">Tidak Lulus</div>
+            <div style="font-size:1.875rem;font-weight:700;margin-top:.25rem;color:rgb(225 29 72);">{{ $tidakLulus }}</div>
+        </x-filament::section>
 
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1rem;margin-top:1rem;">
 
         {{-- ================= STATUS BREAKDOWN ================= --}}
-        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-
-            <div class="px-5 py-3 border-b border-slate-100 bg-slate-50/50">
-                <h3 class="text-sm font-semibold text-slate-900">Pendaftar per Status</h3>
-            </div>
-
-            <div class="divide-y divide-slate-100">
-                @foreach($this->statusBreakdown as $item)
-                    <div class="px-5 py-3 flex items-center justify-between">
-                        <span class="text-sm text-slate-600">{{ $item['label'] }}</span>
-                        <span class="text-sm font-semibold text-slate-900">{{ $item['total'] }}</span>
-                    </div>
-                @endforeach
-            </div>
-
-        </div>
+        <x-filament::section heading="Pendaftar per Status">
+            <table style="width:100%;border-collapse:collapse;">
+                <tbody>
+                    @foreach($this->statusBreakdown as $item)
+                        <tr style="border-bottom:1px solid rgb(241 245 249);">
+                            <td style="padding:.6rem .25rem;font-size:.875rem;color:rgb(71 85 105);">{{ $item['label'] }}</td>
+                            <td style="padding:.6rem .25rem;font-size:.875rem;font-weight:600;text-align:right;">{{ $item['total'] }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </x-filament::section>
 
         {{-- ================= PER LEMBAGA ================= --}}
-        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-
-            <div class="px-5 py-3 border-b border-slate-100 bg-slate-50/50">
-                <h3 class="text-sm font-semibold text-slate-900">Pendaftar per Lembaga</h3>
-            </div>
-
-            <div class="divide-y divide-slate-100">
-                @forelse($this->perLembaga as $item)
-                    <div class="px-5 py-3 flex items-center justify-between">
-                        <span class="text-sm text-slate-600">{{ $item['lembaga'] }}</span>
-                        <span class="text-sm font-semibold text-slate-900">{{ $item['total'] }}</span>
-                    </div>
-                @empty
-                    <div class="px-5 py-6 text-center text-sm text-slate-400">
-                        Belum ada data
-                    </div>
-                @endforelse
-            </div>
-
-        </div>
+        <x-filament::section heading="Pendaftar per Lembaga">
+            <table style="width:100%;border-collapse:collapse;">
+                <tbody>
+                    @forelse($this->perLembaga as $item)
+                        <tr style="border-bottom:1px solid rgb(241 245 249);">
+                            <td style="padding:.6rem .25rem;font-size:.875rem;color:rgb(71 85 105);">{{ $item['lembaga'] }}</td>
+                            <td style="padding:.6rem .25rem;font-size:.875rem;font-weight:600;text-align:right;">{{ $item['total'] }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td style="padding:1.5rem .25rem;text-align:center;color:rgb(148 163 184);font-size:.875rem;">
+                                Belum ada data
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </x-filament::section>
 
     </div>
 
     {{-- ================= PEMBAYARAN ================= --}}
-    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden mt-4">
+    <div style="margin-top:1rem;">
+        <x-filament::section heading="Status Pembayaran Pendaftaran">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;text-align:center;">
 
-        <div class="px-5 py-3 border-b border-slate-100 bg-slate-50/50">
-            <h3 class="text-sm font-semibold text-slate-900">Status Pembayaran Pendaftaran</h3>
-        </div>
+                <div>
+                    <div style="font-size:1.5rem;font-weight:700;color:rgb(5 150 105);">{{ $this->pembayaranBreakdown['lunas'] }}</div>
+                    <div style="font-size:.75rem;color:rgb(100 116 139);margin-top:.25rem;">Lunas</div>
+                </div>
 
-        <div class="grid grid-cols-2 md:grid-cols-4 divide-x divide-slate-100">
+                <div>
+                    <div style="font-size:1.5rem;font-weight:700;color:rgb(217 119 6);">{{ $this->pembayaranBreakdown['sebagian'] }}</div>
+                    <div style="font-size:.75rem;color:rgb(100 116 139);margin-top:.25rem;">Sebagian</div>
+                </div>
 
-            <div class="px-5 py-4 text-center">
-                <div class="text-2xl font-bold text-emerald-600">{{ $this->pembayaranBreakdown['lunas'] }}</div>
-                <div class="text-xs text-slate-500 mt-1">Lunas</div>
+                <div>
+                    <div style="font-size:1.5rem;font-weight:700;color:rgb(225 29 72);">{{ $this->pembayaranBreakdown['belum'] }}</div>
+                    <div style="font-size:.75rem;color:rgb(100 116 139);margin-top:.25rem;">Belum Bayar</div>
+                </div>
+
+                <div>
+                    <div style="font-size:1.5rem;font-weight:700;color:rgb(148 163 184);">{{ $this->pembayaranBreakdown['belum_ada_tagihan'] }}</div>
+                    <div style="font-size:.75rem;color:rgb(100 116 139);margin-top:.25rem;">Belum Ada Tagihan</div>
+                </div>
+
             </div>
-
-            <div class="px-5 py-4 text-center">
-                <div class="text-2xl font-bold text-amber-600">{{ $this->pembayaranBreakdown['sebagian'] }}</div>
-                <div class="text-xs text-slate-500 mt-1">Sebagian</div>
-            </div>
-
-            <div class="px-5 py-4 text-center">
-                <div class="text-2xl font-bold text-rose-600">{{ $this->pembayaranBreakdown['belum'] }}</div>
-                <div class="text-xs text-slate-500 mt-1">Belum Bayar</div>
-            </div>
-
-            <div class="px-5 py-4 text-center">
-                <div class="text-2xl font-bold text-slate-400">{{ $this->pembayaranBreakdown['belum_ada_tagihan'] }}</div>
-                <div class="text-xs text-slate-500 mt-1">Belum Ada Tagihan</div>
-            </div>
-
-        </div>
-
+        </x-filament::section>
     </div>
 
     {{-- ================= PENDAFTAR TERBARU ================= --}}
-    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden mt-4">
-
-        <div class="px-5 py-3 border-b border-slate-100 bg-slate-50/50">
-            <h3 class="text-sm font-semibold text-slate-900">Pendaftar Terbaru</h3>
-        </div>
-
-        <table class="w-full text-sm">
-            <thead>
-                <tr class="text-left text-xs text-slate-500 border-b border-slate-100">
-                    <th class="px-5 py-2">Nama</th>
-                    <th class="px-5 py-2">Lembaga</th>
-                    <th class="px-5 py-2">Status</th>
-                    <th class="px-5 py-2">Tanggal Daftar</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100">
-                @forelse($this->pendaftarTerbaru as $p)
-                    <tr>
-                        <td class="px-5 py-3 font-medium text-slate-900">{{ $p->nama_lengkap }}</td>
-                        <td class="px-5 py-3 text-slate-600">{{ $p->lembaga?->nama ?? '-' }}</td>
-                        <td class="px-5 py-3 text-slate-600">{{ ucwords(str_replace('_', ' ', $p->status)) }}</td>
-                        <td class="px-5 py-3 text-slate-600">{{ $p->created_at->locale('id')->translatedFormat('d M Y, H:i') }}</td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="4" class="px-5 py-8 text-center text-slate-400">
-                            Belum ada pendaftar
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-
+    <div style="margin-top:1rem;">
+        <x-filament::section heading="Pendaftar Terbaru">
+            <div style="overflow-x:auto;">
+                <table style="width:100%;border-collapse:collapse;font-size:.875rem;">
+                    <thead>
+                        <tr style="text-align:left;font-size:.75rem;color:rgb(100 116 139);border-bottom:1px solid rgb(226 232 240);">
+                            <th style="padding:.5rem .5rem .5rem 0;">Nama</th>
+                            <th style="padding:.5rem .5rem;">Lembaga</th>
+                            <th style="padding:.5rem .5rem;">Status</th>
+                            <th style="padding:.5rem 0 .5rem .5rem;">Tanggal Daftar</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($this->pendaftarTerbaru as $p)
+                            <tr style="border-bottom:1px solid rgb(241 245 249);">
+                                <td style="padding:.6rem .5rem .6rem 0;font-weight:600;">{{ $p->nama_lengkap }}</td>
+                                <td style="padding:.6rem .5rem;color:rgb(71 85 105);">{{ $p->lembaga?->nama ?? '-' }}</td>
+                                <td style="padding:.6rem .5rem;color:rgb(71 85 105);">{{ ucwords(str_replace('_', ' ', $p->status)) }}</td>
+                                <td style="padding:.6rem 0 .6rem .5rem;color:rgb(71 85 105);white-space:nowrap;">{{ $p->created_at->locale('id')->translatedFormat('d M Y, H:i') }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4" style="padding:2rem 0;text-align:center;color:rgb(148 163 184);">
+                                    Belum ada pendaftar
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </x-filament::section>
     </div>
 
 </x-filament::page>
