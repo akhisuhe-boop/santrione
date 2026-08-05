@@ -152,7 +152,11 @@ class ListJadwalPelajarans extends Page implements HasForms
 
         ];
 
+        $kelas = Kelas::find($this->kelas_id);
+
         $jamPelajaran = JamPelajaran::query()
+
+            ->where('lembaga_id', $kelas?->lembaga_id)
 
             ->where('aktif', true)
 
@@ -579,7 +583,10 @@ public function delete(
                 return;
             }
 
+            $kelasUntukHapus = Kelas::find($this->kelas_id);
+
             $jamUrutanList = JamPelajaran::query()
+                ->where('lembaga_id', $kelasUntukHapus?->lembaga_id)
                 ->where('aktif', true)
                 ->orderBy('urutan')
                 ->pluck('id')
