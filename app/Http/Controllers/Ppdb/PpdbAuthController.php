@@ -164,20 +164,7 @@ class PpdbAuthController extends Controller
         // Otomatis buat tagihan Biaya Pendaftaran PPDB, kalau lembaga/yayasan
         // ini sudah punya Jenis Tagihan yang ditandai sebagai
         // "Biaya Pendaftaran PPDB" (tipe_sistem = pendaftaran_ppdb).
-        $jenisTagihanPendaftaran = \App\Models\JenisTagihan::where('tipe_sistem', 'pendaftaran_ppdb')->first();
-
-        if ($jenisTagihanPendaftaran) {
-            \App\Models\Tagihan::create([
-                'ppdb_id'          => $ppdb->id,
-                'jenis_tagihan_id' => $jenisTagihanPendaftaran->id,
-                'judul'            => $jenisTagihanPendaftaran->nama,
-                'nominal'          => $jenisTagihanPendaftaran->default_nominal,
-                'nominal_terbayar' => 0,
-                'status'           => 'belum',
-                'jatuh_tempo'      => now()->addDays(7),
-                'tahun_ajaran_id'  => $ppdb->tahun_ajaran_id,
-            ]);
-        }
+        \App\Models\Tagihan::pastikanTagihanPendaftaranPpdb($ppdb);
 
         NotificationService::sendPpdbBaru($ppdb);
 

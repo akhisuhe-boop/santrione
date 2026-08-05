@@ -24,7 +24,11 @@ class PpdbDashboardController extends Controller
         // branding yayasan yang benar, bukan tertukar antar yayasan.
         $yayasan = $ppdb->lembaga?->yayasan ?? Yayasan::first();
 
-        // Tagihan PPDB yang belum lunas
+        // Tagihan PPDB yang belum lunas -- pastikan dulu tagihan biaya
+        // pendaftaran sudah ada (kalau lembaga ini memang pakai fitur ini),
+        // supaya tidak nampilin "Belum Ada Tagihan" padahal seharusnya ada.
+        Tagihan::pastikanTagihanPendaftaranPpdb($ppdb);
+
         $tagihan = Tagihan::where('ppdb_id', $ppdb->id)
             ->latest()
             ->first();

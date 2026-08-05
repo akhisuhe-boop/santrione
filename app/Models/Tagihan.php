@@ -48,6 +48,41 @@ class Tagihan extends Model
         return $this->belongsTo(Siswa::class);
     }
 
+    /**
+     * Pastikan tagihan "Biaya Pendaftaran PPDB" sudah ada untuk PPDB ini.
+     * Kalau belum ada (mis. pendaftar lama dari sebelum fitur ini dibuat,
+     * atau Jenis Tagihan-nya baru diaktifkan setelah dia daftar), buat
+     * sekarang juga. Dipanggil dari dashboard, halaman pembayaran, dan
+     * guard kunci Formulir/Berkas -- supaya konsisten di mana pun dicek.
+     */
+    public static function pastikanTagihanPendaftaranPpdb(\App\Models\Ppdb $ppdb): ?self
+    {
+        $jenisTagihan = \App\Models\JenisTagihan::where('tipe_sistem', 'pendaftaran_ppdb')->first();
+
+        if (!$jenisTagihan) {
+            return null; // lembaga ini tidak pakai fitur biaya pendaftaran otomatis
+        }
+
+        $tagihan = self::where('ppdb_id', $ppdb->id)
+            ->where('jenis_tagihan_id', $jenisTagihan->id)
+            ->first();
+
+        if ($tagihan) {
+            return $tagihan;
+        }
+
+        return self::create([
+            'ppdb_id'          => $ppdb->id,
+            'jenis_tagihan_id' => $jenisTagihan->id,
+            'judul'            => $jenisTagihan->nama,
+            'nominal'          => $jenisTagihan->default_nominal,
+            'nominal_terbayar' => 0,
+            'status'           => 'belum',
+            'jatuh_tempo'      => now()->addDays(7),
+            'tahun_ajaran_id'  => $ppdb->tahun_ajaran_id,
+        ]);
+    }
+
     // 🔗 Relasi ke ppdb
     public function ppdb()
     {

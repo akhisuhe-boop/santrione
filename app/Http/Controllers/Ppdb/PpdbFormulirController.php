@@ -17,6 +17,11 @@ class PpdbFormulirController extends Controller
      */
     private function pastikanSudahBayarFormulir(Ppdb $ppdb)
     {
+        // Pastikan dulu tagihannya ada (kalau lembaga ini memang pakai
+        // fitur ini) -- supaya guard ini tetap benar walau user buka
+        // langsung URL Formulir/Berkas tanpa lewat dashboard dulu.
+        \App\Models\Tagihan::pastikanTagihanPendaftaranPpdb($ppdb);
+
         $adaTagihanPendaftaran = \App\Models\Tagihan::where('ppdb_id', $ppdb->id)
             ->whereHas('jenisTagihan', fn ($q) => $q->where('tipe_sistem', 'pendaftaran_ppdb'))
             ->exists();
