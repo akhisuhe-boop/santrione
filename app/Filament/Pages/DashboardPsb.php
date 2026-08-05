@@ -35,14 +35,14 @@ class DashboardPsb extends Page implements HasForms
 
     public ?array $data = [];
 
-    public ?int $tahunAjaranId = null;
+    public ?string $tahunAjaranNama = null;
 
     public function mount(): void
     {
-        $this->tahunAjaranId = TahunAjaran::aktif()?->id;
+        $this->tahunAjaranNama = TahunAjaran::aktif()?->nama;
 
         $this->form->fill([
-            'tahun_ajaran_id' => $this->tahunAjaranId,
+            'tahun_ajaran_nama' => $this->tahunAjaranNama,
         ]);
     }
 
@@ -50,11 +50,17 @@ class DashboardPsb extends Page implements HasForms
     {
         return $form
             ->schema([
-                Select::make('tahun_ajaran_id')
+                Select::make('tahun_ajaran_nama')
                     ->label('Tahun Ajaran')
-                    ->options(TahunAjaran::orderByDesc('id')->pluck('nama', 'id'))
+                    ->options(
+                        TahunAjaran::query()
+                            ->select('nama')
+                            ->distinct()
+                            ->orderByDesc('nama')
+                            ->pluck('nama', 'nama')
+                    )
                     ->live()
-                    ->afterStateUpdated(fn ($state) => $this->tahunAjaranId = $state)
+                    ->afterStateUpdated(fn ($state) => $this->tahunAjaranNama = $state)
                     ->required(),
             ])
             ->statePath('data');
@@ -63,7 +69,10 @@ class DashboardPsb extends Page implements HasForms
     protected function baseQueryFull()
     {
         return Ppdb::query()
-            ->when($this->tahunAjaranId, fn ($q) => $q->where('tahun_ajaran_id', $this->tahunAjaranId));
+            ->when(
+                $this->tahunAjaranNama,
+                fn ($q) => $q->whereHas('tahunAjaran', fn ($sub) => $sub->where('nama', $this->tahunAjaranNama))
+            );
     }
 
     public function getTotalPendaftarProperty(): int
@@ -104,13 +113,77 @@ class DashboardPsb extends Page implements HasForms
 
     public function getPerLembagaProperty(): array
     {
-        return $this->baseQueryFull()
+        $rows = $this->baseQueryFull()
             ->join('lembagas', 'lembagas.id', '=', 'ppdbs.lembaga_id')
-            ->selectRaw('lembagas.nama as lembaga, count(*) as total')
+            ->selectRaw("lembagas.nama as lembaga, count(*) as total,
+                sum(case when ppdbs.jenis_kelamin = 'L' then 1 else 0 end) as laki_laki,
+                sum(case when ppdbs.jenis_kelamin = 'P' then 1 else 0 end) as perempuan")
             ->groupBy('lembagas.nama')
             ->orderByDesc('total')
-            ->get()
-            ->toArray();
+            ->get();
+
+        return $rows->toArray();
+    }
+
+    /**
+     * Untuk field kategori (bukan angka) seperti pekerjaan, pendidikan,
+     * penghasilan, dan daerah — "rata-rata" tidak berlaku secara matematis.
+     * Yang ditampilkan adalah nilai yang PALING BANYAK muncul (modus).
+     */
+    protected function terbanyakPerLembaga(string $kolom): array
+    {
+        $lembagas = Lembaga::orderBy('nama')->get();
+
+        $result = [];
+
+        foreach ($lembagas as $lembaga) {
+
+            $top = $this->baseQueryFull()
+                ->where('lembaga_id', $lembaga->id)
+                ->whereNotNull($kolom)
+                ->where($kolom, '!=', '')
+                ->selectRaw("{$kolom} as val, count(*) as total")
+                ->groupBy($kolom)
+                ->orderByDesc('total')
+                ->first();
+
+            if (!$top) {
+                continue;
+            }
+
+            $result[] = [
+                'lembaga' => $lembaga->nama,
+                'nilai' => $top->val,
+                'total' => $top->total,
+            ];
+        }
+
+        return $result;
+    }
+
+    public function getAsalSekolahTerbanyakProperty(): array
+    {
+        return $this->terbanyakPerLembaga('asal_sekolah');
+    }
+
+    public function getPenghasilanTerbanyakProperty(): array
+    {
+        return $this->terbanyakPerLembaga('penghasilan_ayah');
+    }
+
+    public function getPekerjaanTerbanyakProperty(): array
+    {
+        return $this->terbanyakPerLembaga('pekerjaan_ayah');
+    }
+
+    public function getPendidikanTerbanyakProperty(): array
+    {
+        return $this->terbanyakPerLembaga('pendidikan_ayah');
+    }
+
+    public function getDaerahTerbanyakProperty(): array
+    {
+        return $this->terbanyakPerLembaga('kecamatan');
     }
 
     public function getPembayaranBreakdownProperty(): array
