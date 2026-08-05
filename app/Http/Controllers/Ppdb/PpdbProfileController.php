@@ -12,8 +12,9 @@ class PpdbProfileController extends Controller
     public function index()
     {
         $ppdb = Ppdb::findOrFail(session('ppdb_id'));
+        $yayasan = $ppdb->lembaga?->yayasan ?? \App\Models\Yayasan::first();
 
-        return view('ppdb.profil', compact('ppdb'));
+        return view('ppdb.profil', compact('ppdb', 'yayasan'));
     }
 
     public function updatePassword(Request $request)

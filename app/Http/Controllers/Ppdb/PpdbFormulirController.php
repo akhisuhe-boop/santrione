@@ -55,7 +55,10 @@ class PpdbFormulirController extends Controller
             return $redirect;
         }
 
-        return view('ppdb.formulir', compact('ppdb'));
+        return view('ppdb.formulir', [
+            'ppdb' => $ppdb,
+            'yayasan' => $ppdb->lembaga?->yayasan ?? \App\Models\Yayasan::first(),
+        ]);
     }
 
     /**
@@ -203,7 +206,10 @@ class PpdbFormulirController extends Controller
             return $redirect;
         }
 
-        return view('ppdb.upload-berkas', compact('ppdb'));
+        return view('ppdb.upload-berkas', [
+            'ppdb' => $ppdb,
+            'yayasan' => $ppdb->lembaga?->yayasan ?? \App\Models\Yayasan::first(),
+        ]);
     }
 
     /**

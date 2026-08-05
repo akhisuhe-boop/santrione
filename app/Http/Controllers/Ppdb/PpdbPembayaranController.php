@@ -46,6 +46,7 @@ class PpdbPembayaranController extends Controller
 
         return view('ppdb.pembayaran', [
             'ppdb'         => $ppdb,
+            'yayasan'      => $ppdb->lembaga?->yayasan ?? \App\Models\Yayasan::first(),
             'tagihan'      => $tagihan,
             'isCicilan'    => $isCicilan,
             'sisaTagihan'  => $sisaTagihan,
@@ -70,6 +71,7 @@ class PpdbPembayaranController extends Controller
     
         return view('ppdb.transfer', [
             'ppdb'         => $ppdb,
+            'yayasan'      => $ppdb->lembaga?->yayasan ?? \App\Models\Yayasan::first(),
             'tagihan'      => $tagihan,
             'isCicilan'    => $isCicilan,
             'sisaTagihan'  => $sisaTagihan,
@@ -158,6 +160,7 @@ class PpdbPembayaranController extends Controller
 
         return view('ppdb.duitku', [
             'ppdb' => $ppdb,
+            'yayasan' => $ppdb->lembaga?->yayasan ?? \App\Models\Yayasan::first(),
             'tagihan' => $tagihan,
         ]);
     }

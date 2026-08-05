@@ -17,10 +17,12 @@ class PpdbPengumumanController extends Controller
         }
 
         $announcements = Announcement::visibleFor('ppdb')->latest()->get();
+        $yayasan = $ppdb->lembaga?->yayasan ?? \App\Models\Yayasan::first();
 
         return view('ppdb.pengumuman', compact(
             'ppdb',
-            'announcements'
+            'announcements',
+            'yayasan'
         ));
     }
 }
