@@ -27,6 +27,30 @@
         }
     </script>
 
+    <style>
+        @keyframes daftarPulseGlow {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.55);
+            }
+            50% {
+                box-shadow: 0 0 0 10px rgba(245, 158, 11, 0);
+            }
+        }
+
+        @keyframes daftarBadgeBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.35; }
+        }
+
+        .daftar-cta {
+            animation: daftarPulseGlow 2.2s ease-in-out infinite;
+        }
+
+        .daftar-cta-badge {
+            animation: daftarBadgeBlink 1.4s ease-in-out infinite;
+        }
+    </style>
+
 </head>
 
 <body class="font-sans bg-slate-100 min-h-screen flex items-center justify-center p-4">
@@ -227,15 +251,8 @@
 
             </div>
             
-            <div class="flex items-center justify-between mb-6 text-sm">
+            <div class="flex items-center justify-end mb-6 text-sm">
 
-                <a
-                    href="{{ route('ppdb.register') }}"
-                    class="font-medium text-teal-600 hover:text-teal-700">
-            
-                    Daftar PPDB
-            
-                </a>
                 @php
                     $wa = preg_replace('/[^0-9]/', '', $yayasan->telepon ?? '');
                 
@@ -284,6 +301,52 @@
                 <span>Login Portal PPDB</span>
 
             </button>
+
+            {{-- CTA DAFTAR PPDB (dibuat menonjol supaya calon siswa/wali sadar) --}}
+            <a
+                href="{{ route('ppdb.register') }}"
+                class="daftar-cta mt-4 flex items-center justify-between gap-3 rounded-xl
+                       border-2 border-amber-400 bg-amber-50
+                       px-4 py-3 transition hover:bg-amber-100">
+
+                <div class="flex items-center gap-3">
+
+                    <span class="daftar-cta-badge flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-400 text-white">
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                             fill="none"
+                             viewBox="0 0 24 24"
+                             stroke-width="2"
+                             stroke="currentColor"
+                             class="w-5 h-5">
+                            <path stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  d="M12 4.5v15m7.5-7.5h-15"/>
+                        </svg>
+                    </span>
+
+                    <span class="text-left">
+                        <span class="block text-sm font-bold text-amber-700">
+                            Calon Siswa Baru?
+                        </span>
+                        <span class="block text-xs text-amber-600">
+                            Daftar PPDB sekarang, gratis & mudah
+                        </span>
+                    </span>
+
+                </div>
+
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     fill="none"
+                     viewBox="0 0 24 24"
+                     stroke-width="2.5"
+                     stroke="currentColor"
+                     class="w-5 h-5 shrink-0 text-amber-500">
+                    <path stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
+                </svg>
+
+            </a>
 
         </form>
 
