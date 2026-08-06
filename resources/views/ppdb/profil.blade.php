@@ -82,7 +82,7 @@
             <div class="w-20 h-20 rounded-2xl overflow-hidden border-2 border-white/30 bg-white/10 shrink-0">
 
                 @if($ppdb->foto)
-                    <img src="{{ Storage::disk('r2-public')->url($ppdb->foto) }}"
+                    <img src="{{ \App\Support\FileUrlResolver::public($ppdb->foto) }}"
                          class="w-full h-full object-cover">
                 @else
                     <div class="w-full h-full flex items-center justify-center text-xs text-white/80">

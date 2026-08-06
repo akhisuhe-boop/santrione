@@ -174,7 +174,7 @@ $pekerjaanOptions = [
                     <div class="mb-6 flex justify-center">
                         <div
                         x-data="{
-                            preview:'{{ $ppdb->foto ? Storage::disk('r2-public')->url($ppdb->foto) : '' }}'
+                            preview:'{{ $ppdb->foto ? \App\Support\FileUrlResolver::public($ppdb->foto) : '' }}'
                         }">
                 
                             <label class="cursor-pointer">

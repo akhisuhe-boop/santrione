@@ -57,6 +57,13 @@ class Tagihan extends Model
      */
     public static function pastikanTagihanPendaftaranPpdb(\App\Models\Ppdb $ppdb): ?self
     {
+        // Kalau PPDB ini sudah resmi jadi siswa aktif, tagihannya SUDAH
+        // dipindahkan ke siswa_id (lihat aksi "Aktifkan Siswa") -- jangan
+        // buat lagi tagihan baru yang nyangkut ke ppdb_id ini.
+        if ($ppdb->status === 'aktif') {
+            return null;
+        }
+
         $jenisTagihan = \App\Models\JenisTagihan::where('tipe_sistem', 'pendaftaran_ppdb')->first();
 
         if (!$jenisTagihan) {
