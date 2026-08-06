@@ -386,21 +386,40 @@ class PembayaranResource extends BaseResource
                         ->searchable()
                         ->sortable(),
 
-                    Tables\Columns\TextColumn::make('siswa.nama_lengkap')
+                    Tables\Columns\TextColumn::make('tagihan.nama_pembayar')
                         ->label('Siswa')
-                        ->searchable()
-                        ->description(fn ($record) =>
-                            $record->siswa && $record->siswa->status_siswa !== 'Aktif'
-                                ? new \Illuminate\Support\HtmlString(
+                        ->searchable(query: function ($query, string $search) {
+                            $query->where(function ($q) use ($search) {
+                                $q->whereHas('tagihan.siswa', fn ($s) => $s->where('nama_lengkap', 'like', "%{$search}%"))
+                                  ->orWhereHas('tagihan.ppdb', fn ($p) => $p->where('nama_lengkap', 'like', "%{$search}%"));
+                            });
+                        })
+                        ->description(function ($record) {
+
+                            if ($record->siswa && $record->siswa->status_siswa !== 'Aktif') {
+                                return new \Illuminate\Support\HtmlString(
                                     '<span class="inline-flex items-center gap-1 text-amber-600">'
                                     . '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5 flex-shrink-0">'
                                     . '<path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />'
                                     . '</svg>'
                                     . 'Alumni (' . e($record->siswa->status_siswa) . ')'
                                     . '</span>'
-                                )
-                                : null
-                        ),
+                                );
+                            }
+
+                            if (!$record->siswa && $record->tagihan?->ppdb) {
+                                return new \Illuminate\Support\HtmlString(
+                                    '<span class="inline-flex items-center gap-1 text-sky-600">'
+                                    . '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5 flex-shrink-0">'
+                                    . '<path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443" />'
+                                    . '</svg>'
+                                    . 'Calon Siswa (PSB)'
+                                    . '</span>'
+                                );
+                            }
+
+                            return null;
+                        }),
 
                     Tables\Columns\TextColumn::make('tagihan.kelas_nama')
                         ->label('Kelas'),

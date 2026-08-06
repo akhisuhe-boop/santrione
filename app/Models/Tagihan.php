@@ -145,6 +145,19 @@ class Tagihan extends Model
             ?? '-';
     }
 
+    public function getNamaPembayarAttribute()
+    {
+        if ($this->siswa) {
+            return $this->siswa->nama_lengkap;
+        }
+
+        if ($this->ppdb) {
+            return $this->ppdb->nama_lengkap;
+        }
+
+        return '-';
+    }
+
     public function getKelasNamaAttribute()
     {
         return optional(optional($this->siswa)->kelas)->nama
