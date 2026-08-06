@@ -40,16 +40,21 @@
         <div class="text-center mb-8">
 
             {{-- LOGO --}}
-            @if(!empty($yayasan?->logo))
-                <div class="flex justify-center mb-3">
-        
+            <div class="flex justify-center mb-3">
+
+                @if(!empty($yayasan?->logo))
                     <img
                         src="{{ App\Support\FileUrlResolver::public($yayasan->logo) }}"
                         alt="{{ $yayasan->nama }}"
                         class="w-24 h-24 object-contain">
-        
-                </div>
-            @endif
+                @else
+                    <img
+                        src="{{ asset('images/qinara-apps-logo.png') }}"
+                        alt="Qinara Apps"
+                        class="w-40 object-contain">
+                @endif
+
+            </div>
         
             {{-- SUBTITLE --}}
             <p class="text-slate-500 mt-4 text-sm">
@@ -57,7 +62,7 @@
             </p>
             
             <h1 class="text-2xl font-bold text-teal-600">
-                {{ $yayasan->nama ?? 'Portal Guru' }}
+                {{ $yayasan->nama ?? 'Qinara Apps' }}
             </h1>
             
             <p class="text-slate-500 text-sm">
