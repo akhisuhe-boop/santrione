@@ -85,6 +85,8 @@ class DashboardPsb extends Page implements HasForms
         $labels = [
             'draft' => 'Draft',
             'menunggu_pembayaran' => 'Menunggu Pembayaran',
+            'formulir' => 'Isi Formulir',
+            'upload_berkas' => 'Upload Berkas',
             'verifikasi_berkas' => 'Verifikasi Berkas',
             'tes' => 'Tes Seleksi',
             'lulus' => 'Lulus',
