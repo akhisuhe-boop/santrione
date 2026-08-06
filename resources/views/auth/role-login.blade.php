@@ -54,6 +54,11 @@
 
         <div class="text-center mb-8">
 
+        {{-- GREETING --}}
+        <p class="text-sm md:text-lg font-semibold text-emerald-700">
+            Selamat Datang di
+        </p>
+
         {{-- LOGO --}}
         <div class="flex justify-center mt-4 mb-4">
 
@@ -72,11 +77,6 @@
             @endif
 
         </div>
-
-        {{-- GREETING --}}
-        <p class="text-sm md:text-lg font-semibold text-emerald-700">
-            Selamat Datang di
-        </p>
 
         {{-- NAMA YAYASAN (cuma tampil kalau memang ada tenant spesifik, biar nggak dobel sama logo Qinara Apps) --}}
         @if($yayasan?->nama)
