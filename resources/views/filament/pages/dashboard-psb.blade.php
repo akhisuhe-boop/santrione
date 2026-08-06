@@ -116,7 +116,7 @@
 
     {{-- ================= INFORMASI DEMOGRAFI PER LEMBAGA ================= --}}
     <div style="margin-top:1rem;">
-        <x-filament::section heading="Informasi Latar Belakang Calon Siswa per Lembaga" description="Nilai yang ditampilkan adalah yang PALING BANYAK muncul (bukan rata-rata angka, karena data ini berupa kategori pilihan, bukan angka).">
+        <x-filament::section heading="Informasi Latar Belakang Calon Siswa per Lembaga">
 
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;">
 

@@ -90,9 +90,27 @@ class DashboardPsb extends Page implements HasForms
             'verifikasi_berkas' => 'Verifikasi Berkas',
             'tes' => 'Tes Seleksi',
             'lulus' => 'Lulus',
-            'tidak_lulus' => 'Tidak Lulus',
             'daftar_ulang' => 'Daftar Ulang',
             'aktif' => 'Aktif (Jadi Siswa)',
+        ];
+
+        $labelTidakLulus = 'Tidak Lulus';
+
+        // Urutan tahapan jalur SUKSES (dipakai untuk hitung kumulatif:
+        // "berapa yang PERNAH mencapai tahap ini", bukan cuma yang
+        // SEDANG persis di situ sekarang -- karena status cuma nyimpen
+        // posisi TERAKHIR, begitu maju ke tahap berikutnya jejak tahap
+        // sebelumnya jangan sampai hilang dari laporan ini).
+        $urutan = [
+            'draft' => 0,
+            'menunggu_pembayaran' => 1,
+            'formulir' => 2,
+            'upload_berkas' => 3,
+            'verifikasi_berkas' => 4,
+            'tes' => 5,
+            'lulus' => 6,
+            'daftar_ulang' => 7,
+            'aktif' => 8,
         ];
 
         $counts = $this->baseQueryFull()
@@ -100,14 +118,42 @@ class DashboardPsb extends Page implements HasForms
             ->groupBy('status')
             ->pluck('total', 'status');
 
+        $tidakLulusCount = $counts['tidak_lulus'] ?? 0;
+
         $result = [];
 
         foreach ($labels as $key => $label) {
+
+            $ambangBatas = $urutan[$key];
+
+            $total = 0;
+
+            foreach ($urutan as $statusLain => $urutanLain) {
+                if ($urutanLain >= $ambangBatas) {
+                    $total += $counts[$statusLain] ?? 0;
+                }
+            }
+
+            // "Tidak Lulus" tetap sempat melalui Draft s.d Tes Seleksi
+            // sebelum akhirnya gagal -- tapi TIDAK ikut dihitung di
+            // Lulus/Daftar Ulang/Aktif (karena memang tidak lanjut).
+            if ($ambangBatas <= $urutan['tes']) {
+                $total += $tidakLulusCount;
+            }
+
             $result[] = [
                 'key' => $key,
                 'label' => $label,
-                'total' => $counts[$key] ?? 0,
+                'total' => $total,
             ];
+
+            if ($key === 'lulus') {
+                $result[] = [
+                    'key' => 'tidak_lulus',
+                    'label' => $labelTidakLulus,
+                    'total' => $tidakLulusCount,
+                ];
+            }
         }
 
         return $result;
@@ -190,20 +236,48 @@ class DashboardPsb extends Page implements HasForms
 
     public function getPembayaranBreakdownProperty(): array
     {
-        $ppdbIds = $this->baseQueryFull()->pluck('id');
+        $ppdbs = $this->baseQueryFull()->get(['id', 'siswa_id']);
 
-        $tagihans = \App\Models\Tagihan::whereIn('ppdb_id', $ppdbIds)
+        $jenisTagihanPendaftaran = \App\Models\JenisTagihan::where('tipe_sistem', 'pendaftaran_ppdb')->first();
+
+        $ppdbIds = $ppdbs->pluck('id');
+        $siswaIds = $ppdbs->pluck('siswa_id')->filter()->values();
+
+        // Tagihan yang MASIH nyangkut ke ppdb_id (belum/belum sempat diaktifkan jadi siswa)
+        $tagihanViaPpdb = \App\Models\Tagihan::whereIn('ppdb_id', $ppdbIds)
             ->whereNotNull('ppdb_id')
             ->get()
             ->groupBy('ppdb_id')
             ->map(fn ($group) => $group->sortByDesc('created_at')->first());
 
+        // Tagihan yang SUDAH pindah ke siswa_id (setelah "Aktifkan Siswa"),
+        // dicocokkan balik ke ppdb_id lewat siswa_id -- supaya siswa yang
+        // sudah aktif tetap kelihatan riwayat pembayaran pendaftarannya,
+        // bukan malah nongol "Belum Ada Tagihan".
+        $tagihanViaSiswa = collect();
+
+        if ($siswaIds->isNotEmpty() && $jenisTagihanPendaftaran) {
+            $tagihanViaSiswa = \App\Models\Tagihan::whereIn('siswa_id', $siswaIds)
+                ->where('jenis_tagihan_id', $jenisTagihanPendaftaran->id)
+                ->get()
+                ->keyBy('siswa_id');
+        }
+
         $belum = 0;
         $sebagian = 0;
         $lunas = 0;
-        $belumAdaTagihan = $ppdbIds->count() - $tagihans->count();
+        $belumAdaTagihan = 0;
 
-        foreach ($tagihans as $t) {
+        foreach ($ppdbs as $ppdb) {
+
+            $t = $tagihanViaPpdb->get($ppdb->id)
+                ?? ($ppdb->siswa_id ? $tagihanViaSiswa->get($ppdb->siswa_id) : null);
+
+            if (!$t) {
+                $belumAdaTagihan++;
+                continue;
+            }
+
             match ($t->status) {
                 'lunas' => $lunas++,
                 'sebagian' => $sebagian++,
