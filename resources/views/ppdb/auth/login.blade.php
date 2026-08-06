@@ -158,7 +158,7 @@
                     </span>
 
                     <span class="text-left">
-                        <span class="block text-sm font-bold text-amber-700">
+                        <span class="block text-sm font-medium text-amber-700">
                             Calon Siswa Baru? Daftar PPDB Sekarang
                         </span>
                     </span>
@@ -177,6 +177,13 @@
                 </svg>
 
             </a>
+
+            {{-- DIVIDER --}}
+            <div class="mb-5 flex items-center gap-3">
+                <div class="h-px flex-1 bg-slate-200"></div>
+                <span class="text-xs font-medium text-slate-400">Sudah Punya Akun? Login</span>
+                <div class="h-px flex-1 bg-slate-200"></div>
+            </div>
 
             {{-- NIY --}}
             <div class="mb-4">
