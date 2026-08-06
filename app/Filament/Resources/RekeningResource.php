@@ -70,6 +70,16 @@ class RekeningResource extends BaseResource
                     Forms\Components\TextInput::make('atas_nama')
                         ->visible(fn ($get) => $get('tipe') === 'bank'),
 
+                    Forms\Components\Select::make('keperluan')
+                        ->label('Keperluan (untuk alur otomatis)')
+                        ->helperText('Tandai kalau rekening ini yang dipakai sistem untuk alur PPDB otomatis milik lembaga ini. Kosongkan kalau rekening umum biasa.')
+                        ->options([
+                            'pendaftaran_ppdb' => 'Formulir Pendaftaran PPDB',
+                            'daftar_ulang_ppdb' => 'Daftar Ulang PPDB',
+                        ])
+                        ->placeholder('Rekening umum (bukan bagian alur otomatis)')
+                        ->nullable(),
+
                     Forms\Components\Toggle::make('is_active')
                         ->default(true),
 
@@ -81,6 +91,16 @@ class RekeningResource extends BaseResource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('keperluan')
+                    ->label('Keperluan')
+                    ->badge()
+                    ->color('warning')
+                    ->formatStateUsing(fn ($state) => match ($state) {
+                        'pendaftaran_ppdb' => 'Formulir Pendaftaran PPDB',
+                        'daftar_ulang_ppdb' => 'Daftar Ulang PPDB',
+                        default => '-',
+                    }),
+
                 Tables\Columns\TextColumn::make('lembaga.nama')
                     ->label('Lembaga')
                     ->badge(),

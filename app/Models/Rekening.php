@@ -16,6 +16,7 @@ class Rekening extends Model
         'no_rekening',
         'atas_nama',
         'tipe',
+        'keperluan',
         'is_active',
     ];
 

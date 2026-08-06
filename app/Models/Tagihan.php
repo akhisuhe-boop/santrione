@@ -68,8 +68,25 @@ class Tagihan extends Model
             ->first();
 
         if ($tagihan) {
+
+            if (!$tagihan->rekening_id) {
+                $rekening = \App\Models\Rekening::where('lembaga_id', $ppdb->lembaga_id)
+                    ->where('keperluan', 'pendaftaran_ppdb')
+                    ->where('is_active', true)
+                    ->first();
+
+                if ($rekening) {
+                    $tagihan->update(['rekening_id' => $rekening->id]);
+                }
+            }
+
             return $tagihan;
         }
+
+        $rekening = \App\Models\Rekening::where('lembaga_id', $ppdb->lembaga_id)
+            ->where('keperluan', 'pendaftaran_ppdb')
+            ->where('is_active', true)
+            ->first();
 
         return self::create([
             'ppdb_id'          => $ppdb->id,
@@ -80,6 +97,7 @@ class Tagihan extends Model
             'status'           => 'belum',
             'jatuh_tempo'      => now()->addDays(7),
             'tahun_ajaran_id'  => $ppdb->tahun_ajaran_id,
+            'rekening_id'      => $rekening?->id,
         ]);
     }
 
