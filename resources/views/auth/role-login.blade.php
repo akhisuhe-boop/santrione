@@ -54,26 +54,36 @@
 
         <div class="text-center mb-8">
 
-        {{-- LOGO YAYASAN --}}
-        @if($yayasan && $yayasan->logo)
-            <div class="flex justify-center mt-4 mb-4">
+        {{-- LOGO --}}
+        <div class="flex justify-center mt-4 mb-4">
+
+            @if($yayasan && $yayasan->logo)
                 <img
                     src="{{ App\Support\FileUrlResolver::public($yayasan->logo) }}"
-                    alt="{{ $yayasan->nama ?? 'Qinara App' }}"
+                    alt="{{ $yayasan->nama }}"
                     class="h-24 md:h-28 w-auto object-contain"
                 >
-            </div>
-        @endif
+            @else
+                <img
+                    src="{{ asset('images/qinara-apps-logo.png') }}"
+                    alt="Qinara Apps"
+                    class="w-48 md:w-56 object-contain"
+                >
+            @endif
+
+        </div>
 
         {{-- GREETING --}}
         <p class="text-sm md:text-lg font-semibold text-emerald-700">
             Selamat Datang di
         </p>
 
-        {{-- NAMA YAYASAN --}}
-        <h1 class="mt-3 text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-slate-900">
-            {{ $yayasan->nama ?? 'Qinara App' }}
-        </h1>
+        {{-- NAMA YAYASAN (cuma tampil kalau memang ada tenant spesifik, biar nggak dobel sama logo Qinara Apps) --}}
+        @if($yayasan?->nama)
+            <h1 class="mt-3 text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-slate-900">
+                {{ $yayasan->nama }}
+            </h1>
+        @endif
 
         {{-- TAGLINE --}}
         <div class="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full
