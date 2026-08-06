@@ -60,7 +60,11 @@ class PpdbDashboardController extends Controller
             'ppdb'        => $ppdb,
             'tagihan'     => $tagihan,
             'pembayaran'  => $pembayaran,
-            'progress'    => $this->progress($ppdb->status, (bool) $ppdb->lembaga?->is_tes),
+            'progress'    => $this->progress(
+                $ppdb->status,
+                (bool) $ppdb->lembaga?->is_tes,
+                $tagihan && $tagihan->status === 'lunas'
+            ),
             'pengumuman'  => $pengumuman,
         ]);
     }
@@ -76,7 +80,7 @@ class PpdbDashboardController extends Controller
      *         Ulang, bukan "Pengumuman" (karena pengumumannya sudah
      *         terjadi bersamaan dengan verifikasi).
      */
-    protected function progress(string $status, bool $isTes = true): array
+    protected function progress(string $status, bool $isTes = true, bool $tagihanLunas = false): array
     {
         $steps = [
             'Akun Dibuat',
@@ -106,7 +110,11 @@ class PpdbDashboardController extends Controller
 
             'lulus' => $isTes ? 6 : 7,
 
-            'daftar_ulang' => 7,
+            // Begitu tagihan Daftar Ulang lunas, tandai step "Daftar
+            // Ulang" (index 7) sudah selesai -- yang sedang "berjalan"
+            // jadi "Resmi Menjadi Siswa" (index 8), menunggu admin
+            // klik "Aktifkan Siswa".
+            'daftar_ulang' => $tagihanLunas ? 8 : 7,
 
             'aktif' => 8,
 

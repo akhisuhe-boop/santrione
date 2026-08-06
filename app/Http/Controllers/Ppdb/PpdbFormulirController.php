@@ -168,16 +168,26 @@ class PpdbFormulirController extends Controller
         if ($request->hasFile('foto')) {
 
             // hapus foto lama
-            if ($ppdb->foto && Storage::disk('public')->exists($ppdb->foto)) {
-        
-                Storage::disk('public')->delete($ppdb->foto);
-        
+            if ($ppdb->foto) {
+                try {
+                    \Storage::disk('r2-public')->delete($ppdb->foto);
+                } catch (\Throwable $e) {
+                    // biarkan, foto lama mungkin masih di disk lokal (data lama)
+                }
             }
-        
-            $validated['foto'] = $request
-                ->file('foto')
-                ->store('ppdb/foto', 'public');
-        
+
+            $webp = \Intervention\Image\Laravel\Facades\Image::decode(
+                    file_get_contents($request->file('foto')->getRealPath())
+                )
+                ->cover(800, 1000)
+                ->encodeUsingFileExtension('webp', quality: 80);
+
+            $filename = 'siswa-photos/' . uniqid() . '.webp';
+
+            \Storage::disk('r2-public')->put($filename, (string) $webp);
+
+            $validated['foto'] = $filename;
+
         }
 
         /*
@@ -248,13 +258,16 @@ class PpdbFormulirController extends Controller
 
         if ($request->hasFile('scan_kk')) {
 
-            if ($ppdb->scan_kk && Storage::disk('public')->exists($ppdb->scan_kk)) {
-                Storage::disk('public')->delete($ppdb->scan_kk);
+            if ($ppdb->scan_kk) {
+                try {
+                    \Storage::disk('r2-private')->delete($ppdb->scan_kk);
+                } catch (\Throwable $e) {
+                }
             }
 
             $validated['scan_kk'] = $request
                 ->file('scan_kk')
-                ->store('ppdb/berkas', 'public');
+                ->store('ppdb/berkas', 'r2-private');
         }
 
         /*
@@ -265,13 +278,16 @@ class PpdbFormulirController extends Controller
 
         if ($request->hasFile('scan_akta')) {
 
-            if ($ppdb->scan_akta && Storage::disk('public')->exists($ppdb->scan_akta)) {
-                Storage::disk('public')->delete($ppdb->scan_akta);
+            if ($ppdb->scan_akta) {
+                try {
+                    \Storage::disk('r2-private')->delete($ppdb->scan_akta);
+                } catch (\Throwable $e) {
+                }
             }
 
             $validated['scan_akta'] = $request
                 ->file('scan_akta')
-                ->store('ppdb/berkas', 'public');
+                ->store('ppdb/berkas', 'r2-private');
         }
 
         /*
@@ -282,13 +298,16 @@ class PpdbFormulirController extends Controller
 
         if ($request->hasFile('scan_ijazah')) {
 
-            if ($ppdb->scan_ijazah && Storage::disk('public')->exists($ppdb->scan_ijazah)) {
-                Storage::disk('public')->delete($ppdb->scan_ijazah);
+            if ($ppdb->scan_ijazah) {
+                try {
+                    \Storage::disk('r2-private')->delete($ppdb->scan_ijazah);
+                } catch (\Throwable $e) {
+                }
             }
 
             $validated['scan_ijazah'] = $request
                 ->file('scan_ijazah')
-                ->store('ppdb/berkas', 'public');
+                ->store('ppdb/berkas', 'r2-private');
         }
 
         /*

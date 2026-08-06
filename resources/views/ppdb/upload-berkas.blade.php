@@ -324,7 +324,7 @@
                 </div>
     
                 <a
-                    href="{{ Storage::url($ppdb->scan_kk) }}"
+                    href="{{ \App\Support\FileUrlResolver::private($ppdb->scan_kk) }}"
                     target="_blank"
                     class="inline-flex items-center gap-2
                            px-4 py-2 rounded-xl
@@ -566,7 +566,7 @@
                 </div>
     
                 <a
-                    href="{{ Storage::url($ppdb->scan_akta) }}"
+                    href="{{ \App\Support\FileUrlResolver::private($ppdb->scan_akta) }}"
                     target="_blank"
                     class="inline-flex items-center gap-2
                            px-4 py-2 rounded-xl
@@ -808,7 +808,7 @@
                 </div>
     
                 <a
-                    href="{{ Storage::url($ppdb->scan_ijazah) }}"
+                    href="{{ \App\Support\FileUrlResolver::private($ppdb->scan_ijazah) }}"
                     target="_blank"
                     class="inline-flex items-center gap-2
                            px-4 py-2 rounded-xl

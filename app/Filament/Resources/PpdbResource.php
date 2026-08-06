@@ -259,7 +259,7 @@ class PpdbResource extends BaseResource
             ->columns([
                 Tables\Columns\ImageColumn::make('foto')
                 ->label('Foto')
-		->disk('r2-public')
+                ->getStateUsing(fn ($record) => \App\Support\FileUrlResolver::public($record->foto))
                 ->circular()
                 ->size(40),
                 Tables\Columns\TextColumn::make('nama_lengkap')

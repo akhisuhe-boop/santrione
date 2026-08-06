@@ -207,9 +207,19 @@
                                 {{ ($umum->currentPage() - 1) * $umum->perPage() + $loop->iteration }}
                             </td>
 
-                            <td class="p-2">{{ optional($tagihan->siswa)->nama_lengkap 
-                            ?? optional($tagihan->ppdb)->nama_lengkap 
-                            ?? '-' }}</td>
+                            <td class="p-2">
+                                {{ optional($tagihan->siswa)->nama_lengkap
+                                ?? optional($tagihan->ppdb)->nama_lengkap
+                                ?? '-' }}
+
+                                @if(!$tagihan->siswa && $tagihan->ppdb)
+                                    <div style="margin-top:2px;">
+                                        <span style="display:inline-flex;align-items:center;gap:4px;color:#0284c7;font-size:11px;">
+                                            Calon Siswa (PSB)
+                                        </span>
+                                    </div>
+                                @endif
+                            </td>
 
                             <td class="p-2">{{ $tagihan->siswa->kelas->nama ?? '-' }}</td>
 
