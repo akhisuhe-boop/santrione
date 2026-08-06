@@ -60,7 +60,7 @@
         </p>
 
         {{-- LOGO --}}
-        <div class="flex justify-center mt-4 mb-4">
+        <div class="flex justify-center mt-2 mb-2">
 
             @if($yayasan && $yayasan->logo)
                 <img
@@ -72,7 +72,7 @@
                 <img
                     src="{{ asset('images/qinara-apps-logo.png') }}"
                     alt="Qinara Apps"
-                    class="w-48 md:w-56 object-contain"
+                    class="w-56 md:w-64 object-contain"
                 >
             @endif
 
@@ -86,7 +86,7 @@
         @endif
 
         {{-- TAGLINE --}}
-        <div class="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full
+        <div class="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-full
                     bg-emerald-50 border border-emerald-100">
 
             <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
