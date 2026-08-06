@@ -26,4 +26,14 @@ class CreatePpdb extends CreateRecord
     
         return $data;
     }
+
+    protected function afterCreate(): void
+    {
+        // Sama seperti pendaftaran mandiri lewat portal: kalau lembaga ini
+        // punya Jenis Tagihan "Biaya Pendaftaran PPDB" aktif, otomatis
+        // buatkan tagihannya juga untuk pendaftar yang diinput admin.
+        // Kalau admin nanti pakai "Setting Pembayaran" buat Jenis Tagihan
+        // yang SAMA, sistem akan tolak (anti-duplikat) -- aman.
+        \App\Models\Tagihan::pastikanTagihanPendaftaranPpdb($this->record);
+    }
 }
