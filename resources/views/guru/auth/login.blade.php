@@ -61,9 +61,11 @@
                 Portal Guru
             </p>
             
-            <h1 class="text-2xl font-bold text-teal-600">
-                {{ $yayasan->nama ?? 'Qinara Apps' }}
-            </h1>
+            @if($yayasan?->nama)
+                <h1 class="text-2xl font-bold text-teal-600">
+                    {{ $yayasan->nama }}
+                </h1>
+            @endif
             
             <p class="text-slate-500 text-sm">
                 Login menggunakan NIY Guru

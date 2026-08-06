@@ -63,10 +63,12 @@
                 Portal Wali Santri
             </p>
         
-            {{-- NAMA YAYASAN --}}
-            <h1 class="mt-1 text-2xl font-bold text-[#00A39D] leading-tight">
-                {{ $yayasan->nama ?? 'Qinara Apps' }}
-            </h1>
+            {{-- NAMA YAYASAN (cuma tampil kalau memang ada tenant spesifik, biar nggak dobel sama logo Qinara Apps) --}}
+            @if($yayasan?->nama)
+                <h1 class="mt-1 text-2xl font-bold text-[#00A39D] leading-tight">
+                    {{ $yayasan->nama }}
+                </h1>
+            @endif
         
             {{-- DESKRIPSI --}}
             <p class="mt-2 text-sm text-slate-500">
