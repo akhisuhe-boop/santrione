@@ -10,6 +10,11 @@ class PlatformStatsOverview extends BaseWidget
 {
     protected static ?int $sort = 1;
 
+    protected function getColumns(): int
+    {
+        return 3;
+    }
+
     /**
      * MRR (Monthly Recurring Revenue) dihitung dari totalTagihan()
      * subscription AKTIF tiap yayasan — SATU-SATUNYA sumber nominal
@@ -42,6 +47,11 @@ class PlatformStatsOverview extends BaseWidget
         $mrr = $this->estimasiMrr();
         $rataRataPerYayasan = $aktif > 0 ? intdiv($mrr, $aktif) : 0;
 
+        $yayasanBaruBulanIni = Yayasan::withoutGlobalScopes()
+            ->whereYear('created_at', now()->year)
+            ->whereMonth('created_at', now()->month)
+            ->count();
+
         return [
             Stat::make('Total Yayasan', $totalYayasan)
                 ->description("{$aktif} aktif · {$trial} trial · {$suspended} suspended")
@@ -62,6 +72,10 @@ class PlatformStatsOverview extends BaseWidget
             Stat::make('Total Siswa Aktif', number_format($totalSiswa, 0, ',', '.'))
                 ->description('Seluruh platform')
                 ->color('gray'),
+
+            Stat::make('Yayasan Baru Bulan Ini', $yayasanBaruBulanIni)
+                ->description(now()->translatedFormat('F Y'))
+                ->color('info'),
         ];
     }
 }

@@ -97,7 +97,7 @@ class GenerateTenantInvoices extends Command
             ]);
 
             try {
-                $duitku->createTransaction(
+                $paymentUrl = $duitku->createTransaction(
                     $subscription,
                     $planAksesPlatform,
                     $yayasan->email ?? 'billing@qinaraindonesia.id'
@@ -105,6 +105,22 @@ class GenerateTenantInvoices extends Command
             } catch (\Throwable $e) {
                 Log::error("GenerateTenantInvoices: gagal membuat transaksi Duitku untuk yayasan {$yayasan->id}: {$e->getMessage()}");
                 $this->error("    Gagal membuat transaksi Duitku: {$e->getMessage()}");
+
+                continue;
+            }
+
+            try {
+                \App\Services\NotificationService::sendTagihanSubscription(
+                    $yayasan,
+                    $hasil['total'],
+                    $paymentUrl,
+                    $periode
+                );
+            } catch (\Throwable $e) {
+                // Duitku SUDAH berhasil di sini -- gagal kirim WA bukan
+                // alasan untuk gagalkan invoice-nya, cukup dicatat supaya
+                // link tetap bisa dikirim manual lewat tombol "Link Tagihan".
+                Log::error("GenerateTenantInvoices: transaksi Duitku sukses tapi notifikasi WA gagal untuk yayasan {$yayasan->id}: {$e->getMessage()}");
             }
         }
 

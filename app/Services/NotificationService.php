@@ -817,4 +817,36 @@ class NotificationService
         }
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | TAGIHAN LANGGANAN QINARA (Yayasan -> Qinara)
+    |--------------------------------------------------------------------------
+    */
+
+    public static function sendTagihanSubscription($yayasan, $totalTagihan, $paymentUrl, $periode)
+    {
+        $nomor = $yayasan->telepon ?? null;
+
+        if (! $nomor) {
+            return;
+        }
+
+        $nomor = self::formatPhone($nomor);
+        $bulan = Carbon::createFromFormat('Y-m', $periode)->translatedFormat('F Y');
+
+        $pesan =
+            "*TAGIHAN LANGGANAN QINARA APPS*\n\n" .
+            "Yth. {$yayasan->nama},\n\n" .
+            "Tagihan langganan periode *{$bulan}* telah terbit.\n\n" .
+            "Total Tagihan : *Rp " . number_format($totalTagihan, 0, ',', '.') . "*\n\n" .
+            "Silakan lakukan pembayaran melalui link berikut:\n" .
+            $paymentUrl . "\n\n" .
+            "Terima kasih telah menggunakan Qinara Apps.";
+
+        // lembagaId sengaja null -> WhatsappService fallback ke setting WA
+        // aktif pertama yang ditemukan, karena ini notifikasi level
+        // Yayasan/platform, bukan spesifik 1 Lembaga tertentu.
+        self::wa($nomor, $pesan, null);
+    }
+
 }
