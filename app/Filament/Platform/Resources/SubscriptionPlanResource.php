@@ -15,8 +15,9 @@ use Filament\Tables\Table;
 class SubscriptionPlanResource extends BaseResource
 {
     protected static ?string $model = SubscriptionPlan::class;
-    protected static ?string $navigationGroup = 'Platform (SaaS)';
+    protected static ?string $navigationGroup = 'Billing & Harga';
     protected static ?string $navigationLabel = 'Paket Langganan';
+    protected static ?int $navigationSort = 10;
     protected static ?string $modelLabel = 'Paket Langganan';
     protected static ?string $pluralModelLabel = 'Paket Langganan';
     protected static ?string $navigationIcon = 'heroicon-o-tag';

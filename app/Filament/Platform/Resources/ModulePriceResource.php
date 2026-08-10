@@ -23,8 +23,9 @@ use Filament\Tables\Table;
 class ModulePriceResource extends BaseResource
 {
     protected static ?string $model = ModulePrice::class;
-    protected static ?string $navigationGroup = 'Platform (SaaS)';
+    protected static ?string $navigationGroup = 'Billing & Harga';
     protected static ?string $navigationLabel = 'Harga Modul';
+    protected static ?int $navigationSort = 20;
     protected static ?string $modelLabel = 'Harga Modul';
     protected static ?string $pluralModelLabel = 'Harga Modul';
     protected static ?string $navigationIcon = 'heroicon-o-puzzle-piece';

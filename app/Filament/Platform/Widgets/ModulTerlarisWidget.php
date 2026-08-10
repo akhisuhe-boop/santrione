@@ -11,7 +11,9 @@ class ModulTerlarisWidget extends BaseWidget
 {
     protected static ?string $heading = 'Modul Terlaris';
 
-    protected int|string|array $columnSpan = 1;
+    protected static ?int $sort = 3;
+
+    protected int|string|array $columnSpan = 'full';
 
     public function table(Table $table): Table
     {

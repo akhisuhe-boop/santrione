@@ -8,6 +8,8 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class PlatformStatsOverview extends BaseWidget
 {
+    protected static ?int $sort = 1;
+
     /**
      * MRR (Monthly Recurring Revenue) dihitung dari totalTagihan()
      * subscription AKTIF tiap yayasan — SATU-SATUNYA sumber nominal
@@ -37,14 +39,21 @@ class PlatformStatsOverview extends BaseWidget
         $totalLembaga = \App\Models\Lembaga::withoutGlobalScopes()->count();
         $totalSiswa = \App\Models\Siswa::withoutGlobalScopes()->where('status_siswa', 'Aktif')->count();
 
+        $mrr = $this->estimasiMrr();
+        $rataRataPerYayasan = $aktif > 0 ? intdiv($mrr, $aktif) : 0;
+
         return [
             Stat::make('Total Yayasan', $totalYayasan)
                 ->description("{$aktif} aktif · {$trial} trial · {$suspended} suspended")
                 ->color('primary'),
 
-            Stat::make('Estimasi MRR', 'Rp ' . number_format($this->estimasiMrr(), 0, ',', '.'))
+            Stat::make('Estimasi MRR', 'Rp ' . number_format($mrr, 0, ',', '.'))
                 ->description('Dari subscription aktif berjalan')
                 ->color('success'),
+
+            Stat::make('Rata-rata / Yayasan Aktif', 'Rp ' . number_format($rataRataPerYayasan, 0, ',', '.'))
+                ->description('MRR ÷ jumlah Yayasan aktif')
+                ->color('warning'),
 
             Stat::make('Total Lembaga', $totalLembaga)
                 ->description('Seluruh platform')

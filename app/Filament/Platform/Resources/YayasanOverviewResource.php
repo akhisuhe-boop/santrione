@@ -18,11 +18,12 @@ use Filament\Tables\Table;
 class YayasanOverviewResource extends \App\Filament\Resources\BaseResource
 {
     protected static ?string $model = Yayasan::class;
+    protected static ?string $navigationGroup = 'Yayasan';
     protected static ?string $navigationLabel = 'Daftar Yayasan';
     protected static ?string $modelLabel = 'Yayasan';
     protected static ?string $pluralModelLabel = 'Yayasan';
     protected static ?string $navigationIcon = 'heroicon-o-building-office-2';
-    protected static ?int $navigationSort = -10;
+    protected static ?int $navigationSort = 10;
 
     public static function canViewAny(): bool
     {
@@ -103,6 +104,35 @@ class YayasanOverviewResource extends \App\Filament\Resources\BaseResource
                     ]),
             ])
             ->actions([
+                Tables\Actions\Action::make('lihatTagihanPending')
+                    ->label('Link Tagihan')
+                    ->icon('heroicon-o-link')
+                    ->color('warning')
+                    ->visible(function (Yayasan $record) {
+                        return $record->subscriptions()
+                            ->where('status', 'pending')
+                            ->whereHas('payments', fn ($q) => $q->where('status', 'pending')->whereNotNull('gateway_order_id'))
+                            ->exists();
+                    })
+                    ->modalHeading('Link Pembayaran Pending')
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Tutup')
+                    ->modalContent(function (Yayasan $record) {
+                        $payment = $record->subscriptions()
+                            ->where('status', 'pending')
+                            ->with('payments')
+                            ->latest()
+                            ->first()
+                            ?->payments()
+                            ->where('status', 'pending')
+                            ->latest()
+                            ->first();
+
+                        $url = $payment?->gateway_raw_response['paymentUrl'] ?? null;
+
+                        return view('filament.platform.link-tagihan', ['url' => $url]);
+                    }),
+
                 Tables\Actions\Action::make('masukSebagaiYayasan')
                     ->label('Masuk sebagai Yayasan')
                     ->icon('heroicon-o-arrow-top-right-on-square')

@@ -17,6 +17,8 @@ class YayasanPerluPerhatianWidget extends BaseWidget
 {
     protected static ?string $heading = 'Yayasan Perlu Perhatian';
 
+    protected static ?int $sort = 2;
+
     protected int|string|array $columnSpan = 'full';
 
     public function table(Table $table): Table

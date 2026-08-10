@@ -74,8 +74,14 @@ class PlatformPanelProvider extends PanelProvider
                 \Filament\Pages\Dashboard::class,
             ])
             ->navigationGroups([
-                NavigationGroup::make('Billing')
-                    ->icon('heroicon-o-credit-card'),
+                NavigationGroup::make('Yayasan')
+                    ->icon('heroicon-o-building-office-2'),
+
+                NavigationGroup::make('Billing & Harga')
+                    ->icon('heroicon-o-currency-dollar'),
+
+                NavigationGroup::make('Pembayaran')
+                    ->icon('heroicon-o-banknotes'),
             ])
             ->colors([
                 'primary' => Color::hex('#00A39D'),
@@ -90,8 +96,9 @@ class PlatformPanelProvider extends PanelProvider
             )
             ->widgets([
                 \App\Filament\Platform\Widgets\PlatformStatsOverview::class,
-                \App\Filament\Platform\Widgets\ModulTerlarisWidget::class,
                 \App\Filament\Platform\Widgets\YayasanPerluPerhatianWidget::class,
+                \App\Filament\Platform\Widgets\ModulTerlarisWidget::class,
+                \App\Filament\Platform\Widgets\PertumbuhanYayasanChart::class,
             ])
             ->middleware([
                 EncryptCookies::class,

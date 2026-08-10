@@ -14,8 +14,9 @@ use Filament\Tables\Table;
 class SubscriptionPaymentResource extends BaseResource
 {
     protected static ?string $model = SubscriptionPayment::class;
-    protected static ?string $navigationGroup = 'Platform (SaaS)';
+    protected static ?string $navigationGroup = 'Pembayaran';
     protected static ?string $navigationLabel = 'Verifikasi Pembayaran';
+    protected static ?int $navigationSort = 10;
     protected static ?string $modelLabel = 'Pembayaran Langganan';
     protected static ?string $pluralModelLabel = 'Pembayaran Langganan';
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
