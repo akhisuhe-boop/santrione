@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Filament\Resources\SubscriptionPaymentResource\Pages;
+namespace App\Filament\Platform\Resources\SubscriptionPaymentResource\Pages;
 
-use App\Filament\Resources\SubscriptionPaymentResource;
+use App\Filament\Platform\Resources\SubscriptionPaymentResource;
 use Filament\Resources\Pages\ListRecords;
 
 class ListSubscriptionPayments extends ListRecords

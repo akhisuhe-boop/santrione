@@ -1,8 +1,10 @@
 <?php
 
-namespace App\Filament\Resources;
+namespace App\Filament\Platform\Resources;
 
-use App\Filament\Resources\ModulePriceResource\Pages;
+use App\Filament\Resources\BaseResource;
+
+use App\Filament\Platform\Resources\ModulePriceResource\Pages;
 use App\Models\ModulePrice;
 use App\Support\FeatureGate;
 use Filament\Forms;

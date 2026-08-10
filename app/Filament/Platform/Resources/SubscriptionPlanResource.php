@@ -1,8 +1,10 @@
 <?php
 
-namespace App\Filament\Resources;
+namespace App\Filament\Platform\Resources;
 
-use App\Filament\Resources\SubscriptionPlanResource\Pages;
+use App\Filament\Resources\BaseResource;
+
+use App\Filament\Platform\Resources\SubscriptionPlanResource\Pages;
 use App\Models\SubscriptionPlan;
 use Filament\Forms;
 use Filament\Forms\Form;

@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Filament\Resources\ModulePriceResource\Pages;
+namespace App\Filament\Platform\Resources\ModulePriceResource\Pages;
 
-use App\Filament\Resources\ModulePriceResource;
+use App\Filament\Platform\Resources\ModulePriceResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 

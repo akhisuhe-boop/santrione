@@ -1,8 +1,10 @@
 <?php
 
-namespace App\Filament\Resources;
+namespace App\Filament\Platform\Resources;
 
-use App\Filament\Resources\SubscriptionPaymentResource\Pages;
+use App\Filament\Resources\BaseResource;
+
+use App\Filament\Platform\Resources\SubscriptionPaymentResource\Pages;
 use App\Models\SubscriptionPayment;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
