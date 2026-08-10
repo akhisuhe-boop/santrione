@@ -62,6 +62,22 @@ class SubscriptionPlanResource extends BaseResource
                             ->prefix('Rp')
                             ->required(),
 
+                        Forms\Components\TextInput::make('harga_per_siswa_tambahan')
+                            ->label('Harga per Siswa Tambahan')
+                            ->numeric()
+                            ->mask(RawJs::make("\$money(\$input, ',', '.')"))
+                            ->stripCharacters('.')
+                            ->prefix('Rp')
+                            ->helperText('Dikenakan untuk siswa di atas Maks. Siswa. Kosongkan kalau paket ini flat (tanpa biaya tambahan siswa).'),
+
+                        Forms\Components\TextInput::make('harga_per_lembaga_tambahan')
+                            ->label('Harga per Lembaga Tambahan')
+                            ->numeric()
+                            ->mask(RawJs::make("\$money(\$input, ',', '.')"))
+                            ->stripCharacters('.')
+                            ->prefix('Rp')
+                            ->helperText('Dikenakan untuk lembaga di atas Maks. Lembaga.'),
+
                         Forms\Components\TextInput::make('maks_lembaga')
                             ->label('Maks. Lembaga')
                             ->numeric()
@@ -80,6 +96,12 @@ class SubscriptionPlanResource extends BaseResource
                         Forms\Components\Toggle::make('is_active')
                             ->label('Aktif (tampil ke calon customer)')
                             ->default(true),
+
+                        Forms\Components\Toggle::make('termasuk_semua_modul')
+                            ->label('Paket Full (semua modul termasuk)')
+                            ->helperText('Kalau AKTIF: modul yang diaktifkan di Lembaga manapun yang pakai paket ini TIDAK ditagih terpisah (sudah termasuk harga di atas) — jangan aktifkan untuk paket biasa seperti Akses Platform.')
+                            ->default(false)
+                            ->columnSpanFull(),
 
                         Forms\Components\CheckboxList::make('fitur')
                             ->label('Fitur Premium yang Dibuka')
@@ -114,6 +136,16 @@ class SubscriptionPlanResource extends BaseResource
                     ->label('Harga / Bulan')
                     ->formatStateUsing(fn ($state) => 'Rp ' . number_format($state, 0, ',', '.')),
 
+                Tables\Columns\TextColumn::make('harga_per_siswa_tambahan')
+                    ->label('+Siswa')
+                    ->toggleable()
+                    ->formatStateUsing(fn ($state) => $state ? 'Rp ' . number_format($state, 0, ',', '.') : '—'),
+
+                Tables\Columns\TextColumn::make('harga_per_lembaga_tambahan')
+                    ->label('+Lembaga')
+                    ->toggleable()
+                    ->formatStateUsing(fn ($state) => $state ? 'Rp ' . number_format($state, 0, ',', '.') : '—'),
+
                 Tables\Columns\TextColumn::make('maks_lembaga')
                     ->label('Maks. Lembaga')
                     ->formatStateUsing(fn ($state) => $state ?? 'Tidak dibatasi'),
@@ -121,6 +153,11 @@ class SubscriptionPlanResource extends BaseResource
                 Tables\Columns\TextColumn::make('maks_siswa')
                     ->label('Maks. Siswa')
                     ->formatStateUsing(fn ($state) => $state ?? 'Tidak dibatasi'),
+
+                Tables\Columns\IconColumn::make('termasuk_semua_modul')
+                    ->label('Full')
+                    ->boolean()
+                    ->toggleable(),
 
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Aktif')
