@@ -12,6 +12,8 @@ class DatabaseSeeder extends Seeder
             SurahSeeder::class,
             JuzSeeder::class,
             AdminSeeder::class,
+            SubscriptionPlanSeeder::class,
+            ModulePriceSeeder::class,
         ]);
     }
 }

@@ -13,7 +13,10 @@ class SubscriptionPlan extends Model
         'harga_bulanan',
         'maks_lembaga',
         'maks_siswa',
+        'harga_per_siswa_tambahan',
+        'harga_per_lembaga_tambahan',
         'fitur',
+        'termasuk_semua_modul',
         'is_active',
         'urutan',
     ];
@@ -22,6 +25,7 @@ class SubscriptionPlan extends Model
     {
         return [
             'is_active' => 'boolean',
+            'termasuk_semua_modul' => 'boolean',
             'fitur' => 'array',
         ];
     }

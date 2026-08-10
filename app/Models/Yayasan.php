@@ -244,10 +244,21 @@ class Yayasan extends Model implements HasName
             return true;
         }
 
-        if (! $subscription) {
-            return false;
+        if ($subscription && $subscription->plan?->hasFeature($key)) {
+            return true;
         }
 
-        return (bool) $subscription->plan?->hasFeature($key);
+        // Skema à la carte (per-Lembaga): kalau paket dasar TIDAK
+        // membuka fitur ini tapi ADA minimal 1 Lembaga di yayasan ini
+        // yang mengaktifkan modul tersebut (lihat LembagaModule/
+        // ModulePrice), tetap buka menunya. Ini gating di level
+        // Yayasan (menu sidebar tampil untuk semua Lembaga di bawah
+        // yayasan itu), BUKAN scoping data per-Lembaga — kalau ke
+        // depan dibutuhkan penyembunyian menu yang benar-benar
+        // berbeda per Lembaga dalam satu Yayasan, itu perubahan
+        // arsitektur terpisah (tenant panel saat ini = Yayasan).
+        return $this->lembagas()
+            ->whereHas('activeModules.modulePrice', fn ($q) => $q->where('key', $key))
+            ->exists();
     }
 }

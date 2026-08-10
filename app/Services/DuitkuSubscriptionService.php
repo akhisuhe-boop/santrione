@@ -62,7 +62,11 @@ class DuitkuSubscriptionService
         $merchantCode = $this->merchantCode();
         $apiKey = $this->apiKey();
 
-        $amount = (int) $plan->harga_bulanan;
+        // totalTagihan() pakai computed_amount kalau sudah dihitung
+        // TenantBillingCalculator (skema à la carte baru), fallback ke
+        // plan->harga_bulanan untuk subscription lama/plan flat biasa
+        // — subscription lama TIDAK terpengaruh perubahan ini.
+        $amount = $subscription->totalTagihan() ?: (int) $plan->harga_bulanan;
         $merchantOrderId = 'SUB-' . $subscription->id . '-' . time();
 
         $signature = md5($merchantCode . $merchantOrderId . $amount . $apiKey);

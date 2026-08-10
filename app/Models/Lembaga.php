@@ -37,6 +37,9 @@ class Lembaga extends Model
     'max_jp_kelas_per_minggu',
     'max_jp_guru_per_minggu',
     'warning_jp_guru_per_minggu',
+    'jumlah_siswa_billing',
+    'siswa_billing_snapshot_at',
+    'urutan_billing',
     ];
     
     protected static function booted()
@@ -90,5 +93,45 @@ class Lembaga extends Model
         return $this->hasMany(
             \App\Models\Siswa::class
         );
+    }
+
+    public function modules()
+    {
+        return $this->hasMany(LembagaModule::class);
+    }
+
+    public function activeModules()
+    {
+        return $this->modules()->aktif()->with('modulePrice');
+    }
+
+    /**
+     * Jumlah siswa AKTIF saat ini (live, bukan snapshot) — dipakai job
+     * billing bulanan untuk mengisi jumlah_siswa_billing. Kode lain
+     * yang butuh angka billing SEHARUSNYA baca kolom
+     * jumlah_siswa_billing (snapshot terkunci), bukan panggil method
+     * ini langsung, supaya tagihan tidak berubah-ubah di tengah bulan.
+     */
+    public function jumlahSiswaAktif(): int
+    {
+        return $this->siswas()->where('status_siswa', 'Aktif')->count();
+    }
+
+    /**
+     * Urutan Lembaga ke berapa dalam Yayasannya, untuk keperluan
+     * diskon volume Akses Platform. Pakai urutan_billing kalau sudah
+     * diisi manual, fallback ke urutan pendaftaran (id ascending)
+     * supaya selalu deterministik walau belum pernah di-set.
+     */
+    public function urutanBillingKe(): int
+    {
+        if ($this->urutan_billing !== null) {
+            return (int) $this->urutan_billing;
+        }
+
+        return Lembaga::withoutGlobalScopes()
+            ->where('yayasan_id', $this->yayasan_id)
+            ->where('id', '<=', $this->id)
+            ->count();
     }
 }
