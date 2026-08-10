@@ -35,12 +35,13 @@ class PertumbuhanYayasanChart extends ChartWidget
                 [
                     'label' => 'Yayasan Baru',
                     'data' => $jumlahBaru->values()->all(),
-                    'backgroundColor' => '#00A39D',
+                    'borderColor' => '#00A39D',
+                    'backgroundColor' => 'rgba(0, 163, 157, 0.1)',
+                    'fill' => true,
                 ],
                 [
                     'label' => 'Total Kumulatif',
                     'data' => $kumulatif->values()->all(),
-                    'type' => 'line',
                     'borderColor' => '#D97706',
                     'fill' => false,
                 ],
@@ -51,6 +52,6 @@ class PertumbuhanYayasanChart extends ChartWidget
 
     protected function getType(): string
     {
-        return 'bar';
+        return 'line';
     }
 }
