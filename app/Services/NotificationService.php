@@ -849,4 +849,30 @@ class NotificationService
         self::wa($nomor, $pesan, null);
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | BROADCAST PLATFORM (update info, produk/layanan Qinara)
+    |--------------------------------------------------------------------------
+    */
+
+    public static function sendBroadcastYayasan($yayasan, string $judul, string $pesan): bool
+    {
+        $nomor = $yayasan->telepon ?? null;
+
+        if (! $nomor) {
+            return false;
+        }
+
+        $nomor = self::formatPhone($nomor);
+
+        $isiLengkap =
+            "*{$judul}*\n\n" .
+            $pesan . "\n\n" .
+            "— Tim Qinara Apps";
+
+        self::wa($nomor, $isiLengkap, null);
+
+        return true;
+    }
+
 }

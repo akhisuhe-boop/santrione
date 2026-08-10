@@ -82,6 +82,9 @@ class PlatformPanelProvider extends PanelProvider
 
                 NavigationGroup::make('Pembayaran')
                     ->icon('heroicon-o-banknotes'),
+
+                NavigationGroup::make('Komunikasi')
+                    ->icon('heroicon-o-megaphone'),
             ])
             ->colors([
                 'primary' => Color::hex('#00A39D'),
