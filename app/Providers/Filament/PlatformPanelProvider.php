@@ -48,6 +48,31 @@ class PlatformPanelProvider extends PanelProvider
             ->brandName('Qinara Platform')
             ->favicon(asset('favicon.ico'))
             ->sidebarCollapsibleOnDesktop()
+            // Sama persis dengan AdminPanelProvider — sidebar & topbar putih,
+            // supaya Panel Platform terasa satu keluarga visual dengan panel
+            // Yayasan, bukan seperti aplikasi lain yang terpisah.
+            ->renderHook(
+                'panels::head.end',
+                fn (): string => '
+                    <style>
+                        .fi-sidebar{
+                            background:white !important;
+                            border-right:1px solid #e5e7eb;
+                        }
+
+                        .fi-sidebar-nav{
+                            background:white !important;
+                        }
+
+                        .fi-topbar{
+                            background:white !important;
+                        }
+                    </style>
+                '
+            )
+            ->pages([
+                \Filament\Pages\Dashboard::class,
+            ])
             ->navigationGroups([
                 NavigationGroup::make('Billing')
                     ->icon('heroicon-o-credit-card'),
@@ -65,6 +90,8 @@ class PlatformPanelProvider extends PanelProvider
             )
             ->widgets([
                 \App\Filament\Platform\Widgets\PlatformStatsOverview::class,
+                \App\Filament\Platform\Widgets\ModulTerlarisWidget::class,
+                \App\Filament\Platform\Widgets\YayasanPerluPerhatianWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
