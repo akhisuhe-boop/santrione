@@ -28,10 +28,45 @@ class SubscriptionController extends Controller
             ->latest()
             ->get();
 
+        // Estimasi tagihan bulan berjalan -- HITUNG ULANG live lewat
+        // TenantBillingCalculator (sumber kebenaran yang sama dipakai
+        // command autopilot bulanan), bukan angka simpanan terpisah.
+        $estimasi = app(\App\Services\TenantBillingCalculator::class)->hitungYayasan($yayasan);
+
+        // Modul aktif lintas SEMUA Lembaga milik yayasan ini, dengan
+        // nama Lembaga-nya, supaya kelihatan modul mana aktif di mana
+        // (relevan untuk yayasan multi-lembaga).
+        $modulAktif = $yayasan->lembagas()
+            ->with(['activeModules.modulePrice'])
+            ->get()
+            ->flatMap(function ($lembaga) {
+                return $lembaga->activeModules->map(fn ($lm) => [
+                    'lembaga_nama' => $lembaga->nama,
+                    'modul_nama' => $lm->modulePrice->nama,
+                    'harga' => $lm->modulePrice->hargaTagihSekolah(),
+                    'aktif_sejak' => $lm->aktif_sejak,
+                ]);
+            });
+
+        $subscriptionAktif = $yayasan->activeSubscription();
+
+        // Broadcast platform admin yang relevan untuk yayasan ini --
+        // evaluasi ulang target_filter tiap broadcast (lihat
+        // PlatformBroadcast::includesYayasan()), 10 terbaru saja.
+        $broadcasts = \App\Models\PlatformBroadcast::where('status', '!=', 'draft')
+            ->latest('dikirim_pada')
+            ->get()
+            ->filter(fn ($b) => $b->includesYayasan($yayasan))
+            ->take(10);
+
         return view('public.langganan', [
             'yayasan' => $yayasan,
             'plans' => $plans,
             'subscriptions' => $subscriptions,
+            'estimasi' => $estimasi,
+            'modulAktif' => $modulAktif,
+            'subscriptionAktif' => $subscriptionAktif,
+            'broadcasts' => $broadcasts,
             'xenditEnabled' => filled(config('services.xendit.secret_key')),
             'bank' => config('subscription.manual_transfer'),
         ]);

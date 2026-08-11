@@ -53,4 +53,23 @@ class PlatformBroadcast extends Model
             default => Yayasan::withoutGlobalScopes()->get(),
         };
     }
+
+    /**
+     * Cek apakah $yayasan termasuk penerima broadcast ini -- evaluasi
+     * ULANG kriteria target_filter terhadap yayasan spesifik (bukan
+     * simpan daftar penerima permanen), supaya tetap akurat kalau
+     * kriteria awalnya "berdasarkan status" dan status yayasan itu
+     * berubah setelahnya. Murni untuk keperluan TAMPILAN riwayat "info
+     * yang pernah saya terima" di halaman Langganan Saya.
+     */
+    public function includesYayasan(Yayasan $yayasan): bool
+    {
+        $filter = $this->target_filter;
+
+        return match ($filter['tipe'] ?? 'semua') {
+            'status' => in_array($yayasan->status, $filter['status'] ?? [], true),
+            'manual' => in_array($yayasan->id, $filter['yayasan_ids'] ?? [], true),
+            default => true,
+        };
+    }
 }

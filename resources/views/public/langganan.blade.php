@@ -66,6 +66,75 @@
 
     </div>
 
+    {{-- RINGKASAN LANGGANAN --}}
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+        <div class="bg-white rounded-3xl shadow-sm p-6">
+            <div class="text-sm text-slate-500 mb-1">Estimasi Tagihan Bulan Ini</div>
+            <div class="text-2xl font-bold text-teal-600">Rp {{ number_format($estimasi['total'], 0, ',', '.') }}</div>
+            <div class="text-xs text-slate-400 mt-1">{{ $estimasi['total_siswa'] }} siswa · {{ count($estimasi['lembaga']) }} lembaga</div>
+        </div>
+
+        <div class="bg-white rounded-3xl shadow-sm p-6">
+            <div class="text-sm text-slate-500 mb-1">Jatuh Tempo Berikutnya</div>
+            @if ($subscriptionAktif?->berakhir_pada)
+                <div class="text-2xl font-bold text-slate-800">{{ $subscriptionAktif->berakhir_pada->locale('id')->translatedFormat('d M Y') }}</div>
+            @else
+                <div class="text-lg font-semibold text-slate-400">Belum ada langganan aktif</div>
+            @endif
+        </div>
+
+        <div class="bg-white rounded-3xl shadow-sm p-6">
+            <div class="text-sm text-slate-500 mb-1">Total Modul Aktif</div>
+            <div class="text-2xl font-bold text-slate-800">{{ $modulAktif->count() }}</div>
+            <div class="text-xs text-slate-400 mt-1">di seluruh lembaga</div>
+        </div>
+
+    </div>
+
+    {{-- MODUL AKTIF --}}
+    <div class="bg-white rounded-3xl shadow-sm p-6">
+
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-bold text-slate-900">Modul Aktif</h2>
+            <a href="/admin/{{ $yayasan->slug }}/lembagas" class="text-sm text-teal-600 font-medium">Kelola Modul &rarr;</a>
+        </div>
+
+        @forelse ($modulAktif as $m)
+            <div class="flex items-center justify-between text-sm border-b border-slate-100 py-3 last:border-0">
+                <div>
+                    <div class="font-medium text-slate-800">{{ $m['modul_nama'] }}</div>
+                    <div class="text-slate-400 text-xs">{{ $m['lembaga_nama'] }} · aktif sejak {{ $m['aktif_sejak']?->locale('id')->translatedFormat('d M Y') ?? '-' }}</div>
+                </div>
+                <div class="font-semibold text-slate-700">
+                    {{ $m['harga'] === 0 ? 'Gratis' : 'Rp ' . number_format($m['harga'], 0, ',', '.') . '/bln' }}
+                </div>
+            </div>
+        @empty
+            <p class="text-sm text-slate-500">Belum ada modul aktif. <a href="/admin/{{ $yayasan->slug }}/lembagas" class="text-teal-600 font-medium">Pilih modul di sini</a>.</p>
+        @endforelse
+
+    </div>
+
+    {{-- INFO DARI ADMIN PLATFORM --}}
+    @if ($broadcasts->isNotEmpty())
+        <div class="bg-white rounded-3xl shadow-sm p-6">
+
+            <h2 class="text-lg font-bold text-slate-900 mb-4">Info dari Qinara</h2>
+
+            <div class="space-y-4">
+                @foreach ($broadcasts as $b)
+                    <div class="border-b border-slate-100 pb-4 last:border-0 last:pb-0">
+                        <div class="font-semibold text-slate-800">{{ $b->judul }}</div>
+                        <p class="text-sm text-slate-600 mt-1 whitespace-pre-line">{{ $b->pesan }}</p>
+                        <div class="text-xs text-slate-400 mt-2">{{ $b->dikirim_pada?->locale('id')->translatedFormat('d M Y') }}</div>
+                    </div>
+                @endforeach
+            </div>
+
+        </div>
+    @endif
+
     {{-- PILIH PAKET --}}
     <div class="bg-white rounded-3xl shadow-sm p-6">
 
