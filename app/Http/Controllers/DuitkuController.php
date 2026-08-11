@@ -92,6 +92,17 @@ class DuitkuController extends Controller
             return $this->handleSubscriptionCallback($request);
         }
 
+        // Callback pembayaran TAGIHAN (SPP dsb) langsung via Duitku —
+        // order id prefix "TAGIHAN-", dibuat di
+        // WaliDashboardController::duitku(). SEBELUM PERBAIKAN INI,
+        // cabang ini tidak ada sama sekali -- Pembayaran dengan
+        // reference "TAGIHAN-*" tidak pernah di-update statusnya oleh
+        // webhook manapun, tetap 'pending' selamanya walau wali sudah
+        // bayar sukses di Duitku.
+        if (str_starts_with((string) $request->merchantOrderId, 'TAGIHAN-')) {
+            return $this->handleTagihanCallback($request);
+        }
+
         DB::beginTransaction();
 
         try {
@@ -210,6 +221,73 @@ class DuitkuController extends Controller
                 'message' => $e->getMessage(),
                 'line' => $e->getLine(),
                 'file' => $e->getFile(),
+            ]);
+
+            DB::rollBack();
+
+            return response('ERROR: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Callback pembayaran Tagihan (SPP dsb) via Duitku -- PERBAIKAN
+     * BUG: sebelumnya tidak ada cabang ini sama sekali, Pembayaran
+     * dengan reference "TAGIHAN-*" (dibuat di
+     * WaliDashboardController::duitku()) tidak pernah dikonfirmasi
+     * otomatis. Mengikuti pola persis handleSubscriptionCallback() di
+     * atas.
+     *
+     * Sengaja HANYA update status Pembayaran -- update Tagihan +
+     * catat Kas otomatis ditangani Pembayaran::booted() yang SUDAH
+     * ADA (tidak disentuh di sini), persis prinsip yang sama dipakai
+     * XenditWebhookController.
+     */
+    protected function handleTagihanCallback(Request $request)
+    {
+        $pembayaran = \App\Models\Pembayaran::where(
+            'reference',
+            $request->merchantOrderId
+        )->first();
+
+        if (! $pembayaran) {
+            return response('NOT FOUND', 404);
+        }
+
+        // Idempotent -- callback Duitku bisa terkirim lebih dari
+        // sekali untuk order yang sama.
+        if ($pembayaran->status === 'sukses') {
+            return response('OK (already processed)');
+        }
+
+        DB::beginTransaction();
+
+        try {
+
+            if ((string) $request->resultCode === '00') {
+
+                $pembayaran->status = 'sukses';
+                $pembayaran->tanggal_bayar = now();
+                $pembayaran->save();
+
+                \App\Services\NotificationService::sendPembayaran(
+                    $pembayaran->siswa,
+                    $pembayaran
+                );
+
+            } else {
+                $pembayaran->update(['status' => 'gagal']);
+            }
+
+            DB::commit();
+            return response('OK');
+
+        } catch (\Exception $e) {
+
+            \Log::error('DUITKU TAGIHAN CALLBACK ERROR', [
+                'message' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+                'merchantOrderId' => $request->merchantOrderId,
             ]);
 
             DB::rollBack();
