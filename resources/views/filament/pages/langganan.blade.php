@@ -18,7 +18,7 @@
     >
         <div class="flex items-start justify-between flex-wrap gap-6">
             <div>
-                <div class="text-sm font-medium uppercase tracking-wide" style="color: rgba(255,255,255,0.8);">Estimasi Tagihan Bulan Ini</div>
+                <div class="text-sm font-medium uppercase tracking-wide" style="color: rgba(255,255,255,0.8);">Invoice Bulan Ini</div>
                 <div class="text-4xl font-extrabold mt-1" style="color: #ffffff;">Rp {{ number_format($estimasi['total'], 0, ',', '.') }}</div>
                 <div class="text-sm mt-2" style="color: rgba(255,255,255,0.8);">{{ $estimasi['total_siswa'] }} siswa · {{ count($estimasi['lembaga']) }} lembaga</div>
             </div>
@@ -39,6 +39,54 @@
             </div>
         </div>
     </div>
+
+    {{-- RINCIAN INVOICE PER LEMBAGA --}}
+    <x-filament::section heading="Rincian Invoice per Lembaga" icon="heroicon-o-document-text">
+        <div class="overflow-x-auto -mx-2">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-left text-xs uppercase text-gray-400 border-b border-gray-100 dark:border-gray-700">
+                        <th class="px-2 py-2 font-semibold">Lembaga</th>
+                        <th class="px-2 py-2 font-semibold">Siswa</th>
+                        <th class="px-2 py-2 font-semibold">Akses Platform</th>
+                        <th class="px-2 py-2 font-semibold">Diskon</th>
+                        <th class="px-2 py-2 font-semibold">Modul</th>
+                        <th class="px-2 py-2 font-semibold text-right">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($estimasi['lembaga'] as $l)
+                        @php
+                            $modulAktifList = collect($l['modul'])->filter(fn ($m) => $m['harga'] > 0 || ($m['termasuk_paket_full'] ?? false));
+                            $modulLabel = $modulAktifList->isNotEmpty()
+                                ? $modulAktifList->pluck('nama')->implode(' + ') . ' = Rp ' . number_format($l['total_modul'], 0, ',', '.')
+                                : '—';
+                        @endphp
+                        <tr class="border-b border-gray-50 dark:border-gray-800 align-top">
+                            <td class="px-2 py-3 font-medium text-gray-800 dark:text-gray-100">{{ $l['lembaga_nama'] }}<br><span class="text-xs text-gray-400 font-normal">(Lembaga ke-{{ $l['urutan_ke'] }})</span></td>
+                            <td class="px-2 py-3 text-gray-600 dark:text-gray-300">{{ $l['jumlah_siswa'] }}</td>
+                            <td class="px-2 py-3 text-gray-600 dark:text-gray-300">Rp {{ number_format($l['akses_platform_sebelum_diskon'], 0, ',', '.') }}</td>
+                            <td class="px-2 py-3 text-gray-600 dark:text-gray-300">
+                                @if ($l['diskon_persen'] > 0)
+                                    <span class="text-success-600 font-medium">{{ $l['diskon_persen'] }}%</span> &rarr; Rp {{ number_format($l['akses_platform'], 0, ',', '.') }}
+                                @else
+                                    0%
+                                @endif
+                            </td>
+                            <td class="px-2 py-3 text-gray-600 dark:text-gray-300">{{ $modulLabel }}</td>
+                            <td class="px-2 py-3 text-right font-semibold text-gray-900 dark:text-white">Rp {{ number_format($l['subtotal'], 0, ',', '.') }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="5" class="px-2 py-3 font-bold text-gray-900 dark:text-white">TOTAL YAYASAN</td>
+                        <td class="px-2 py-3 text-right font-bold text-primary-600">Rp {{ number_format($estimasi['total'], 0, ',', '.') }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </x-filament::section>
 
     {{-- TAGIHAN PENDING / BELUM ADA LANGGANAN --}}
     @if ($pendingUrl)
