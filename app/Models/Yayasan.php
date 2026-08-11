@@ -228,13 +228,18 @@ class Yayasan extends Model implements HasName
      */
     public function hasFeature(string $key): bool
     {
-        // REVISI: sebelumnya trial = buka SEMUA menu tanpa syarat
-        // (bypass total). Diubah supaya trial & active diperlakukan
-        // SAMA untuk keperluan gating -- modul yang menentukan menu
-        // terbuka, bukan status trial/active. Ini penting supaya
-        // halaman "Langganan" (pilih modul) benar-benar berarti sejak
-        // hari pertama, bukan cuma preferensi billing pasca-trial.
-        if (! in_array($this->status, ['trial', 'active'], true)) {
+        // Selama trial: akses PENUH tanpa syarat, tidak peduli modul
+        // mana yang sudah/belum dipilih -- ini SENGAJA (revisi final
+        // setelah diskusi ulang), supaya sekolah benar-benar bisa
+        // rasakan value produk selama masa coba, bukan cuma lihat
+        // kerangka kosong. Modul yang dipilih di halaman Langganan
+        // selama trial itu preferensi "nanti mau lanjut modul apa",
+        // bukan gerbang akses saat trial masih berjalan.
+        if ($this->status === 'trial') {
+            return $this->isOnTrial();
+        }
+
+        if ($this->status !== 'active') {
             return false;
         }
 

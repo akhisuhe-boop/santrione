@@ -147,19 +147,6 @@
 
             </div>
 
-            <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">
-                    Custom Domain <span class="text-slate-400 font-normal">(opsional)</span>
-                </label>
-                <input
-                    type="text"
-                    name="custom_domain"
-                    value="{{ old('custom_domain') }}"
-                    placeholder="contoh: sekolahku.qinaraindonesia.id"
-                    class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-teal-500 focus:ring-teal-500">
-                <p class="text-xs text-slate-400 mt-1">Bisa diisi/diganti nanti kalau belum yakin sekarang.</p>
-            </div>
-
             <button
                 type="submit"
                 class="w-full rounded-xl bg-teal-600 hover:bg-teal-700 transition text-white font-semibold py-3 text-sm">

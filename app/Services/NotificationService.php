@@ -875,4 +875,33 @@ class NotificationService
         return true;
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | REMINDER TRIAL AKAN HABIS (H-7 / H-3 / H-1)
+    |--------------------------------------------------------------------------
+    */
+
+    public static function sendTrialReminder($yayasan, int $sisaHari): bool
+    {
+        $nomor = $yayasan->telepon ?? null;
+
+        if (! $nomor) {
+            return false;
+        }
+
+        $nomor = self::formatPhone($nomor);
+        $tanggal = $yayasan->trial_ends_at?->locale('id')->translatedFormat('d M Y');
+
+        $pesan =
+            "*MASA TRIAL QINARA APPS AKAN BERAKHIR*\n\n" .
+            "Yth. {$yayasan->nama},\n\n" .
+            "Masa coba gratis Anda tinggal *{$sisaHari} hari lagi* (berakhir {$tanggal}).\n\n" .
+            "Segera pilih modul yang mau dilanjutkan dan lakukan pembayaran di menu \"Langganan\" supaya akses tidak terputus.\n\n" .
+            "Terima kasih telah mencoba Qinara Apps.";
+
+        self::wa($nomor, $pesan, null);
+
+        return true;
+    }
+
 }

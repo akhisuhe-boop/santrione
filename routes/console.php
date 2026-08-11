@@ -20,3 +20,7 @@ Schedule::command('absensi:tandai-alpa')->dailyAt('16:00');
 // diskon multi-lembaga) — tanggal 1 tiap bulan jam 02:00, sebelum cek
 // langganan expired (01:00) supaya invoice baru sudah terbit duluan.
 Schedule::command('subscription:generate-monthly-invoice')->monthlyOn(1, '02:00');
+
+// Reminder WA H-7/H-3/H-1 sebelum trial habis — jam 09:00 (jam kerja,
+// supaya notifikasi WA tidak masuk tengah malam).
+Schedule::command('subscription:send-trial-reminders')->dailyAt('09:00');

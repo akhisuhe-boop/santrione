@@ -109,11 +109,13 @@ class PublicRegistrationController extends Controller
 
         Auth::guard('web')->login($admin);
 
-        // Arahkan ke halaman Langganan (bukan dashboard/Lembaga) —
-        // tenant WAJIB lewat sini dulu untuk pilih modul yang mau
-        // dipakai, sebelum eksplorasi fitur lain.
+        // Arahkan ke Dashboard biasa (BUKAN halaman Langganan) --
+        // trial = akses penuh langsung, biar kesan pertama produk
+        // terasa "hidup" dipakai, bukan disuruh pilih modul/bayar
+        // duluan. Halaman Langganan tetap ada di sidebar, dibuka
+        // kapan saja tenant mau lihat estimasi/pilih preferensi modul.
         return redirect()->to(
-            '/admin/' . $yayasan->slug . '/langganan'
-        )->with('success', 'Selamat datang! Masa trial 14 hari sudah aktif — silakan pilih modul yang mau dipakai di bawah.');
+            '/admin/' . $yayasan->slug
+        )->with('success', 'Selamat datang! Masa trial 14 hari sudah aktif — semua fitur bisa langsung dicoba.');
     }
 }
