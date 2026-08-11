@@ -239,6 +239,31 @@ class Langganan extends Page
         return (bool) $this->getSubscriptionAktif()?->plan?->termasuk_semua_modul;
     }
 
+    /**
+     * Kebalikan dari aktifkanPaketFull() -- pindah balik ke plan
+     * 'akses-platform', modul yang sudah aktif TETAP aktif (tidak
+     * dimatikan otomatis), tapi sekarang dihitung satu-satu lagi
+     * (bukan flat Paket Full). Tenant tinggal uncheck manual kalau
+     * mau kurangi.
+     */
+    public function batalkanPaketFull(): void
+    {
+        $yayasan = $this->getYayasan();
+        $planDasar = \App\Models\SubscriptionPlan::where('slug', 'akses-platform')->firstOrFail();
+
+        $subAktif = $yayasan->activeSubscription();
+
+        if ($subAktif) {
+            $subAktif->update(['subscription_plan_id' => $planDasar->id]);
+        }
+
+        Notification::make()
+            ->title('Paket Full dibatalkan')
+            ->body('Sekarang dihitung per modul yang dicentang.')
+            ->success()
+            ->send();
+    }
+
     public function getBroadcasts()
     {
         return PlatformBroadcast::where('status', '!=', 'draft')

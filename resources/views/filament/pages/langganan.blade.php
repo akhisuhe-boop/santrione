@@ -12,24 +12,27 @@
     @endphp
 
     {{-- HERO: TOTAL TAGIHAN --}}
-    <div class="rounded-2xl bg-gradient-to-br from-primary-600 to-primary-700 dark:from-primary-700 dark:to-primary-900 p-8 text-white shadow-lg">
+    <div
+        class="rounded-2xl p-8 text-white shadow-lg"
+        style="background: linear-gradient(135deg, #0f9c94 0%, #0b7a73 100%);"
+    >
         <div class="flex items-start justify-between flex-wrap gap-6">
             <div>
-                <div class="text-primary-100 text-sm font-medium uppercase tracking-wide">Estimasi Tagihan Bulan Ini</div>
-                <div class="text-4xl font-extrabold mt-1">Rp {{ number_format($estimasi['total'], 0, ',', '.') }}</div>
-                <div class="text-primary-100 text-sm mt-2">{{ $estimasi['total_siswa'] }} siswa · {{ count($estimasi['lembaga']) }} lembaga</div>
+                <div class="text-sm font-medium uppercase tracking-wide" style="color: rgba(255,255,255,0.8);">Estimasi Tagihan Bulan Ini</div>
+                <div class="text-4xl font-extrabold mt-1" style="color: #ffffff;">Rp {{ number_format($estimasi['total'], 0, ',', '.') }}</div>
+                <div class="text-sm mt-2" style="color: rgba(255,255,255,0.8);">{{ $estimasi['total_siswa'] }} siswa · {{ count($estimasi['lembaga']) }} lembaga</div>
             </div>
 
             <div class="text-right">
-                <div class="text-primary-100 text-sm font-medium uppercase tracking-wide">Jatuh Tempo</div>
+                <div class="text-sm font-medium uppercase tracking-wide" style="color: rgba(255,255,255,0.8);">Jatuh Tempo</div>
                 @if ($subAktif?->berakhir_pada)
-                    <div class="text-xl font-bold mt-1">{{ $subAktif->berakhir_pada->locale('id')->translatedFormat('d M Y') }}</div>
+                    <div class="text-xl font-bold mt-1" style="color: #ffffff;">{{ $subAktif->berakhir_pada->locale('id')->translatedFormat('d M Y') }}</div>
                 @else
-                    <div class="text-lg font-semibold text-primary-100 mt-1">Belum ada langganan aktif</div>
+                    <div class="text-lg font-semibold mt-1" style="color: rgba(255,255,255,0.8);">Belum ada langganan aktif</div>
                 @endif
 
                 @if ($paketFullAktif)
-                    <span class="inline-flex items-center gap-1 mt-2 rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
+                    <span class="inline-flex items-center gap-1 mt-2 rounded-full px-3 py-1 text-xs font-semibold" style="background: rgba(255,255,255,0.2); color: #ffffff;">
                         ⭐ Paket Full Aktif
                     </span>
                 @endif
@@ -82,6 +85,23 @@
                 </x-filament::button>
             </div>
         </x-filament::section>
+    @else
+        <x-filament::section>
+            <div class="flex items-center justify-between flex-wrap gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="rounded-xl bg-success-100 dark:bg-success-500/10 p-3">
+                        <x-heroicon-o-check-badge class="w-6 h-6 text-success-600" />
+                    </div>
+                    <div>
+                        <div class="font-semibold text-gray-900 dark:text-white">Paket Full sedang aktif</div>
+                        <div class="text-sm text-gray-500">Semua modul di bawah termasuk otomatis, tidak dihitung terpisah.</div>
+                    </div>
+                </div>
+                <x-filament::button wire:click="batalkanPaketFull" color="gray" outlined>
+                    Kembali Pilih Satu-satu
+                </x-filament::button>
+            </div>
+        </x-filament::section>
     @endif
 
     {{-- BELUM ADA LEMBAGA --}}
@@ -106,20 +126,25 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     @foreach ($modulOptions as $modul)
-                        @php $aktif = $this->isModuleActive($lembaga->id, $modul->id); @endphp
+                        @php $aktif = $paketFullAktif ? true : $this->isModuleActive($lembaga->id, $modul->id); @endphp
 
-                        <label class="flex items-center justify-between gap-3 rounded-xl border transition-colors {{ $aktif ? 'border-primary-400 bg-primary-50 dark:bg-primary-500/10' : 'border-gray-200 dark:border-gray-700 hover:border-primary-300' }} px-4 py-3 text-sm cursor-pointer">
+                        <label class="flex items-center justify-between gap-3 rounded-xl border transition-colors {{ $aktif ? 'border-primary-400 bg-primary-50 dark:bg-primary-500/10' : 'border-gray-200 dark:border-gray-700 hover:border-primary-300' }} px-4 py-3 text-sm {{ $paketFullAktif ? '' : 'cursor-pointer' }}">
                             <span class="flex items-center gap-3">
                                 <input
                                     type="checkbox"
-                                    wire:click="toggleModule({{ $lembaga->id }}, {{ $modul->id }})"
+                                    @if (! $paketFullAktif) wire:click="toggleModule({{ $lembaga->id }}, {{ $modul->id }})" @endif
                                     {{ $aktif ? 'checked' : '' }}
-                                    class="rounded text-primary-600 focus:ring-primary-500"
+                                    {{ $paketFullAktif ? 'disabled' : '' }}
+                                    class="rounded text-primary-600 focus:ring-primary-500 disabled:opacity-60"
                                 >
                                 <span class="font-medium text-gray-700 dark:text-gray-200">{{ $modul->nama }}</span>
                             </span>
                             <span class="text-gray-500 text-xs font-medium">
-                                {{ $modul->is_gratis ? 'Gratis (dari wali murid)' : 'Rp ' . number_format($modul->harga_bulanan, 0, ',', '.') . '/bln' }}
+                                @if ($paketFullAktif && ! $modul->is_gratis)
+                                    Termasuk Paket Full
+                                @else
+                                    {{ $modul->is_gratis ? 'Gratis (dari wali murid)' : 'Rp ' . number_format($modul->harga_bulanan, 0, ',', '.') . '/bln' }}
+                                @endif
                             </span>
                         </label>
                     @endforeach
