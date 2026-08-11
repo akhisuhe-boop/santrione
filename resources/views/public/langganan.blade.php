@@ -88,20 +88,11 @@
 
                     <div class="mt-4 flex flex-col sm:flex-row gap-3">
 
-                        @if ($duitkuEnabled)
-                            <form method="POST" action="{{ route('subscription.pay-duitku', $plan) }}">
+                        @if ($xenditEnabled)
+                            <form method="POST" action="{{ route('subscription.pay-xendit', $plan) }}">
                                 @csrf
                                 <button type="submit" class="rounded-xl bg-teal-600 hover:bg-teal-700 transition text-white text-sm font-semibold px-4 py-2.5 w-full sm:w-auto">
-                                    Bayar Otomatis (VA / QRIS / E-Wallet)
-                                </button>
-                            </form>
-                        @endif
-
-                        @if ($midtransEnabled)
-                            <form method="POST" action="{{ route('subscription.pay-midtrans', $plan) }}">
-                                @csrf
-                                <button type="submit" class="rounded-xl bg-slate-700 hover:bg-slate-800 text-white text-sm font-semibold px-4 py-2.5 w-full sm:w-auto">
-                                    Bayar via Midtrans
+                                    Bayar Otomatis (QRIS / VA / E-Wallet)
                                 </button>
                             </form>
                         @endif

@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Yayasan;
-use App\Services\DuitkuSubscriptionService;
+use App\Services\XenditSubscriptionService;
 use App\Services\TenantBillingCalculator;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
@@ -24,18 +24,18 @@ use Illuminate\Support\Facades\Log;
  *  3. Lewati kalau invoice periode ini SUDAH pernah dibuat (idempotent
  *     — command ini aman dijalankan ulang tanpa membuat tagihan dobel).
  *  4. Buat baris Subscription baru (status pending, computed_amount +
- *     computed_breakdown terisi) lalu buat transaksi Duitku otomatis.
+ *     computed_breakdown terisi) lalu buat transaksi Xendit otomatis.
  *
- * Kegagalan pada satu Yayasan (mis. Duitku error) TIDAK menghentikan
+ * Kegagalan pada satu Yayasan (mis. Xendit error) TIDAK menghentikan
  * proses Yayasan lain — dicatat ke log dan lanjut.
  */
 class GenerateTenantInvoices extends Command
 {
     protected $signature = 'subscription:generate-monthly-invoice {--dry-run : Hitung & tampilkan saja, jangan simpan/tagih}';
 
-    protected $description = 'Kunci snapshot siswa, hitung tagihan bulanan (Akses Platform + modul + diskon), lalu buat transaksi Duitku otomatis untuk tiap Yayasan';
+    protected $description = 'Kunci snapshot siswa, hitung tagihan bulanan (Akses Platform + modul + diskon), lalu buat transaksi Xendit otomatis untuk tiap Yayasan';
 
-    public function handle(TenantBillingCalculator $calculator, DuitkuSubscriptionService $duitku): int
+    public function handle(TenantBillingCalculator $calculator, XenditSubscriptionService $xendit): int
     {
         $periode = now()->format('Y-m');
         $dryRun = (bool) $this->option('dry-run');
@@ -97,14 +97,14 @@ class GenerateTenantInvoices extends Command
             ]);
 
             try {
-                $paymentUrl = $duitku->createTransaction(
+                $paymentUrl = $xendit->createTransaction(
                     $subscription,
                     $planAksesPlatform,
                     $yayasan->email ?? 'billing@qinaraindonesia.id'
                 );
             } catch (\Throwable $e) {
-                Log::error("GenerateTenantInvoices: gagal membuat transaksi Duitku untuk yayasan {$yayasan->id}: {$e->getMessage()}");
-                $this->error("    Gagal membuat transaksi Duitku: {$e->getMessage()}");
+                Log::error("GenerateTenantInvoices: gagal membuat transaksi Xendit untuk yayasan {$yayasan->id}: {$e->getMessage()}");
+                $this->error("    Gagal membuat transaksi Xendit: {$e->getMessage()}");
 
                 continue;
             }
@@ -117,10 +117,10 @@ class GenerateTenantInvoices extends Command
                     $periode
                 );
             } catch (\Throwable $e) {
-                // Duitku SUDAH berhasil di sini -- gagal kirim WA bukan
+                // Xendit SUDAH berhasil di sini -- gagal kirim WA bukan
                 // alasan untuk gagalkan invoice-nya, cukup dicatat supaya
                 // link tetap bisa dikirim manual lewat tombol "Link Tagihan".
-                Log::error("GenerateTenantInvoices: transaksi Duitku sukses tapi notifikasi WA gagal untuk yayasan {$yayasan->id}: {$e->getMessage()}");
+                Log::error("GenerateTenantInvoices: transaksi Xendit sukses tapi notifikasi WA gagal untuk yayasan {$yayasan->id}: {$e->getMessage()}");
             }
         }
 

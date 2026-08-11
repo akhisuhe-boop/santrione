@@ -32,8 +32,7 @@ class SubscriptionController extends Controller
             'yayasan' => $yayasan,
             'plans' => $plans,
             'subscriptions' => $subscriptions,
-            'duitkuEnabled' => filled(config('services.duitku.merchant_code')),
-            'midtransEnabled' => filled(config('subscription.midtrans.server_key')),
+            'xenditEnabled' => filled(config('services.xendit.secret_key')),
             'bank' => config('subscription.manual_transfer'),
         ]);
     }
@@ -71,8 +70,44 @@ class SubscriptionController extends Controller
     }
 
     /**
-     * Bayar lewat Duitku — pakai kredensial yang sama dengan yang
-     * sudah dipakai untuk pembayaran SPP/tagihan di aplikasi ini.
+     * Bayar lewat Xendit — SATU-SATUNYA jalur pembayaran otomatis
+     * yang dipakai (revisi keputusan: hanya Xendit, tidak lagi
+     * Duitku/Midtrans untuk billing langganan). payDuitku() &
+     * payMidtrans() di bawah dibiarkan ada (tidak dihapus, supaya
+     * tidak kehilangan kode kalau suatu saat dibutuhkan lagi) tapi
+     * TIDAK dipanggil dari halaman "Langganan Saya" lagi.
+     */
+    public function payXendit(Request $request, SubscriptionPlan $plan)
+    {
+        if (blank(config('services.xendit.secret_key'))) {
+            return back()->with('error', 'Pembayaran otomatis belum diaktifkan. Silakan pakai transfer manual dulu.');
+        }
+
+        $user = $request->user();
+        $yayasan = $user->yayasan;
+
+        abort_if(! $yayasan, 404);
+
+        $subscription = $yayasan->subscriptions()->create([
+            'subscription_plan_id' => $plan->id,
+            'status' => 'pending',
+        ]);
+
+        $xendit = app(\App\Services\XenditSubscriptionService::class);
+
+        try {
+            $invoiceUrl = $xendit->createTransaction($subscription, $plan, $yayasan->email ?? $user->email);
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Gagal membuat transaksi pembayaran: ' . $e->getMessage());
+        }
+
+        return redirect($invoiceUrl);
+    }
+
+    /**
+     * Bayar lewat Duitku — DIPERTAHANKAN sebagai kode cadangan, TIDAK
+     * lagi dipakai di halaman "Langganan Saya" sejak keputusan
+     * revisi payment gateway ke Xendit-only.
      */
     public function payDuitku(Request $request, SubscriptionPlan $plan)
     {

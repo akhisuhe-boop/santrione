@@ -35,6 +35,89 @@ class XenditWebhookController extends Controller
             return response('INVALID TOKEN', 403);
         }
 
+        // Webhook Invoice (dipakai billing langganan Yayasan->Qinara,
+        // lihat XenditSubscriptionService) -- field 'external_id' &
+        // 'status' PAID/EXPIRED, beda struktur dari webhook Payment
+        // Request (split payment wali) di bawah.
+        $externalId = $request->input('external_id');
+
+        if ($externalId && str_starts_with((string) $externalId, 'SUB-')) {
+            return $this->handleSubscriptionInvoice($request, $externalId);
+        }
+
+        return $this->handlePaymentRequestSplit($request);
+    }
+
+    /**
+     * Webhook Invoice untuk billing langganan -- mengikuti pola
+     * PERSIS DuitkuController::handleSubscriptionCallback(), cuma
+     * beda nama field status (Xendit: 'PAID', Duitku: resultCode
+     * '00') dan field ID (external_id vs merchantOrderId).
+     */
+    protected function handleSubscriptionInvoice(Request $request, string $externalId)
+    {
+        $payment = \App\Models\SubscriptionPayment::where('gateway_order_id', $externalId)->first();
+
+        if (! $payment) {
+            Log::warning('XenditWebhookController: SubscriptionPayment tidak ditemukan', ['external_id' => $externalId]);
+
+            return response('NOT FOUND', 404);
+        }
+
+        if ($payment->status === 'berhasil') {
+            return response('OK (already processed)');
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $payment->update([
+                'gateway_transaction_id' => $request->input('id'),
+                'gateway_raw_response' => $request->all(),
+            ]);
+
+            $status = strtoupper((string) $request->input('status'));
+
+            if ($status === 'PAID' || $status === 'SETTLED') {
+
+                $payment->update(['status' => 'berhasil']);
+
+                $subscription = $payment->subscription;
+
+                $subscription->update([
+                    'status' => 'active',
+                    'mulai_pada' => now(),
+                    'berakhir_pada' => now()->addMonth(),
+                ]);
+
+                $subscription->yayasan->update(['status' => 'active']);
+
+            } else {
+                $payment->update(['status' => 'gagal']);
+            }
+
+            DB::commit();
+
+            return response('OK');
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            Log::error('XenditWebhookController: error memproses webhook invoice langganan', [
+                'external_id' => $externalId,
+                'message' => $e->getMessage(),
+            ]);
+
+            return response('ERROR: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Webhook Payment Request (split payment wali murid) -- logic
+     * SEBELUMNYA di method handle(), dipindah ke sini tanpa diubah
+     * saat menambah cabang Invoice di atas.
+     */
+    protected function handlePaymentRequestSplit(Request $request)
+    {
         $referenceId = $request->input('reference_id') ?? $request->input('data.reference_id');
         $status = $request->input('status') ?? $request->input('data.status');
 

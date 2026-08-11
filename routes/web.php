@@ -74,6 +74,7 @@ Route::post('/webhooks/xendit', [\App\Http\Controllers\XenditWebhookController::
 Route::middleware(['auth'])->group(function () {
     Route::get('/langganan', [SubscriptionController::class, 'show'])->name('subscription.show');
     Route::post('/langganan/{plan}/manual', [SubscriptionController::class, 'payManual'])->name('subscription.pay-manual');
+    Route::post('/langganan/{plan}/xendit', [SubscriptionController::class, 'payXendit'])->name('subscription.pay-xendit');
     Route::post('/langganan/{plan}/duitku', [SubscriptionController::class, 'payDuitku'])->name('subscription.pay-duitku');
     Route::post('/langganan/{plan}/midtrans', [SubscriptionController::class, 'payMidtrans'])->name('subscription.pay-midtrans');
 });
