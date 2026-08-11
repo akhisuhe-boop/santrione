@@ -48,4 +48,11 @@ return [
     'mode'          => env('DUITKU_MODE', 'live'),
     ],
 
+    'xendit' => [
+    'secret_key'     => env('XENDIT_SECRET_KEY'),
+    'webhook_token'  => env('XENDIT_WEBHOOK_TOKEN'), // dari Log Webhook di dashboard Xendit, untuk verifikasi callback
+    'fee_persen'     => env('XENDIT_FEE_PERSEN', 1.0), // persentase fee Qinara dari tiap transaksi wali
+    'main_account_id' => env('XENDIT_MAIN_ACCOUNT_ID'), // ID akun utama Qinara (bukan sub-account Lembaga) untuk terima porsi fee
+    ],
+
 ];

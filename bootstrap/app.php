@@ -24,10 +24,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'akses.slip.gaji' => \App\Http\Middleware\AksesSlipGaji::class,
         ]);
 
-        // Webhook Midtrans dipanggil server-to-server (bukan browser
-        // dengan session/CSRF token), jadi wajib dikecualikan.
+        // Webhook Midtrans & Xendit dipanggil server-to-server (bukan
+        // browser dengan session/CSRF token), jadi wajib dikecualikan.
         $middleware->validateCsrfTokens(except: [
             'webhooks/midtrans',
+            'webhooks/xendit',
         ]);
 
     })

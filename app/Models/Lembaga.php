@@ -40,6 +40,9 @@ class Lembaga extends Model
     'jumlah_siswa_billing',
     'siswa_billing_snapshot_at',
     'urutan_billing',
+    'payment_gateway',
+    'xendit_account_holder_id',
+    'xendit_status',
     ];
     
     protected static function booted()

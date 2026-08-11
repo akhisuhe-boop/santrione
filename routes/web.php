@@ -67,6 +67,7 @@ Route::post('/daftar', [PublicRegistrationController::class, 'store'])->name('pu
 // tidak pakai auth/CSRF, verifikasi lewat signature key di dalam
 // controller-nya sendiri).
 Route::post('/webhooks/midtrans', [MidtransWebhookController::class, 'handle'])->name('webhooks.midtrans');
+Route::post('/webhooks/xendit', [\App\Http\Controllers\XenditWebhookController::class, 'handle'])->name('webhooks.xendit');
 
 // Halaman langganan tenant (lihat status trial/aktif, upload bukti
 // transfer manual, atau bayar via Midtrans kalau sudah dikonfigurasi).
