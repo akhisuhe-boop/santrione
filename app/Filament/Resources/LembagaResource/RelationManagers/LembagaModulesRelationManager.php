@@ -27,12 +27,17 @@ class LembagaModulesRelationManager extends RelationManager
 
     protected static ?string $title = 'Modul Aktif';
 
-    // Sama seperti Paket Langganan & Harga Modul — mengaktifkan/menonaktifkan
-    // modul berpengaruh langsung ke tagihan, jadi hanya Platform Admin yang
-    // boleh lihat & kelola tab ini, bukan staf sekolah biasa.
+    // Siapa saja yang sudah bisa MEMBUKA halaman Edit Lembaga ini
+    // (sudah lolos permission Shield untuk resource Lembaga) juga
+    // boleh lihat & kelola tab ini -- BUKAN cuma Platform Admin lagi.
+    // Alasannya: mengaktifkan modul TIDAK memicu pembayaran terpisah
+    // saat itu juga -- biayanya otomatis masuk ke tagihan bulan
+    // berikutnya lewat subscription:generate-monthly-invoice, jadi
+    // aman diberikan ke Yayasan sendiri sebagai self-service, sama
+    // seperti mereka mengatur data Lembaga lainnya.
     public static function canViewForRecord($ownerRecord, string $pageClass): bool
     {
-        return (bool) auth()->user()?->is_platform_admin;
+        return true;
     }
 
     public function form(Form $form): Form
@@ -89,6 +94,7 @@ class LembagaModulesRelationManager extends RelationManager
             ->headerActions([
                 Tables\Actions\CreateAction::make()
                     ->label('Aktifkan Modul')
+                    ->modalDescription('Modul yang diaktifkan akan otomatis masuk ke tagihan bulan berikutnya — tidak perlu bayar terpisah sekarang. Cek dulu harganya di "Lihat Estimasi Tagihan" kalau perlu.')
                     ->mutateFormDataUsing(function (array $data): array {
                         $data['is_active'] = true;
                         $data['aktif_sejak'] = now();
