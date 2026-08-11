@@ -44,7 +44,7 @@ class PublicRegistrationController extends Controller
             'subscription_plan_id' => ['nullable', 'exists:subscription_plans,id'],
         ]);
 
-        [$yayasan, $admin] = DB::transaction(function () use ($data) {
+        [$yayasan, $admin, $lembaga] = DB::transaction(function () use ($data) {
 
             $yayasan = Yayasan::create([
                 'nama' => $data['nama_yayasan'],
@@ -52,6 +52,16 @@ class PublicRegistrationController extends Controller
                 'telepon' => $data['no_hp'] ?? null,
                 // status & trial_ends_at otomatis ke-set 'trial' +
                 // trial_days ke depan lewat Yayasan::booted().
+            ]);
+
+            // Auto-buat 1 Lembaga default -- supaya Yayasan baru bisa
+            // LANGSUNG pilih modul & lihat estimasi tagihan begitu
+            // selesai daftar, tidak perlu buat Lembaga manual dulu.
+            // Nama & jenis-nya generik, Yayasan bebas ganti nanti
+            // lewat form edit Lembaga seperti biasa.
+            $lembaga = $yayasan->lembagas()->create([
+                'nama' => $data['nama_yayasan'],
+                'jenis' => 'Umum',
             ]);
 
             $admin = User::create([
@@ -87,11 +97,17 @@ class PublicRegistrationController extends Controller
                 ]);
             }
 
-            return [$yayasan, $admin];
+            return [$yayasan, $admin, $lembaga];
         });
 
         Auth::guard('web')->login($admin);
 
-        return redirect()->to('/admin/' . $yayasan->slug);
+        // Arahkan LANGSUNG ke halaman edit Lembaga default-nya
+        // (bukan cuma dashboard kosong) -- tab "Modul Aktif" di situ
+        // yang jadi langkah onboarding berikutnya: pilih modul, lihat
+        // estimasi tagihan bulanan, semua reuse fitur yang sudah ada.
+        return redirect()->to(
+            '/admin/' . $yayasan->slug . '/lembagas/' . $lembaga->id . '/edit'
+        )->with('success', 'Selamat datang! Lembaga pertama Anda sudah dibuat otomatis — silakan pilih modul yang mau dipakai di tab "Modul Aktif" di bawah.');
     }
 }
