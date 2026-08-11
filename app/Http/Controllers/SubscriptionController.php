@@ -12,64 +12,19 @@ class SubscriptionController extends Controller
      * Halaman "Langganan Saya" — status trial/aktif, daftar paket,
      * dan riwayat pembayaran.
      */
+    /**
+     * DIRETIRE — halaman ini dulu Blade route publik terpisah, sekarang
+     * digantikan Filament Page App\Filament\Pages\Langganan (di dalam
+     * panel, ada di sidebar). Method ini SEKARANG cuma redirect,
+     * supaya link lama/bookmark lama tidak 404 begitu saja.
+     */
     public function show(Request $request)
     {
-        $user = $request->user();
-        $yayasan = $user->yayasan;
+        $yayasan = $request->user()->yayasan;
 
         abort_if(! $yayasan, 404);
 
-        $plans = SubscriptionPlan::where('is_active', true)
-            ->orderBy('urutan')
-            ->get();
-
-        $subscriptions = $yayasan->subscriptions()
-            ->with(['plan', 'payments'])
-            ->latest()
-            ->get();
-
-        // Estimasi tagihan bulan berjalan -- HITUNG ULANG live lewat
-        // TenantBillingCalculator (sumber kebenaran yang sama dipakai
-        // command autopilot bulanan), bukan angka simpanan terpisah.
-        $estimasi = app(\App\Services\TenantBillingCalculator::class)->hitungYayasan($yayasan);
-
-        // Modul aktif lintas SEMUA Lembaga milik yayasan ini, dengan
-        // nama Lembaga-nya, supaya kelihatan modul mana aktif di mana
-        // (relevan untuk yayasan multi-lembaga).
-        $modulAktif = $yayasan->lembagas()
-            ->with(['activeModules.modulePrice'])
-            ->get()
-            ->flatMap(function ($lembaga) {
-                return $lembaga->activeModules->map(fn ($lm) => [
-                    'lembaga_nama' => $lembaga->nama,
-                    'modul_nama' => $lm->modulePrice->nama,
-                    'harga' => $lm->modulePrice->hargaTagihSekolah(),
-                    'aktif_sejak' => $lm->aktif_sejak,
-                ]);
-            });
-
-        $subscriptionAktif = $yayasan->activeSubscription();
-
-        // Broadcast platform admin yang relevan untuk yayasan ini --
-        // evaluasi ulang target_filter tiap broadcast (lihat
-        // PlatformBroadcast::includesYayasan()), 10 terbaru saja.
-        $broadcasts = \App\Models\PlatformBroadcast::where('status', '!=', 'draft')
-            ->latest('dikirim_pada')
-            ->get()
-            ->filter(fn ($b) => $b->includesYayasan($yayasan))
-            ->take(10);
-
-        return view('public.langganan', [
-            'yayasan' => $yayasan,
-            'plans' => $plans,
-            'subscriptions' => $subscriptions,
-            'estimasi' => $estimasi,
-            'modulAktif' => $modulAktif,
-            'subscriptionAktif' => $subscriptionAktif,
-            'broadcasts' => $broadcasts,
-            'xenditEnabled' => filled(config('services.xendit.secret_key')),
-            'bank' => config('subscription.manual_transfer'),
-        ]);
+        return redirect()->to('/admin/' . $yayasan->slug . '/langganan');
     }
 
     /**

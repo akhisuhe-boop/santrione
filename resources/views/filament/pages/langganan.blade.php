@@ -8,44 +8,45 @@
         $pendingUrl = $this->getPendingPaymentUrl();
         $broadcasts = $this->getBroadcasts();
         $riwayat = $this->getRiwayatPembayaran();
+        $paketFullAktif = $this->isPaketFullAktif();
     @endphp
 
-    {{-- RINGKASAN --}}
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    {{-- HERO: TOTAL TAGIHAN --}}
+    <div class="rounded-2xl bg-gradient-to-br from-primary-600 to-primary-700 dark:from-primary-700 dark:to-primary-900 p-8 text-white shadow-lg">
+        <div class="flex items-start justify-between flex-wrap gap-6">
+            <div>
+                <div class="text-primary-100 text-sm font-medium uppercase tracking-wide">Estimasi Tagihan Bulan Ini</div>
+                <div class="text-4xl font-extrabold mt-1">Rp {{ number_format($estimasi['total'], 0, ',', '.') }}</div>
+                <div class="text-primary-100 text-sm mt-2">{{ $estimasi['total_siswa'] }} siswa · {{ count($estimasi['lembaga']) }} lembaga</div>
+            </div>
 
-        <x-filament::section>
-            <div class="text-sm text-gray-500 mb-1">Estimasi Tagihan Bulan Ini</div>
-            <div class="text-2xl font-bold text-primary-600">Rp {{ number_format($estimasi['total'], 0, ',', '.') }}</div>
-            <div class="text-xs text-gray-400 mt-1">{{ $estimasi['total_siswa'] }} siswa · {{ count($estimasi['lembaga']) }} lembaga</div>
-        </x-filament::section>
+            <div class="text-right">
+                <div class="text-primary-100 text-sm font-medium uppercase tracking-wide">Jatuh Tempo</div>
+                @if ($subAktif?->berakhir_pada)
+                    <div class="text-xl font-bold mt-1">{{ $subAktif->berakhir_pada->locale('id')->translatedFormat('d M Y') }}</div>
+                @else
+                    <div class="text-lg font-semibold text-primary-100 mt-1">Belum ada langganan aktif</div>
+                @endif
 
-        <x-filament::section>
-            <div class="text-sm text-gray-500 mb-1">Jatuh Tempo Berikutnya</div>
-            @if ($subAktif?->berakhir_pada)
-                <div class="text-2xl font-bold text-gray-800">{{ $subAktif->berakhir_pada->locale('id')->translatedFormat('d M Y') }}</div>
-            @else
-                <div class="text-lg font-semibold text-gray-400">Belum ada langganan aktif</div>
-            @endif
-        </x-filament::section>
-
-        <x-filament::section>
-            <div class="text-sm text-gray-500 mb-1">Total Modul Aktif</div>
-            <div class="text-2xl font-bold text-gray-800">{{ collect($estimasi['lembaga'])->sum(fn ($l) => count($l['modul'])) }}</div>
-            <div class="text-xs text-gray-400 mt-1">di seluruh lembaga</div>
-        </x-filament::section>
-
+                @if ($paketFullAktif)
+                    <span class="inline-flex items-center gap-1 mt-2 rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
+                        ⭐ Paket Full Aktif
+                    </span>
+                @endif
+            </div>
+        </div>
     </div>
 
-    {{-- TAGIHAN PENDING --}}
+    {{-- TAGIHAN PENDING / BELUM ADA LANGGANAN --}}
     @if ($pendingUrl)
         <x-filament::section>
             <div class="flex items-center justify-between flex-wrap gap-3">
                 <div>
-                    <div class="font-semibold text-gray-900">Ada tagihan menunggu pembayaran</div>
+                    <div class="font-semibold text-gray-900 dark:text-white">Ada tagihan menunggu pembayaran</div>
                     <div class="text-sm text-gray-500">Selesaikan pembayaran supaya langganan tetap aktif.</div>
                 </div>
                 <a href="{{ $pendingUrl }}" target="_blank">
-                    <x-filament::button color="warning">Bayar Sekarang</x-filament::button>
+                    <x-filament::button color="warning" icon="heroicon-o-credit-card">Bayar Sekarang</x-filament::button>
                 </a>
             </div>
         </x-filament::section>
@@ -53,52 +54,90 @@
         <x-filament::section>
             <div class="flex items-center justify-between flex-wrap gap-3">
                 <div>
-                    <div class="font-semibold text-gray-900">Belum ada langganan aktif</div>
+                    <div class="font-semibold text-gray-900 dark:text-white">Belum ada langganan aktif</div>
                     <div class="text-sm text-gray-500">Aktifkan sekarang lewat Xendit (QRIS / VA / E-Wallet).</div>
                 </div>
-                <x-filament::button wire:click="bayarSekarang" color="primary">
+                <x-filament::button wire:click="bayarSekarang" color="primary" icon="heroicon-o-credit-card">
                     Bayar Sekarang
                 </x-filament::button>
             </div>
         </x-filament::section>
     @endif
 
-    {{-- PILIH MODUL PER LEMBAGA --}}
-    @foreach ($lembagas as $lembaga)
-        <x-filament::section :heading="'Modul — ' . $lembaga->nama">
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                @foreach ($modulOptions as $modul)
-                    @php $aktif = $this->isModuleActive($lembaga->id, $modul->id); @endphp
-
-                    <label class="flex items-center justify-between gap-3 rounded-xl border {{ $aktif ? 'border-primary-400 bg-primary-50' : 'border-gray-200' }} px-4 py-3 text-sm cursor-pointer">
-                        <span class="flex items-center gap-3">
-                            <input
-                                type="checkbox"
-                                wire:click="toggleModule({{ $lembaga->id }}, {{ $modul->id }})"
-                                {{ $aktif ? 'checked' : '' }}
-                                class="rounded text-primary-600 focus:ring-primary-500"
-                            >
-                            <span class="font-medium text-gray-700">{{ $modul->nama }}</span>
-                        </span>
-                        <span class="text-gray-500 text-xs">
-                            {{ $modul->is_gratis ? 'Gratis (dari wali murid)' : 'Rp ' . number_format($modul->harga_bulanan, 0, ',', '.') . '/bln' }}
-                        </span>
-                    </label>
-                @endforeach
+    {{-- PAKET FULL SHORTCUT --}}
+    @if (! $paketFullAktif)
+        <x-filament::section>
+            <div class="flex items-center justify-between flex-wrap gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="rounded-xl bg-warning-100 dark:bg-warning-500/10 p-3">
+                        <x-heroicon-o-sparkles class="w-6 h-6 text-warning-600" />
+                    </div>
+                    <div>
+                        <div class="font-semibold text-gray-900 dark:text-white">Mau semua modul sekaligus?</div>
+                        <div class="text-sm text-gray-500">Aktifkan Paket Full — lebih hemat daripada pilih modul satu-satu.</div>
+                    </div>
+                </div>
+                <x-filament::button wire:click="aktifkanPaketFull" color="warning" outlined>
+                    Aktifkan Paket Full
+                </x-filament::button>
             </div>
-
         </x-filament::section>
-    @endforeach
+    @endif
+
+    {{-- BELUM ADA LEMBAGA --}}
+    @if ($lembagas->isEmpty())
+        <x-filament::section>
+            <div class="text-center py-8">
+                <x-heroicon-o-building-office-2 class="w-10 h-10 mx-auto text-gray-300" />
+                <div class="font-semibold text-gray-900 dark:text-white mt-3">Belum ada Lembaga</div>
+                <p class="text-sm text-gray-500 mt-1 max-w-md mx-auto">
+                    Buat Lembaga (unit sekolah) dulu di menu <strong>Master Data &rarr; Lembaga</strong>, baru Anda bisa pilih modul yang mau diaktifkan di sini.
+                </p>
+                <a href="{{ \App\Filament\Resources\LembagaResource::getUrl('create', tenant: $this->getYayasan()) }}" class="inline-block mt-4">
+                    <x-filament::button icon="heroicon-o-plus">Buat Lembaga</x-filament::button>
+                </a>
+            </div>
+        </x-filament::section>
+    @else
+
+        {{-- PILIH MODUL PER LEMBAGA --}}
+        @foreach ($lembagas as $lembaga)
+            <x-filament::section :heading="'Modul — ' . $lembaga->nama">
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    @foreach ($modulOptions as $modul)
+                        @php $aktif = $this->isModuleActive($lembaga->id, $modul->id); @endphp
+
+                        <label class="flex items-center justify-between gap-3 rounded-xl border transition-colors {{ $aktif ? 'border-primary-400 bg-primary-50 dark:bg-primary-500/10' : 'border-gray-200 dark:border-gray-700 hover:border-primary-300' }} px-4 py-3 text-sm cursor-pointer">
+                            <span class="flex items-center gap-3">
+                                <input
+                                    type="checkbox"
+                                    wire:click="toggleModule({{ $lembaga->id }}, {{ $modul->id }})"
+                                    {{ $aktif ? 'checked' : '' }}
+                                    class="rounded text-primary-600 focus:ring-primary-500"
+                                >
+                                <span class="font-medium text-gray-700 dark:text-gray-200">{{ $modul->nama }}</span>
+                            </span>
+                            <span class="text-gray-500 text-xs font-medium">
+                                {{ $modul->is_gratis ? 'Gratis (dari wali murid)' : 'Rp ' . number_format($modul->harga_bulanan, 0, ',', '.') . '/bln' }}
+                            </span>
+                        </label>
+                    @endforeach
+                </div>
+
+            </x-filament::section>
+        @endforeach
+
+    @endif
 
     {{-- INFO DARI QINARA --}}
     @if ($broadcasts->isNotEmpty())
-        <x-filament::section heading="Info dari Qinara">
+        <x-filament::section heading="Info dari Qinara" icon="heroicon-o-megaphone">
             <div class="space-y-4">
                 @foreach ($broadcasts as $b)
-                    <div class="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
-                        <div class="font-semibold text-gray-800">{{ $b->judul }}</div>
-                        <p class="text-sm text-gray-600 mt-1 whitespace-pre-line">{{ $b->pesan }}</p>
+                    <div class="border-b border-gray-100 dark:border-gray-700 pb-4 last:border-0 last:pb-0">
+                        <div class="font-semibold text-gray-800 dark:text-gray-100">{{ $b->judul }}</div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1 whitespace-pre-line">{{ $b->pesan }}</p>
                         <div class="text-xs text-gray-400 mt-2">{{ $b->dikirim_pada?->locale('id')->translatedFormat('d M Y') }}</div>
                     </div>
                 @endforeach
@@ -107,11 +146,11 @@
     @endif
 
     {{-- RIWAYAT PEMBAYARAN --}}
-    <x-filament::section heading="Riwayat Langganan">
+    <x-filament::section heading="Riwayat Langganan" icon="heroicon-o-clock">
         @forelse ($riwayat as $sub)
-            <div class="flex items-center justify-between text-sm border-b border-gray-100 py-3 last:border-0">
+            <div class="flex items-center justify-between text-sm border-b border-gray-100 dark:border-gray-700 py-3 last:border-0">
                 <div>
-                    <div class="font-medium text-gray-800">{{ $sub->plan->nama ?? '—' }}</div>
+                    <div class="font-medium text-gray-800 dark:text-gray-100">{{ $sub->plan->nama ?? '—' }}</div>
                     <div class="text-gray-400 text-xs">{{ $sub->created_at->locale('id')->translatedFormat('d M Y H:i') }}</div>
                 </div>
                 <x-filament::badge :color="match($sub->status) { 'active' => 'success', 'pending' => 'warning', default => 'gray' }">

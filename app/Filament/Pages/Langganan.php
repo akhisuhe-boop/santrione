@@ -178,6 +178,67 @@ class Langganan extends Page
         }
     }
 
+    /**
+     * Shortcut "Aktifkan Paket Full" -- pindahkan Subscription aktif
+     * ke plan 'paket-full' (termasuk_semua_modul=true, supaya
+     * TenantBillingCalculator tidak menghitung modul dobel di atas
+     * harga flat-nya) DAN aktifkan semua modul di semua Lembaga milik
+     * yayasan ini, supaya tercatat & terlihat "termasuk" di rincian.
+     */
+    public function aktifkanPaketFull(): void
+    {
+        $yayasan = $this->getYayasan();
+        $planFull = \App\Models\SubscriptionPlan::where('slug', 'paket-full')->first();
+
+        if (! $planFull) {
+            Notification::make()->title('Paket Full belum tersedia')->danger()->send();
+
+            return;
+        }
+
+        $subAktif = $yayasan->activeSubscription();
+
+        if ($subAktif) {
+            $subAktif->update(['subscription_plan_id' => $planFull->id]);
+        } else {
+            $yayasan->subscriptions()->create([
+                'subscription_plan_id' => $planFull->id,
+                'status' => 'active',
+                'mulai_pada' => now(),
+                'berakhir_pada' => $yayasan->trial_ends_at ?? now()->addDays(config('subscription.trial_days', 14)),
+            ]);
+        }
+
+        $modulSemua = ModulePrice::aktif()->get();
+
+        foreach ($this->getLembagas() as $lembaga) {
+            foreach ($modulSemua as $mp) {
+                $existing = $lembaga->modules()->where('module_price_id', $mp->id)->first();
+
+                if ($existing) {
+                    $existing->update(['is_active' => true, 'aktif_sejak' => now(), 'nonaktif_sejak' => null]);
+                } else {
+                    $lembaga->modules()->create([
+                        'module_price_id' => $mp->id,
+                        'is_active' => true,
+                        'aktif_sejak' => now(),
+                    ]);
+                }
+            }
+        }
+
+        Notification::make()
+            ->title('Paket Full diaktifkan')
+            ->body('Semua modul sekarang termasuk di seluruh Lembaga Anda.')
+            ->success()
+            ->send();
+    }
+
+    public function isPaketFullAktif(): bool
+    {
+        return (bool) $this->getSubscriptionAktif()?->plan?->termasuk_semua_modul;
+    }
+
     public function getBroadcasts()
     {
         return PlatformBroadcast::where('status', '!=', 'draft')

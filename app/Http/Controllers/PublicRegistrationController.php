@@ -54,13 +54,11 @@ class PublicRegistrationController extends Controller
                 // trial_days ke depan lewat Yayasan::booted().
             ]);
 
-            // Auto-buat 1 Lembaga default -- supaya begitu selesai
-            // daftar, langsung ada Lembaga yang bisa dipilihkan modul
-            // di halaman Langganan, tidak perlu bikin manual dulu.
-            $yayasan->lembagas()->create([
-                'nama' => $data['nama_yayasan'],
-                'jenis' => 'Umum',
-            ]);
+            // TIDAK auto-buat Lembaga lagi -- tenant bikin sendiri
+            // lewat Master Data > Lembaga kapan pun mereka siap
+            // (biasanya sambil eksplorasi produk selama trial). Ini
+            // lebih natural daripada dipaksakan otomatis dengan nama
+            // generik yang kemungkinan besar akan diganti lagi.
 
             $admin = User::create([
                 'name' => $data['nama_admin'],
