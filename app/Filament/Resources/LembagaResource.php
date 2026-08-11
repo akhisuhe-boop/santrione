@@ -183,7 +183,7 @@ class LembagaResource extends BaseResource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\LembagaModulesRelationManager::class,
+            //
         ];
     }
 

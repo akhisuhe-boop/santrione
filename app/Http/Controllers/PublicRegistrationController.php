@@ -19,19 +19,18 @@ class PublicRegistrationController extends Controller
      */
     public function create()
     {
-        $plans = SubscriptionPlan::where('is_active', true)
-            ->orderBy('urutan')
-            ->get();
-
         return view('public.daftar', [
-            'plans' => $plans,
             'trialDays' => config('subscription.trial_days', 14),
         ]);
     }
 
     /**
-     * Proses pendaftaran: bikin Yayasan (status trial) + 1 akun admin,
-     * langsung login-kan, redirect ke panel yayasan itu.
+     * Proses pendaftaran: bikin Yayasan (status trial) + 1 Lembaga
+     * default + 1 akun admin + Subscription dasar (plan "Akses
+     * Platform", supaya menu inti langsung terbuka) — TIDAK ada lagi
+     * pemilihan paket di form ini (dihapus, sesuai keputusan revisi:
+     * paket/harga ditentukan tenant sendiri lewat pilih modul di
+     * halaman "Langganan", bukan di form daftar).
      */
     public function store(Request $request)
     {
@@ -41,25 +40,24 @@ class PublicRegistrationController extends Controller
             'email' => ['required', 'email', 'max:150', 'unique:users,email'],
             'no_hp' => ['nullable', 'string', 'max:20'],
             'password' => ['required', 'confirmed', Password::min(8)],
-            'subscription_plan_id' => ['nullable', 'exists:subscription_plans,id'],
+            'custom_domain' => ['nullable', 'string', 'max:255'],
         ]);
 
-        [$yayasan, $admin, $lembaga] = DB::transaction(function () use ($data) {
+        [$yayasan, $admin] = DB::transaction(function () use ($data) {
 
             $yayasan = Yayasan::create([
                 'nama' => $data['nama_yayasan'],
                 'email' => $data['email'],
                 'telepon' => $data['no_hp'] ?? null,
+                'domain' => $data['custom_domain'] ?? null,
                 // status & trial_ends_at otomatis ke-set 'trial' +
                 // trial_days ke depan lewat Yayasan::booted().
             ]);
 
-            // Auto-buat 1 Lembaga default -- supaya Yayasan baru bisa
-            // LANGSUNG pilih modul & lihat estimasi tagihan begitu
-            // selesai daftar, tidak perlu buat Lembaga manual dulu.
-            // Nama & jenis-nya generik, Yayasan bebas ganti nanti
-            // lewat form edit Lembaga seperti biasa.
-            $lembaga = $yayasan->lembagas()->create([
+            // Auto-buat 1 Lembaga default -- supaya begitu selesai
+            // daftar, langsung ada Lembaga yang bisa dipilihkan modul
+            // di halaman Langganan, tidak perlu bikin manual dulu.
+            $yayasan->lembagas()->create([
                 'nama' => $data['nama_yayasan'],
                 'jenis' => 'Umum',
             ]);
@@ -71,9 +69,6 @@ class PublicRegistrationController extends Controller
                 'yayasan_id' => $yayasan->id,
             ]);
 
-            // Role "Admin Yayasan" dipakai ulang lintas yayasan (sama
-            // seperti alur bikin Yayasan manual dari admin panel) —
-            // lihat catatan lebih lengkap di CreateYayasan::afterCreate().
             $role = Role::firstOrCreate([
                 'name' => 'Admin Yayasan',
                 'guard_name' => 'web',
@@ -85,29 +80,40 @@ class PublicRegistrationController extends Controller
 
             $admin->assignRole($role);
 
-            // Kalau calon customer sempat pilih paket di form, catat
-            // sebagai langganan berstatus 'pending' — BELUM aktif,
-            // BELUM ganti status yayasan (tetap 'trial' sampai memang
-            // dibayar/diverifikasi). Ini cuma jejak "minat" awal supaya
-            // gampang di-follow-up sales/admin.
-            if (! empty($data['subscription_plan_id'])) {
+            // Subscription dasar ke plan "Akses Platform" -- dibuat
+            // OTOMATIS untuk SEMUA yayasan baru (bukan opsional lagi),
+            // supaya:
+            // (a) menu inti (Master Data, Manajemen Sekolah, Master
+            //     Setting) langsung terbuka lewat Yayasan::hasFeature(),
+            // (b) TenantBillingCalculator langsung punya basis hitung
+            //     estimasi yang akurat sejak hari pertama,
+            // (c) Yayasan otomatis "kebaca" oleh command autopilot
+            //     bulanan begitu masa trial berakhir.
+            // berakhir_pada disamakan dengan trial_ends_at -- selama
+            // trial, tidak ditagih (command autopilot cuma proses yang
+            // subscription-nya AKTIF & belum lewat berakhir_pada, jadi
+            // otomatis "aman" sepanjang trial berjalan).
+            $planDasar = SubscriptionPlan::where('slug', 'akses-platform')->first();
+
+            if ($planDasar) {
                 $yayasan->subscriptions()->create([
-                    'subscription_plan_id' => $data['subscription_plan_id'],
-                    'status' => 'pending',
+                    'subscription_plan_id' => $planDasar->id,
+                    'status' => 'active',
+                    'mulai_pada' => now(),
+                    'berakhir_pada' => $yayasan->trial_ends_at ?? now()->addDays(config('subscription.trial_days', 14)),
                 ]);
             }
 
-            return [$yayasan, $admin, $lembaga];
+            return [$yayasan, $admin];
         });
 
         Auth::guard('web')->login($admin);
 
-        // Arahkan LANGSUNG ke halaman edit Lembaga default-nya
-        // (bukan cuma dashboard kosong) -- tab "Modul Aktif" di situ
-        // yang jadi langkah onboarding berikutnya: pilih modul, lihat
-        // estimasi tagihan bulanan, semua reuse fitur yang sudah ada.
+        // Arahkan ke halaman Langganan (bukan dashboard/Lembaga) —
+        // tenant WAJIB lewat sini dulu untuk pilih modul yang mau
+        // dipakai, sebelum eksplorasi fitur lain.
         return redirect()->to(
-            '/admin/' . $yayasan->slug . '/lembagas/' . $lembaga->id . '/edit'
-        )->with('success', 'Selamat datang! Lembaga pertama Anda sudah dibuat otomatis — silakan pilih modul yang mau dipakai di tab "Modul Aktif" di bawah.');
+            '/admin/' . $yayasan->slug . '/langganan'
+        )->with('success', 'Selamat datang! Masa trial 14 hari sudah aktif — silakan pilih modul yang mau dipakai di bawah.');
     }
 }

@@ -147,36 +147,18 @@
 
             </div>
 
-            @if ($plans->isNotEmpty())
-
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">
-                        Rencana Paket Setelah Trial (opsional, bisa dipilih/diganti nanti)
-                    </label>
-
-                    <div class="space-y-2">
-
-                        @foreach ($plans as $plan)
-
-                            <label class="flex items-center justify-between gap-3 rounded-xl border border-slate-200 px-4 py-3 text-sm cursor-pointer hover:border-teal-400">
-
-                                <span class="flex items-center gap-3">
-                                    <input type="radio" name="subscription_plan_id" value="{{ $plan->id }}" class="text-teal-600 focus:ring-teal-500">
-                                    <span class="font-medium text-slate-700">{{ $plan->nama }}</span>
-                                </span>
-
-                                <span class="text-slate-500">
-                                    Rp {{ number_format($plan->harga_bulanan, 0, ',', '.') }} / bulan
-                                </span>
-
-                            </label>
-
-                        @endforeach
-
-                    </div>
-                </div>
-
-            @endif
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">
+                    Custom Domain <span class="text-slate-400 font-normal">(opsional)</span>
+                </label>
+                <input
+                    type="text"
+                    name="custom_domain"
+                    value="{{ old('custom_domain') }}"
+                    placeholder="contoh: sekolahku.qinaraindonesia.id"
+                    class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-teal-500 focus:ring-teal-500">
+                <p class="text-xs text-slate-400 mt-1">Bisa diisi/diganti nanti kalau belum yakin sekarang.</p>
+            </div>
 
             <button
                 type="submit"

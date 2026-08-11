@@ -31,7 +31,17 @@ class SubscriptionPlanSeeder extends Seeder
                 'maks_siswa' => 100,
                 'harga_per_siswa_tambahan' => 1_000,
                 'harga_per_lembaga_tambahan' => 100_000,
-                'fitur' => [],
+                // Menu INTI (bukan modul add-on) -- selalu terbuka
+                // begitu Yayasan punya Subscription aktif ke plan ini
+                // (dibuat otomatis sejak daftar, lihat
+                // PublicRegistrationController::store()). Modul
+                // lainnya (Keuangan, Akademik, dst) TETAP harus
+                // diaktifkan satu-satu lewat halaman Langganan.
+                'fitur' => [
+                    \App\Support\FeatureGate::MASTER_DATA,
+                    \App\Support\FeatureGate::MANAJEMEN_SEKOLAH,
+                    \App\Support\FeatureGate::MASTER_SETTING,
+                ],
                 'termasuk_semua_modul' => false,
                 'is_active' => true,
                 'urutan' => 10,

@@ -228,18 +228,25 @@ class Yayasan extends Model implements HasName
      */
     public function hasFeature(string $key): bool
     {
-        if ($this->status === 'trial') {
-            return $this->isOnTrial();
-        }
-
-        if ($this->status !== 'active') {
+        // REVISI: sebelumnya trial = buka SEMUA menu tanpa syarat
+        // (bypass total). Diubah supaya trial & active diperlakukan
+        // SAMA untuk keperluan gating -- modul yang menentukan menu
+        // terbuka, bukan status trial/active. Ini penting supaya
+        // halaman "Langganan" (pilih modul) benar-benar berarti sejak
+        // hari pertama, bukan cuma preferensi billing pasca-trial.
+        if (! in_array($this->status, ['trial', 'active'], true)) {
             return false;
         }
 
         $subscription = $this->activeSubscription();
 
         // Grandfathered: tidak pernah ada baris subscription sama
-        // sekali -> anggap semua fitur terbuka.
+        // sekali -> anggap semua fitur terbuka. Ini murni untuk
+        // Yayasan LAMA yang sudah ada sebelum sistem billing baru ini
+        // (belum pernah punya Subscription record apapun) -- Yayasan
+        // BARU selalu langsung dapat Subscription otomatis saat
+        // daftar (lihat PublicRegistrationController), jadi baris ini
+        // tidak berlaku untuk mereka.
         if (! $this->subscriptions()->exists()) {
             return true;
         }
