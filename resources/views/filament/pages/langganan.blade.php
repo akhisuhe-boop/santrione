@@ -11,37 +11,28 @@
         $paketFullAktif = $this->isPaketFullAktif();
     @endphp
 
-    {{-- HERO: TOTAL TAGIHAN --}}
-    <div
-        class="rounded-2xl p-8 text-white shadow-lg"
-        style="background: linear-gradient(135deg, #0f9c94 0%, #0b7a73 100%);"
-    >
-        <div class="flex items-start justify-between flex-wrap gap-6">
-            <div>
-                <div class="text-sm font-medium uppercase tracking-wide" style="color: rgba(255,255,255,0.8);">Invoice Bulan Ini</div>
-                <div class="text-4xl font-extrabold mt-1" style="color: #ffffff;">Rp {{ number_format($estimasi['total'], 0, ',', '.') }}</div>
-                <div class="text-sm mt-2" style="color: rgba(255,255,255,0.8);">{{ $estimasi['total_siswa'] }} siswa · {{ count($estimasi['lembaga']) }} lembaga</div>
+    {{-- TAGIHAN BULANAN --}}
+    <x-filament::section heading="Tagihan Bulanan" icon="heroicon-o-document-text">
+
+        <div class="flex items-center justify-between flex-wrap gap-3 mb-4 text-sm">
+            <div class="text-gray-500">
+                {{ $estimasi['total_siswa'] }} siswa · {{ count($estimasi['lembaga']) }} lembaga
             </div>
 
-            <div class="text-right">
-                <div class="text-sm font-medium uppercase tracking-wide" style="color: rgba(255,255,255,0.8);">Jatuh Tempo</div>
-                @if ($subAktif?->berakhir_pada)
-                    <div class="text-xl font-bold mt-1" style="color: #ffffff;">{{ $subAktif->berakhir_pada->locale('id')->translatedFormat('d M Y') }}</div>
-                @else
-                    <div class="text-lg font-semibold mt-1" style="color: rgba(255,255,255,0.8);">Belum ada langganan aktif</div>
+            <div class="flex items-center gap-3">
+                @if ($paketFullAktif)
+                    <x-filament::badge color="warning" icon="heroicon-o-sparkles">Paket Full Aktif</x-filament::badge>
                 @endif
 
-                @if ($paketFullAktif)
-                    <span class="inline-flex items-center gap-1 mt-2 rounded-full px-3 py-1 text-xs font-semibold" style="background: rgba(255,255,255,0.2); color: #ffffff;">
-                        ⭐ Paket Full Aktif
+                <div class="text-gray-500">
+                    Jatuh Tempo:
+                    <span class="font-semibold text-gray-800 dark:text-gray-100">
+                        {{ $subAktif?->berakhir_pada?->locale('id')->translatedFormat('d M Y') ?? 'Belum ada langganan aktif' }}
                     </span>
-                @endif
+                </div>
             </div>
         </div>
-    </div>
 
-    {{-- RINCIAN INVOICE PER LEMBAGA --}}
-    <x-filament::section heading="Rincian Invoice per Lembaga" icon="heroicon-o-document-text">
         <div class="overflow-x-auto -mx-2">
             <table class="w-full text-sm">
                 <thead>
