@@ -52,9 +52,12 @@ class XenditService
     public function daftarkanSubAccount(Lembaga $lembaga): array
     {
         $response = Http::withHeaders($this->authHeader())
-            ->post('https://api.xendit.co/v2/account_holders', [
+            ->post('https://api.xendit.co/v2/accounts', [
                 'type' => 'MANAGED',
                 'email' => $lembaga->yayasan?->email ?? "lembaga{$lembaga->id}@qinaraindonesia.id",
+                'public_profile' => [
+                    'business_name' => $lembaga->nama,
+                ],
                 'country' => 'ID',
                 'business_profile' => [
                     'business_name' => $lembaga->nama,
@@ -112,20 +115,32 @@ class XenditService
                     'channel_code' => 'DANA', // QRIS dinamis lintas-channel di Xendit direpresentasikan lewat QR_CODE payment method
                 ],
             ],
+            // Sengaja HANYA route porsi Lembaga (sub-account) secara
+            // eksplisit -- sisa dana (fee Qinara) diasumsikan otomatis
+            // tetap di saldo akun utama tanpa perlu destination_account_id
+            // terpisah, supaya tidak bergantung pada 1 ID yang belum
+            // 100% terverifikasi formatnya benar untuk keperluan split.
+            // WAJIB dicek ulang saat testing: apakah asumsi ini benar,
+            // atau Xendit tetap mewajibkan route eksplisit untuk sisa
+            // dana juga -- kalau begitu, isi XENDIT_MAIN_ACCOUNT_ID dan
+            // aktifkan blok kedua di bawah.
             'routes' => [
                 [
                     'destination_account_id' => $lembaga->xendit_account_holder_id,
                     'amount' => $porsiLembaga,
                 ],
-                [
-                    'destination_account_id' => config('services.xendit.main_account_id'),
-                    'amount' => $feeQinara,
-                ],
             ],
         ];
 
+        if ($mainAccountId = config('services.xendit.main_account_id')) {
+            $payload['routes'][] = [
+                'destination_account_id' => $mainAccountId,
+                'amount' => $feeQinara,
+            ];
+        }
+
         $response = Http::withHeaders($this->authHeader())
-            ->post('https://api.xendit.co/payment_requests', $payload);
+            ->post('https://api.xendit.co/v3/payment_requests', $payload);
 
         if ($response->failed()) {
             Log::error('XenditService::buatPaymentRequest gagal', [
