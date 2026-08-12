@@ -73,6 +73,10 @@ class PlatformPanelProvider extends PanelProvider
             ->pages([
                 \Filament\Pages\Dashboard::class,
             ])
+            ->discoverPages(
+                in: app_path('Filament/Platform/Pages'),
+                for: 'App\\Filament\\Platform\\Pages'
+            )
             ->navigationGroups([
                 NavigationGroup::make('Yayasan')
                     ->icon('heroicon-o-building-office-2'),
