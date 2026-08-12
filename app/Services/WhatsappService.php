@@ -57,4 +57,49 @@ class WhatsappService
 
         }
     }
+
+    /**
+     * Kirim WA pakai kredensial QINARA SENDIRI (config/services.php
+     * -> qinara_whatsapp), TIDAK meminjam WhatsappSetting Lembaga
+     * manapun -- KHUSUS notifikasi level platform (tagihan
+     * langganan, broadcast, reminder trial). Struktur request HTTP
+     * SAMA PERSIS dengan send() di atas (provider Xsender yang sama),
+     * cuma sumber kredensialnya beda.
+     */
+    public static function sendPlatform($phone, $message)
+    {
+        try {
+            $apiUrl = config('services.qinara_whatsapp.api_url');
+            $token = config('services.qinara_whatsapp.token');
+            $sender = config('services.qinara_whatsapp.sender');
+
+            if (! $apiUrl || ! $token || ! $sender) {
+                Log::error('WhatsappService::sendPlatform: kredensial QINARA_WHATSAPP_* belum lengkap di .env');
+
+                return false;
+            }
+
+            $phone = preg_replace('/^0/', '62', $phone);
+
+            $response = Http::asForm()->post($apiUrl, [
+                'api_key' => $token,
+                'sender'  => $sender,
+                'number'  => $phone,
+                'message' => $message,
+            ]);
+
+            Log::info('XSENDER RESPONSE (platform)', [
+                'status' => $response->status(),
+                'body'   => $response->body(),
+            ]);
+
+            return $response->successful();
+
+        } catch (\Exception $e) {
+
+            Log::error('XSender Error (platform): ' . $e->getMessage());
+
+            return false;
+        }
+    }
 }

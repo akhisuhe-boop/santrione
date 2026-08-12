@@ -55,4 +55,16 @@ return [
     'main_account_id' => env('XENDIT_MAIN_ACCOUNT_ID'), // ID akun utama Qinara (bukan sub-account Lembaga) untuk terima porsi fee
     ],
 
+    // Kredensial WA MILIK QINARA SENDIRI (Xsender, provider yang sama
+    // dipakai sekolah lewat WhatsappSetting per-Lembaga) -- KHUSUS
+    // untuk notifikasi platform ke tenant (tagihan langganan,
+    // broadcast, reminder trial). SENGAJA terpisah dari
+    // WhatsappSetting per-Lembaga -- notifikasi platform TIDAK BOLEH
+    // meminjam nomor WA sekolah manapun.
+    'qinara_whatsapp' => [
+    'api_url' => env('QINARA_WHATSAPP_API_URL'),
+    'token'   => env('QINARA_WHATSAPP_TOKEN'),
+    'sender'  => env('QINARA_WHATSAPP_SENDER'),
+    ],
+
 ];

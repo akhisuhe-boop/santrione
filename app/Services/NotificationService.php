@@ -18,6 +18,16 @@ class NotificationService
         SendWhatsappJob::dispatch($phone, $message, $lembagaId);
     }
 
+    /**
+     * KHUSUS notifikasi level platform (tagihan langganan, broadcast,
+     * reminder trial) -- SELALU pakai kredensial WA milik Qinara
+     * sendiri, TIDAK PERNAH meminjam WhatsappSetting Lembaga manapun.
+     */
+    public static function waPlatform($phone, $message)
+    {
+        \App\Jobs\SendPlatformWhatsappJob::dispatch($phone, $message);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | FORMAT NOMOR
@@ -846,7 +856,7 @@ class NotificationService
         // lembagaId sengaja null -> WhatsappService fallback ke setting WA
         // aktif pertama yang ditemukan, karena ini notifikasi level
         // Yayasan/platform, bukan spesifik 1 Lembaga tertentu.
-        self::wa($nomor, $pesan, null);
+        self::waPlatform($nomor, $pesan);
     }
 
     /*
@@ -870,7 +880,7 @@ class NotificationService
             $pesan . "\n\n" .
             "— Tim Qinara Apps";
 
-        self::wa($nomor, $isiLengkap, null);
+        self::waPlatform($nomor, $isiLengkap);
 
         return true;
     }
@@ -899,7 +909,7 @@ class NotificationService
             "Segera pilih modul yang mau dilanjutkan dan lakukan pembayaran di menu \"Langganan\" supaya akses tidak terputus.\n\n" .
             "Terima kasih telah mencoba Qinara Apps.";
 
-        self::wa($nomor, $pesan, null);
+        self::waPlatform($nomor, $pesan);
 
         return true;
     }
