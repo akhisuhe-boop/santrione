@@ -55,4 +55,31 @@ class LaporanPembayaran extends Page
     {
         return (int) collect($this->getLaporan())->sum('total_bulan');
     }
+
+    /**
+     * Ringkasan per Yayasan, DIGABUNG semua bulan (bukan dipecah
+     * per periode seperti getLaporan()) -- untuk jawab "Yayasan A
+     * total sekian, Yayasan B total sekian" secara langsung, tanpa
+     * perlu jumlah manual dari tabel per-bulan.
+     */
+    public function getLaporanPerYayasan(): array
+    {
+        $payments = SubscriptionPayment::where('status', 'berhasil')
+            ->with('subscription.yayasan')
+            ->get()
+            ->filter(fn ($p) => $p->subscription?->yayasan);
+
+        return $payments
+            ->groupBy(fn ($p) => $p->subscription->yayasan_id)
+            ->map(function ($grupYayasan) {
+                return [
+                    'yayasan_nama' => $grupYayasan->first()->subscription->yayasan->nama,
+                    'jumlah_transaksi' => $grupYayasan->count(),
+                    'total' => $grupYayasan->sum('jumlah'),
+                ];
+            })
+            ->sortByDesc('total')
+            ->values()
+            ->toArray();
+    }
 }
