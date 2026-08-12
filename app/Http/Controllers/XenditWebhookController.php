@@ -83,6 +83,13 @@ class XenditWebhookController extends Controller
                 $payment->update(['status' => 'berhasil']);
 
                 $subscription = $payment->subscription;
+                $yayasan = $subscription->yayasan;
+
+                // Cek status SEBELUM update -- supaya notifikasi "aplikasi
+                // aktif" cuma terkirim saat AKTIVASI PERTAMA (trial->active
+                // atau suspended->active), BUKAN tiap perpanjangan bulanan
+                // rutin (yang sudah punya notifikasi tagihan sendiri).
+                $statusSebelumnya = $yayasan->status;
 
                 $subscription->update([
                     'status' => 'active',
@@ -90,7 +97,15 @@ class XenditWebhookController extends Controller
                     'berakhir_pada' => now()->addMonth(),
                 ]);
 
-                $subscription->yayasan->update(['status' => 'active']);
+                $yayasan->update(['status' => 'active']);
+
+                if ($statusSebelumnya !== 'active') {
+                    try {
+                        \App\Services\NotificationService::sendAplikasiAktif($yayasan);
+                    } catch (\Throwable $e) {
+                        Log::error("XenditWebhookController: gagal kirim notif aplikasi aktif untuk yayasan {$yayasan->id}: {$e->getMessage()}");
+                    }
+                }
 
             } else {
                 $payment->update(['status' => 'gagal']);

@@ -127,6 +127,8 @@ class SubscriptionPaymentResource extends BaseResource
                         ]);
 
                         $subscription = $record->subscription;
+                        $yayasan = $subscription->yayasan;
+                        $statusSebelumnya = $yayasan->status;
 
                         $subscription->update([
                             'status' => 'active',
@@ -134,7 +136,15 @@ class SubscriptionPaymentResource extends BaseResource
                             'berakhir_pada' => now()->addMonth(),
                         ]);
 
-                        $subscription->yayasan->update(['status' => 'active']);
+                        $yayasan->update(['status' => 'active']);
+
+                        if ($statusSebelumnya !== 'active') {
+                            try {
+                                \App\Services\NotificationService::sendAplikasiAktif($yayasan);
+                            } catch (\Throwable $e) {
+                                \Illuminate\Support\Facades\Log::error("SubscriptionPaymentResource: gagal kirim notif aplikasi aktif untuk yayasan {$yayasan->id}: {$e->getMessage()}");
+                            }
+                        }
 
                         Notification::make()
                             ->title('Langganan diaktifkan')

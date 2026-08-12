@@ -38,5 +38,36 @@ class NotificationTemplateSeeder extends Seeder
                 'keterangan_placeholder' => '{nama_yayasan}, {sisa_hari} (angka, contoh: 7), {tanggal_berakhir} (format tanggal Indonesia)',
             ]
         );
+
+        NotificationTemplate::updateOrCreate(
+            ['key' => 'pendaftaran_berhasil'],
+            [
+                'nama' => 'Pendaftaran Berhasil (Selamat Datang)',
+                'template' =>
+                    "*SELAMAT DATANG DI QINARA APPS!*\n\n" .
+                    "Yth. {nama_admin},\n\n" .
+                    "Pendaftaran *{nama_yayasan}* berhasil. Masa coba gratis *14 hari* sudah aktif sampai *{tanggal_trial_berakhir}*.\n\n" .
+                    "Berikut info login Anda:\n" .
+                    "Email  : {email}\n" .
+                    "Password : {password}\n\n" .
+                    "Login di: {link_login}\n\n" .
+                    "Selamat mencoba semua fitur Qinara Apps!",
+                'keterangan_placeholder' => '{nama_admin}, {nama_yayasan}, {tanggal_trial_berakhir}, {email}, {password} (plaintext, cuma sekali di pesan ini), {link_login}',
+            ]
+        );
+
+        NotificationTemplate::updateOrCreate(
+            ['key' => 'aplikasi_aktif'],
+            [
+                'nama' => 'Langganan/Aplikasi Aktif (Setelah Bayar)',
+                'template' =>
+                    "*LANGGANAN QINARA APPS AKTIF*\n\n" .
+                    "Yth. {nama_yayasan},\n\n" .
+                    "Terima kasih! Pembayaran Anda berhasil dikonfirmasi dan langganan sekarang *AKTIF PENUH*.\n\n" .
+                    "Semua modul yang Anda pilih dapat langsung digunakan.\n\n" .
+                    "Terima kasih telah mempercayai Qinara Apps.",
+                'keterangan_placeholder' => '{nama_yayasan}',
+            ]
+        );
     }
 }

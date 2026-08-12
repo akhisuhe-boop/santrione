@@ -925,4 +925,61 @@ class NotificationService
         return true;
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | PENDAFTARAN BERHASIL & AKTIVASI
+    |--------------------------------------------------------------------------
+    */
+
+    public static function sendPendaftaranBerhasil($yayasan, string $namaAdmin, string $email, string $password): bool
+    {
+        $nomor = $yayasan->telepon ?? null;
+
+        if (! $nomor) {
+            return false;
+        }
+
+        $nomor = self::formatPhone($nomor);
+        $tanggalTrial = $yayasan->trial_ends_at?->locale('id')->translatedFormat('d M Y') ?? '-';
+
+        $pesan = \App\Models\NotificationTemplate::render('pendaftaran_berhasil', [
+            'nama_admin' => $namaAdmin,
+            'nama_yayasan' => $yayasan->nama,
+            'tanggal_trial_berakhir' => $tanggalTrial,
+            'email' => $email,
+            'password' => $password,
+            'link_login' => rtrim(config('app.url'), '/') . '/admin/' . $yayasan->slug,
+        ], default:
+            "*SELAMAT DATANG DI QINARA APPS!*\n\n" .
+            "Yth. {$namaAdmin},\n\n" .
+            "Pendaftaran *{$yayasan->nama}* berhasil. Masa coba gratis 14 hari sudah aktif sampai {$tanggalTrial}.\n\n" .
+            "Email: {$email}\nPassword: {$password}"
+        );
+
+        self::waPlatform($nomor, $pesan);
+
+        return true;
+    }
+
+    public static function sendAplikasiAktif($yayasan): bool
+    {
+        $nomor = $yayasan->telepon ?? null;
+
+        if (! $nomor) {
+            return false;
+        }
+
+        $nomor = self::formatPhone($nomor);
+
+        $pesan = \App\Models\NotificationTemplate::render('aplikasi_aktif', [
+            'nama_yayasan' => $yayasan->nama,
+        ], default:
+            "*LANGGANAN QINARA APPS AKTIF*\n\nYth. {$yayasan->nama},\n\nPembayaran berhasil, langganan sekarang aktif penuh."
+        );
+
+        self::waPlatform($nomor, $pesan);
+
+        return true;
+    }
+
 }

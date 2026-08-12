@@ -44,24 +44,31 @@ class NotificationTemplateResource extends \App\Filament\Resources\BaseResource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('nama')
-                ->required()
-                ->maxLength(150),
+            Forms\Components\Section::make('Info Template')
+                ->schema([
+                    Forms\Components\TextInput::make('nama')
+                        ->required()
+                        ->maxLength(150),
 
-            Forms\Components\TextInput::make('key')
-                ->label('Key (jangan diubah)')
-                ->disabled()
-                ->dehydrated(false),
+                    Forms\Components\TextInput::make('key')
+                        ->label('Key (jangan diubah)')
+                        ->disabled()
+                        ->dehydrated(false),
+                ])
+                ->columns(2),
 
-            Forms\Components\Textarea::make('template')
-                ->label('Isi Pesan')
-                ->required()
-                ->rows(10)
-                ->helperText('Pakai {nama_placeholder} untuk bagian yang diganti otomatis — lihat daftar placeholder yang tersedia di bawah.'),
+            Forms\Components\Section::make('Isi Pesan')
+                ->schema([
+                    Forms\Components\Textarea::make('template')
+                        ->label('Isi Pesan')
+                        ->required()
+                        ->rows(10)
+                        ->helperText('Pakai {nama_placeholder} untuk bagian yang diganti otomatis — lihat daftar placeholder yang tersedia di bawah.'),
 
-            Forms\Components\Placeholder::make('keterangan_placeholder')
-                ->label('Placeholder yang tersedia')
-                ->content(fn ($record) => $record?->keterangan_placeholder ?? '—'),
+                    Forms\Components\Placeholder::make('keterangan_placeholder')
+                        ->label('Placeholder yang tersedia')
+                        ->content(fn ($record) => $record?->keterangan_placeholder ?? '—'),
+                ]),
         ]);
     }
 

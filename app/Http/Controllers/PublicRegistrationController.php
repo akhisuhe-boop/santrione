@@ -105,6 +105,19 @@ class PublicRegistrationController extends Controller
             return [$yayasan, $admin];
         });
 
+        try {
+            \App\Services\NotificationService::sendPendaftaranBerhasil(
+                $yayasan,
+                $data['nama_admin'],
+                $data['email'],
+                $data['password']
+            );
+        } catch (\Throwable $e) {
+            // Gagal kirim WA welcome TIDAK boleh menggagalkan pendaftaran
+            // yang sudah sukses -- cukup dicatat ke log.
+            \Illuminate\Support\Facades\Log::error("PublicRegistrationController: gagal kirim WA welcome untuk yayasan {$yayasan->id}: {$e->getMessage()}");
+        }
+
         Auth::guard('web')->login($admin);
 
         // Arahkan ke Dashboard biasa (BUKAN halaman Langganan) --
