@@ -42,51 +42,62 @@ class PlatformBroadcastResource extends \App\Filament\Resources\BaseResource
 
     public static function canDelete($record = null): bool
     {
-        return false;
+        return (bool) auth()->user()?->is_platform_admin;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return (bool) auth()->user()?->is_platform_admin;
     }
 
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('judul')
-                ->label('Judul')
-                ->required()
-                ->maxLength(150),
+            Forms\Components\Section::make('Isi Broadcast')
+                ->schema([
+                    Forms\Components\TextInput::make('judul')
+                        ->label('Judul')
+                        ->required()
+                        ->maxLength(150),
 
-            Forms\Components\Textarea::make('pesan')
-                ->label('Isi Pesan')
-                ->required()
-                ->rows(6)
-                ->helperText('Judul akan otomatis ditebalkan dan ditambah salam penutup "— Tim Qinara Apps" saat dikirim.'),
+                    Forms\Components\Textarea::make('pesan')
+                        ->label('Isi Pesan')
+                        ->required()
+                        ->rows(6)
+                        ->helperText('Judul akan otomatis ditebalkan dan ditambah salam penutup "— Tim Qinara Apps" saat dikirim.'),
+                ]),
 
-            Forms\Components\Select::make('target_tipe')
-                ->label('Kirim ke')
-                ->options([
-                    'semua' => 'Semua Yayasan',
-                    'status' => 'Berdasarkan Status',
-                    'manual' => 'Pilih Manual',
-                ])
-                ->default('semua')
-                ->live()
-                ->required(),
+            Forms\Components\Section::make('Target Penerima')
+                ->schema([
+                    Forms\Components\Select::make('target_tipe')
+                        ->label('Kirim ke')
+                        ->options([
+                            'semua' => 'Semua Yayasan',
+                            'status' => 'Berdasarkan Status',
+                            'manual' => 'Pilih Manual',
+                        ])
+                        ->default('semua')
+                        ->live()
+                        ->required(),
 
-            Forms\Components\Select::make('target_status')
-                ->label('Status Yayasan')
-                ->multiple()
-                ->options([
-                    'trial' => 'Trial',
-                    'active' => 'Active',
-                    'suspended' => 'Suspended',
-                    'cancelled' => 'Cancelled',
-                ])
-                ->visible(fn (Forms\Get $get) => $get('target_tipe') === 'status'),
+                    Forms\Components\Select::make('target_status')
+                        ->label('Status Yayasan')
+                        ->multiple()
+                        ->options([
+                            'trial' => 'Trial',
+                            'active' => 'Active',
+                            'suspended' => 'Suspended',
+                            'cancelled' => 'Cancelled',
+                        ])
+                        ->visible(fn (Forms\Get $get) => $get('target_tipe') === 'status'),
 
-            Forms\Components\Select::make('target_yayasan_ids')
-                ->label('Pilih Yayasan')
-                ->multiple()
-                ->options(fn () => Yayasan::withoutGlobalScopes()->pluck('nama', 'id'))
-                ->searchable()
-                ->visible(fn (Forms\Get $get) => $get('target_tipe') === 'manual'),
+                    Forms\Components\Select::make('target_yayasan_ids')
+                        ->label('Pilih Yayasan')
+                        ->multiple()
+                        ->options(fn () => Yayasan::withoutGlobalScopes()->pluck('nama', 'id'))
+                        ->searchable()
+                        ->visible(fn (Forms\Get $get) => $get('target_tipe') === 'manual'),
+                ]),
         ]);
     }
 
@@ -122,6 +133,11 @@ class PlatformBroadcastResource extends \App\Filament\Resources\BaseResource
                     ->dateTime('d M Y H:i')
                     ->placeholder('—')
                     ->sortable(),
+            ])
+            ->bulkActions([
+                Tables\Actions\DeleteBulkAction::make()
+                    ->label('Hapus Riwayat Terpilih')
+                    ->modalDescription('Ini cuma menghapus RIWAYAT broadcast (log), TIDAK menarik kembali pesan WA yang sudah terkirim ke tenant.'),
             ])
             ->defaultSort('created_at', 'desc');
     }
