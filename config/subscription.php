@@ -15,6 +15,11 @@ return [
 
     'trial_days' => env('SUBSCRIPTION_TRIAL_DAYS', 14),
 
+    // Yayasan trial yang habis TANPA pernah bayar sama sekali dihapus
+    // permanen setelah sekian hari lewat trial_ends_at (lihat
+    // command subscription:purge-expired-trials).
+    'purge_trial_after_days' => env('SUBSCRIPTION_PURGE_TRIAL_AFTER_DAYS', 14),
+
     /*
     |--------------------------------------------------------------------------
     | Masa Tenggang Setelah Langganan Berakhir

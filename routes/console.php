@@ -24,3 +24,10 @@ Schedule::command('subscription:generate-monthly-invoice')->monthlyOn(1, '02:00'
 // Reminder WA H-7/H-3/H-1 sebelum trial habis — jam 09:00 (jam kerja,
 // supaya notifikasi WA tidak masuk tengah malam).
 Schedule::command('subscription:send-trial-reminders')->dailyAt('09:00');
+
+// Hapus permanen Yayasan trial yang sudah habis >14 hari (default,
+// bisa diatur lewat SUBSCRIPTION_PURGE_TRIAL_AFTER_DAYS) dan TIDAK
+// PERNAH bayar sama sekali -- mingguan (bukan harian, penghapusan
+// permanen tidak perlu buru-buru), Senin jam 03:00 (dini hari, di
+// luar jam sibuk).
+Schedule::command('subscription:purge-expired-trials')->weeklyOn(1, '03:00');
