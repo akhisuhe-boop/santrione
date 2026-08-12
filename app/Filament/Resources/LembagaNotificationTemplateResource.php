@@ -20,7 +20,7 @@ use Filament\Tables\Table;
 class LembagaNotificationTemplateResource extends BaseResource
 {
     protected static ?string $model = LembagaNotificationTemplate::class;
-    protected static ?string $navigationGroup = 'Pengaturan';
+    protected static ?string $navigationGroup = 'Master Setting';
     protected static ?string $navigationLabel = 'Template Notifikasi Sekolah';
     protected static ?string $modelLabel = 'Template Notifikasi';
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
@@ -28,25 +28,45 @@ class LembagaNotificationTemplateResource extends BaseResource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\Select::make('lembaga_id')
-                ->label('Lembaga')
-                ->options(fn () => Lembaga::pluck('nama', 'id'))
-                ->required()
-                ->searchable(),
+            Forms\Components\Section::make('Target Redaksi')
+                ->schema([
+                    Forms\Components\Select::make('lembaga_id')
+                        ->label('Lembaga')
+                        ->options(fn () => Lembaga::pluck('nama', 'id'))
+                        ->required()
+                        ->searchable(),
 
-            Forms\Components\Select::make('key')
-                ->label('Jenis Notifikasi')
-                ->options(fn () => collect(NotificationType::all())->mapWithKeys(
-                    fn ($item, $key) => [$key => $item['nama'] . ' (' . $item['kategori'] . ')']
-                ))
-                ->required()
-                ->searchable(),
+                    Forms\Components\Select::make('key')
+                        ->label('Jenis Notifikasi')
+                        ->options(fn () => collect(NotificationType::all())->mapWithKeys(
+                            fn ($item, $key) => [$key => $item['nama'] . ' (' . $item['kategori'] . ')']
+                        ))
+                        ->required()
+                        ->searchable()
+                        ->live(),
+                ])
+                ->columns(2),
 
-            Forms\Components\Textarea::make('template')
-                ->label('Redaksi Kustom')
-                ->required()
-                ->rows(8)
-                ->helperText('Pakai {nama_placeholder} untuk bagian yang diganti otomatis, mengikuti placeholder yang tersedia di jenis notifikasi terkait.'),
+            Forms\Components\Section::make('Isi Pesan')
+                ->schema([
+                    Forms\Components\Placeholder::make('placeholder_tersedia')
+                        ->label('Placeholder yang tersedia untuk jenis ini')
+                        ->content(function (Forms\Get $get) {
+                            $key = $get('key');
+
+                            if (blank($key)) {
+                                return 'Pilih "Jenis Notifikasi" dulu di atas untuk lihat placeholder yang tersedia.';
+                            }
+
+                            return NotificationType::all()[$key]['placeholder'] ?? '—';
+                        }),
+
+                    Forms\Components\Textarea::make('template')
+                        ->label('Redaksi Kustom')
+                        ->required()
+                        ->rows(8)
+                        ->helperText('Salin persis nama placeholder di atas (termasuk kurung kurawal), sisanya bebas ditulis sesuai gaya sekolah.'),
+                ]),
         ]);
     }
 

@@ -10,8 +10,8 @@
 
             @foreach ($this->getKatalogPerKategori() as $kategori => $items)
 
-                <div class="mb-6 last:mb-0">
-                    <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">{{ $kategori }}</h3>
+                <div class="mb-8 last:mb-0 pt-6 border-t border-gray-100 dark:border-gray-700 first:pt-0 first:border-0">
+                    <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">{{ $kategori }}</h3>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         @foreach ($items as $item)

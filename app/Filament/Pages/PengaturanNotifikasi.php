@@ -25,7 +25,7 @@ class PengaturanNotifikasi extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-bell';
     protected static ?string $navigationLabel = 'Pengaturan Notifikasi';
-    protected static ?string $navigationGroup = 'Pengaturan';
+    protected static ?string $navigationGroup = 'Master Setting';
     protected static ?string $title = 'Pengaturan Notifikasi WhatsApp';
 
     protected static string $view = 'filament.pages.pengaturan-notifikasi';
