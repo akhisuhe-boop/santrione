@@ -37,6 +37,12 @@
         {{-- HEADER --}}
         <div class="text-center mb-6">
 
+            <img
+                src="{{ asset('images/qinara-apps-logo.png') }}"
+                alt="Qinara Apps"
+                class="w-48 md:w-56 object-contain mx-auto mb-4"
+            >
+
             <p class="text-slate-500 text-sm">
                 Daftar Yayasan Baru
             </p>
