@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
             AdminSeeder::class,
             SubscriptionPlanSeeder::class,
             ModulePriceSeeder::class,
+            NotificationTemplateSeeder::class,
         ]);
     }
 }

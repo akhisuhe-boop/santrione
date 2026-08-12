@@ -69,9 +69,11 @@ class WhatsappService
     public static function sendPlatform($phone, $message)
     {
         try {
-            $apiUrl = config('services.qinara_whatsapp.api_url');
-            $token = config('services.qinara_whatsapp.token');
-            $sender = config('services.qinara_whatsapp.sender');
+            $setting = \App\Models\PlatformWhatsappSetting::current();
+
+            $apiUrl = $setting->api_url ?: config('services.qinara_whatsapp.api_url');
+            $token = $setting->token ?: config('services.qinara_whatsapp.token');
+            $sender = $setting->sender ?: config('services.qinara_whatsapp.sender');
 
             if (! $apiUrl || ! $token || ! $sender) {
                 Log::error('WhatsappService::sendPlatform: kredensial QINARA_WHATSAPP_* belum lengkap di .env');

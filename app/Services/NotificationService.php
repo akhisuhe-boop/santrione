@@ -842,16 +842,22 @@ class NotificationService
         }
 
         $nomor = self::formatPhone($nomor);
-        $bulan = Carbon::createFromFormat('Y-m', $periode)->translatedFormat('F Y');
+        $bulan = Carbon::createFromFormat('Y-m', $periode)->locale('id')->translatedFormat('F Y');
 
-        $pesan =
+        $pesan = \App\Models\NotificationTemplate::render('tagihan_subscription', [
+            'nama_yayasan' => $yayasan->nama,
+            'periode' => $bulan,
+            'total_tagihan' => 'Rp ' . number_format($totalTagihan, 0, ',', '.'),
+            'link_pembayaran' => $paymentUrl,
+        ], default:
             "*TAGIHAN LANGGANAN QINARA APPS*\n\n" .
             "Yth. {$yayasan->nama},\n\n" .
             "Tagihan langganan periode *{$bulan}* telah terbit.\n\n" .
             "Total Tagihan : *Rp " . number_format($totalTagihan, 0, ',', '.') . "*\n\n" .
             "Silakan lakukan pembayaran melalui link berikut:\n" .
             $paymentUrl . "\n\n" .
-            "Terima kasih telah menggunakan Qinara Apps.";
+            "Terima kasih telah menggunakan Qinara Apps."
+        );
 
         // lembagaId sengaja null -> WhatsappService fallback ke setting WA
         // aktif pertama yang ditemukan, karena ini notifikasi level
@@ -902,12 +908,17 @@ class NotificationService
         $nomor = self::formatPhone($nomor);
         $tanggal = $yayasan->trial_ends_at?->locale('id')->translatedFormat('d M Y');
 
-        $pesan =
+        $pesan = \App\Models\NotificationTemplate::render('trial_reminder', [
+            'nama_yayasan' => $yayasan->nama,
+            'sisa_hari' => $sisaHari,
+            'tanggal_berakhir' => $tanggal,
+        ], default:
             "*MASA TRIAL QINARA APPS AKAN BERAKHIR*\n\n" .
             "Yth. {$yayasan->nama},\n\n" .
             "Masa coba gratis Anda tinggal *{$sisaHari} hari lagi* (berakhir {$tanggal}).\n\n" .
             "Segera pilih modul yang mau dilanjutkan dan lakukan pembayaran di menu \"Langganan\" supaya akses tidak terputus.\n\n" .
-            "Terima kasih telah mencoba Qinara Apps.";
+            "Terima kasih telah mencoba Qinara Apps."
+        );
 
         self::waPlatform($nomor, $pesan);
 
