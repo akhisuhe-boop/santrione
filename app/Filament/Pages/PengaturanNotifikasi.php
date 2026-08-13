@@ -53,4 +53,25 @@ class PengaturanNotifikasi extends Page
         $aktifSekarang = NotificationTypeToggle::isEnabled($lembagaId, $key);
         NotificationTypeToggle::setEnabled($lembagaId, $key, ! $aktifSekarang);
     }
+
+    public function getKategoriIcon(string $kategori): string
+    {
+        return match ($kategori) {
+            'Absensi' => 'heroicon-o-clipboard-document-check',
+            'Kedisiplinan' => 'heroicon-o-shield-exclamation',
+            'Akademik' => 'heroicon-o-book-open',
+            'Perizinan' => 'heroicon-o-document-text',
+            'PPDB' => 'heroicon-o-user-plus',
+            'Keuangan' => 'heroicon-o-banknotes',
+            'Umum' => 'heroicon-o-megaphone',
+            default => 'heroicon-o-bell',
+        };
+    }
+
+    public function getJumlahAktif(int $lembagaId): int
+    {
+        return collect(NotificationType::all())
+            ->filter(fn ($item, $key) => $this->isEnabled($lembagaId, $key))
+            ->count();
+    }
 }
