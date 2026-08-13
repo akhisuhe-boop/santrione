@@ -109,9 +109,15 @@ class NotificationService
             return;
         }
 
+        $lembagaId = $kegiatan->templateKegiatan->lembaga_id ?? null;
+
+        if ($lembagaId && ! \App\Models\NotificationTypeToggle::isEnabled($lembagaId, \App\Support\NotificationType::ABSENSI_GURU)) {
+            return;
+        }
+
         $nomorAdmin = self::formatPhone($nomorAdmin);
         $jam = Carbon::now()->format('H:i');
-        $pesan =
+        $default =
             "*ABSENSI GURU / PEGAWAI*\n\n" .
             "Guru / Pegawai telah melakukan absensi\n\n" .
 
@@ -122,7 +128,17 @@ class NotificationService
             "Jam : *{$jam}*\n\n" .
             "Terima kasih";
 
-        self::wa($nomorAdmin, $pesan, $kegiatan->templateKegiatan->lembaga_id ?? null);
+        $pesan = $lembagaId
+            ? \App\Models\LembagaNotificationTemplate::renderFor($lembagaId, \App\Support\NotificationType::ABSENSI_GURU, [
+                'nama_guru' => $pegawai->nama,
+                'niy' => $pegawai->niy,
+                'kegiatan' => $kegiatan->templateKegiatan->nama_kegiatan,
+                'status' => $status,
+                'jam' => $jam,
+            ], $default)
+            : $default;
+
+        self::wa($nomorAdmin, $pesan, $lembagaId);
     }
 
     /*
@@ -143,11 +159,17 @@ class NotificationService
             return;
         }
 
+        $lembagaId = $lembagaId ?? $siswa->lembaga_id;
+
+        if ($lembagaId && ! \App\Models\NotificationTypeToggle::isEnabled($lembagaId, \App\Support\NotificationType::ABSENSI_HARIAN)) {
+            return;
+        }
+
         $nomor = self::formatPhone($nomor);
         $jam = Carbon::parse($waktu)->format('H:i');
         $label = $jenis === 'masuk' ? 'MASUK SEKOLAH' : 'PULANG SEKOLAH';
 
-        $pesan =
+        $default =
             "*ABSENSI {$label}*\n\n" .
             "Ananda telah melakukan absensi {$jenis}\n\n" .
             "Nama : *{$siswa->nama_lengkap}*\n" .
@@ -155,7 +177,16 @@ class NotificationService
             "Jam : *{$jam}*\n\n" .
             "Terima kasih";
 
-        self::wa($nomor, $pesan, $lembagaId ?? $siswa->lembaga_id);
+        $pesan = $lembagaId
+            ? \App\Models\LembagaNotificationTemplate::renderFor($lembagaId, \App\Support\NotificationType::ABSENSI_HARIAN, [
+                'nama_siswa' => $siswa->nama_lengkap,
+                'jenis' => $jenis,
+                'status' => $status,
+                'jam' => $jam,
+            ], $default)
+            : $default;
+
+        self::wa($nomor, $pesan, $lembagaId);
     }
 
     public static function sendAbsensiHarianGuru(
@@ -170,11 +201,15 @@ class NotificationService
             return;
         }
 
+        if ($lembagaId && ! \App\Models\NotificationTypeToggle::isEnabled($lembagaId, \App\Support\NotificationType::ABSENSI_HARIAN_GURU)) {
+            return;
+        }
+
         $nomorAdmin = self::formatPhone($nomorAdmin);
         $jam = Carbon::parse($waktu)->format('H:i');
         $label = $jenis === 'masuk' ? 'MASUK' : 'PULANG';
 
-        $pesan =
+        $default =
             "*ABSENSI GURU/PEGAWAI - {$label}*\n\n" .
             "Guru/Pegawai telah melakukan absensi {$jenis}\n\n" .
             "Nama : *{$pegawai->nama}*\n" .
@@ -182,6 +217,16 @@ class NotificationService
             "Status : *{$status}*\n" .
             "Jam : *{$jam}*\n\n" .
             "Terima kasih";
+
+        $pesan = $lembagaId
+            ? \App\Models\LembagaNotificationTemplate::renderFor($lembagaId, \App\Support\NotificationType::ABSENSI_HARIAN_GURU, [
+                'nama_guru' => $pegawai->nama,
+                'niy' => $pegawai->niy,
+                'jenis' => $jenis,
+                'status' => $status,
+                'jam' => $jam,
+            ], $default)
+            : $default;
 
         self::wa($nomorAdmin, $pesan, $lembagaId);
     }
@@ -203,9 +248,15 @@ class NotificationService
             return;
         }
 
+        $lembagaId = $siswa->lembaga_id;
+
+        if ($lembagaId && ! \App\Models\NotificationTypeToggle::isEnabled($lembagaId, \App\Support\NotificationType::PELANGGARAN)) {
+            return;
+        }
+
         $nomor = self::formatPhone($nomor);
 
-        $pesan =
+        $default =
             "*PELANGGARAN SISWA*\n\n" .
 
             "Kami memberitahukan bahwa ananda:\n\n" .
@@ -217,7 +268,15 @@ class NotificationService
             "Mohon perhatian dan pembinaannya.\n\n" .
             "Terima kasih.";
 
-        self::wa($nomor, $pesan, $siswa->lembaga_id);
+        $pesan = $lembagaId
+            ? \App\Models\LembagaNotificationTemplate::renderFor($lembagaId, \App\Support\NotificationType::PELANGGARAN, [
+                'nama_siswa' => $siswa->nama_lengkap,
+                'nama_pelanggaran' => $pelanggaran->nama,
+                'poin' => $pelanggaran->point,
+            ], $default)
+            : $default;
+
+        self::wa($nomor, $pesan, $lembagaId);
     }
 
      /*
@@ -237,9 +296,15 @@ class NotificationService
             return;
         }
 
+        $lembagaId = $siswa->lembaga_id;
+
+        if ($lembagaId && ! \App\Models\NotificationTypeToggle::isEnabled($lembagaId, \App\Support\NotificationType::PRESTASI)) {
+            return;
+        }
+
         $nomor = self::formatPhone($nomor);
 
-        $pesan =
+        $default =
             "🎉 *PRESTASI SISWA* 🎉\n\n" .
 
             "Selamat kepada ananda:\n\n" .
@@ -250,7 +315,14 @@ class NotificationService
             "Semoga terus berprestasi.\n\n" .
             "Terima kasih.";
 
-        self::wa($nomor, $pesan, $siswa->lembaga_id);
+        $pesan = $lembagaId
+            ? \App\Models\LembagaNotificationTemplate::renderFor($lembagaId, \App\Support\NotificationType::PRESTASI, [
+                'nama_siswa' => $siswa->nama_lengkap,
+                'nama_prestasi' => $prestasi->nama,
+            ], $default)
+            : $default;
+
+        self::wa($nomor, $pesan, $lembagaId);
     }
 
      /*
@@ -270,6 +342,12 @@ class NotificationService
             return;
         }
 
+        $lembagaId = $siswa->lembaga_id;
+
+        if ($lembagaId && ! \App\Models\NotificationTypeToggle::isEnabled($lembagaId, \App\Support\NotificationType::TAHFIDZ)) {
+            return;
+        }
+
         $nomor = self::formatPhone($nomor);
 
         $jenis = match ($tahfidz->jenis) {
@@ -278,7 +356,7 @@ class NotificationService
         default => ucfirst($tahfidz->jenis),
         };
 
-        $pesan =
+        $default =
             "*LAPORAN TAHFIDZ*\n\n" .
             "Selamat kepada ananda, telah menyelesaikan tugas tahfidz:\n\n" .
 
@@ -292,7 +370,19 @@ class NotificationService
             "Semoga istiqomah dalam menghafal Al-Qur'an.\n\n" .
             "Barakallahu fiikum.";
 
-        self::wa($nomor, $pesan, $siswa->lembaga_id);
+        $pesan = $lembagaId
+            ? \App\Models\LembagaNotificationTemplate::renderFor($lembagaId, \App\Support\NotificationType::TAHFIDZ, [
+                'nama_siswa' => $siswa->nama_lengkap,
+                'jenis' => $jenis,
+                'surah' => $tahfidz->surah->nama,
+                'ayat_dari' => $tahfidz->ayat_dari,
+                'ayat_sampai' => $tahfidz->ayat_sampai,
+                'nilai' => $tahfidz->nilai,
+                'musyrif' => $tahfidz->pegawai->nama,
+            ], $default)
+            : $default;
+
+        self::wa($nomor, $pesan, $lembagaId);
     }
 
      /*
@@ -311,22 +401,41 @@ class NotificationService
             return;
         }
 
-        $nomor = self::formatPhone($nomor);
+        $lembagaId = $siswa->lembaga_id;
 
-        $pesan =
+        if ($lembagaId && ! \App\Models\NotificationTypeToggle::isEnabled($lembagaId, \App\Support\NotificationType::PERIZINAN_APPROVED)) {
+            return;
+        }
+
+        $nomor = self::formatPhone($nomor);
+        $tipeIzin = ucfirst($perizinan->tipe);
+        $tanggalIzin = Carbon::parse($perizinan->tanggal_mulai)->format('d M Y');
+        $batasKembali = Carbon::parse($perizinan->tanggal_selesai)->format('d M Y H:i');
+
+        $default =
             "*PERIZINAN DISETUJUI*\n\n" .
 
             "Perizinan ananda telah disetujui.\n\n" .
 
             "Nama : *{$siswa->nama_lengkap}*\n" .
-            "Tipe izin: *" . ucfirst($perizinan->tipe) . "*\n" .
+            "Tipe izin: *{$tipeIzin}*\n" .
             "Keperluan : *{$perizinan->keperluan}*\n" .
-            "Tanggal Izin : *" . Carbon::parse($perizinan->tanggal_mulai)->format('d M Y') . "*\n" .
-            "Batas Kembali : *" . Carbon::parse($perizinan->tanggal_selesai)->format('d M Y H:i') . "*\n\n" .
+            "Tanggal Izin : *{$tanggalIzin}*\n" .
+            "Batas Kembali : *{$batasKembali}*\n\n" .
 
             "Terima kasih.";
 
-        self::wa($nomor, $pesan, $siswa->lembaga_id);
+        $pesan = $lembagaId
+            ? \App\Models\LembagaNotificationTemplate::renderFor($lembagaId, \App\Support\NotificationType::PERIZINAN_APPROVED, [
+                'nama_siswa' => $siswa->nama_lengkap,
+                'tipe_izin' => $tipeIzin,
+                'keperluan' => $perizinan->keperluan,
+                'tanggal_izin' => $tanggalIzin,
+                'batas_kembali' => $batasKembali,
+            ], $default)
+            : $default;
+
+        self::wa($nomor, $pesan, $lembagaId);
     }
 
      /*
@@ -344,8 +453,16 @@ class NotificationService
             return;
         }
 
+        $lembagaId = $siswa->lembaga_id;
+
+        if ($lembagaId && ! \App\Models\NotificationTypeToggle::isEnabled($lembagaId, \App\Support\NotificationType::PERIZINAN_DIJEMPUT)) {
+            return;
+        }
+
         $nomor = self::formatPhone($nomor);
-        $pesan =
+        $jamKeluar = now()->format('d M Y H:i');
+
+        $default =
             "*SANTRI DIJEMPUT*\n\n" .
 
             "Ananda telah dijemput.\n\n" .
@@ -353,11 +470,20 @@ class NotificationService
             "Nama : *{$siswa->nama_lengkap}*\n" .
             "Penjemput : *{$perizinan->penjemput}*\n" .
             "Hubungan : *{$perizinan->hubungan}*\n" .
-            "Jam Keluar : *" . now()->format('d M Y H:i') . "*\n\n" .
+            "Jam Keluar : *{$jamKeluar}*\n\n" .
 
             "Semoga selamat dalam perjalanan.";
 
-        self::wa($nomor, $pesan, $siswa->lembaga_id);
+        $pesan = $lembagaId
+            ? \App\Models\LembagaNotificationTemplate::renderFor($lembagaId, \App\Support\NotificationType::PERIZINAN_DIJEMPUT, [
+                'nama_siswa' => $siswa->nama_lengkap,
+                'penjemput' => $perizinan->penjemput,
+                'hubungan' => $perizinan->hubungan,
+                'jam_keluar' => $jamKeluar,
+            ], $default)
+            : $default;
+
+        self::wa($nomor, $pesan, $lembagaId);
     }
 
      /*
@@ -376,6 +502,12 @@ class NotificationService
             return;
         }
 
+        $lembagaId = $siswa->lembaga_id;
+
+        if ($lembagaId && ! \App\Models\NotificationTypeToggle::isEnabled($lembagaId, \App\Support\NotificationType::PERIZINAN_KEMBALI)) {
+            return;
+        }
+
         $nomor = self::formatPhone($nomor);
 
         $status = match ($perizinan->keterangan_waktu) {
@@ -385,18 +517,28 @@ class NotificationService
             default => '-',
         };
 
-        $pesan =
+        $jamKembali = now()->format('d M Y H:i');
+
+        $default =
             "*SANTRI TELAH KEMBALI*\n\n" .
 
             "Ananda telah kembali ke pondok/sekolah.\n\n" .
 
             "Nama : *{$siswa->nama_lengkap}*\n" .
-            "Jam Kembali : *" . now()->format('d M Y H:i') . "*\n" .
+            "Jam Kembali : *{$jamKembali}*\n" .
             "Status : *{$status}*\n\n" .
 
             "Terima kasih.";
 
-        self::wa($nomor, $pesan, $siswa->lembaga_id);
+        $pesan = $lembagaId
+            ? \App\Models\LembagaNotificationTemplate::renderFor($lembagaId, \App\Support\NotificationType::PERIZINAN_KEMBALI, [
+                'nama_siswa' => $siswa->nama_lengkap,
+                'jam_kembali' => $jamKembali,
+                'status' => $status,
+            ], $default)
+            : $default;
+
+        self::wa($nomor, $pesan, $lembagaId);
     }
 
     /*
@@ -420,10 +562,16 @@ class NotificationService
         if (empty($nomor)) {
             return;
         }
+
+        $lembagaId = $ppdb->lembaga_id;
+
+        if ($lembagaId && ! \App\Models\NotificationTypeToggle::isEnabled($lembagaId, \App\Support\NotificationType::PPDB_BARU)) {
+            return;
+        }
     
         $nomor = self::formatPhone($nomor);
     
-        $pesan =
+        $default =
             "🎉 *PENDAFTARAN PPDB BERHASIL*\n\n"
     
             ."Assalamu'alaikum Wr. Wb.\n\n"
@@ -441,8 +589,15 @@ class NotificationService
             ."Demi keamanan akun, segera ubah password setelah berhasil login.\n\n"
     
             ."Barakallahu fiikum.";
+
+        $pesan = $lembagaId
+            ? \App\Models\LembagaNotificationTemplate::renderFor($lembagaId, \App\Support\NotificationType::PPDB_BARU, [
+                'nama_lengkap' => $ppdb->nama_lengkap,
+                'nisn' => $ppdb->nisn,
+            ], $default)
+            : $default;
     
-        self::wa($nomor, $pesan, $ppdb->lembaga_id);
+        self::wa($nomor, $pesan, $lembagaId);
     }
 
     /*
@@ -459,9 +614,16 @@ class NotificationService
             return;
         }
 
-        $nomor = self::formatPhone($nomor);
+        $lembagaId = $ppdb->lembaga_id;
 
-        $pesan =
+        if ($lembagaId && ! \App\Models\NotificationTypeToggle::isEnabled($lembagaId, \App\Support\NotificationType::PPDB_PEMBAYARAN)) {
+            return;
+        }
+
+        $nomor = self::formatPhone($nomor);
+        $jatuhTempo = Carbon::parse($tagihan->jatuh_tempo)->format('d M Y');
+
+        $default =
             "*TAGIHAN PPDB*\n\n" .
 
             "Silakan melakukan pembayaran pendaftaran.\n\n" .
@@ -469,12 +631,21 @@ class NotificationService
             "Nama : *{$ppdb->nama_lengkap}*\n" .
             "Tagihan : *{$tagihan->judul}*\n" .
             "Nominal : *Rp " . number_format($tagihan->nominal, 0, ',', '.') . "*\n" .
-            "Jatuh Tempo : *" . Carbon::parse($tagihan->jatuh_tempo)->format('d M Y') . "*\n\n" .
+            "Jatuh Tempo : *{$jatuhTempo}*\n\n" .
 
             "Mohon segera melakukan pembayaran.\n\n" .
             "Terima kasih.";
 
-        self::wa($nomor, $pesan, $ppdb->lembaga_id);
+        $pesan = $lembagaId
+            ? \App\Models\LembagaNotificationTemplate::renderFor($lembagaId, \App\Support\NotificationType::PPDB_PEMBAYARAN, [
+                'nama_lengkap' => $ppdb->nama_lengkap,
+                'judul_tagihan' => $tagihan->judul,
+                'nominal' => 'Rp ' . number_format($tagihan->nominal, 0, ',', '.'),
+                'jatuh_tempo' => $jatuhTempo,
+            ], $default)
+            : $default;
+
+        self::wa($nomor, $pesan, $lembagaId);
     }
 
     /*
@@ -491,9 +662,15 @@ class NotificationService
             return;
         }
 
+        $lembagaId = $ppdb->lembaga_id;
+
+        if ($lembagaId && ! \App\Models\NotificationTypeToggle::isEnabled($lembagaId, \App\Support\NotificationType::PPDB_TES)) {
+            return;
+        }
+
         $nomor = self::formatPhone($nomor);
 
-        $pesan =
+        $default =
             "*INFORMASI TES PPDB*\n\n" .
 
             "Ananda masuk tahap seleksi tes.\n\n" .
@@ -504,7 +681,14 @@ class NotificationService
             "Silakan menunggu jadwal tes dari panitia.\n\n" .
             "Terima kasih.";
 
-        self::wa($nomor, $pesan, $ppdb->lembaga_id);
+        $pesan = $lembagaId
+            ? \App\Models\LembagaNotificationTemplate::renderFor($lembagaId, \App\Support\NotificationType::PPDB_TES, [
+                'nama_lengkap' => $ppdb->nama_lengkap,
+                'nama_lembaga' => $ppdb->lembaga?->nama,
+            ], $default)
+            : $default;
+
+        self::wa($nomor, $pesan, $lembagaId);
     }
 
     /*
@@ -521,9 +705,15 @@ class NotificationService
             return;
         }
 
+        $lembagaId = $ppdb->lembaga_id;
+
+        if ($lembagaId && ! \App\Models\NotificationTypeToggle::isEnabled($lembagaId, \App\Support\NotificationType::PPDB_LULUS)) {
+            return;
+        }
+
         $nomor = self::formatPhone($nomor);
 
-        $pesan =
+        $default =
             "*SELAMAT! ANDA DINYATAKAN LULUS*\n\n" .
 
             "Nama : *{$ppdb->nama_lengkap}*\n" .
@@ -532,7 +722,14 @@ class NotificationService
             "Silakan melanjutkan proses daftar ulang.\n\n" .
             "Barakallahu fiikum.";
 
-        self::wa($nomor, $pesan, $ppdb->lembaga_id);
+        $pesan = $lembagaId
+            ? \App\Models\LembagaNotificationTemplate::renderFor($lembagaId, \App\Support\NotificationType::PPDB_LULUS, [
+                'nama_lengkap' => $ppdb->nama_lengkap,
+                'nama_lembaga' => $ppdb->lembaga?->nama,
+            ], $default)
+            : $default;
+
+        self::wa($nomor, $pesan, $lembagaId);
     }
 
     /*
@@ -549,9 +746,15 @@ class NotificationService
             return;
         }
 
+        $lembagaId = $ppdb->lembaga_id;
+
+        if ($lembagaId && ! \App\Models\NotificationTypeToggle::isEnabled($lembagaId, \App\Support\NotificationType::PPDB_TIDAK_LULUS)) {
+            return;
+        }
+
         $nomor = self::formatPhone($nomor);
 
-        $pesan =
+        $default =
             "*INFORMASI HASIL PPDB*\n\n" .
 
             "Mohon maaf, ananda belum dinyatakan lulus seleksi.\n\n" .
@@ -562,7 +765,14 @@ class NotificationService
             "Tetap semangat dan sukses selalu.\n\n" .
             "Terima kasih.";
 
-        self::wa($nomor, $pesan, $ppdb->lembaga_id);
+        $pesan = $lembagaId
+            ? \App\Models\LembagaNotificationTemplate::renderFor($lembagaId, \App\Support\NotificationType::PPDB_TIDAK_LULUS, [
+                'nama_lengkap' => $ppdb->nama_lengkap,
+                'nama_lembaga' => $ppdb->lembaga?->nama,
+            ], $default)
+            : $default;
+
+        self::wa($nomor, $pesan, $lembagaId);
     }
 
     /*
@@ -579,9 +789,15 @@ class NotificationService
             return;
         }
 
+        $lembagaId = $ppdb->lembaga_id;
+
+        if ($lembagaId && ! \App\Models\NotificationTypeToggle::isEnabled($lembagaId, \App\Support\NotificationType::PPDB_DAFTAR_ULANG)) {
+            return;
+        }
+
         $nomor = self::formatPhone($nomor);
 
-        $pesan =
+        $default =
             "*TAGIHAN DAFTAR ULANG*\n\n" .
 
             "Silakan melakukan pembayaran daftar ulang.\n\n" .
@@ -592,7 +808,15 @@ class NotificationService
 
             "Terima kasih.";
 
-        self::wa($nomor, $pesan, $ppdb->lembaga_id);
+        $pesan = $lembagaId
+            ? \App\Models\LembagaNotificationTemplate::renderFor($lembagaId, \App\Support\NotificationType::PPDB_DAFTAR_ULANG, [
+                'nama_lengkap' => $ppdb->nama_lengkap,
+                'judul_tagihan' => $tagihan->judul,
+                'nominal' => 'Rp ' . number_format($tagihan->nominal, 0, ',', '.'),
+            ], $default)
+            : $default;
+
+        self::wa($nomor, $pesan, $lembagaId);
     }
 
     /*
@@ -609,8 +833,14 @@ class NotificationService
             return;
         }
 
+        $lembagaId = $siswa->lembaga_id;
+
+        if ($lembagaId && ! \App\Models\NotificationTypeToggle::isEnabled($lembagaId, \App\Support\NotificationType::PPDB_AKTIF)) {
+            return;
+        }
+
         $nomor = self::formatPhone($nomor);
-        $pesan =
+        $default =
             "*SISWA BERHASIL DIAKTIFKAN*\n\n" .
 
             "Selamat, ananda resmi menjadi siswa.\n\n" .
@@ -622,7 +852,15 @@ class NotificationService
             "Semoga menjadi siswa yang sholeh dan berprestasi.\n\n" .
             "Barakallahu fiikum.";
 
-        self::wa($nomor, $pesan, $siswa->lembaga_id);
+        $pesan = $lembagaId
+            ? \App\Models\LembagaNotificationTemplate::renderFor($lembagaId, \App\Support\NotificationType::PPDB_AKTIF, [
+                'nama_siswa' => $siswa->nama_lengkap,
+                'nis' => $siswa->nis,
+                'kelas' => $siswa->kelas?->nama,
+            ], $default)
+            : $default;
+
+        self::wa($nomor, $pesan, $lembagaId);
     }
     
     /*
@@ -645,8 +883,14 @@ class NotificationService
         if (empty($nomor)) {
             return;
         }
+
+        $lembagaId = $ppdb->lembaga_id;
+
+        if ($lembagaId && ! \App\Models\NotificationTypeToggle::isEnabled($lembagaId, \App\Support\NotificationType::PPDB_RESET_PASSWORD)) {
+            return;
+        }
     
-        $pesan = "🔑 *RESET PASSWORD PORTAL PPDB*\n\n"
+        $default = "🔑 *RESET PASSWORD PORTAL PPDB*\n\n"
             ."Assalamu'alaikum Wr. Wb.\n\n"
             ."Password Portal PPDB berhasil direset.\n\n"
             ."Silakan login menggunakan:\n"
@@ -654,9 +898,15 @@ class NotificationService
             ."Password : {$ppdb->nisn}\n\n"
             ."Setelah berhasil login, segera ubah password Anda.\n\n"
             ."Terima kasih.";
+
+        $pesan = $lembagaId
+            ? \App\Models\LembagaNotificationTemplate::renderFor($lembagaId, \App\Support\NotificationType::PPDB_RESET_PASSWORD, [
+                'nisn' => $ppdb->nisn,
+            ], $default)
+            : $default;
             
         $nomor = self::formatPhone($nomor);
-        self::wa($nomor, $pesan, $ppdb->lembaga_id);
+        self::wa($nomor, $pesan, $lembagaId);
     }
 
      /*
@@ -817,6 +1067,10 @@ class NotificationService
         if (! $nomor) {
             return;
         }
+
+        if ($lembagaId && ! \App\Models\NotificationTypeToggle::isEnabled($lembagaId, \App\Support\NotificationType::ANNOUNCEMENT)) {
+            return;
+        }
     
         $nomor = self::formatPhone($nomor);
         self::wa($nomor, $message, $lembagaId);
@@ -831,6 +1085,8 @@ class NotificationService
     public static function sendIzinHarianDiproses($izin)
     {
         $statusLabel = $izin->status === 'approved' ? 'DISETUJUI' : 'DITOLAK';
+        $tanggal = Carbon::parse($izin->tanggal_mulai)->format('d M Y') . " - " . Carbon::parse($izin->tanggal_selesai)->format('d M Y');
+        $alasan = ($izin->status === 'ditolak' && $izin->catatan_admin) ? $izin->catatan_admin : '';
 
         if ($izin->tipe === 'siswa') {
 
@@ -840,36 +1096,70 @@ class NotificationService
             $nomor = $siswa->wa_ayah ?? $siswa->wa_ibu;
             if (!$nomor) return;
 
+            $lembagaId = $siswa->lembaga_id;
+
+            if ($lembagaId && ! \App\Models\NotificationTypeToggle::isEnabled($lembagaId, \App\Support\NotificationType::IZIN_HARIAN_DIPROSES)) {
+                return;
+            }
+
             $nomor = self::formatPhone($nomor);
 
-            $pesan =
+            $default =
                 "*PENGAJUAN {$izin->jenis} {$statusLabel}*\n\n" .
                 "Pengajuan {$izin->jenis} untuk ananda telah {$statusLabel}.\n\n" .
                 "Nama : *{$siswa->nama_lengkap}*\n" .
                 "Jenis : *{$izin->jenis}*\n" .
-                "Tanggal : *" . Carbon::parse($izin->tanggal_mulai)->format('d M Y') . " - " . Carbon::parse($izin->tanggal_selesai)->format('d M Y') . "*\n" .
-                ($izin->status === 'ditolak' && $izin->catatan_admin ? "Alasan : *{$izin->catatan_admin}*\n" : "") .
+                "Tanggal : *{$tanggal}*\n" .
+                ($alasan ? "Alasan : *{$alasan}*\n" : "") .
                 "\nTerima kasih.";
 
-            self::wa($nomor, $pesan, $siswa->lembaga_id);
+            $pesan = $lembagaId
+                ? \App\Models\LembagaNotificationTemplate::renderFor($lembagaId, \App\Support\NotificationType::IZIN_HARIAN_DIPROSES, [
+                    'nama' => $siswa->nama_lengkap,
+                    'jenis_izin' => $izin->jenis,
+                    'status_izin' => $statusLabel,
+                    'tanggal_mulai' => Carbon::parse($izin->tanggal_mulai)->format('d M Y'),
+                    'tanggal_selesai' => Carbon::parse($izin->tanggal_selesai)->format('d M Y'),
+                    'alasan_ditolak' => $alasan,
+                ], $default)
+                : $default;
+
+            self::wa($nomor, $pesan, $lembagaId);
 
         } else {
 
             $pegawai = $izin->pegawai;
             if (!$pegawai || !$pegawai->no_hp) return;
 
+            $lembagaId = $pegawai->lembagas?->first()?->id;
+
+            if ($lembagaId && ! \App\Models\NotificationTypeToggle::isEnabled($lembagaId, \App\Support\NotificationType::IZIN_HARIAN_DIPROSES)) {
+                return;
+            }
+
             $nomor = self::formatPhone($pegawai->no_hp);
 
-            $pesan =
+            $default =
                 "*PENGAJUAN {$izin->jenis} {$statusLabel}*\n\n" .
                 "Pengajuan {$izin->jenis} Anda telah {$statusLabel}.\n\n" .
                 "Nama : *{$pegawai->nama}*\n" .
                 "Jenis : *{$izin->jenis}*\n" .
-                "Tanggal : *" . Carbon::parse($izin->tanggal_mulai)->format('d M Y') . " - " . Carbon::parse($izin->tanggal_selesai)->format('d M Y') . "*\n" .
-                ($izin->status === 'ditolak' && $izin->catatan_admin ? "Alasan : *{$izin->catatan_admin}*\n" : "") .
+                "Tanggal : *{$tanggal}*\n" .
+                ($alasan ? "Alasan : *{$alasan}*\n" : "") .
                 "\nTerima kasih.";
 
-            self::wa($nomor, $pesan, $pegawai->lembagas?->first()?->id);
+            $pesan = $lembagaId
+                ? \App\Models\LembagaNotificationTemplate::renderFor($lembagaId, \App\Support\NotificationType::IZIN_HARIAN_DIPROSES, [
+                    'nama' => $pegawai->nama,
+                    'jenis_izin' => $izin->jenis,
+                    'status_izin' => $statusLabel,
+                    'tanggal_mulai' => Carbon::parse($izin->tanggal_mulai)->format('d M Y'),
+                    'tanggal_selesai' => Carbon::parse($izin->tanggal_selesai)->format('d M Y'),
+                    'alasan_ditolak' => $alasan,
+                ], $default)
+                : $default;
+
+            self::wa($nomor, $pesan, $lembagaId);
         }
     }
 
