@@ -58,13 +58,19 @@ class NotificationService
             return;
         }
 
+        $lembagaId = $kegiatan->templateKegiatan->lembaga_id ?? $siswa->lembaga_id;
+
+        if ($lembagaId && ! \App\Models\NotificationTypeToggle::isEnabled($lembagaId, \App\Support\NotificationType::ABSENSI_SISWA)) {
+            return;
+        }
+
         $nomor = self::formatPhone($nomor);
         $jam = Carbon::now()->format('H:i');
         $narasi = $status == 'Hadir'
             ? 'Ananda hadir tepat waktu'
             : 'Ananda datang terlambat';
 
-        $pesan =
+        $default =
             "*ABSENSI SEKOLAH*\n\n" .
             "Ananda telah melakukan absensi\n\n" .
             $narasi . "\n\n" .
@@ -74,7 +80,16 @@ class NotificationService
             "Jam : *{$jam}*\n\n" .
             "Terima kasih";
 
-        self::wa($nomor, $pesan, $kegiatan->templateKegiatan->lembaga_id ?? $siswa->lembaga_id);
+        $pesan = $lembagaId
+            ? \App\Models\LembagaNotificationTemplate::renderFor($lembagaId, \App\Support\NotificationType::ABSENSI_SISWA, [
+                'nama_siswa' => $siswa->nama_lengkap,
+                'kegiatan' => $kegiatan->templateKegiatan->nama_kegiatan,
+                'status' => $status,
+                'jam' => $jam,
+            ], $default)
+            : $default;
+
+        self::wa($nomor, $pesan, $lembagaId);
     }
 
     /*
@@ -666,6 +681,12 @@ class NotificationService
             return;
         }
 
+        $lembagaId = $user->lembaga_id ?? null;
+
+        if ($lembagaId && ! \App\Models\NotificationTypeToggle::isEnabled($lembagaId, \App\Support\NotificationType::TAGIHAN)) {
+            return;
+        }
+
         $status = match ($tagihan->status) {
             'Belum' => 'Belum Lunas',
             'sebagian' => 'Sebagian',
@@ -674,8 +695,10 @@ class NotificationService
         };
 
         $nomor = self::formatPhone($nomor);
+        $sisa = $tagihan->nominal - $tagihan->nominal_terbayar;
+        $jatuhTempo = Carbon::parse($tagihan->jatuh_tempo)->format('d M Y');
 
-        $pesan =
+        $default =
             "*TAGIHAN SEKOLAH*\n\n" .
 
             "Ananda Memiliki Tagihan Pembayaran.\n\n" .
@@ -686,18 +709,25 @@ class NotificationService
             "Total Tagihan : *Rp " . number_format($tagihan->nominal, 0, ',', '.') . "*\n" .
             "Terbayar : *Rp " . number_format($tagihan->nominal_terbayar, 0, ',', '.') . "*\n" .
             "Status : *{$status}*\n\n" .
-            "Sisa : *Rp " . number_format(
-                $tagihan->nominal - $tagihan->nominal_terbayar,
-                0,
-                ',',
-                '.'
-            ) . "*\n" .
-            "Jatuh Tempo : *" . Carbon::parse($tagihan->jatuh_tempo)->format('d M Y') . "*\n\n" .
+            "Sisa : *Rp " . number_format($sisa, 0, ',', '.') . "*\n" .
+            "Jatuh Tempo : *{$jatuhTempo}*\n\n" .
 
             "Mohon segera melakukan pembayaran ke rekening resmi yayasan.\n\n" .
             "Terima kasih.";
 
-        self::wa($nomor, $pesan, $user->lembaga_id ?? null);
+        $pesan = $lembagaId
+            ? \App\Models\LembagaNotificationTemplate::renderFor($lembagaId, \App\Support\NotificationType::TAGIHAN, [
+                'nama_siswa' => $user->nama_lengkap,
+                'judul_tagihan' => $tagihan->judul,
+                'total_tagihan' => 'Rp ' . number_format($tagihan->nominal, 0, ',', '.'),
+                'terbayar' => 'Rp ' . number_format($tagihan->nominal_terbayar, 0, ',', '.'),
+                'status' => $status,
+                'sisa' => 'Rp ' . number_format($sisa, 0, ',', '.'),
+                'jatuh_tempo' => $jatuhTempo,
+            ], $default)
+            : $default;
+
+        self::wa($nomor, $pesan, $lembagaId);
     }
 
      /*
@@ -719,9 +749,16 @@ class NotificationService
             return;
         }
 
-        $nomor = self::formatPhone($nomor);
+        $lembagaId = $user->lembaga_id ?? null;
 
-        $pesan =
+        if ($lembagaId && ! \App\Models\NotificationTypeToggle::isEnabled($lembagaId, \App\Support\NotificationType::PEMBAYARAN)) {
+            return;
+        }
+
+        $nomor = self::formatPhone($nomor);
+        $tanggal = Carbon::now()->format('d M Y H:i');
+
+        $default =
             "*PEMBAYARAN BERHASIL*\n\n" .
 
             "Pembayaran telah diterima.\n\n" .
@@ -729,11 +766,20 @@ class NotificationService
             "Nama : *{$user->nama_lengkap}*\n" .
             "Pembayaran : *{$pembayaran->tagihan->judul}*\n" .
             "Nominal : *Rp " . number_format($pembayaran->nominal, 0, ',', '.') . "*\n" .
-            "Tanggal : *" . Carbon::now()->format('d M Y H:i') . "*\n\n" .
-            
+            "Tanggal : *{$tanggal}*\n\n" .
+
             "Terima kasih.";
 
-        self::wa($nomor, $pesan, $user->lembaga_id ?? null);
+        $pesan = $lembagaId
+            ? \App\Models\LembagaNotificationTemplate::renderFor($lembagaId, \App\Support\NotificationType::PEMBAYARAN, [
+                'nama_siswa' => $user->nama_lengkap,
+                'judul_tagihan' => $pembayaran->tagihan->judul,
+                'nominal' => 'Rp ' . number_format($pembayaran->nominal, 0, ',', '.'),
+                'tanggal' => $tanggal,
+            ], $default)
+            : $default;
+
+        self::wa($nomor, $pesan, $lembagaId);
     }
     
     /*
