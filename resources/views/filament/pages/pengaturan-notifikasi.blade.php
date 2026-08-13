@@ -4,7 +4,7 @@
         Matikan jenis notifikasi WA tertentu kalau sekolah tidak mau mengirimkannya. Redaksi pesan bisa dikustomisasi di menu "Template Notifikasi Sekolah".
     </p>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
         @foreach ($this->getLembagas() as $lembaga)
 
@@ -31,7 +31,7 @@
 
                     @foreach ($this->getKatalogPerKategori() as $kategori => $items)
 
-                        <div class="mb-7 last:mb-0">
+                        <div class="mb-9 last:mb-0 pt-6 first:pt-0 border-t border-gray-100 dark:border-gray-800 first:border-0">
 
                             <div class="flex items-center gap-2 mb-3">
                                 <div class="flex items-center gap-1.5 rounded-lg bg-primary-600 px-3 py-1.5 shadow-sm shadow-primary-600/20">
