@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ $setting->brand_name }} - Aplikasi Manajemen & Digitalisasi Pesantren All-in-One</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+                    colors: {
+                        primary: {
+                            50: '#E6F6F5', 100: '#CCECEB', 200: '#99DAD7', 300: '#66C7C3', 400: '#33B5B0',
+                            500: '#00A39D', 600: '#00938E', 700: '#00736F', 800: '#00524F', 900: '#00312F',
+                        },
+                        slate: { 900: '#0F172A' }
+                    },
+                    boxShadow: {
+                        'premium': '0 10px 30px -10px rgba(0, 163, 157, 0.05)',
+                        'premium-hover': '0 20px 40px -15px rgba(0, 163, 157, 0.12)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8FAFC; color: #0F172A; }
+        .gradient-bg {
+            background: radial-gradient(circle at 10% 20%, rgba(0, 163, 157, 0.05) 0%, transparent 50%),
+                        radial-gradient(circle at 90% 80%, rgba(0, 163, 157, 0.03) 0%, transparent 50%);
+        }
+    </style>
+</head>
+<body class="gradient-bg antialiased">
+
+@php
+    $brandParts = explode(' ', $setting->brand_name ?: 'Qinara Apps', 2);
+@endphp
+
+<a href="javascript:void(0)" onclick="hubungiSales()"
+   style="position: fixed; right: 24px; bottom: 24px; width: 64px; height: 64px; border-radius: 9999px;
+          background: #25D366; display: flex; align-items: center; justify-content: center; z-index: 999999;
+          box-shadow: 0 10px 25px rgba(0,0,0,.25); cursor: pointer;">
+    <i class="fa-brands fa-whatsapp" style="font-size:34px;color:#fff;"></i>
+</a>
+
+<!-- HEADER -->
+<header class="fixed inset-x-0 top-0 z-40 w-full border-b border-slate-100 bg-white/70 backdrop-blur-xl">
+    <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 lg:px-8">
+        <div class="flex items-center gap-2">
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-500 text-white shadow-sm">
+                <i data-lucide="graduation-cap" class="h-6 w-6"></i>
+            </div>
+            <span class="text-xl font-bold tracking-tight text-slate-900">
+                {{ $brandParts[0] }}<span class="text-primary-500">{{ $brandParts[1] ?? '' }}</span>
+            </span>
+        </div>
+
+        <nav class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
+            <a href="#masalah" class="hover:text-primary-500 transition-colors">Masalah</a>
+            <a href="#solusi" class="hover:text-primary-500 transition-colors">Solusi</a>
+            <a href="#fitur" class="hover:text-primary-500 transition-colors">Fitur Unggulan</a>
+            @if($mockupScreenshots->isNotEmpty())
+            <a href="#tampilan-aplikasi" class="hover:text-primary-500 transition-colors">Tampilan Aplikasi</a>
+            @endif
+            <a href="#testimoni" class="hover:text-primary-500 transition-colors">Testimoni</a>
+            <a href="#harga" class="hover:text-primary-500 transition-colors">Harga</a>
+            <a href="#faq" class="hover:text-primary-500 transition-colors">FAQ</a>
+        </nav>
+
+        <div class="hidden md:flex items-center gap-4">
+            <a href="{{ route('public.daftar') }}"
+                class="rounded-full bg-primary-500 px-5 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-primary-600 hover:scale-[1.02] active:scale-[0.98] transition-all">
+                Coba Demo Gratis
+            </a>
+        </div>
+
+        <button id="mobile-menu-btn" class="md:hidden p-2 text-slate-600">
+            <i id="menu-icon" data-lucide="menu" class="h-6 w-6"></i>
+        </button>
+    </div>
+
+    <div id="mobile-menu" class="hidden md:hidden border-t border-slate-100 bg-white px-4 py-4 space-y-3 shadow-lg">
+        <a href="#masalah" class="block py-2 text-sm font-medium text-slate-700 hover:text-primary-500">Masalah</a>
+        <a href="#solusi" class="block py-2 text-sm font-medium text-slate-700 hover:text-primary-500">Solusi</a>
+        <a href="#fitur" class="block py-2 text-sm font-medium text-slate-700 hover:text-primary-500">Fitur Unggulan</a>
+        @if($mockupScreenshots->isNotEmpty())
+        <a href="#tampilan-aplikasi" class="block py-2 text-sm font-medium text-slate-700 hover:text-primary-500">Tampilan Aplikasi</a>
+        @endif
+        <a href="#testimoni" class="block py-2 text-sm font-medium text-slate-700 hover:text-primary-500">Testimoni</a>
+        <a href="#harga" class="block py-2 text-sm font-medium text-slate-700 hover:text-primary-500">Harga</a>
+        <a href="#faq" class="block py-2 text-sm font-medium text-slate-700 hover:text-primary-500">FAQ</a>
+        <a href="{{ route('public.daftar') }}" class="block text-center w-full rounded-full bg-primary-500 py-3 text-sm font-semibold text-white shadow-md">
+            Coba Demo Gratis
+        </a>
+    </div>
+</header>
+
+<!-- HERO -->
+<section id="hero" class="relative pt-16 pb-24 md:pt-24 md:pb-32 overflow-hidden bg-gradient-to-b from-white via-white to-slate-50">
+    <div class="mx-auto max-w-7xl px-4 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-14 items-center">
+
+            <div class="lg:col-span-7 text-center lg:text-left space-y-8">
+                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-50 border border-slate-200 text-xs font-medium text-slate-700 mx-auto lg:mx-0 shadow-sm hover:shadow-md transition-all duration-300">
+                    <span class="relative flex h-2 w-2">
+                        <span class="absolute inline-flex h-full w-full rounded-full opacity-60 animate-ping" style="background-color:#00A39D;"></span>
+                        <span class="relative inline-flex h-2 w-2 rounded-full" style="background-color:#00A39D;"></span>
+                    </span>
+                    {{ $setting->badge_text ?? 'Sistem Manajemen Pesantren Modern' }}
+                </div>
+
+                <h1 class="mt-6 mb-4 text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 leading-tight sm:leading-[1.1]">
+                    {{ $setting->headline_baris1 }}
+                    <br class="hidden sm:block">
+                    <span class="block mt-2 text-xl sm:text-2xl md:text-3xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-primary-700">
+                        {{ $setting->headline_baris2 }}
+                    </span>
+                </h1>
+
+                <p class="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+                    {{ $setting->subheadline }}
+                </p>
+
+                <div class="flex flex-wrap justify-center lg:justify-start gap-3">
+                    <span class="flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 rounded-full text-xs font-semibold border border-red-100">
+                        <i data-lucide="x-circle" class="w-4 h-4"></i> Data Berantakan
+                    </span>
+                    <span class="flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 rounded-full text-xs font-semibold border border-red-100">
+                        <i data-lucide="x-circle" class="w-4 h-4"></i> Keuangan Tidak Transparan
+                    </span>
+                    <span class="flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 rounded-full text-xs font-semibold border border-red-100">
+                        <i data-lucide="x-circle" class="w-4 h-4"></i> Proses Manual Lambat
+                    </span>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                    <a href="{{ route('public.daftar') }}"
+                        class="inline-flex items-center justify-center gap-2 rounded-full bg-primary-600 px-8 py-4 text-white font-bold shadow-lg hover:bg-primary-700 hover:scale-[1.02] transition">
+                        Coba Demo Gratis
+                        <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                    </a>
+                    <button onclick="hubungiSales()"
+                        class="inline-flex items-center justify-center gap-2 rounded-full bg-white border border-slate-200 px-8 py-4 font-semibold text-slate-700 hover:bg-slate-50 transition shadow-sm">
+                        <i data-lucide="message-circle" class="w-5 h-5 text-emerald-500"></i>
+                        Konsultasi Gratis
+                    </button>
+                </div>
+
+                <div class="flex items-center justify-center lg:justify-start gap-4 pt-2">
+                    <div class="flex -space-x-2">
+                        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-slate-200 to-slate-300 border-2 border-white flex items-center justify-center shadow-sm">
+                            <span class="text-xs font-bold text-slate-700">AH</span>
+                        </div>
+                        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-primary-100 to-primary-200 border-2 border-white flex items-center justify-center shadow-sm">
+                            <span class="text-xs font-bold text-primary-700">MZ</span>
+                        </div>
+                        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-amber-100 to-amber-200 border-2 border-white flex items-center justify-center shadow-sm">
+                            <span class="text-xs font-bold text-amber-700">FS</span>
+                        </div>
+                    </div>
+                    <p class="text-sm text-slate-500">
+                        Dipakai oleh <span class="font-bold text-slate-800">{{ $setting->social_proof_text ?? '120+ Pesantren' }}</span> di Indonesia
+                    </p>
+                </div>
+            </div>
+
+            <!-- RIGHT: mockup asli jika diupload, fallback ke kartu rekaan -->
+            <div class="lg:col-span-5">
+                @if($setting->hero_mockup_gambar)
+                    <img src="{{ \Illuminate\Support\Facades\Storage::disk('r2-public')->url($setting->hero_mockup_gambar) }}"
+                         alt="Tampilan Dashboard {{ $setting->brand_name }}"
+                         class="w-full rounded-2xl border border-slate-200 shadow-2xl">
+                @else
+                <div class="relative rounded-2xl bg-white border border-slate-200 shadow-2xl p-6">
+                    <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
+                        <div class="flex gap-1.5">
+                            <span class="w-3 h-3 rounded-full bg-red-400"></span>
+                            <span class="w-3 h-3 rounded-full bg-yellow-400"></span>
+                            <span class="w-3 h-3 rounded-full bg-green-400"></span>
+                        </div>
+                        <div class="text-xs text-slate-400 font-mono">app.qinaraindonesia.id</div>
+                    </div>
+                    <div class="space-y-6">
+                        <div>
+                            <p class="text-xs text-slate-400 font-semibold">Total Keuangan</p>
+                            <h3 class="text-2xl font-bold text-slate-900">{{ $setting->hero_kpi_keuangan ?? 'Rp 142.850.000' }}</h3>
+                            <p class="text-xs text-green-600 font-semibold mt-1">{{ $setting->hero_kpi_keuangan_growth ?? '+12% bulan ini' }}</p>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-500">Kehadiran Santri</span>
+                                <span class="font-bold text-primary-600">{{ $setting->hero_kpi_kehadiran_persen ?? 98.2 }}%</span>
+                            </div>
+                            <div class="w-full bg-slate-100 h-2 rounded-full">
+                                <div class="bg-primary-500 h-2 rounded-full" style="width:{{ $setting->hero_kpi_kehadiran_persen ?? 98.2 }}%"></div>
+                            </div>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border">
+                                <div>
+                                    <p class="text-sm font-semibold">Ahmad Muzzaki</p>
+                                    <p class="text-xs text-slate-400">Hafalan Juz 30</p>
+                                </div>
+                                <span class="text-xs bg-green-100 text-green-600 px-2 py-1 rounded">Lancar</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border">
+                                <div>
+                                    <p class="text-sm font-semibold">Zahra Nurfadhilah</p>
+                                    <p class="text-xs text-slate-400">Izin Sakit</p>
+                                </div>
+                                <span class="text-xs bg-yellow-100 text-yellow-600 px-2 py-1 rounded">Izin</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="absolute -bottom-4 -right-4 bg-slate-900 text-white p-3 rounded-xl shadow-xl flex items-center gap-2">
+                        <i data-lucide="shield-check" class="w-5 h-5 text-primary-400"></i>
+                        <div>
+                            <p class="text-[10px] text-slate-400">Security</p>
+                            <p class="text-xs font-bold">Encrypted</p>
+                        </div>
+                    </div>
+                </div>
+                @endif
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- BEFORE / AFTER -->
+<section id="masalah" class="py-24 bg-gradient-to-b from-white to-slate-50">
+<div class="max-w-7xl mx-auto px-6 lg:px-8">
+    <div class="max-w-3xl mx-auto text-center">
+        <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-50 text-primary-600 text-sm font-semibold">
+            <i data-lucide="sparkles" class="w-4 h-4"></i> Transformasi Digital Pesantren
+        </span>
+        <h2 class="mt-6 text-3xl font-extrabold text-slate-900 sm:text-4xl tracking-tight leading-tight">
+            Tinggalkan Sistem Manual,<br>
+            <span class="text-primary-600">Masuk ke Era Digital Terintegrasi</span>
+        </h2>
+        <p class="mt-5 text-lg text-slate-600">
+            Semua operasional pesantren—keuangan, akademik, tahfidz, absensi, hingga laporan—
+            dalam satu sistem yang cepat, rapi, dan real-time.
+        </p>
+    </div>
+
+    <div class="mt-16 relative grid lg:grid-cols-2 gap-8 items-stretch">
+        <div class="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm hover:shadow-md transition">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-12 h-12 rounded-2xl bg-red-50 flex items-center justify-center">
+                    <i data-lucide="x-circle" class="w-6 h-6 text-red-500"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-xl text-slate-900">Sistem Manual</h3>
+                    <p class="text-slate-500 text-sm">Sebelum {{ $setting->brand_name }}</p>
+                </div>
+            </div>
+            <div class="space-y-4 text-slate-600">
+                @foreach([
+                    'Data santri masih tersebar dan tidak terpusat',
+                    'PPDB masih manual dan sulit dipantau',
+                    'Pengelolaan keuangan sering lambat dan tidak transparan',
+                    'Jurnal mengajar dan raport masih dicatat manual',
+                    'Absensi masih manual dan tidak real-time',
+                    'Prestasi dan pelanggaran sulit dipantau',
+                    'Data tahfidz tidak terdokumentasi dengan rapi',
+                    'Perizinan santri masih manual dan bertele-tele',
+                ] as $poin)
+                <div class="flex items-start gap-2">
+                    <i data-lucide="x-circle" class="w-5 h-5 text-red-400 mt-0.5"></i> {{ $poin }}
+                </div>
+                @endforeach
+            </div>
+        </div>
+
+        <div class="rounded-3xl bg-gradient-to-br from-[#00A39D] to-[#008C87] text-white p-8 shadow-xl hover:shadow-2xl transition">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center">
+                    <i data-lucide="sparkles" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-xl">Digital Terintegrasi</h3>
+                    <p class="text-white/80 text-sm">Dengan {{ $setting->brand_name }}</p>
+                </div>
+            </div>
+            <div class="space-y-4 text-white/90">
+                @foreach([
+                    'Manajemen Data santri terpusat dan mudah diakses',
+                    'PPDB online lebih cepat dan terstruktur',
+                    'Keuangan otomatis, transparan, dan real-time',
+                    'Jurnal mengajar & raport digital terintegrasi',
+                    'Absensi santri otomatis dan real-time',
+                    'Monitoring prestasi & pelanggaran lebih mudah',
+                    'Pencatatan tahfidz lebih rapi dan terdokumentasi',
+                    'Sistem perizinan santri digital dan cepat disetujui',
+                ] as $poin)
+                <div class="flex items-start gap-2">
+                    <i data-lucide="check-circle" class="w-5 h-5 text-white/90 mt-0.5"></i> {{ $poin }}
+                </div>
+                @endforeach
+            </div>
+        </div>
+
+        <div class="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+            <div class="w-14 h-14 rounded-full bg-white shadow-lg border border-slate-200 flex items-center justify-center">
+                <i data-lucide="arrow-right" class="w-7 h-7 text-primary-600"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-14 grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div class="text-center">
+            <div class="text-3xl font-bold text-primary-600">{{ $setting->stat_efisiensi ?? '70%' }}</div>
+            <p class="text-sm text-slate-500 mt-1">Lebih Efisien</p>
+        </div>
+        <div class="text-center">
+            <div class="text-3xl font-bold text-primary-600">{{ $setting->stat_modul ?? '10+' }}</div>
+            <p class="text-sm text-slate-500 mt-1">Modul Terintegrasi</p>
+        </div>
+        <div class="text-center">
+            <div class="text-3xl font-bold text-primary-600">{{ $setting->stat_akses ?? '24/7' }}</div>
+            <p class="text-sm text-slate-500 mt-1">Akses Real-time</p>
+        </div>
+        <div class="text-center">
+            <div class="text-3xl font-bold text-primary-600">{{ $setting->stat_digitalisasi ?? '100%' }}</div>
+            <p class="text-sm text-slate-500 mt-1">Digitalisasi</p>
+        </div>
+    </div>
+</div>
+</section>
+
+<!-- SOLUSI EKOSISTEM (statis - value prop per peran, tidak spesifik client) -->
+<section id="solusi" class="py-20 md:py-28 bg-[#FFFFFF]">
+    <div class="mx-auto max-w-7xl px-4 lg:px-8">
+        <div class="text-center max-w-3xl mx-auto space-y-4">
+            <span class="text-xs font-bold tracking-wider text-primary-500 bg-primary-50 px-3 py-1 rounded-full">Solusi Terpadu</span>
+            <h2 class="text-3xl font-extrabold text-slate-900 sm:text-4xl tracking-tight">
+                Satu Platform, Solusi untuk Semua Kebutuhan Pesantren
+            </h2>
+            <p class="text-base text-slate-600 leading-relaxed">
+                {{ $setting->brand_name }} membagi platform menjadi ekosistem khusus guna mempermudah koordinasi antar pemangku kepentingan di lingkungan pesantren Anda.
+            </p>
+        </div>
+
+        <div class="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            @foreach([
+                ['icon' => 'bar-chart-3', 'title' => 'Solusi Pimpinan', 'desc' => 'Akses dashboard statistik real-time untuk memantau grafik keuangan syahriah, total kehadiran guru-santri, serta performa akademik keseluruhan secara ringkas.', 'tag' => 'Monitoring Executive'],
+                ['icon' => 'banknote', 'title' => 'Solusi Bendahara', 'desc' => 'Otomatisasi pengiriman invoice pembayaran SPP ke WhatsApp wali santri, rekonsiliasi kas bank otomatis, dan manajemen uang jajan non-tunai.', 'tag' => 'Automated Billing'],
+                ['icon' => 'book-open', 'title' => 'Solusi Akademik & Guru', 'desc' => 'Isi jurnal harian mengajar lewat HP, kelola absensi kelas, pantau setoran tahfidz santri per juz, serta pengisian nilai rapor digital secara kolektif tanpa ribet.', 'tag' => 'Sistem Akademis'],
+                ['icon' => 'smartphone', 'title' => 'Solusi Wali Santri', 'desc' => 'Portal khusus untuk melihat tagihan bulanan, cek kedisiplinan dan poin sanksi santri, riwayat izin keluar pondok, serta riwayat kelancaran hafalan anak.', 'tag' => 'Portal Orang Tua'],
+            ] as $s)
+            <div class="bg-[#F8FAFC] rounded-3xl p-8 border border-slate-100 shadow-premium flex flex-col justify-between hover:border-primary-400 transition-all duration-300 group">
+                <div class="space-y-4">
+                    <div class="w-12 h-12 rounded-2xl bg-primary-50 text-primary-500 flex items-center justify-center group-hover:bg-primary-500 group-hover:text-white transition-all duration-300">
+                        <i data-lucide="{{ $s['icon'] }}" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900">{{ $s['title'] }}</h3>
+                    <p class="text-sm text-slate-500 leading-relaxed">{{ $s['desc'] }}</p>
+                </div>
+                <div class="pt-6 border-t border-slate-200/60 mt-6">
+                    <span class="text-xs font-bold text-primary-500 flex items-center gap-1 group-hover:gap-2 transition-all">
+                        {{ $s['tag'] }} <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </span>
+                </div>
+            </div>
+            @endforeach
+        </div>
+    </div>
+</section>
+
+<!-- FITUR (statis - daftar modul aplikasi) -->
+<section id="fitur" class="py-20 md:py-28 bg-[#F8FAFC] overflow-hidden">
+    <div class="mx-auto max-w-7xl px-4 lg:px-8">
+        <div class="text-center max-w-3xl mx-auto space-y-4 mb-16">
+            <span class="text-xs font-bold tracking-wider text-primary-500 bg-primary-50 px-3.5 py-1.5 rounded-full border border-primary-100">Modul Aplikasi</span>
+            <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
+                Infrastruktur Digital Terlengkap dalam Ekosistem Premium
+            </h2>
+            <p class="text-base text-slate-600 max-w-2xl mx-auto">
+                Kelola pesantren Anda dengan standar teknologi SaaS modern global. Tampilan bersih, responsif, stabil, dan dilengkapi sistem visualisasi proteksi data.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
+            @foreach([
+                ['title' => 'Keuangan Pesantren', 'tag' => 'Laporan Keuangan Otomatis', 'desc' => 'Kelola tagihan Syahriah (SPP), uang makan, pembangunan, dan kas asrama secara terotomatisasi. Laporan keuangan terbit seketika, mengurangi risiko kesalahan pencatatan manual.'],
+                ['title' => 'Wallet Santri', 'tag' => 'Transaksi Non-Tunai', 'desc' => 'Batasi uang saku santri secara digital dengan teknologi cashless. Mencegah kehilangan uang tunai, pemalakan, serta memantau transaksi harian secara real-time di koperasi pesantren.'],
+                ['title' => 'PPDB Online', 'tag' => 'Penerimaan Santri Mandiri', 'desc' => 'Penerimaan Santri Baru terintegrasi satu pintu dari formulir digital, verifikasi berkas otomatis, ujian seleksi mandiri, hingga pengumuman kelulusan dan pembayaran biaya awal.'],
+                ['title' => 'Rapor Digital', 'tag' => 'Evaluasi Akademis Praktis', 'desc' => "Penilaian otomatis berbasis kurikulum nasional maupun kepesantrenan. Cetak format transkrip nilai rapi yang langsung dikonversi menjadi berkas PDF siap cetak kapan pun."],
+                ['title' => 'Jurnal Mengajar', 'tag' => 'Sistem Agenda Pengajar', 'desc' => 'Membantu asatidzah mendokumentasikan agenda harian mengajar, cakupan topik kajian, serta mencatat catatan evaluasi kelas langsung melalui ponsel cerdas pengajar.'],
+                ['title' => "Tahfidz & Al-Qur'an", 'tag' => 'Monitoring Progres Hafalan', 'desc' => "Pantau capaian setoran hafalan harian santri secara komprehensif. Catat progres juz, nomor surah, ketepatan makhraj, tajwid, hingga kelancaran muroja'ah."],
+                ['title' => 'Perizinan Santri', 'tag' => 'Sistem Keamanan Gerbang', 'desc' => 'Alur digital pengajuan izin keluar masuk lingkungan pondok. Verifikasi instan melalui sistem pemindai QR Code guna melacak status santri secara aman dan disiplin.'],
+                ['title' => 'Pelanggaran Santri', 'tag' => 'Ketertiban Obyektif', 'desc' => 'Pencatatan akumulasi poin pelanggaran dan ketertiban secara transparan. Meminimalisir bias penilaian tindakan disipliner berlandaskan aturan formal lembaga.'],
+                ['title' => 'Prestasi Santri', 'tag' => 'Portofolio Prestasi', 'desc' => 'Pendataan sertifikat kejuaraan, penghargaan hafalan tercepat, hingga capaian ekstra-kurikuler santri demi menciptakan iklim motivasi belajar yang positif.'],
+            ] as $f)
+            <div class="group relative rounded-3xl bg-white border border-slate-200/50 p-8 shadow-premium hover:shadow-premium-hover transition-all duration-300 hover:border-primary-400/50 flex flex-col justify-between overflow-hidden">
+                <div class="space-y-5">
+                    <div class="relative w-14 h-14 flex items-center justify-center rounded-2xl bg-primary-50 text-primary-500 group-hover:bg-primary-500 group-hover:text-white transition-all duration-300 shadow-sm">
+                        <i data-lucide="layout-dashboard" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 group-hover:text-primary-600 transition-colors">{{ $f['title'] }}</h3>
+                    <p class="text-sm text-slate-500 leading-relaxed">{{ $f['desc'] }}</p>
+                </div>
+                <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-slate-400">
+                    <span>{{ $f['tag'] }}</span>
+                </div>
+            </div>
+            @endforeach
+
+            <div class="md:col-span-3 group relative rounded-3xl bg-white border border-slate-200/50 p-8 shadow-premium hover:shadow-premium-hover transition-all duration-300 hover:border-primary-400/50 flex flex-col justify-between overflow-hidden">
+                <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-primary-500/5 rounded-full blur-3xl group-hover:bg-primary-500/10 transition-colors duration-300"></div>
+                <div class="relative z-10 flex flex-col lg:flex-row gap-8 justify-between items-center">
+                    <div class="space-y-4 max-w-xl">
+                        <div class="relative w-14 h-14 flex items-center justify-center rounded-2xl bg-primary-50 text-primary-500 group-hover:bg-primary-500 group-hover:text-white transition-all duration-300 shadow-sm">
+                            <i data-lucide="scan-face" class="w-6 h-6"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-slate-900 group-hover:text-primary-600 transition-colors">Absensi Digital Real-time</h3>
+                        <p class="text-sm text-slate-500 leading-relaxed">
+                            Rekam daftar hadir santri secara instan pada saat halaqoh subuh, jam masuk madrasah diniyah, maupun jam asrama malam. Mengurangi risiko bolos, memudahkan pendeteksian dini kerawanan ketidakhadiran, serta didukung sistem notifikasi pengiriman ke orang tua.
+                        </p>
+                    </div>
+                    <div class="shrink-0 w-full lg:w-auto">
+                        <button onclick="hubungiSales()"
+                            class="w-full lg:w-auto inline-flex items-center justify-center gap-2 text-center rounded-full bg-slate-900 text-white hover:bg-primary-500 hover:scale-105 transition-all duration-300 text-sm font-semibold py-3 px-7 shadow-md">
+                            Hubungi via WhatsApp
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- GALERI SCREENSHOT ASLI - dinamis, dikelola via Filament -->
+@if($mockupScreenshots->isNotEmpty())
+<section id="tampilan-aplikasi" class="py-20 bg-white border-t border-slate-100">
+    <div class="mx-auto max-w-7xl px-4 lg:px-8">
+        <div class="text-center max-w-3xl mx-auto space-y-4 mb-16">
+            <span class="text-xs font-bold tracking-wider text-primary-500 bg-primary-50 px-3 py-1 rounded-full">Lihat Langsung</span>
+            <h2 class="text-3xl font-extrabold text-slate-900 sm:text-4xl tracking-tight">Tampilan Asli Aplikasi {{ $setting->brand_name }}</h2>
+            <p class="text-base text-slate-600">Bukan mockup rekaan — ini tampilan nyata dari dashboard yang dipakai pesantren mitra kami sehari-hari.</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            @foreach($mockupScreenshots as $m)
+            <div class="rounded-2xl overflow-hidden border border-slate-200 shadow-premium bg-white">
+                <img src="{{ $m->url() }}" alt="{{ $m->judul }}" class="w-full h-56 object-cover">
+                <div class="p-5">
+                    <h3 class="font-bold text-slate-900">{{ $m->judul }}</h3>
+                    @if($m->deskripsi)
+                    <p class="text-sm text-slate-500 mt-1">{{ $m->deskripsi }}</p>
+                    @endif
+                </div>
+            </div>
+            @endforeach
+        </div>
+    </div>
+</section>
+@endif
+
+<!-- STUDI KASUS - dinamis, semua angka diisi manual lewat panel admin -->
+@if($studiKasusList->isNotEmpty())
+<section id="studi-kasus" class="py-20 bg-white">
+    <div class="mx-auto max-w-7xl px-4 lg:px-8 space-y-16">
+        @foreach($studiKasusList as $sk)
+        <div class="rounded-3xl bg-gradient-to-br from-slate-900 to-slate-800 text-white p-8 md:p-12 shadow-2xl overflow-hidden relative">
+            <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#00A39D_1px,transparent_1px)] [background-size:16px_16px]"></div>
+            <div class="relative grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+
+                <div class="lg:col-span-7 space-y-5">
+                    @if($sk->badge_text)
+                    <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary-500/20 border border-primary-400/30 text-primary-300 text-xs font-semibold">
+                        <i data-lucide="badge-check" class="w-4 h-4"></i> {{ $sk->badge_text }}
+                    </span>
+                    @endif
+
+                    <h3 class="text-2xl md:text-3xl font-extrabold">{{ $sk->nama_lembaga }}</h3>
+
+                    @if($sk->deskripsi)
+                    <p class="text-slate-300 leading-relaxed">{{ $sk->deskripsi }}</p>
+                    @endif
+
+                    @if($sk->kutipan)
+                    <blockquote class="border-l-2 border-primary-400 pl-4 italic text-slate-200">
+                        "{{ $sk->kutipan }}"
+                        @if($sk->kutipan_nama)
+                        <footer class="mt-2 not-italic text-sm text-slate-400">
+                            — {{ $sk->kutipan_nama }}{{ $sk->kutipan_jabatan ? ', '.$sk->kutipan_jabatan : '' }}
+                        </footer>
+                        @endif
+                    </blockquote>
+                    @endif
+                </div>
+
+                <div class="lg:col-span-5">
+                    @if($sk->fotoUrl())
+                    <img src="{{ $sk->fotoUrl() }}" alt="{{ $sk->nama_lembaga }}" class="w-full rounded-2xl mb-6 object-cover max-h-64">
+                    @endif
+
+                    @if(!empty($sk->stats))
+                    <div class="grid grid-cols-2 gap-4">
+                        @foreach($sk->stats as $stat)
+                        <div class="bg-white/5 border border-white/10 rounded-2xl p-4 text-center">
+                            <p class="text-2xl font-extrabold text-primary-400">{{ $stat['value'] ?? '' }}</p>
+                            <p class="text-xs text-slate-400 mt-1">{{ $stat['label'] ?? '' }}</p>
+                        </div>
+                        @endforeach
+                    </div>
+                    @endif
+                </div>
+
+            </div>
+        </div>
+        @endforeach
+    </div>
+</section>
+@endif
+
+<!-- TESTIMONI - dinamis -->
+<section id="testimoni" class="py-20 bg-slate-50 border-t border-slate-100">
+    <div class="mx-auto max-w-7xl px-4 lg:px-8">
+        <div class="text-center max-w-3xl mx-auto space-y-4">
+            <span class="text-xs font-bold tracking-wider text-primary-500 bg-primary-50 px-3.5 py-1.5 rounded-full border border-primary-100">Testimonial</span>
+            <h2 class="text-3xl font-extrabold text-slate-900 sm:text-4xl">Kata Mereka Yang Telah Bertransformasi</h2>
+            <p class="text-base text-slate-600">
+                Kami bangga menjadi bagian dari perkembangan digitalisasi puluhan pondok pesantren modern di seluruh penjuru Indonesia.
+            </p>
+        </div>
+
+        <div class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
+            @foreach($testimonis as $t)
+            <div class="bg-white rounded-2xl p-8 border border-slate-100 shadow-premium flex flex-col justify-between">
+                <div class="space-y-4">
+                    <div class="flex text-amber-400 gap-0.5">
+                        @for($i = 0; $i < $t->rating; $i++)
+                            <i data-lucide="star" class="fill-current w-4 h-4"></i>
+                        @endfor
+                    </div>
+                    <p class="text-sm text-slate-600 italic leading-relaxed">"{{ $t->isi }}"</p>
+                </div>
+                <div class="mt-8 flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center font-bold text-sm text-slate-700 border border-slate-200">
+                        {{ $t->inisial() }}
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-bold text-slate-900">{{ $t->nama }}</h4>
+                        <p class="text-xs text-slate-500">{{ $t->jabatan }}{{ $t->asal_pesantren ? ' - '.$t->asal_pesantren : '' }}</p>
+                    </div>
+                </div>
+            </div>
+            @endforeach
+        </div>
+
+        <div class="mt-16 bg-white border border-slate-100 rounded-3xl p-8 md:p-10 shadow-premium max-w-4xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center divide-y md:divide-y-0 md:divide-x divide-slate-100 text-center md:text-left">
+                <div class="space-y-2 md:pr-4">
+                    <div class="flex items-center gap-2 justify-center md:justify-start text-primary-500">
+                        <i data-lucide="lock" class="w-5 h-5"></i>
+                        <h4 class="font-bold text-slate-900">Sistem Keamanan</h4>
+                    </div>
+                    <p class="text-xs text-slate-500">Enkripsi database SSL 256-bit standar perbankan untuk proteksi identitas santri & keuangan.</p>
+                </div>
+                <div class="space-y-2 pt-4 md:pt-0 md:px-6">
+                    <div class="flex items-center gap-2 justify-center md:justify-start text-primary-500">
+                        <i data-lucide="cloud-lightning" class="w-5 h-5"></i>
+                        <h4 class="font-bold text-slate-900">Cloud Server 99.9% Uptime</h4>
+                    </div>
+                    <p class="text-xs text-slate-500">Kecepatan akses data tinggi tanpa khawatir server down atau mati listrik di wilayah pondok.</p>
+                </div>
+                <div class="space-y-2 pt-4 md:pt-0 md:pl-6">
+                    <div class="flex items-center gap-2 justify-center md:justify-start text-primary-500">
+                        <i data-lucide="users" class="w-5 h-5"></i>
+                        <h4 class="font-bold text-slate-900">Multi-Level Hak Akses</h4>
+                    </div>
+                    <p class="text-xs text-slate-500">Pembagian izin akses ketat untuk pimpinan, ustadz, tata usaha, hingga wali santri.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- HARGA - dinamis -->
+<section id="harga" class="py-20 md:py-28">
+    <div class="mx-auto max-w-7xl px-4 lg:px-8">
+        <div class="text-center max-w-3xl mx-auto space-y-4">
+            <span class="text-xs font-bold tracking-wider text-primary-500 bg-primary-50 px-3.5 py-1.5 rounded-full border border-primary-100">Pilihan Investasi</span>
+            <h2 class="text-3xl font-extrabold text-slate-900 sm:text-4xl">Harga Transparan, Tumbuh Sesuai Kebutuhan</h2>
+            <p class="text-base text-slate-600">
+                Mulai dari biaya dasar yang ringan, lalu tambahkan modul satu per satu hanya untuk yang benar-benar dipakai pondok Anda.
+            </p>
+        </div>
+
+        <div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto items-stretch">
+            @foreach($subscriptionPlans as $plan)
+            <div class="relative {{ $plan->termasuk_semua_modul ? 'bg-slate-900 text-white rounded-3xl border-2 border-primary-500 shadow-2xl hover:scale-[1.02]' : 'bg-white rounded-2xl border border-slate-100 shadow-premium hover:scale-[1.01]' }} p-8 flex flex-col justify-between transition-all">
+                @if($plan->termasuk_semua_modul)
+                <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary-400 to-primary-600 text-white text-xs font-bold py-1 px-4 rounded-full shadow-lg uppercase tracking-wider">
+                    Semua Modul Termasuk
+                </div>
+                @endif
+                <div>
+                    <h3 class="text-2xl font-bold {{ $plan->termasuk_semua_modul ? '' : 'text-slate-900' }} mt-2">{{ $plan->nama }}</h3>
+                    <p class="text-xs {{ $plan->termasuk_semua_modul ? 'text-slate-400' : 'text-slate-500' }} mt-1">{{ $plan->deskripsi }}</p>
+
+                    <div class="mt-6 flex items-baseline">
+                        <span class="text-4xl font-extrabold {{ $plan->termasuk_semua_modul ? 'text-white' : 'text-slate-900' }}">Rp {{ number_format($plan->harga_bulanan, 0, ',', '.') }}</span>
+                        <span class="text-xs {{ $plan->termasuk_semua_modul ? 'text-slate-400' : 'text-slate-500' }} ml-1">/ bulan</span>
+                    </div>
+                    <p class="text-xs {{ $plan->termasuk_semua_modul ? 'text-slate-400' : 'text-slate-500' }} mt-2">
+                        Termasuk {{ $plan->maks_siswa ?? 'tanpa batas' }} siswa
+                        @if($plan->maks_lembaga) & {{ $plan->maks_lembaga }} lembaga @endif.
+                        @if($plan->harga_per_siswa_tambahan)
+                            Siswa tambahan +Rp{{ number_format($plan->harga_per_siswa_tambahan, 0, ',', '.') }}/siswa.
+                        @endif
+                        @if($plan->harga_per_lembaga_tambahan)
+                            Lembaga tambahan +Rp{{ number_format($plan->harga_per_lembaga_tambahan, 0, ',', '.') }}/lembaga.
+                        @endif
+                    </p>
+
+                    <ul class="mt-8 space-y-4 text-sm {{ $plan->termasuk_semua_modul ? 'text-slate-300' : 'text-slate-600' }}">
+                        @if($plan->termasuk_semua_modul)
+                        <li class="flex items-center gap-2.5">
+                            <i data-lucide="check" class="w-4 h-4 {{ $plan->termasuk_semua_modul ? 'text-primary-400' : 'text-primary-500' }}"></i>
+                            <span>Semua modul aplikasi tanpa kecuali</span>
+                        </li>
+                        @else
+                            @foreach($plan->fitur ?? [] as $fiturKey)
+                            <li class="flex items-center gap-2.5">
+                                <i data-lucide="check" class="w-4 h-4 text-primary-500"></i>
+                                <span>{{ \App\Support\FeatureGate::label($fiturKey) }}</span>
+                            </li>
+                            @endforeach
+                            <li class="flex items-center gap-2.5 text-slate-400">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                                <span>Tambah modul lain sesuai kebutuhan (lihat di bawah)</span>
+                            </li>
+                        @endif
+                    </ul>
+                </div>
+                <div class="mt-8">
+                    <a href="{{ route('public.daftar') }}"
+                        class="block text-center w-full rounded-full py-3.5 px-6 text-sm font-bold transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5
+                        {{ $plan->termasuk_semua_modul ? 'bg-primary-500 text-white hover:bg-primary-600' : 'bg-white border-2 border-primary-500 text-primary-500 hover:bg-primary-500 hover:text-white' }}">
+                        Coba Gratis 14 Hari
+                    </a>
+                </div>
+            </div>
+            @endforeach
+        </div>
+
+        @if($modulePrices->isNotEmpty())
+        <div class="mt-16 max-w-4xl mx-auto">
+            <h3 class="text-center text-lg font-bold text-slate-900 mb-2">Modul Tambahan — Pilih Sesuai Kebutuhan</h3>
+            <p class="text-center text-sm text-slate-500 mb-8">Di luar Paket Full, modul berikut bisa diaktifkan satu-satu kapan saja dari halaman Langganan.</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                @foreach($modulePrices as $modul)
+                <div class="rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm">
+                    <p class="text-sm font-bold text-slate-900">{{ $modul->nama }}</p>
+                    @if($modul->is_gratis)
+                        <p class="text-lg font-extrabold text-emerald-600 mt-1">Gratis</p>
+                        <p class="text-[11px] text-slate-400 mt-1">Dibebankan ke wali murid via fee transaksi</p>
+                    @else
+                        <p class="text-lg font-extrabold text-slate-900 mt-1">Rp {{ number_format($modul->harga_bulanan, 0, ',', '.') }}</p>
+                        <p class="text-[11px] text-slate-400 mt-1">/ bulan, dibebankan ke sekolah</p>
+                    @endif
+                </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+    </div>
+</section>
+
+<!-- FAQ - dinamis, dibagi 2 kolom -->
+<section id="faq" class="py-20 bg-white border-t border-slate-100">
+    <div class="mx-auto max-w-6xl px-4">
+        <div class="text-center space-y-4 mb-16">
+            <span class="text-xs font-bold tracking-wider text-primary-500 bg-primary-50 px-3 py-1 rounded-full">Tanya Jawab</span>
+            <h2 class="text-3xl font-extrabold text-slate-900 sm:text-4xl tracking-tight">Pertanyaan yang Sering Diajukan</h2>
+            <p class="text-base text-slate-600">Temukan jawaban cepat atas pertanyaan mendasar mengenai penggunaan platform {{ $setting->brand_name }}.</p>
+        </div>
+
+        @php $faqChunks = $faqItems->chunk((int) max(1, ceil($faqItems->count() / 2))); @endphp
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+            @foreach($faqChunks as $chunk)
+            <div class="space-y-4">
+                @foreach($chunk as $faq)
+                <div class="border border-slate-200 rounded-2xl bg-white overflow-hidden transition-all duration-300">
+                    <button class="faq-btn w-full flex items-center justify-between p-6 text-left focus:outline-none">
+                        <span class="font-bold text-slate-950 pr-4">{{ $faq->pertanyaan }}</span>
+                        <span class="bg-primary-50 text-primary-500 p-1.5 rounded-full transition-transform duration-300 faq-icon-wrapper">
+                            <i data-lucide="chevron-down" class="w-5 h-5"></i>
+                        </span>
+                    </button>
+                    <div class="faq-content max-h-0 overflow-hidden transition-all duration-300 ease-in-out bg-slate-50/50">
+                        <p class="p-6 text-sm text-slate-600 leading-relaxed border-t border-slate-100">{{ $faq->jawaban }}</p>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+            @endforeach
+        </div>
+    </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="py-20 md:py-28 bg-slate-900 text-white relative overflow-hidden">
+    <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#00A39D_1px,transparent_1px)] [background-size:16px_16px]"></div>
+    <div class="relative mx-auto max-w-5xl px-4 text-center space-y-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary-950 border border-primary-800 text-xs font-semibold text-primary-300 uppercase tracking-wider mx-auto">
+            Langkah Digitalisasi Hebat
+        </div>
+        <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight max-w-3xl mx-auto leading-tight">
+            Saatnya Pesantren Anda Bertransformasi ke Sistem Digital
+        </h2>
+        <p class="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto font-medium">
+            Nikmati kemudahan pengelolaan pondok yang teratur, hemat ribuan jam kerja berharga administrasi, dan tingkatkan kepercayaan wali santri Anda sekarang juga bersama {{ $setting->brand_name }}.
+        </p>
+        <div class="flex flex-wrap justify-center gap-4 text-sm font-semibold text-slate-300">
+            <span class="flex items-center gap-1.5 px-3 py-1 bg-slate-800 rounded-full">
+                <i data-lucide="clock" class="w-4 h-4 text-primary-400"></i> Hemat Waktu Staf
+            </span>
+            <span class="flex items-center gap-1.5 px-3 py-1 bg-slate-800 rounded-full">
+                <i data-lucide="folder-check" class="w-4 h-4 text-primary-400"></i> Administrasi Lebih Rapi
+            </span>
+            <span class="flex items-center gap-1.5 px-3 py-1 bg-slate-800 rounded-full">
+                <i data-lucide="eye" class="w-4 h-4 text-primary-400"></i> Transparan & Modern
+            </span>
+        </div>
+        <div class="flex flex-col sm:flex-row justify-center items-center gap-4 pt-4">
+            <a href="{{ route('public.daftar') }}" class="w-full sm:w-auto flex items-center justify-center gap-2 rounded-full bg-primary-500 px-8 py-4 text-base font-bold text-white shadow-premium hover:bg-primary-600 hover:scale-105 active:scale-95 transition-all">
+                Coba Demo Gratis Sekarang
+                <i data-lucide="sparkles" class="w-5 h-5"></i>
+            </a>
+            <button onclick="hubungiSales()" class="w-full sm:w-auto flex items-center justify-center gap-2 rounded-full bg-slate-800 border border-slate-700 px-8 py-4 text-base font-semibold text-white hover:bg-slate-700 transition-colors">
+                <i data-lucide="phone" class="w-5 h-5 text-emerald-400"></i>
+                Konsultasi via WhatsApp
+            </button>
+        </div>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="bg-slate-950 text-slate-400 py-12 border-t border-slate-900 text-sm">
+    <div class="mx-auto max-w-7xl px-4 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+            <div class="space-y-4 col-span-1 md:col-span-2">
+                <div class="flex items-center gap-2">
+                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-500 text-white">
+                        <i data-lucide="graduation-cap" class="h-5 w-5"></i>
+                    </div>
+                    <span class="text-lg font-bold text-white">{{ $brandParts[0] }}<span class="text-primary-500">{{ $brandParts[1] ?? '' }}</span></span>
+                </div>
+                <p class="max-w-sm text-xs leading-relaxed text-slate-500">
+                    {{ $setting->brand_name }} menyediakan platform manajemen terintegrasi terlengkap guna mendorong modernisasi dan akselerasi keandalan digital di seluruh pondok pesantren di Indonesia.
+                </p>
+
+                <div class="pt-2 space-y-3">
+                    <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-300">Temukan Kami di Media Sosial</h4>
+                    <div class="flex gap-3">
+                        @if($setting->ig_url)
+                        <a href="{{ $setting->ig_url }}" target="_blank" rel="noopener noreferrer"
+                           class="w-9 h-9 rounded-full bg-slate-900 hover:bg-primary-500 text-slate-300 hover:text-white flex items-center justify-center border border-slate-800 hover:border-primary-500 transition-all duration-300 hover:scale-110 shadow-md">
+                            <i class="fa-brands fa-instagram text-base"></i>
+                        </a>
+                        @endif
+                        @if($setting->fb_url)
+                        <a href="{{ $setting->fb_url }}" target="_blank" rel="noopener noreferrer"
+                           class="w-9 h-9 rounded-full bg-slate-900 hover:bg-primary-500 text-slate-300 hover:text-white flex items-center justify-center border border-slate-800 hover:border-primary-500 transition-all duration-300 hover:scale-110 shadow-md">
+                            <i class="fa-brands fa-facebook-f text-base"></i>
+                        </a>
+                        @endif
+                        @if($setting->yt_url)
+                        <a href="{{ $setting->yt_url }}" target="_blank" rel="noopener noreferrer"
+                           class="w-9 h-9 rounded-full bg-slate-900 hover:bg-primary-500 text-slate-300 hover:text-white flex items-center justify-center border border-slate-800 hover:border-primary-500 transition-all duration-300 hover:scale-110 shadow-md">
+                            <i class="fa-brands fa-youtube text-base"></i>
+                        </a>
+                        @endif
+                        @if($setting->x_url)
+                        <a href="{{ $setting->x_url }}" target="_blank" rel="noopener noreferrer"
+                           class="w-9 h-9 rounded-full bg-slate-900 hover:bg-primary-500 text-slate-300 hover:text-white flex items-center justify-center border border-slate-800 hover:border-primary-500 transition-all duration-300 hover:scale-110 shadow-md">
+                            <i class="fa-brands fa-x-twitter text-base"></i>
+                        </a>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-200">Navigasi Layanan</h4>
+                <ul class="space-y-2 text-xs">
+                    <li><a href="#masalah" class="hover:text-primary-400 transition-colors">Analisis Masalah</a></li>
+                    <li><a href="#solusi" class="hover:text-primary-400 transition-colors">Solusi Digital</a></li>
+                    <li><a href="#fitur" class="hover:text-primary-400 transition-colors">Fitur Aplikasi</a></li>
+                    <li><a href="#harga" class="hover:text-primary-400 transition-colors">Skema Investasi</a></li>
+                </ul>
+            </div>
+
+            <div class="space-y-3">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-200">Kontak Resmi</h4>
+                <p class="text-xs text-slate-500 leading-relaxed">
+                    {{ $setting->alamat }} <br>
+                    @if($setting->email_kontak)
+                    Email: <a href="mailto:{{ $setting->email_kontak }}" class="hover:text-white transition-colors">{{ $setting->email_kontak }}</a> <br>
+                    @endif
+                    @if($setting->whatsapp_number)
+                    Telp/WA: <a href="https://wa.me/{{ $setting->whatsapp_number }}" class="hover:text-white transition-colors">{{ $setting->whatsapp_number }}</a>
+                    @endif
+                </p>
+            </div>
+        </div>
+
+        <div class="pt-8 border-t border-slate-900 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
+            <p>{{ $setting->footer_text ?? ('© '.date('Y').' '.$setting->brand_name.'. Hak Cipta Dilindungi Undang-Undang.') }}</p>
+            <div class="flex gap-4">
+                <a href="#" class="hover:text-primary-400 transition-colors">Kebijakan Privasi</a>
+                <a href="#" class="hover:text-primary-400 transition-colors">Syarat & Ketentuan</a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+
+<script>
+    lucide.createIcons();
+
+    const waNumber = "{{ $setting->whatsapp_number }}";
+    const waDefaultMessage = @json($setting->whatsapp_pesan_default ?? '');
+    const brandName = @json($setting->brand_name);
+
+    function hubungiSales() {
+        const url = "https://wa.me/" + waNumber + "?text=" + encodeURIComponent(waDefaultMessage);
+        window.open(url, "_blank");
+    }
+
+    // Mobile menu
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    const menuIcon = document.getElementById('menu-icon');
+    mobileMenuBtn.addEventListener('click', () => {
+        const isHidden = mobileMenu.classList.contains('hidden');
+        mobileMenu.classList.toggle('hidden');
+        menuIcon.setAttribute('data-lucide', isHidden ? 'x' : 'menu');
+        lucide.createIcons();
+    });
+    document.querySelectorAll('#mobile-menu a').forEach(link => {
+        link.addEventListener('click', () => {
+            mobileMenu.classList.add('hidden');
+            menuIcon.setAttribute('data-lucide', 'menu');
+            lucide.createIcons();
+        });
+    });
+
+    // FAQ accordion
+    document.querySelectorAll('.faq-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const content = btn.nextElementSibling;
+            const iconWrapper = btn.querySelector('.faq-icon-wrapper');
+            const isOpen = content.style.maxHeight && content.style.maxHeight !== '0px';
+
+            document.querySelectorAll('.faq-content').forEach(c => {
+                c.style.maxHeight = '0px';
+                c.parentElement.classList.remove('border-primary-500');
+                c.parentElement.classList.add('border-slate-200');
+            });
+            document.querySelectorAll('.faq-icon-wrapper').forEach(w => {
+                w.style.transform = 'rotate(0deg)';
+                w.classList.remove('bg-primary-500', 'text-white');
+                w.classList.add('bg-primary-50', 'text-primary-500');
+            });
+
+            if (!isOpen) {
+                content.style.maxHeight = content.scrollHeight + 'px';
+                btn.parentElement.classList.remove('border-slate-200');
+                btn.parentElement.classList.add('border-primary-500');
+                iconWrapper.style.transform = 'rotate(180deg)';
+                iconWrapper.classList.remove('bg-primary-50', 'text-primary-500');
+                iconWrapper.classList.add('bg-primary-500', 'text-white');
+            }
+        });
+    });
+
+</script>
+</body>
+</html>
