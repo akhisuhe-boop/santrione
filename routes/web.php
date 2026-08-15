@@ -47,7 +47,7 @@ use App\Http\Controllers\Ppdb\PpdbAuthController;
 // ==========================
 // ROLE LOGIN GATEWAY (BARU)
 // ==========================
-
+require __DIR__.'/landing.php';
 Route::get('/', function () {
     return redirect()->route('login');
 });
