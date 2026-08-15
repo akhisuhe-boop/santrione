@@ -80,6 +80,9 @@ class PlatformPanelProvider extends PanelProvider
             ->navigationGroups([
                 NavigationGroup::make('Yayasan')
                     ->icon('heroicon-o-building-office-2'),
+                    
+                NavigationGroup::make('Landing Page')
+                    ->icon('heroicon-o-globe-alt'),
 
                 NavigationGroup::make('Billing & Harga')
                     ->icon('heroicon-o-currency-dollar'),

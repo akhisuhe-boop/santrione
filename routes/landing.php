@@ -10,7 +10,6 @@ Route::domain('qinaraindonesia.id')->group(function () {
     Route::get('/', [LandingController::class, 'index'])->name('landing');
 });
 
-// Route tambahan untuk preview/testing landing page dari domain manapun
-// (local, dev.qinaraindonesia.id, dst) tanpa perlu akses lewat domain
-// qinaraindonesia.id yang sebenarnya.
-Route::get('/preview-landing', [LandingController::class, 'index'])->name('landing.preview');
+// Route tambahan untuk cek/preview landing page dari domain manapun
+// (local, dev.qinaraindonesia.id, dst) tanpa perlu domain utama aktif dulu.
+Route::get('/landing-page', [LandingController::class, 'index'])->name('landing.preview');
