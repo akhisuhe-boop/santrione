@@ -33,4 +33,28 @@ class LandingSetting extends Model
         return $this->hero_video_url
             && (str_contains($this->hero_video_url, 'youtube.com') || str_contains($this->hero_video_url, 'youtu.be'));
     }
+
+    /**
+     * Untuk embed YouTube, tambahkan parameter autoplay+mute+rel=0+
+     * modestbranding otomatis supaya langsung main tanpa overlay
+     * thumbnail/nama channel yang mencolok. Catatan: YouTube tetap
+     * mewajibkan logo kecil YouTube tetap ada di pemutar (bagian dari
+     * ketentuan layanan mereka, tidak bisa dihilangkan 100%) -- yang
+     * hilang adalah overlay thumbnail besar "Watch on YouTube" sebelum
+     * video mulai diputar.
+     */
+    public function heroVideoEmbedUrl(): ?string
+    {
+        if (! $this->hero_video_url) {
+            return null;
+        }
+
+        if (! $this->heroVideoIsEmbed()) {
+            return $this->hero_video_url;
+        }
+
+        $separator = str_contains($this->hero_video_url, '?') ? '&' : '?';
+
+        return $this->hero_video_url.$separator.'autoplay=1&mute=1&rel=0&modestbranding=1&playsinline=1';
+    }
 }

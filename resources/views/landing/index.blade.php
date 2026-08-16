@@ -184,7 +184,7 @@
     <div class="mx-auto max-w-7xl px-4 lg:px-8">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-14 items-center">
 
-            <div class="lg:col-span-7 text-center lg:text-left space-y-8">
+            <div class="{{ $setting->hero_video_url ? 'lg:col-span-5' : 'lg:col-span-7' }} text-center lg:text-left space-y-8">
                 <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-50 border border-slate-200 text-xs font-medium text-slate-700 mx-auto lg:mx-0 shadow-sm hover:shadow-md transition-all duration-300">
                     <span class="relative flex h-2 w-2">
                         <span class="absolute inline-flex h-full w-full rounded-full opacity-60 animate-ping" style="background-color:#00A39D;"></span>
@@ -248,11 +248,11 @@
                 </div>
             </div>
 
-            <div class="lg:col-span-5">
+            <div class="{{ $setting->hero_video_url ? 'lg:col-span-7' : 'lg:col-span-5' }}">
                 @if($setting->hero_video_url)
                     <div class="rounded-2xl overflow-hidden border border-slate-200 shadow-2xl aspect-video bg-slate-900">
                         @if($setting->heroVideoIsEmbed())
-                            <iframe src="{{ $setting->hero_video_url }}" class="w-full h-full" title="Video {{ $setting->brand_name }}" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+                            <iframe src="{{ $setting->heroVideoEmbedUrl() }}" class="w-full h-full" title="Video {{ $setting->brand_name }}" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
                         @else
                             <video class="w-full h-full object-cover" src="{{ $setting->hero_video_url }}" autoplay muted loop playsinline controls></video>
                         @endif
@@ -608,15 +608,14 @@
             <div id="testimoni-scroll" class="no-scrollbar flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth py-8 -my-8 px-1">
                 @foreach($testimonis as $t)
                 <div class="snap-center shrink-0 w-[88%] sm:w-[70%] md:w-[calc(50%-0.75rem)]">
-                    <div class="relative h-full bg-gradient-to-b from-white to-slate-50/60 rounded-2xl p-8 border border-slate-100 border-l-4 border-l-primary-500 shadow-md flex flex-col">
-                        <i data-lucide="quote" class="absolute top-6 right-6 w-12 h-12 text-primary-50 pointer-events-none"></i>
-                        <div class="relative flex text-amber-400 gap-0.5 mb-5">
+                    <div class="h-full bg-white rounded-2xl p-8 shadow-sm hover:shadow-lg transition-shadow duration-300 flex flex-col">
+                        <div class="flex text-amber-400 gap-0.5 mb-5">
                             @for($i = 0; $i < $t->rating; $i++)
                                 <i data-lucide="star" class="fill-current w-4 h-4"></i>
                             @endfor
                         </div>
-                        <p class="relative text-sm text-slate-600 leading-relaxed flex-1">{{ $t->isi }}</p>
-                        <div class="relative mt-8 pt-6 border-t border-slate-100 flex items-center gap-4">
+                        <p class="text-[15px] text-slate-700 leading-relaxed flex-1">{{ $t->isi }}</p>
+                        <div class="mt-8 pt-6 border-t border-slate-100 flex items-center gap-4">
                             @if($t->logoUrl())
                                 <img src="{{ $t->logoUrl() }}" alt="{{ $t->nama }}" class="w-12 h-12 rounded-full object-cover ring-2 ring-primary-100">
                             @else
