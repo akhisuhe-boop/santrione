@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class Testimoni extends Model
 {
-    protected $fillable = ['nama', 'jabatan', 'asal_pesantren', 'isi', 'rating', 'urutan', 'is_active'];
+    protected $fillable = ['nama', 'logo', 'jabatan', 'asal_pesantren', 'isi', 'rating', 'urutan', 'is_active'];
 
     protected $casts = [
         'is_active' => 'boolean',
@@ -23,5 +24,10 @@ class Testimoni extends Model
         $kata = preg_split('/\s+/', trim($this->nama));
 
         return mb_strtoupper(mb_substr($kata[0] ?? '', 0, 1).mb_substr($kata[1] ?? '', 0, 1));
+    }
+
+    public function logoUrl(): ?string
+    {
+        return $this->logo ? Storage::disk('r2-public')->url($this->logo) : null;
     }
 }

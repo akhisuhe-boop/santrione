@@ -379,38 +379,41 @@
             </p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
             @foreach($modulAplikasi->where('is_featured', false) as $m)
-            <div class="group relative rounded-3xl bg-white border border-slate-200/50 p-8 shadow-premium hover:shadow-premium-hover transition-all duration-300 hover:border-primary-400/50 flex flex-col justify-between overflow-hidden">
-                <div class="space-y-5">
-                    <div class="relative w-14 h-14 flex items-center justify-center rounded-2xl bg-primary-50 text-primary-500 group-hover:bg-primary-500 group-hover:text-white transition-all duration-300 shadow-sm">
-                        <i data-lucide="{{ $m->icon }}" class="w-6 h-6"></i>
+            <div class="group relative rounded-2xl bg-white border border-slate-200/60 p-7 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-xl hover:-translate-y-1 hover:border-primary-300 transition-all duration-300 flex flex-col justify-between overflow-hidden">
+                <div class="absolute -right-8 -top-8 w-28 h-28 bg-primary-500/[0.04] rounded-full blur-2xl group-hover:bg-primary-500/[0.08] transition-colors duration-300"></div>
+                <div class="relative space-y-4">
+                    <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-gradient-to-br from-primary-50 to-primary-100 text-primary-600 ring-1 ring-primary-100 group-hover:from-primary-500 group-hover:to-primary-600 group-hover:text-white group-hover:ring-primary-500 transition-all duration-300">
+                        <i data-lucide="{{ $m->icon }}" class="w-5 h-5"></i>
                     </div>
-                    <h3 class="text-xl font-bold text-slate-900 group-hover:text-primary-600 transition-colors">{{ $m->judul }}</h3>
+                    <h3 class="text-lg font-bold text-slate-900 group-hover:text-primary-600 transition-colors">{{ $m->judul }}</h3>
                     <p class="text-sm text-slate-500 leading-relaxed">{{ $m->deskripsi }}</p>
                 </div>
                 @if($m->tag_text)
-                <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-slate-400">
-                    <span>{{ $m->tag_text }}</span>
+                <div class="relative mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
+                    <span class="text-xs font-semibold text-slate-400">{{ $m->tag_text }}</span>
+                    <i data-lucide="arrow-up-right" class="w-4 h-4 text-slate-300 group-hover:text-primary-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all"></i>
                 </div>
                 @endif
             </div>
             @endforeach
 
             @foreach($modulAplikasi->where('is_featured', true) as $m)
-            <div class="md:col-span-3 group relative rounded-3xl bg-white border border-slate-200/50 p-8 shadow-premium hover:shadow-premium-hover transition-all duration-300 hover:border-primary-400/50 flex flex-col justify-between overflow-hidden">
-                <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-primary-500/5 rounded-full blur-3xl group-hover:bg-primary-500/10 transition-colors duration-300"></div>
+            <div class="md:col-span-2 lg:col-span-3 group relative rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 p-8 md:p-10 shadow-xl overflow-hidden">
+                <div class="absolute inset-0 opacity-[0.07] bg-[radial-gradient(#00A39D_1px,transparent_1px)] [background-size:18px_18px]"></div>
+                <div class="absolute -right-16 -bottom-16 w-72 h-72 bg-primary-500/10 rounded-full blur-3xl"></div>
                 <div class="relative z-10 flex flex-col lg:flex-row gap-8 justify-between items-center">
                     <div class="space-y-4 max-w-xl">
-                        <div class="relative w-14 h-14 flex items-center justify-center rounded-2xl bg-primary-50 text-primary-500 group-hover:bg-primary-500 group-hover:text-white transition-all duration-300 shadow-sm">
-                            <i data-lucide="{{ $m->icon }}" class="w-6 h-6"></i>
+                        <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-primary-500/20 text-primary-300 ring-1 ring-primary-400/30">
+                            <i data-lucide="{{ $m->icon }}" class="w-5 h-5"></i>
                         </div>
-                        <h3 class="text-2xl font-bold text-slate-900 group-hover:text-primary-600 transition-colors">{{ $m->judul }}</h3>
-                        <p class="text-sm text-slate-500 leading-relaxed">{{ $m->deskripsi }}</p>
+                        <h3 class="text-2xl font-bold text-white">{{ $m->judul }}</h3>
+                        <p class="text-sm text-slate-300 leading-relaxed">{{ $m->deskripsi }}</p>
                     </div>
                     <div class="shrink-0 w-full lg:w-auto">
                         <button onclick="hubungiSales()"
-                            class="w-full lg:w-auto inline-flex items-center justify-center gap-2 text-center rounded-full bg-slate-900 text-white hover:bg-primary-500 hover:scale-105 transition-all duration-300 text-sm font-semibold py-3 px-7 shadow-md">
+                            class="w-full lg:w-auto inline-flex items-center justify-center gap-2 text-center rounded-full bg-primary-500 text-white hover:bg-primary-400 hover:scale-105 transition-all duration-300 text-sm font-semibold py-3 px-7 shadow-md">
                             Hubungi via WhatsApp
                         </button>
                     </div>
@@ -510,21 +513,29 @@
             </p>
         </div>
 
-        <div class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6">
             @foreach($testimonis as $t)
-            <div class="bg-white rounded-2xl p-8 border border-slate-100 shadow-premium flex flex-col justify-between">
+            <div class="group relative bg-white rounded-2xl p-8 border border-slate-100 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-400 to-primary-600 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300"></div>
                 <div class="space-y-4">
-                    <div class="flex text-amber-400 gap-0.5">
-                        @for($i = 0; $i < $t->rating; $i++)
-                            <i data-lucide="star" class="fill-current w-4 h-4"></i>
-                        @endfor
+                    <div class="flex items-center justify-between">
+                        <div class="flex text-amber-400 gap-0.5">
+                            @for($i = 0; $i < $t->rating; $i++)
+                                <i data-lucide="star" class="fill-current w-4 h-4"></i>
+                            @endfor
+                        </div>
+                        <i data-lucide="quote" class="w-6 h-6 text-primary-100"></i>
                     </div>
-                    <p class="text-sm text-slate-600 italic leading-relaxed">"{{ $t->isi }}"</p>
+                    <p class="text-sm text-slate-600 leading-relaxed">{{ $t->isi }}</p>
                 </div>
                 <div class="mt-8 flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center font-bold text-sm text-slate-700 border border-slate-200">
-                        {{ $t->inisial() }}
-                    </div>
+                    @if($t->logoUrl())
+                        <img src="{{ $t->logoUrl() }}" alt="{{ $t->nama }}" class="w-12 h-12 rounded-full object-cover ring-2 ring-primary-100">
+                    @else
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center font-bold text-sm text-primary-700 ring-2 ring-primary-100">
+                            {{ $t->inisial() }}
+                        </div>
+                    @endif
                     <div>
                         <h4 class="text-sm font-bold text-slate-900">{{ $t->nama }}</h4>
                         <p class="text-xs text-slate-500">{{ $t->jabatan }}{{ $t->asal_pesantren ? ' - '.$t->asal_pesantren : '' }}</p>
@@ -573,21 +584,51 @@
             </p>
         </div>
 
-        <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch">
+        @php
+            // Paket "Semua Modul Termasuk" DIPAKSA selalu di posisi tengah,
+            // apa pun jumlah paket lain yang aktif -- supaya urutan tampil
+            // tidak tergantung urutan data di database.
+            $featuredPlan = $subscriptionPlans->firstWhere('termasuk_semua_modul', true);
+            $otherPlans = $subscriptionPlans->where('termasuk_semua_modul', false)->values();
 
-            @foreach($subscriptionPlans->sortBy('termasuk_semua_modul') as $plan)
-            <div class="relative {{ $plan->termasuk_semua_modul ? 'md:-translate-y-3 bg-slate-900 text-white rounded-3xl border-2 border-primary-500 shadow-2xl' : 'bg-white rounded-2xl border border-slate-100 shadow-premium' }} p-8 flex flex-col justify-between transition-all hover:-translate-y-1">
+            if ($featuredPlan) {
+                $half = (int) ceil($otherPlans->count() / 2);
+                $orderedPlans = $otherPlans->slice(0, $half)->values()
+                    ->push($featuredPlan)
+                    ->concat($otherPlans->slice($half)->values());
+            } else {
+                $orderedPlans = $otherPlans;
+            }
+
+            $planCount = max(1, $orderedPlans->count());
+            $gridColsClass = match (true) {
+                $planCount >= 3 => 'md:grid-cols-3',
+                $planCount === 2 => 'md:grid-cols-2',
+                default => 'md:grid-cols-1',
+            };
+        @endphp
+
+        <div class="mt-12 grid grid-cols-1 {{ $gridColsClass }} gap-8 max-w-6xl mx-auto items-stretch">
+            @foreach($orderedPlans as $plan)
+            <div class="relative {{ $plan->termasuk_semua_modul ? 'md:-translate-y-3 bg-gradient-to-b from-slate-900 to-slate-950 text-white rounded-3xl shadow-2xl ring-2 ring-primary-500' : 'bg-white rounded-2xl border border-slate-200 shadow-[0_1px_3px_rgba(0,0,0,0.04)]' }} p-8 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl overflow-hidden">
+
                 @if($plan->termasuk_semua_modul)
-                <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary-400 to-primary-600 text-white text-xs font-bold py-1 px-4 rounded-full shadow-lg uppercase tracking-wider">
-                    Paling Populer
+                <div class="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-primary-400 via-primary-500 to-primary-400"></div>
+                <div class="absolute -top-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-gradient-to-r from-primary-400 to-primary-600 text-white text-xs font-bold py-1.5 px-4 rounded-full shadow-lg uppercase tracking-wider">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Paling Populer
                 </div>
                 @endif
+
                 <div>
-                    <h3 class="text-2xl font-bold {{ $plan->termasuk_semua_modul ? '' : 'text-slate-900' }} mt-2">{{ $plan->nama }}</h3>
-                    <p class="text-xs {{ $plan->termasuk_semua_modul ? 'text-slate-400' : 'text-slate-500' }} mt-1">{{ $plan->deskripsi }}</p>
+                    <div class="w-11 h-11 flex items-center justify-center rounded-xl mb-4 {{ $plan->termasuk_semua_modul ? 'bg-primary-500/20 text-primary-300 ring-1 ring-primary-400/30' : 'bg-primary-50 text-primary-600 ring-1 ring-primary-100' }}">
+                        <i data-lucide="{{ $plan->termasuk_semua_modul ? 'crown' : 'zap' }}" class="w-5 h-5"></i>
+                    </div>
+
+                    <h3 class="text-2xl font-bold {{ $plan->termasuk_semua_modul ? 'text-white' : 'text-slate-900' }}">{{ $plan->nama }}</h3>
+                    <p class="text-xs {{ $plan->termasuk_semua_modul ? 'text-slate-400' : 'text-slate-500' }} mt-1.5 leading-relaxed">{{ $plan->deskripsi }}</p>
 
                     <div class="mt-6 flex items-baseline">
-                        <span class="text-4xl font-extrabold {{ $plan->termasuk_semua_modul ? 'text-white' : 'text-slate-900' }}">Rp {{ number_format($plan->harga_bulanan, 0, ',', '.') }}</span>
+                        <span class="text-4xl font-extrabold tracking-tight {{ $plan->termasuk_semua_modul ? 'text-white' : 'text-slate-900' }}">Rp {{ number_format($plan->harga_bulanan, 0, ',', '.') }}</span>
                         <span class="text-xs {{ $plan->termasuk_semua_modul ? 'text-slate-400' : 'text-slate-500' }} ml-1">/ bulan</span>
                     </div>
                     <p class="text-xs {{ $plan->termasuk_semua_modul ? 'text-slate-400' : 'text-slate-500' }} mt-2">
@@ -598,81 +639,98 @@
                         @endif
                     </p>
 
-                    <ul class="mt-8 space-y-4 text-sm {{ $plan->termasuk_semua_modul ? 'text-slate-300' : 'text-slate-600' }}">
+                    <div class="mt-6 h-px w-full {{ $plan->termasuk_semua_modul ? 'bg-white/10' : 'bg-slate-100' }}"></div>
+
+                    <ul class="mt-6 space-y-3.5 text-sm {{ $plan->termasuk_semua_modul ? 'text-slate-300' : 'text-slate-600' }}">
                         @if($plan->termasuk_semua_modul)
                         <li class="flex items-center gap-2.5">
-                            <i data-lucide="check" class="w-4 h-4 text-primary-400"></i>
-                            <span>Semua modul aplikasi tanpa kecuali</span>
+                            <span class="flex items-center justify-center w-5 h-5 rounded-full bg-primary-500/20 shrink-0">
+                                <i data-lucide="check" class="w-3 h-3 text-primary-300"></i>
+                            </span>
+                            <span class="font-medium text-white">Semua modul aplikasi tanpa kecuali</span>
                         </li>
                         @else
                             @foreach($plan->fitur ?? [] as $fiturKey)
                             <li class="flex items-center gap-2.5">
-                                <i data-lucide="check" class="w-4 h-4 text-primary-500"></i>
+                                <span class="flex items-center justify-center w-5 h-5 rounded-full bg-primary-50 shrink-0">
+                                    <i data-lucide="check" class="w-3 h-3 text-primary-600"></i>
+                                </span>
                                 <span>{{ \App\Support\FeatureGate::label($fiturKey) }}</span>
                             </li>
                             @endforeach
                             <li class="flex items-center gap-2.5 text-slate-400">
-                                <i data-lucide="plus" class="w-4 h-4"></i>
+                                <span class="flex items-center justify-center w-5 h-5 rounded-full bg-slate-50 shrink-0">
+                                    <i data-lucide="plus" class="w-3 h-3"></i>
+                                </span>
                                 <span>Tambah modul lain sesuai kebutuhan</span>
                             </li>
                         @endif
                     </ul>
                 </div>
+
                 <div class="mt-8">
                     <a href="{{ route('public.daftar') }}"
-                        class="block text-center w-full rounded-full py-3.5 px-6 text-sm font-bold transition-all duration-300 shadow-md hover:shadow-lg
-                        {{ $plan->termasuk_semua_modul ? 'bg-primary-500 text-white hover:bg-primary-600' : 'bg-white border-2 border-primary-500 text-primary-500 hover:bg-primary-500 hover:text-white' }}">
+                        class="group/btn flex items-center justify-center gap-2 w-full rounded-full py-3.5 px-6 text-sm font-bold transition-all duration-300 shadow-md hover:shadow-lg
+                        {{ $plan->termasuk_semua_modul ? 'bg-primary-500 text-white hover:bg-primary-400' : 'bg-slate-900 text-white hover:bg-primary-600' }}">
                         Coba Gratis 14 Hari
+                        <i data-lucide="arrow-right" class="w-4 h-4 group-hover/btn:translate-x-0.5 transition-transform"></i>
                     </a>
                 </div>
             </div>
             @endforeach
+        </div>
 
-            @if($modulePrices->isNotEmpty())
-            @php
-                $modulIcons = [
-                    'Keuangan (SPP & Tagihan)' => 'wallet',
-                    'e-Kantin' => 'shopping-cart',
-                    'Akademik' => 'book-open',
-                    'Absensi' => 'calendar-check',
-                    'PSB (Pendaftaran Siswa Baru)' => 'user-plus',
-                    'Tahfidz' => 'book-marked',
-                    'Perizinan' => 'door-open',
-                    'Konseling' => 'heart-handshake',
-                ];
-            @endphp
-            <div class="rounded-3xl border border-slate-200 bg-gradient-to-br from-primary-50/60 via-white to-white p-8 shadow-premium flex flex-col">
-                <div class="mb-5">
-                    <div class="w-12 h-12 rounded-2xl bg-primary-500/10 text-primary-500 flex items-center justify-center mb-4">
+        @if($modulePrices->isNotEmpty())
+        @php
+            $modulIcons = [
+                'Keuangan (SPP & Tagihan)' => 'wallet',
+                'e-Kantin' => 'shopping-cart',
+                'Akademik' => 'book-open',
+                'Absensi' => 'calendar-check',
+                'PSB (Pendaftaran Siswa Baru)' => 'user-plus',
+                'Tahfidz' => 'book-marked',
+                'Perizinan' => 'door-open',
+                'Konseling' => 'heart-handshake',
+            ];
+        @endphp
+        <div class="mt-10 max-w-6xl mx-auto rounded-3xl bg-gradient-to-br from-slate-50 to-white border border-slate-200 p-8 md:p-10">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 text-white flex items-center justify-center shadow-md shrink-0">
                         <i data-lucide="puzzle" class="w-6 h-6"></i>
                     </div>
-                    <h3 class="text-xl font-bold text-slate-900">Modul Tambahan</h3>
-                    <p class="text-xs text-slate-500 mt-1">Pilih sesuai kebutuhan, aktifkan kapan saja</p>
-                </div>
-                <div class="space-y-2.5 flex-1">
-                    @foreach($modulePrices as $modul)
-                    <div class="flex items-center gap-3 bg-white/80 rounded-xl p-3 border border-slate-100 hover:border-primary-300 hover:shadow-sm transition-all">
-                        <div class="w-9 h-9 rounded-lg bg-primary-50 text-primary-500 flex items-center justify-center shrink-0">
-                            <i data-lucide="{{ $modulIcons[$modul->nama] ?? 'puzzle' }}" class="w-4 h-4"></i>
-                        </div>
-                        <span class="text-sm font-medium text-slate-700 flex-1">{{ $modul->nama }}</span>
-                        @if($modul->is_gratis)
-                            <span class="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full whitespace-nowrap">Gratis</span>
-                        @else
-                            <span class="text-[11px] font-bold text-primary-600 bg-primary-50 px-2.5 py-1 rounded-full whitespace-nowrap">Rp{{ number_format($modul->harga_bulanan / 1000, 0) }}rb</span>
-                        @endif
+                    <div>
+                        <h3 class="text-xl font-bold text-slate-900">Modul Tambahan</h3>
+                        <p class="text-sm text-slate-500">Pilih sesuai kebutuhan, aktifkan kapan saja dari halaman Langganan</p>
                     </div>
-                    @endforeach
                 </div>
-                <a href="{{ route('public.daftar') }}" class="mt-6 block text-center w-full rounded-full py-3 px-6 text-sm font-bold border-2 border-primary-500 text-primary-500 hover:bg-primary-500 hover:text-white transition-all duration-300">
+                <a href="{{ route('public.daftar') }}" class="inline-flex items-center justify-center gap-2 rounded-full border-2 border-primary-500 text-primary-600 hover:bg-primary-500 hover:text-white transition-all duration-300 text-sm font-bold py-2.5 px-6 shrink-0">
                     Coba Gratis 14 Hari
                 </a>
             </div>
-            @endif
 
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                @foreach($modulePrices as $modul)
+                <div class="group relative bg-white rounded-2xl p-5 border border-slate-200 hover:border-primary-300 hover:shadow-lg transition-all duration-300 text-center">
+                    <div class="w-11 h-11 mx-auto rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center mb-3 group-hover:bg-primary-500 group-hover:text-white transition-all duration-300">
+                        <i data-lucide="{{ $modulIcons[$modul->nama] ?? 'puzzle' }}" class="w-5 h-5"></i>
+                    </div>
+                    <p class="text-sm font-semibold text-slate-800 leading-snug">{{ $modul->nama }}</p>
+                    <div class="mt-2.5">
+                        @if($modul->is_gratis)
+                            <span class="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">Gratis</span>
+                        @else
+                            <span class="text-[11px] font-bold text-primary-600 bg-primary-50 px-2.5 py-1 rounded-full">Rp{{ number_format($modul->harga_bulanan / 1000, 0) }}rb/bln</span>
+                        @endif
+                    </div>
+                </div>
+                @endforeach
+            </div>
         </div>
+        @endif
     </div>
 </section>
+
 
 <!-- FAQ - dinamis -->
 <section id="faq" class="py-20 bg-white border-t border-slate-100">

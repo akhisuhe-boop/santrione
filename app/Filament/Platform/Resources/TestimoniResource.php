@@ -45,6 +45,14 @@ class TestimoniResource extends BaseResource
             Forms\Components\Section::make('Isi Testimoni')
                 ->schema([
                     Forms\Components\TextInput::make('nama')->required()->maxLength(255),
+                    Forms\Components\FileUpload::make('logo')
+                        ->label('Foto / Logo Yayasan-Sekolah')
+                        ->image()
+                        ->disk('r2-public')
+                        ->directory('landing/testimoni')
+                        ->imageEditor()
+                        ->circleCropper()
+                        ->helperText('Opsional. Kalau kosong, tampilkan inisial nama sebagai gantinya.'),
                     Forms\Components\TextInput::make('jabatan')->maxLength(255)
                         ->placeholder('Contoh: Pimpinan Yayasan Al-Amanah'),
                     Forms\Components\TextInput::make('asal_pesantren')
@@ -71,6 +79,7 @@ class TestimoniResource extends BaseResource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('urutan')->label('#')->sortable(),
+                Tables\Columns\ImageColumn::make('logo')->disk('r2-public')->circular(),
                 Tables\Columns\TextColumn::make('nama')->searchable(),
                 Tables\Columns\TextColumn::make('asal_pesantren')->label('Asal Lembaga'),
                 Tables\Columns\TextColumn::make('rating')->badge(),
