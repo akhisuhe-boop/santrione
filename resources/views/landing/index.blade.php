@@ -228,8 +228,8 @@
                         <i data-lucide="arrow-right" class="w-5 h-5"></i>
                     </a>
                     <button onclick="hubungiSales()"
-                        class="inline-flex items-center justify-center gap-2 rounded-full bg-white border-2 border-accent-500 px-8 py-4 font-semibold text-accent-600 hover:bg-accent-50 transition shadow-sm">
-                        <i data-lucide="message-circle" class="w-5 h-5 text-accent-500"></i>
+                        class="inline-flex items-center justify-center gap-2 rounded-full bg-[#F97316] px-8 py-4 font-semibold text-white hover:bg-[#EA580C] transition-all duration-300 shadow-md hover:shadow-lg">
+                        <i data-lucide="message-circle" class="w-5 h-5 text-white"></i>
                         Konsultasi Gratis
                     </button>
                 </div>
@@ -821,9 +821,10 @@
 
                 <div class="mt-8">
                     <a href="{{ route('public.daftar') }}"
-                        class="group/btn flex items-center justify-center gap-2 w-full rounded-full py-3.5 px-6 text-sm font-bold transition-all duration-300 shadow-md hover:shadow-lg bg-accent-500 text-white hover:bg-accent-600">
+                        class="group/btn flex items-center justify-center gap-2 w-full rounded-full py-3.5 px-6 text-sm font-bold transition-all duration-300 shadow-md hover:shadow-lg bg-[#0D9488] text-white hover:bg-[#0F766E]">
                         Coba Gratis 14 Hari
-                        <i data-lucide="arrow-right" class="w-4 h-4 group-hover/btn:translate-x-0.5 transition-transform"></i>
+                        <i data-lucide="arrow-right"
+                            class="w-4 h-4 group-hover/btn:translate-x-0.5 transition-transform"></i>
                     </a>
                 </div>
             </div>
@@ -873,7 +874,8 @@
                 </div>
 
                 <div class="mt-6 text-center">
-                    <a href="{{ route('public.daftar') }}" class="inline-flex items-center justify-center gap-2 rounded-full bg-accent-500 text-white hover:bg-accent-600 transition-all duration-300 text-sm font-bold py-3 px-8 shadow-md hover:shadow-lg">
+                    <a href="{{ route('public.daftar') }}"
+                        class="inline-flex items-center justify-center gap-2 rounded-full bg-[#0D9488] text-white hover:bg-[#0F766E] transition-all duration-300 text-sm font-bold py-3 px-8 shadow-md hover:shadow-lg">
                         Coba Gratis 14 Hari
                         <i data-lucide="arrow-right" class="w-4 h-4"></i>
                     </a>
