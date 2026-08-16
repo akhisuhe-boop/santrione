@@ -157,7 +157,7 @@
 
         <div class="hidden md:flex items-center gap-4">
             <a href="{{ route('public.daftar') }}"
-                class="rounded-full bg-accent-500 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-accent-500/20 hover:bg-accent-600 hover:scale-[1.02] active:scale-[0.98] transition-all">
+                class="rounded-full bg-primary-500 px-5 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-primary-600 hover:scale-[1.02] active:scale-[0.98] transition-all">
                 Coba Demo Gratis
             </a>
         </div>
@@ -177,7 +177,7 @@
         <a href="#testimoni" class="block py-2 text-sm font-medium text-slate-700 hover:text-primary-500">Testimoni</a>
         <a href="#harga" class="block py-2 text-sm font-medium text-slate-700 hover:text-primary-500">Harga</a>
         <a href="#faq" class="block py-2 text-sm font-medium text-slate-700 hover:text-primary-500">FAQ</a>
-        <a href="{{ route('public.daftar') }}" class="block text-center w-full rounded-full bg-accent-500 py-3 text-sm font-semibold text-white shadow-md">
+        <a href="{{ route('public.daftar') }}" class="block text-center w-full rounded-full bg-primary-500 py-3 text-sm font-semibold text-white shadow-md">
             Coba Demo Gratis
         </a>
     </div>
@@ -223,13 +223,13 @@
 
                 <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                     <a href="{{ route('public.daftar') }}"
-                        class="inline-flex items-center justify-center gap-2 rounded-full bg-accent-500 px-8 py-4 text-white font-bold shadow-lg shadow-accent-500/25 hover:bg-accent-600 hover:scale-[1.02] transition">
+                        class="inline-flex items-center justify-center gap-2 rounded-full bg-primary-600 px-8 py-4 text-white font-bold shadow-lg hover:bg-primary-700 hover:scale-[1.02] transition">
                         Coba Demo Gratis
                         <i data-lucide="arrow-right" class="w-5 h-5"></i>
                     </a>
                     <button onclick="hubungiSales()"
-                        class="inline-flex items-center justify-center gap-2 rounded-full bg-white border border-slate-200 px-8 py-4 font-semibold text-slate-700 hover:bg-slate-50 transition shadow-sm">
-                        <i data-lucide="message-circle" class="w-5 h-5 text-emerald-500"></i>
+                        class="inline-flex items-center justify-center gap-2 rounded-full bg-white border-2 border-accent-500 px-8 py-4 font-semibold text-accent-600 hover:bg-accent-50 transition shadow-sm">
+                        <i data-lucide="message-circle" class="w-5 h-5 text-accent-500"></i>
                         Konsultasi Gratis
                     </button>
                 </div>
@@ -402,14 +402,14 @@
 
 <!-- VIDEO DEMO - besar, center, dinamis -->
 @if($setting->hero_video_url)
-<section class="pt-16 md:pt-20 pb-8 md:pb-10 bg-white border-t border-slate-100">
+<section class="pt-16 md:pt-20 pb-14 md:pb-16 bg-white border-t border-slate-100">
     <div class="mx-auto max-w-4xl px-4 lg:px-8 text-center">
         <span class="text-xs font-bold tracking-wider text-primary-500 bg-primary-50 px-3.5 py-1.5 rounded-full border border-primary-100">Lihat Cara Kerjanya</span>
         <h2 class="mt-4 text-3xl font-extrabold text-slate-900 sm:text-4xl">Kenali {{ $setting->brand_name }} Lebih Dekat</h2>
         @if($setting->video_deskripsi)
         <p class="mt-4 text-base text-slate-600 max-w-2xl mx-auto">{{ $setting->video_deskripsi }}</p>
         @endif
-        <div class="mt-10 rounded-2xl overflow-hidden border border-slate-200 shadow-2xl aspect-video bg-slate-900">
+        <div class="mt-10 rounded-2xl overflow-hidden border border-slate-200 shadow-xl aspect-video bg-slate-900">
             @if($setting->heroVideoIsEmbed())
                 <iframe src="{{ $setting->heroVideoEmbedUrl() }}" class="w-full h-full" title="Video {{ $setting->brand_name }}" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
             @else
@@ -425,7 +425,7 @@
 <section id="solusi" class="py-20 md:py-28 bg-[#FFFFFF]">
     <div class="mx-auto max-w-7xl px-4 lg:px-8">
         <div class="text-center max-w-3xl mx-auto space-y-4">
-            <span class="text-xs font-bold tracking-wider text-primary-500 bg-primary-50 px-3 py-1 rounded-full">Solusi Terpadu</span>
+            <span class="text-xs font-bold tracking-wider text-accent-600 bg-accent-50 px-3 py-1 rounded-full">Solusi Terpadu</span>
             <h2 class="text-3xl font-extrabold text-slate-900 sm:text-4xl tracking-tight">
                 Satu Platform, Solusi untuk Semua Kebutuhan Lembaga Pendidikan Islam
             </h2>
@@ -760,18 +760,18 @@
 
         <div class="mt-20 pt-6 grid grid-cols-1 {{ $gridColsClass }} gap-8 max-w-6xl mx-auto items-stretch">
             @foreach($orderedPlans as $plan)
-            <div class="reveal-on-scroll relative {{ $plan->termasuk_semua_modul ? 'md:-translate-y-2 bg-gradient-to-b from-slate-900 to-slate-950 text-white rounded-3xl shadow-2xl ring-2 ring-primary-500' : 'bg-white rounded-2xl border border-slate-200 shadow-[0_1px_3px_rgba(0,0,0,0.04)]' }} p-8 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
+            <div class="reveal-on-scroll relative {{ $plan->termasuk_semua_modul ? 'md:-translate-y-2 bg-gradient-to-b from-slate-900 to-slate-950 text-white rounded-3xl shadow-2xl ring-2 ring-primary-500' : 'bg-white rounded-2xl border border-slate-200 shadow-[0_1px_3px_rgba(0,0,0,0.04)]' }} p-8 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:shadow-2xl cursor-default">
 
                 @if($plan->termasuk_semua_modul)
                 <div class="absolute -top-5 inset-x-0 flex justify-center z-10">
-                    <div class="flex items-center gap-2 bg-gradient-to-r from-accent-400 to-accent-600 text-white text-sm font-bold py-2 px-5 rounded-full shadow-lg shadow-accent-500/30 uppercase tracking-wider whitespace-nowrap">
+                    <div class="flex items-center gap-2 bg-gradient-to-r from-primary-400 to-primary-600 text-white text-sm font-bold py-2 px-5 rounded-full shadow-lg uppercase tracking-wider whitespace-nowrap">
                         <i data-lucide="sparkles" class="w-4 h-4"></i> Paling Populer
                     </div>
                 </div>
                 @endif
 
                 <div>
-                    <div class="w-11 h-11 flex items-center justify-center rounded-xl mb-4 {{ $plan->termasuk_semua_modul ? 'bg-accent-500/20 text-accent-400 ring-1 ring-accent-400/30' : 'bg-primary-50 text-primary-600 ring-1 ring-primary-100' }}">
+                    <div class="w-11 h-11 flex items-center justify-center rounded-xl mb-4 {{ $plan->termasuk_semua_modul ? 'bg-primary-500/20 text-primary-300 ring-1 ring-primary-400/30' : 'bg-primary-50 text-primary-600 ring-1 ring-primary-100' }}">
                         <i data-lucide="{{ $plan->termasuk_semua_modul ? 'crown' : 'zap' }}" class="w-5 h-5"></i>
                     </div>
 
@@ -821,7 +821,7 @@
 
                 <div class="mt-8">
                     <a href="{{ route('public.daftar') }}"
-                        class="group/btn flex items-center justify-center gap-2 w-full rounded-full py-3.5 px-6 text-sm font-bold transition-all duration-300 shadow-md hover:shadow-lg bg-primary-500 text-white hover:bg-primary-600">
+                        class="group/btn flex items-center justify-center gap-2 w-full rounded-full py-3.5 px-6 text-sm font-bold transition-all duration-300 shadow-md hover:shadow-lg bg-accent-500 text-white hover:bg-accent-600">
                         Coba Gratis 14 Hari
                         <i data-lucide="arrow-right" class="w-4 h-4 group-hover/btn:translate-x-0.5 transition-transform"></i>
                     </a>
@@ -873,7 +873,7 @@
                 </div>
 
                 <div class="mt-6 text-center">
-                    <a href="{{ route('public.daftar') }}" class="inline-flex items-center justify-center gap-2 rounded-full bg-primary-500 text-white hover:bg-primary-600 transition-all duration-300 text-sm font-bold py-3 px-8 shadow-md hover:shadow-lg">
+                    <a href="{{ route('public.daftar') }}" class="inline-flex items-center justify-center gap-2 rounded-full bg-accent-500 text-white hover:bg-accent-600 transition-all duration-300 text-sm font-bold py-3 px-8 shadow-md hover:shadow-lg">
                         Coba Gratis 14 Hari
                         <i data-lucide="arrow-right" class="w-4 h-4"></i>
                     </a>
@@ -942,7 +942,7 @@
             </span>
         </div>
         <div class="flex flex-col sm:flex-row justify-center items-center gap-4 pt-4">
-            <a href="{{ route('public.daftar') }}" class="w-full sm:w-auto flex items-center justify-center gap-2 rounded-full bg-accent-500 px-8 py-4 text-base font-bold text-white shadow-xl shadow-accent-500/30 hover:bg-accent-600 hover:scale-105 active:scale-95 transition-all">
+            <a href="{{ route('public.daftar') }}" class="w-full sm:w-auto flex items-center justify-center gap-2 rounded-full bg-primary-500 px-8 py-4 text-base font-bold text-white shadow-premium hover:bg-primary-600 hover:scale-105 active:scale-95 transition-all">
                 Coba Demo Gratis Sekarang
                 <i data-lucide="sparkles" class="w-5 h-5"></i>
             </a>
