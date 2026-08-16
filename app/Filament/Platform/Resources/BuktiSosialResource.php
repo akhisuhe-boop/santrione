@@ -52,6 +52,10 @@ class BuktiSosialResource extends BaseResource
                     Forms\Components\TextInput::make('lokasi')
                         ->maxLength(255)
                         ->placeholder('Contoh: Bandung (opsional)'),
+                    Forms\Components\DatePicker::make('tanggal_bergabung')
+                        ->label('Tanggal Bergabung (perkiraan)')
+                        ->helperText('Dipakai untuk menampilkan "X hari/minggu yang lalu" di pop-up. Kosongkan kalau tidak mau menampilkan waktu.')
+                        ->maxDate(now()),
                 ])->columns(2),
 
             Forms\Components\Section::make('Tampilan')
@@ -69,6 +73,7 @@ class BuktiSosialResource extends BaseResource
                 Tables\Columns\TextColumn::make('urutan')->label('#')->sortable(),
                 Tables\Columns\TextColumn::make('nama_lembaga')->searchable(),
                 Tables\Columns\TextColumn::make('lokasi'),
+                Tables\Columns\TextColumn::make('tanggal_bergabung')->date('d M Y'),
                 Tables\Columns\IconColumn::make('is_active')->boolean()->label('Aktif'),
             ])
             ->defaultSort('urutan')

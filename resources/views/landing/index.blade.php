@@ -45,6 +45,11 @@
         .animate-marquee:hover { animation-play-state: paused; }
         .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        .reveal-on-scroll { opacity: 0; transition: opacity 0.7s ease-out; }
+        .reveal-on-scroll.revealed { opacity: 1; }
+        .reveal-on-scroll:nth-child(1) { transition-delay: 0ms; }
+        .reveal-on-scroll:nth-child(2) { transition-delay: 120ms; }
+        .reveal-on-scroll:nth-child(3) { transition-delay: 240ms; }
     </style>
 </head>
 <body class="gradient-bg antialiased">
@@ -69,7 +74,7 @@
     </div>
     <div class="min-w-0 flex-1">
         <p id="social-proof-name" class="text-sm font-bold text-slate-900 truncate"></p>
-        <p class="text-xs text-slate-500">baru saja bergabung dengan {{ $setting->brand_name }}</p>
+        <p class="text-xs text-slate-500">menggunakan {{ $setting->brand_name }}<span id="social-proof-time"></span></p>
     </div>
     <button onclick="dismissSocialProof()" aria-label="Tutup" class="text-slate-300 hover:text-slate-500 shrink-0">
         <i data-lucide="x" class="w-4 h-4"></i>
@@ -539,21 +544,18 @@
 
         @if($testimonis->isNotEmpty())
         <div class="mt-16 relative max-w-6xl mx-auto">
-            <div id="testimoni-scroll" class="no-scrollbar flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth py-3 -my-3 px-1">
+            <div id="testimoni-scroll" class="no-scrollbar flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth py-8 -my-8 px-1">
                 @foreach($testimonis as $t)
                 <div class="snap-center shrink-0 w-[88%] sm:w-[70%] md:w-[calc(50%-0.75rem)]">
-                    <div class="relative h-full bg-white rounded-2xl p-8 border border-slate-100 shadow-lg flex flex-col">
-                        <div class="absolute top-0 left-0 w-full h-1 rounded-t-2xl bg-gradient-to-r from-primary-400 to-primary-600"></div>
-                        <div class="flex items-center justify-between mb-5">
-                            <div class="flex text-amber-400 gap-0.5">
-                                @for($i = 0; $i < $t->rating; $i++)
-                                    <i data-lucide="star" class="fill-current w-4 h-4"></i>
-                                @endfor
-                            </div>
-                            <i data-lucide="quote" class="w-7 h-7 text-primary-100"></i>
+                    <div class="relative h-full bg-white rounded-2xl p-8 border border-slate-100 border-l-4 border-l-primary-500 shadow-md flex flex-col overflow-hidden">
+                        <i data-lucide="quote" class="absolute -top-2 -right-2 w-20 h-20 text-primary-50 pointer-events-none"></i>
+                        <div class="relative flex text-amber-400 gap-0.5 mb-5">
+                            @for($i = 0; $i < $t->rating; $i++)
+                                <i data-lucide="star" class="fill-current w-4 h-4"></i>
+                            @endfor
                         </div>
-                        <p class="text-sm text-slate-600 leading-relaxed flex-1">{{ $t->isi }}</p>
-                        <div class="mt-8 flex items-center gap-4">
+                        <p class="relative text-sm text-slate-600 leading-relaxed flex-1">{{ $t->isi }}</p>
+                        <div class="relative mt-8 pt-6 border-t border-slate-100 flex items-center gap-4">
                             @if($t->logoUrl())
                                 <img src="{{ $t->logoUrl() }}" alt="{{ $t->nama }}" class="w-12 h-12 rounded-full object-cover ring-2 ring-primary-100">
                             @else
@@ -673,12 +675,12 @@
 
         <div class="mt-20 pt-6 grid grid-cols-1 {{ $gridColsClass }} gap-8 max-w-6xl mx-auto items-stretch">
             @foreach($orderedPlans as $plan)
-            <div class="relative {{ $plan->termasuk_semua_modul ? 'md:-translate-y-2 bg-gradient-to-b from-slate-900 to-slate-950 text-white rounded-3xl shadow-2xl ring-2 ring-primary-500' : 'bg-white rounded-2xl border border-slate-200 shadow-[0_1px_3px_rgba(0,0,0,0.04)]' }} p-8 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
+            <div class="reveal-on-scroll relative {{ $plan->termasuk_semua_modul ? 'md:-translate-y-2 bg-gradient-to-b from-slate-900 to-slate-950 text-white rounded-3xl shadow-2xl ring-2 ring-primary-500' : 'bg-white rounded-2xl border border-slate-200 shadow-[0_1px_3px_rgba(0,0,0,0.04)]' }} p-8 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
 
                 @if($plan->termasuk_semua_modul)
-                <div class="absolute -top-4 inset-x-0 flex justify-center z-10">
-                    <div class="flex items-center gap-1.5 bg-gradient-to-r from-primary-400 to-primary-600 text-white text-xs font-bold py-1.5 px-4 rounded-full shadow-lg uppercase tracking-wider whitespace-nowrap">
-                        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Paling Populer
+                <div class="absolute -top-5 inset-x-0 flex justify-center z-10">
+                    <div class="flex items-center gap-2 bg-gradient-to-r from-primary-400 to-primary-600 text-white text-sm font-bold py-2 px-5 rounded-full shadow-lg uppercase tracking-wider whitespace-nowrap">
+                        <i data-lucide="sparkles" class="w-4 h-4"></i> Paling Populer
                     </div>
                 </div>
                 @endif
@@ -689,7 +691,7 @@
                     </div>
 
                     <h3 class="text-2xl font-bold {{ $plan->termasuk_semua_modul ? 'text-white' : 'text-slate-900' }}">{{ $plan->nama }}</h3>
-                    <p class="text-xs {{ $plan->termasuk_semua_modul ? 'text-slate-400' : 'text-slate-500' }} mt-1.5 leading-relaxed">{{ $plan->deskripsi }}</p>
+                    <p class="text-sm {{ $plan->termasuk_semua_modul ? 'text-slate-300' : 'text-slate-600' }} mt-2 leading-relaxed">{{ $plan->deskripsi }}</p>
 
                     <div class="mt-6 flex items-baseline">
                         <span class="text-4xl font-extrabold tracking-tight {{ $plan->termasuk_semua_modul ? 'text-white' : 'text-slate-900' }}">Rp {{ number_format($plan->harga_bulanan, 0, ',', '.') }}</span>
@@ -1094,17 +1096,22 @@
         const popup = document.getElementById('social-proof-popup');
         if (!popup) return;
 
-        const names = @json($buktiSosialList->map(fn($b) => $b->lokasi ? $b->nama_lembaga.', '.$b->lokasi : $b->nama_lembaga));
-        if (!names.length) return;
+        const entries = @json($buktiSosialList->map(fn($b) => [
+            'nama' => $b->lokasi ? $b->nama_lembaga.', '.$b->lokasi : $b->nama_lembaga,
+            'waktu' => $b->waktuBergabungText(),
+        ]));
+        if (!entries.length) return;
 
         const nameEl = document.getElementById('social-proof-name');
+        const timeEl = document.getElementById('social-proof-time');
         let index = 0;
         let dismissedManually = false;
         let cycleTimer;
 
         function show() {
             if (dismissedManually) return;
-            nameEl.textContent = names[index];
+            nameEl.textContent = entries[index].nama;
+            timeEl.textContent = entries[index].waktu ? ' · ' + entries[index].waktu : '';
             popup.classList.remove('opacity-0', 'translate-y-3', 'pointer-events-none');
             popup.classList.add('opacity-100', 'translate-y-0');
             setTimeout(hide, 5500);
@@ -1123,11 +1130,26 @@
 
         function cycle() {
             show();
-            index = (index + 1) % names.length;
+            index = (index + 1) % entries.length;
             cycleTimer = setTimeout(cycle, 9000);
         }
 
         setTimeout(cycle, 4000);
+    })();
+
+    // Animasi reveal saat kartu harga masuk viewport
+    (function () {
+        const els = document.querySelectorAll('.reveal-on-scroll');
+        if (!els.length) return;
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('revealed');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.15 });
+        els.forEach((el) => observer.observe(el));
     })();
 </script>
 </body>
