@@ -12,7 +12,7 @@ class LandingSetting extends Model
         'ig_url', 'fb_url', 'yt_url', 'x_url',
         'hero_mockup_gambar', 'hero_kpi_keuangan', 'hero_kpi_keuangan_growth', 'hero_kpi_kehadiran_persen',
         'social_proof_text', 'stat_efisiensi', 'stat_modul', 'stat_akses', 'stat_digitalisasi',
-        'footer_text', 'footer_legalitas',
+        'footer_text', 'footer_legalitas', 'nomor_nib', 'nomor_akta',
     ];
 
     /**

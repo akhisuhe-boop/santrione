@@ -37,6 +37,12 @@
             background: radial-gradient(circle at 10% 20%, rgba(0, 163, 157, 0.05) 0%, transparent 50%),
                         radial-gradient(circle at 90% 80%, rgba(0, 163, 157, 0.03) 0%, transparent 50%);
         }
+        @keyframes marquee {
+            from { transform: translateX(0); }
+            to { transform: translateX(-50%); }
+        }
+        .animate-marquee { animation: marquee 22s linear infinite; }
+        .animate-marquee:hover { animation-play-state: paused; }
     </style>
 </head>
 <body class="gradient-bg antialiased">
@@ -503,7 +509,7 @@
 @endif
 
 <!-- TESTIMONI - dinamis -->
-<section id="testimoni" class="py-20 bg-slate-50 border-t border-slate-100">
+<section id="testimoni" class="py-20 bg-slate-50 border-t border-slate-100 overflow-hidden">
     <div class="mx-auto max-w-7xl px-4 lg:px-8">
         <div class="text-center max-w-3xl mx-auto space-y-4">
             <span class="text-xs font-bold tracking-wider text-primary-500 bg-primary-50 px-3.5 py-1.5 rounded-full border border-primary-100">Testimonial</span>
@@ -513,37 +519,71 @@
             </p>
         </div>
 
-        <div class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6">
-            @foreach($testimonis as $t)
-            <div class="group relative bg-white rounded-2xl p-8 border border-slate-100 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between overflow-hidden">
-                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-400 to-primary-600 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300"></div>
-                <div class="space-y-4">
-                    <div class="flex items-center justify-between">
-                        <div class="flex text-amber-400 gap-0.5">
-                            @for($i = 0; $i < $t->rating; $i++)
-                                <i data-lucide="star" class="fill-current w-4 h-4"></i>
-                            @endfor
+        @if($testimonis->isNotEmpty())
+        <div class="mt-16 relative max-w-2xl mx-auto">
+            <div class="overflow-hidden rounded-2xl">
+                <div id="testimoni-track" class="flex transition-transform duration-500 ease-out">
+                    @foreach($testimonis as $t)
+                    <div class="w-full shrink-0 px-1">
+                        <div class="relative bg-white rounded-2xl p-8 md:p-10 border border-slate-100 shadow-lg overflow-hidden">
+                            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-400 to-primary-600"></div>
+                            <div class="flex items-center justify-between mb-5">
+                                <div class="flex text-amber-400 gap-0.5">
+                                    @for($i = 0; $i < $t->rating; $i++)
+                                        <i data-lucide="star" class="fill-current w-4 h-4"></i>
+                                    @endfor
+                                </div>
+                                <i data-lucide="quote" class="w-8 h-8 text-primary-100"></i>
+                            </div>
+                            <p class="text-base text-slate-600 leading-relaxed">{{ $t->isi }}</p>
+                            <div class="mt-8 flex items-center gap-4">
+                                @if($t->logoUrl())
+                                    <img src="{{ $t->logoUrl() }}" alt="{{ $t->nama }}" class="w-12 h-12 rounded-full object-cover ring-2 ring-primary-100">
+                                @else
+                                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center font-bold text-sm text-primary-700 ring-2 ring-primary-100">
+                                        {{ $t->inisial() }}
+                                    </div>
+                                @endif
+                                <div>
+                                    <h4 class="text-sm font-bold text-slate-900">{{ $t->nama }}</h4>
+                                    <p class="text-xs text-slate-500">{{ $t->jabatan }}{{ $t->asal_pesantren ? ' - '.$t->asal_pesantren : '' }}</p>
+                                </div>
+                            </div>
                         </div>
-                        <i data-lucide="quote" class="w-6 h-6 text-primary-100"></i>
                     </div>
-                    <p class="text-sm text-slate-600 leading-relaxed">{{ $t->isi }}</p>
-                </div>
-                <div class="mt-8 flex items-center gap-4">
-                    @if($t->logoUrl())
-                        <img src="{{ $t->logoUrl() }}" alt="{{ $t->nama }}" class="w-12 h-12 rounded-full object-cover ring-2 ring-primary-100">
-                    @else
-                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center font-bold text-sm text-primary-700 ring-2 ring-primary-100">
-                            {{ $t->inisial() }}
-                        </div>
-                    @endif
-                    <div>
-                        <h4 class="text-sm font-bold text-slate-900">{{ $t->nama }}</h4>
-                        <p class="text-xs text-slate-500">{{ $t->jabatan }}{{ $t->asal_pesantren ? ' - '.$t->asal_pesantren : '' }}</p>
-                    </div>
+                    @endforeach
                 </div>
             </div>
-            @endforeach
+
+            @if($testimonis->count() > 1)
+            <button id="testimoni-prev" aria-label="Sebelumnya" class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 md:-translate-x-14 w-10 h-10 rounded-full bg-white shadow-lg border border-slate-100 flex items-center justify-center hover:bg-primary-500 hover:text-white transition-colors">
+                <i data-lucide="chevron-left" class="w-5 h-5"></i>
+            </button>
+            <button id="testimoni-next" aria-label="Berikutnya" class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 md:translate-x-14 w-10 h-10 rounded-full bg-white shadow-lg border border-slate-100 flex items-center justify-center hover:bg-primary-500 hover:text-white transition-colors">
+                <i data-lucide="chevron-right" class="w-5 h-5"></i>
+            </button>
+            <div id="testimoni-dots" class="flex justify-center gap-2 mt-6">
+                @foreach($testimonis as $i => $t)
+                <button data-slide="{{ $i }}" class="testimoni-dot h-2 rounded-full transition-all {{ $i === 0 ? 'w-6 bg-primary-500' : 'w-2 bg-slate-300' }}"></button>
+                @endforeach
+            </div>
+            @endif
         </div>
+        @endif
+
+        @php $testimoniLogos = $testimonis->filter(fn($t) => $t->logoUrl()); @endphp
+        @if($testimoniLogos->isNotEmpty())
+        <div class="mt-16">
+            <p class="text-center text-xs font-semibold text-slate-400 uppercase tracking-wider mb-6">Dipercaya oleh lembaga-lembaga berikut</p>
+            <div class="relative overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
+                <div class="flex gap-14 items-center w-max animate-marquee">
+                    @foreach($testimoniLogos->concat($testimoniLogos) as $t)
+                    <img src="{{ $t->logoUrl() }}" alt="{{ $t->nama }}" class="h-12 w-auto grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all duration-300">
+                    @endforeach
+                </div>
+            </div>
+        </div>
+        @endif
 
         <div class="mt-16 bg-white border border-slate-100 rounded-3xl p-8 md:p-10 shadow-premium max-w-4xl mx-auto">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center divide-y md:divide-y-0 md:divide-x divide-slate-100 text-center md:text-left">
@@ -574,8 +614,8 @@
 </section>
 
 <!-- HARGA - 3 kartu menyamping, Paket Full di tengah -->
-<section id="harga" class="py-20 md:py-28">
-    <div class="mx-auto max-w-7xl px-4 lg:px-8">
+<section id="harga" class="py-20 md:py-28 relative overflow-hidden">
+    <div class="mx-auto max-w-7xl px-4 lg:px-8 relative">
         <div class="text-center max-w-3xl mx-auto space-y-4">
             <span class="text-xs font-bold tracking-wider text-primary-500 bg-primary-50 px-3.5 py-1.5 rounded-full border border-primary-100">Pilihan Investasi</span>
             <h2 class="text-3xl font-extrabold text-slate-900 sm:text-4xl">Harga Transparan, Tumbuh Sesuai Kebutuhan</h2>
@@ -608,13 +648,13 @@
             };
         @endphp
 
-        <div class="mt-12 grid grid-cols-1 {{ $gridColsClass }} gap-8 max-w-6xl mx-auto items-stretch">
+        <div class="mt-16 pt-4 grid grid-cols-1 {{ $gridColsClass }} gap-8 max-w-6xl mx-auto items-stretch">
             @foreach($orderedPlans as $plan)
-            <div class="relative {{ $plan->termasuk_semua_modul ? 'md:-translate-y-3 bg-gradient-to-b from-slate-900 to-slate-950 text-white rounded-3xl shadow-2xl ring-2 ring-primary-500' : 'bg-white rounded-2xl border border-slate-200 shadow-[0_1px_3px_rgba(0,0,0,0.04)]' }} p-8 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl overflow-hidden">
+            <div class="relative {{ $plan->termasuk_semua_modul ? 'md:-translate-y-3 bg-gradient-to-b from-slate-900 to-slate-950 text-white rounded-3xl shadow-2xl ring-2 ring-primary-500' : 'bg-white rounded-2xl border border-slate-200 shadow-[0_1px_3px_rgba(0,0,0,0.04)]' }} p-8 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
 
                 @if($plan->termasuk_semua_modul)
-                <div class="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-primary-400 via-primary-500 to-primary-400"></div>
-                <div class="absolute -top-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-gradient-to-r from-primary-400 to-primary-600 text-white text-xs font-bold py-1.5 px-4 rounded-full shadow-lg uppercase tracking-wider">
+                <div class="absolute inset-x-0 top-0 h-1.5 rounded-t-3xl bg-gradient-to-r from-primary-400 via-primary-500 to-primary-400"></div>
+                <div class="absolute -top-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 bg-gradient-to-r from-primary-400 to-primary-600 text-white text-xs font-bold py-1.5 px-4 rounded-full shadow-lg uppercase tracking-wider whitespace-nowrap">
                     <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Paling Populer
                 </div>
                 @endif
@@ -693,38 +733,44 @@
                 'Konseling' => 'heart-handshake',
             ];
         @endphp
-        <div class="mt-10 max-w-6xl mx-auto rounded-3xl bg-gradient-to-br from-slate-50 to-white border border-slate-200 p-8 md:p-10">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 text-white flex items-center justify-center shadow-md shrink-0">
-                        <i data-lucide="puzzle" class="w-6 h-6"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-xl font-bold text-slate-900">Modul Tambahan</h3>
-                        <p class="text-sm text-slate-500">Pilih sesuai kebutuhan, aktifkan kapan saja dari halaman Langganan</p>
-                    </div>
-                </div>
-                <a href="{{ route('public.daftar') }}" class="inline-flex items-center justify-center gap-2 rounded-full border-2 border-primary-500 text-primary-600 hover:bg-primary-500 hover:text-white transition-all duration-300 text-sm font-bold py-2.5 px-6 shrink-0">
-                    Coba Gratis 14 Hari
-                </a>
-            </div>
+        <div class="mt-10 max-w-6xl mx-auto relative">
+            {{-- Glow dekoratif di belakang panel kaca --}}
+            <div class="absolute -top-10 -left-10 w-64 h-64 bg-primary-400/20 rounded-full blur-3xl"></div>
+            <div class="absolute -bottom-10 -right-10 w-64 h-64 bg-primary-600/10 rounded-full blur-3xl"></div>
 
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                @foreach($modulePrices as $modul)
-                <div class="group relative bg-white rounded-2xl p-5 border border-slate-200 hover:border-primary-300 hover:shadow-lg transition-all duration-300 text-center">
-                    <div class="w-11 h-11 mx-auto rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center mb-3 group-hover:bg-primary-500 group-hover:text-white transition-all duration-300">
-                        <i data-lucide="{{ $modulIcons[$modul->nama] ?? 'puzzle' }}" class="w-5 h-5"></i>
+            <div class="relative rounded-[2rem] bg-white/50 backdrop-blur-2xl border border-white/60 shadow-xl p-8 md:p-10">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 text-white flex items-center justify-center shadow-md shrink-0">
+                            <i data-lucide="puzzle" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-900">Modul Tambahan</h3>
+                            <p class="text-sm text-slate-500">Pilih sesuai kebutuhan, aktifkan kapan saja dari halaman Langganan</p>
+                        </div>
                     </div>
-                    <p class="text-sm font-semibold text-slate-800 leading-snug">{{ $modul->nama }}</p>
-                    <div class="mt-2.5">
-                        @if($modul->is_gratis)
-                            <span class="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">Gratis</span>
-                        @else
-                            <span class="text-[11px] font-bold text-primary-600 bg-primary-50 px-2.5 py-1 rounded-full">Rp{{ number_format($modul->harga_bulanan / 1000, 0) }}rb/bln</span>
-                        @endif
-                    </div>
+                    <a href="{{ route('public.daftar') }}" class="inline-flex items-center justify-center gap-2 rounded-full border-2 border-primary-500 text-primary-600 hover:bg-primary-500 hover:text-white transition-all duration-300 text-sm font-bold py-2.5 px-6 shrink-0">
+                        Coba Gratis 14 Hari
+                    </a>
                 </div>
-                @endforeach
+
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                    @foreach($modulePrices as $modul)
+                    <div class="group relative bg-white/60 backdrop-blur-md rounded-2xl p-5 border border-white/80 hover:bg-white/90 hover:border-primary-200 hover:shadow-lg transition-all duration-300 text-center">
+                        <div class="w-11 h-11 mx-auto rounded-xl bg-primary-500/10 text-primary-600 flex items-center justify-center mb-3 group-hover:bg-primary-500 group-hover:text-white transition-all duration-300">
+                            <i data-lucide="{{ $modulIcons[$modul->nama] ?? 'puzzle' }}" class="w-5 h-5"></i>
+                        </div>
+                        <p class="text-sm font-semibold text-slate-800 leading-snug">{{ $modul->nama }}</p>
+                        <div class="mt-2.5">
+                            @if($modul->is_gratis)
+                                <span class="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">Gratis</span>
+                            @else
+                                <span class="text-[11px] font-bold text-primary-600 bg-primary-50 px-2.5 py-1 rounded-full">Rp{{ number_format($modul->harga_bulanan / 1000, 0) }}rb/bln</span>
+                            @endif
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
             </div>
         </div>
         @endif
@@ -875,19 +921,27 @@
                     Telp/WA: <a href="https://wa.me/{{ $setting->whatsapp_number }}" class="hover:text-white transition-colors">{{ $setting->whatsapp_number }}</a>
                     @endif
                 </p>
+                @if($setting->footer_legalitas || $setting->nomor_nib || $setting->nomor_akta)
+                <div class="pt-2 mt-2 border-t border-slate-800/60 text-xs text-slate-500 space-y-1">
+                    @if($setting->footer_legalitas)
+                    <p class="font-semibold text-slate-300">{{ $setting->footer_legalitas }}</p>
+                    @endif
+                    @if($setting->nomor_nib)
+                    <p>NIB: {{ $setting->nomor_nib }}</p>
+                    @endif
+                    @if($setting->nomor_akta)
+                    <p>No. Akta: {{ $setting->nomor_akta }}</p>
+                    @endif
+                </div>
+                @endif
             </div>
         </div>
 
         <div class="pt-8 border-t border-slate-900 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-500">
-            <div>
-                <p>{{ $setting->footer_text ?? ('© '.date('Y').' '.$setting->brand_name.'. Hak Cipta Dilindungi Undang-Undang.') }}</p>
-                @if($setting->footer_legalitas)
-                <p class="text-xs text-slate-600 mt-1">{{ $setting->footer_legalitas }}</p>
-                @endif
-            </div>
+            <p>{{ $setting->footer_text ?? ('© '.date('Y').' '.$setting->brand_name.'. Hak Cipta Dilindungi Undang-Undang.') }}</p>
             <div class="flex gap-4">
-                <a href="#" class="hover:text-primary-400 transition-colors">Kebijakan Privasi</a>
-                <a href="#" class="hover:text-primary-400 transition-colors">Syarat & Ketentuan</a>
+                <a href="{{ route('legal.privasi') }}" class="hover:text-primary-400 transition-colors">Kebijakan Privasi</a>
+                <a href="{{ route('legal.syarat-ketentuan') }}" class="hover:text-primary-400 transition-colors">Syarat & Ketentuan</a>
             </div>
         </div>
     </div>
@@ -903,6 +957,52 @@
         const url = "https://wa.me/" + waNumber + "?text=" + encodeURIComponent(waDefaultMessage);
         window.open(url, "_blank");
     }
+
+    // Slider testimoni
+    (function () {
+        const track = document.getElementById('testimoni-track');
+        if (!track) return;
+
+        const slides = track.children;
+        const dots = document.querySelectorAll('.testimoni-dot');
+        const prevBtn = document.getElementById('testimoni-prev');
+        const nextBtn = document.getElementById('testimoni-next');
+        let current = 0;
+        let autoTimer;
+
+        function goTo(index) {
+            current = (index + slides.length) % slides.length;
+            track.style.transform = 'translateX(-' + (current * 100) + '%)';
+            dots.forEach((d, i) => {
+                d.classList.toggle('w-6', i === current);
+                d.classList.toggle('bg-primary-500', i === current);
+                d.classList.toggle('w-2', i !== current);
+                d.classList.toggle('bg-slate-300', i !== current);
+            });
+        }
+
+        function next() { goTo(current + 1); }
+        function prev() { goTo(current - 1); }
+
+        function startAuto() {
+            stopAuto();
+            autoTimer = setInterval(next, 6000);
+        }
+        function stopAuto() {
+            if (autoTimer) clearInterval(autoTimer);
+        }
+
+        nextBtn?.addEventListener('click', () => { next(); startAuto(); });
+        prevBtn?.addEventListener('click', () => { prev(); startAuto(); });
+        dots.forEach((dot, i) => dot.addEventListener('click', () => { goTo(i); startAuto(); }));
+
+        const wrapper = track.closest('.relative');
+        wrapper?.addEventListener('mouseenter', stopAuto);
+        wrapper?.addEventListener('mouseleave', startAuto);
+
+        goTo(0);
+        if (slides.length > 1) startAuto();
+    })();
 
     const mobileMenuBtn = document.getElementById('mobile-menu-btn');
     const mobileMenu = document.getElementById('mobile-menu');

@@ -73,6 +73,18 @@ class LandingSettingPage extends Page implements HasForms
                         Forms\Components\TextInput::make('x_url')->label('X (Twitter) URL'),
                     ])->columns(2),
 
+                Forms\Components\Section::make('Legalitas Badan Hukum')
+                    ->description('Ditampilkan di kolom "Kontak Resmi" pada footer, supaya calon client lebih percaya. Isi hanya nomor yang sudah resmi terbit -- kosongkan yang belum ada, baris itu otomatis tidak ditampilkan.')
+                    ->schema([
+                        Forms\Components\TextInput::make('footer_legalitas')
+                            ->label('Nama Badan Hukum')
+                            ->placeholder('Contoh: PT Qinara Indonesia'),
+                        Forms\Components\TextInput::make('nomor_nib')
+                            ->label('Nomor Induk Berusaha (NIB)'),
+                        Forms\Components\TextInput::make('nomor_akta')
+                            ->label('Nomor Akta / AHU'),
+                    ])->columns(3),
+
                 Forms\Components\Section::make('Kartu Mockup Dashboard (Hero)')
                     ->description('Kalau gambar diisi, kartu dashboard rekaan di hero otomatis diganti gambar asli ini.')
                     ->schema([
@@ -109,11 +121,6 @@ class LandingSettingPage extends Page implements HasForms
                         Forms\Components\TextInput::make('footer_text')
                             ->label('Teks Copyright')
                             ->columnSpanFull(),
-                        Forms\Components\TextInput::make('footer_legalitas')
-                            ->label('Legalitas Badan Hukum')
-                            ->placeholder('Contoh: PT Qinara Indonesia')
-                            ->columnSpanFull()
-                            ->helperText('Ditampilkan di footer, di bawah teks copyright.'),
                     ]),
             ])
             ->statePath('data');
