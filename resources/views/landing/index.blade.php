@@ -402,7 +402,10 @@
     <div class="mx-auto max-w-4xl px-4 lg:px-8 text-center">
         <span class="text-xs font-bold tracking-wider text-primary-500 bg-primary-50 px-3.5 py-1.5 rounded-full border border-primary-100">Lihat Cara Kerjanya</span>
         <h2 class="mt-4 text-3xl font-extrabold text-slate-900 sm:text-4xl">Kenali {{ $setting->brand_name }} Lebih Dekat</h2>
-        <div class="mt-10 rounded-2xl overflow-hidden border border-slate-200 shadow-2xl aspect-video bg-slate-900">
+        @if($setting->video_deskripsi)
+        <p class="mt-4 text-base text-slate-600 max-w-2xl mx-auto">{{ $setting->video_deskripsi }}</p>
+        @endif
+        <div class="mt-6 rounded-2xl overflow-hidden border border-slate-200 shadow-2xl aspect-video bg-slate-900">
             @if($setting->heroVideoIsEmbed())
                 <iframe src="{{ $setting->heroVideoEmbedUrl() }}" class="w-full h-full" title="Video {{ $setting->brand_name }}" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
             @else
@@ -629,17 +632,17 @@
                             </div>
                             <p class="text-[15px] text-slate-700 leading-relaxed flex-1">{{ $t->isi }}</p>
                         </div>
-                        <div class="bg-slate-900 px-8 py-5 flex items-center gap-4">
+                        <div class="bg-primary-50/70 px-8 py-5 flex items-center gap-4">
                             @if($t->logoUrl())
-                                <img src="{{ $t->logoUrl() }}" alt="{{ $t->nama }}" class="w-11 h-11 rounded-full object-cover ring-2 ring-white/20">
+                                <img src="{{ $t->logoUrl() }}" alt="{{ $t->nama }}" class="w-11 h-11 rounded-full object-cover ring-2 ring-white">
                             @else
-                                <div class="w-11 h-11 rounded-full bg-primary-500/20 flex items-center justify-center font-bold text-sm text-primary-300 ring-2 ring-white/20">
+                                <div class="w-11 h-11 rounded-full bg-primary-100 flex items-center justify-center font-bold text-sm text-primary-700 ring-2 ring-white">
                                     {{ $t->inisial() }}
                                 </div>
                             @endif
                             <div>
-                                <h4 class="text-sm font-bold text-white">{{ $t->nama }}</h4>
-                                <p class="text-xs text-slate-400">{{ $t->jabatan }}{{ $t->asal_pesantren ? ' - '.$t->asal_pesantren : '' }}</p>
+                                <h4 class="text-sm font-bold text-slate-900">{{ $t->nama }}</h4>
+                                <p class="text-xs text-primary-700/70">{{ $t->jabatan }}{{ $t->asal_pesantren ? ' - '.$t->asal_pesantren : '' }}</p>
                             </div>
                         </div>
                     </div>

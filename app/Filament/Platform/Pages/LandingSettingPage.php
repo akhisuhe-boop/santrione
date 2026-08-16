@@ -85,25 +85,19 @@ class LandingSettingPage extends Page implements HasForms
                             ->label('Nomor Akta / AHU'),
                     ])->columns(3),
 
-                Forms\Components\Section::make('Kartu Hero (Video / Mockup Dashboard)')
-                    ->description('Prioritas tampil: Video (kalau diisi) > Gambar Mockup (kalau diisi) > kartu dashboard bawaan.')
+                Forms\Components\Section::make('Kartu Hero (Gambar Mockup)')
+                    ->description('Prioritas tampil di hero: Gambar Mockup (kalau diisi) > kartu dashboard bawaan.')
                     ->schema([
-                        Forms\Components\TextInput::make('hero_video_url')
-                            ->label('URL Video (opsional)')
-                            ->url()
-                            ->columnSpanFull()
-                            ->helperText('Isi salah satu: link embed YouTube (dari tombol Share > Embed, formatnya https://www.youtube.com/embed/xxxxx), atau URL file video .mp4 langsung. Kalau diisi, ini akan tampil menggantikan gambar mockup di bawah.'),
                         Forms\Components\FileUpload::make('hero_mockup_gambar')
                             ->label('Gambar Mockup (opsional)')
                             ->image()
                             ->disk('r2-public')
                             ->directory('landing/hero')
                             ->imageEditor()
-                            ->columnSpanFull()
-                            ->helperText('Dipakai hanya kalau URL Video di atas kosong.'),
+                            ->columnSpanFull(),
                         Forms\Components\TextInput::make('hero_kpi_keuangan')
                             ->label('Angka Total Keuangan (contoh)')
-                            ->helperText('Hanya dipakai jika video & gambar mockup di atas kosong.'),
+                            ->helperText('Hanya dipakai jika gambar mockup di atas kosong.'),
                         Forms\Components\TextInput::make('hero_kpi_keuangan_growth')
                             ->label('Teks Pertumbuhan (contoh: +12% bulan ini)'),
                         Forms\Components\TextInput::make('hero_kpi_kehadiran_persen')
@@ -111,6 +105,21 @@ class LandingSettingPage extends Page implements HasForms
                             ->numeric()
                             ->suffix('%'),
                     ])->columns(2),
+
+                Forms\Components\Section::make('Section Video "Kenali Lebih Dekat"')
+                    ->description('Muncul sebagai section tersendiri (besar, center) di antara "Tinggalkan Sistem Manual" dan "Solusi Terpadu". Kosongkan URL Video untuk menyembunyikan section ini sepenuhnya.')
+                    ->schema([
+                        Forms\Components\TextInput::make('hero_video_url')
+                            ->label('URL Video (opsional)')
+                            ->url()
+                            ->columnSpanFull()
+                            ->helperText('Isi salah satu: link embed YouTube (dari tombol Share > Embed, formatnya https://www.youtube.com/embed/xxxxx), atau URL file video .mp4 langsung.'),
+                        Forms\Components\Textarea::make('video_deskripsi')
+                            ->label('Deskripsi Video')
+                            ->rows(2)
+                            ->columnSpanFull()
+                            ->helperText('Muncul di atas video, di bawah judul "Kenali ... Lebih Dekat".'),
+                    ]),
 
                 Forms\Components\Section::make('Statistik Ringkas')
                     ->schema([
