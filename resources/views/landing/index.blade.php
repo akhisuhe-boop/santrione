@@ -398,14 +398,14 @@
 
 <!-- VIDEO DEMO - besar, center, dinamis -->
 @if($setting->hero_video_url)
-<section class="py-16 md:py-20 bg-white border-t border-slate-100">
+<section class="pt-16 md:pt-20 pb-8 md:pb-10 bg-white border-t border-slate-100">
     <div class="mx-auto max-w-4xl px-4 lg:px-8 text-center">
         <span class="text-xs font-bold tracking-wider text-primary-500 bg-primary-50 px-3.5 py-1.5 rounded-full border border-primary-100">Lihat Cara Kerjanya</span>
         <h2 class="mt-4 text-3xl font-extrabold text-slate-900 sm:text-4xl">Kenali {{ $setting->brand_name }} Lebih Dekat</h2>
         @if($setting->video_deskripsi)
         <p class="mt-4 text-base text-slate-600 max-w-2xl mx-auto">{{ $setting->video_deskripsi }}</p>
         @endif
-        <div class="mt-6 rounded-2xl overflow-hidden border border-slate-200 shadow-2xl aspect-video bg-slate-900">
+        <div class="mt-10 rounded-2xl overflow-hidden border border-slate-200 shadow-2xl aspect-video bg-slate-900">
             @if($setting->heroVideoIsEmbed())
                 <iframe src="{{ $setting->heroVideoEmbedUrl() }}" class="w-full h-full" title="Video {{ $setting->brand_name }}" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
             @else
@@ -430,20 +430,22 @@
             </p>
         </div>
 
-        <div class="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div class="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             @foreach($ekosistemSolusi as $s)
-            <div class="bg-[#F8FAFC] rounded-3xl p-8 border border-slate-100 shadow-premium flex flex-col justify-between hover:border-primary-400 transition-all duration-300 group">
-                <div class="space-y-4">
-                    <div class="w-12 h-12 rounded-2xl bg-primary-50 text-primary-500 flex items-center justify-center group-hover:bg-primary-500 group-hover:text-white transition-all duration-300">
+            <div class="group relative rounded-2xl bg-white border border-slate-200/70 p-7 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-xl hover:-translate-y-1 hover:border-primary-300 transition-all duration-300 flex flex-col justify-between overflow-hidden">
+                <div class="absolute -right-8 -top-8 w-28 h-28 bg-primary-500/[0.04] rounded-full blur-2xl group-hover:bg-primary-500/[0.08] transition-colors duration-300"></div>
+                <div class="relative space-y-4">
+                    <div class="w-14 h-14 flex items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-md shadow-primary-500/20 group-hover:scale-110 transition-transform duration-300">
                         <i data-lucide="{{ $s->icon }}" class="w-6 h-6"></i>
                     </div>
                     <h3 class="text-lg font-bold text-slate-900">{{ $s->judul }}</h3>
                     <p class="text-sm text-slate-500 leading-relaxed">{{ $s->deskripsi }}</p>
                 </div>
                 @if($s->tag_text)
-                <div class="pt-6 border-t border-slate-200/60 mt-6">
-                    <span class="text-xs font-bold text-primary-500 flex items-center gap-1 group-hover:gap-2 transition-all">
-                        {{ $s->tag_text }} <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                <div class="relative mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
+                    <span class="text-xs font-bold text-primary-600">{{ $s->tag_text }}</span>
+                    <span class="w-7 h-7 rounded-full bg-primary-50 flex items-center justify-center group-hover:bg-primary-500 transition-colors duration-300 shrink-0">
+                        <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-primary-600 group-hover:text-white transition-colors"></i>
                     </span>
                 </div>
                 @endif
@@ -470,19 +472,21 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
             @foreach($modulAplikasi->where('is_featured', false) as $m)
-            <div class="group relative rounded-2xl bg-white border border-slate-200/60 p-7 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-xl hover:-translate-y-1 hover:border-primary-300 transition-all duration-300 flex flex-col justify-between overflow-hidden">
+            <div class="group relative rounded-2xl bg-white border border-slate-200/70 p-7 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-xl hover:-translate-y-1 hover:border-primary-300 transition-all duration-300 flex flex-col justify-between overflow-hidden">
                 <div class="absolute -right-8 -top-8 w-28 h-28 bg-primary-500/[0.04] rounded-full blur-2xl group-hover:bg-primary-500/[0.08] transition-colors duration-300"></div>
                 <div class="relative space-y-4">
-                    <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-gradient-to-br from-primary-50 to-primary-100 text-primary-600 ring-1 ring-primary-100 group-hover:from-primary-500 group-hover:to-primary-600 group-hover:text-white group-hover:ring-primary-500 transition-all duration-300">
-                        <i data-lucide="{{ $m->icon }}" class="w-5 h-5"></i>
+                    <div class="w-14 h-14 flex items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-md shadow-primary-500/20 group-hover:scale-110 transition-transform duration-300">
+                        <i data-lucide="{{ $m->icon }}" class="w-6 h-6"></i>
                     </div>
-                    <h3 class="text-lg font-bold text-slate-900 group-hover:text-primary-600 transition-colors">{{ $m->judul }}</h3>
+                    <h3 class="text-lg font-bold text-slate-900">{{ $m->judul }}</h3>
                     <p class="text-sm text-slate-500 leading-relaxed">{{ $m->deskripsi }}</p>
                 </div>
                 @if($m->tag_text)
                 <div class="relative mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
-                    <span class="text-xs font-semibold text-slate-400">{{ $m->tag_text }}</span>
-                    <i data-lucide="arrow-up-right" class="w-4 h-4 text-slate-300 group-hover:text-primary-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all"></i>
+                    <span class="text-xs font-bold text-primary-600">{{ $m->tag_text }}</span>
+                    <span class="w-7 h-7 rounded-full bg-primary-50 flex items-center justify-center group-hover:bg-primary-500 transition-colors duration-300 shrink-0">
+                        <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-primary-600 group-hover:text-white transition-colors"></i>
+                    </span>
                 </div>
                 @endif
             </div>
