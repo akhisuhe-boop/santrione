@@ -51,6 +51,46 @@
         .reveal-on-scroll:nth-child(2) { transition-delay: 120ms; }
         .reveal-on-scroll:nth-child(3) { transition-delay: 240ms; }
     </style>
+
+    {{-- Meta (Facebook) Pixel --}}
+    @if($setting->meta_pixel_id)
+    <script>
+        !function(f,b,e,v,n,t,s)
+        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)}(window, document,'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', '{{ $setting->meta_pixel_id }}');
+        fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none" alt=""
+        src="https://www.facebook.com/tr?id={{ $setting->meta_pixel_id }}&ev=PageView&noscript=1"/></noscript>
+    @endif
+
+    {{-- TikTok Pixel --}}
+    @if($setting->tiktok_pixel_id)
+    <script>
+        !function (w, d, t) {
+            w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie","holdConsent","revokeConsent","grantConsent"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e},ttq.load=function(e,n){var i="https://analytics.tiktok.com/i18n/pixel/events.js",o=n&&n.partner;ttq._i=ttq._i||{},ttq._i[e]=[],ttq._i[e]._u=i,ttq._t=ttq._t||{},ttq._t[e]=+new Date,ttq._o=ttq._o||{},ttq._o[e]=n||{};n=document.createElement("script");n.type="text/javascript",n.async=!0,n.src=i+"?sdkid="+e+"&lib="+t;e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(n,e)};
+            ttq.load('{{ $setting->tiktok_pixel_id }}');
+            ttq.page();
+        }(window, document, 'ttq');
+    </script>
+    @endif
+
+    {{-- Google Ads / Google Tag --}}
+    @if($setting->google_ads_id)
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ $setting->google_ads_id }}"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', '{{ $setting->google_ads_id }}');
+    </script>
+    @endif
 </head>
 <body class="gradient-bg antialiased">
 
@@ -209,7 +249,15 @@
             </div>
 
             <div class="lg:col-span-5">
-                @if($setting->hero_mockup_gambar)
+                @if($setting->hero_video_url)
+                    <div class="rounded-2xl overflow-hidden border border-slate-200 shadow-2xl aspect-video bg-slate-900">
+                        @if($setting->heroVideoIsEmbed())
+                            <iframe src="{{ $setting->hero_video_url }}" class="w-full h-full" title="Video {{ $setting->brand_name }}" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+                        @else
+                            <video class="w-full h-full object-cover" src="{{ $setting->hero_video_url }}" autoplay muted loop playsinline controls></video>
+                        @endif
+                    </div>
+                @elseif($setting->hero_mockup_gambar)
                     <img src="{{ \Illuminate\Support\Facades\Storage::disk('r2-public')->url($setting->hero_mockup_gambar) }}"
                          alt="Tampilan Dashboard {{ $setting->brand_name }}"
                          class="w-full rounded-2xl border border-slate-200 shadow-2xl">
@@ -465,8 +513,10 @@
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             @foreach($mockupScreenshots as $m)
-            <div class="rounded-2xl overflow-hidden border border-slate-200 shadow-premium bg-white">
-                <img src="{{ $m->url() }}" alt="{{ $m->judul }}" class="w-full h-56 object-cover">
+            <div class="rounded-2xl overflow-hidden border border-slate-200 shadow-premium bg-white group">
+                <div class="overflow-hidden cursor-zoom-in" onclick="openLightbox('{{ $m->url() }}', '{{ addslashes($m->judul) }}')">
+                    <img src="{{ $m->url() }}" alt="{{ $m->judul }}" class="w-full h-56 object-cover transition-transform duration-500 group-hover:scale-110">
+                </div>
                 <div class="p-5">
                     <h3 class="font-bold text-slate-900">{{ $m->judul }}</h3>
                     @if($m->deskripsi)
@@ -478,6 +528,17 @@
         </div>
     </div>
 </section>
+
+<!-- LIGHTBOX - zoom gambar tampilan aplikasi -->
+<div id="image-lightbox" class="fixed inset-0 z-[999999] bg-black/90 hidden items-center justify-center p-4 md:p-10 cursor-zoom-out" onclick="closeLightbox()">
+    <button onclick="closeLightbox()" aria-label="Tutup" class="absolute top-5 right-5 text-white/70 hover:text-white transition-colors">
+        <i data-lucide="x" class="w-8 h-8"></i>
+    </button>
+    <figure class="max-w-full max-h-full flex flex-col items-center gap-3">
+        <img id="lightbox-img" src="" alt="" class="max-w-full max-h-[80vh] rounded-xl shadow-2xl cursor-default" onclick="event.stopPropagation()">
+        <figcaption id="lightbox-caption" class="text-white/80 text-sm"></figcaption>
+    </figure>
+</div>
 @endif
 
 <!-- STUDI KASUS - dinamis, manual -->
@@ -547,8 +608,8 @@
             <div id="testimoni-scroll" class="no-scrollbar flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth py-8 -my-8 px-1">
                 @foreach($testimonis as $t)
                 <div class="snap-center shrink-0 w-[88%] sm:w-[70%] md:w-[calc(50%-0.75rem)]">
-                    <div class="relative h-full bg-white rounded-2xl p-8 border border-slate-100 border-l-4 border-l-primary-500 shadow-md flex flex-col overflow-hidden">
-                        <i data-lucide="quote" class="absolute -top-2 -right-2 w-20 h-20 text-primary-50 pointer-events-none"></i>
+                    <div class="relative h-full bg-gradient-to-b from-white to-slate-50/60 rounded-2xl p-8 border border-slate-100 border-l-4 border-l-primary-500 shadow-md flex flex-col">
+                        <i data-lucide="quote" class="absolute top-6 right-6 w-12 h-12 text-primary-50 pointer-events-none"></i>
                         <div class="relative flex text-amber-400 gap-0.5 mb-5">
                             @for($i = 0; $i < $t->rating; $i++)
                                 <i data-lucide="star" class="fill-current w-4 h-4"></i>
@@ -1138,6 +1199,31 @@
         }
 
         setTimeout(cycle, 4000);
+    })();
+
+    // Lightbox zoom untuk galeri "Tampilan Asli Aplikasi"
+    (function () {
+        const lightbox = document.getElementById('image-lightbox');
+        if (!lightbox) return;
+        const img = document.getElementById('lightbox-img');
+        const caption = document.getElementById('lightbox-caption');
+
+        window.openLightbox = function (src, title) {
+            img.src = src;
+            img.alt = title || '';
+            caption.textContent = title || '';
+            lightbox.classList.remove('hidden');
+            lightbox.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+        };
+        window.closeLightbox = function () {
+            lightbox.classList.add('hidden');
+            lightbox.classList.remove('flex');
+            document.body.style.overflow = '';
+        };
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') window.closeLightbox();
+        });
     })();
 
     // Animasi reveal saat kartu harga masuk viewport

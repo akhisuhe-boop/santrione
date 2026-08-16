@@ -54,7 +54,7 @@ class BuktiSosialResource extends BaseResource
                         ->placeholder('Contoh: Bandung (opsional)'),
                     Forms\Components\DatePicker::make('tanggal_bergabung')
                         ->label('Tanggal Bergabung (perkiraan)')
-                        ->helperText('Dipakai untuk menampilkan "X hari/minggu yang lalu" di pop-up. Kosongkan kalau tidak mau menampilkan waktu.')
+                        ->helperText('PENTING: pilih tanggal di MASA LALU (bukan hari ini) supaya muncul teks "X hari/minggu yang lalu" yang meyakinkan. Kalau diisi hari ini, teksnya akan tetap "Hari ini" -- kosongkan field ini kalau memang tidak mau menampilkan info waktu sama sekali.')
                         ->maxDate(now()),
                 ])->columns(2),
 

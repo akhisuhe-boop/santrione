@@ -85,19 +85,25 @@ class LandingSettingPage extends Page implements HasForms
                             ->label('Nomor Akta / AHU'),
                     ])->columns(3),
 
-                Forms\Components\Section::make('Kartu Mockup Dashboard (Hero)')
-                    ->description('Kalau gambar diisi, kartu dashboard rekaan di hero otomatis diganti gambar asli ini.')
+                Forms\Components\Section::make('Kartu Hero (Video / Mockup Dashboard)')
+                    ->description('Prioritas tampil: Video (kalau diisi) > Gambar Mockup (kalau diisi) > kartu dashboard bawaan.')
                     ->schema([
+                        Forms\Components\TextInput::make('hero_video_url')
+                            ->label('URL Video (opsional)')
+                            ->url()
+                            ->columnSpanFull()
+                            ->helperText('Isi salah satu: link embed YouTube (dari tombol Share > Embed, formatnya https://www.youtube.com/embed/xxxxx), atau URL file video .mp4 langsung. Kalau diisi, ini akan tampil menggantikan gambar mockup di bawah.'),
                         Forms\Components\FileUpload::make('hero_mockup_gambar')
                             ->label('Gambar Mockup (opsional)')
                             ->image()
                             ->disk('r2-public')
                             ->directory('landing/hero')
                             ->imageEditor()
-                            ->columnSpanFull(),
+                            ->columnSpanFull()
+                            ->helperText('Dipakai hanya kalau URL Video di atas kosong.'),
                         Forms\Components\TextInput::make('hero_kpi_keuangan')
                             ->label('Angka Total Keuangan (contoh)')
-                            ->helperText('Hanya dipakai jika gambar mockup di atas kosong.'),
+                            ->helperText('Hanya dipakai jika video & gambar mockup di atas kosong.'),
                         Forms\Components\TextInput::make('hero_kpi_keuangan_growth')
                             ->label('Teks Pertumbuhan (contoh: +12% bulan ini)'),
                         Forms\Components\TextInput::make('hero_kpi_kehadiran_persen')
@@ -115,6 +121,20 @@ class LandingSettingPage extends Page implements HasForms
                         Forms\Components\TextInput::make('stat_akses')->label('Stat: Akses Real-time'),
                         Forms\Components\TextInput::make('stat_digitalisasi')->label('Stat: Digitalisasi'),
                     ])->columns(2),
+
+                Forms\Components\Section::make('Tracking & Analytics')
+                    ->description('Kosongkan yang tidak dipakai -- kode tracking hanya dimuat kalau ID-nya diisi.')
+                    ->schema([
+                        Forms\Components\TextInput::make('meta_pixel_id')
+                            ->label('Meta (Facebook) Pixel ID')
+                            ->helperText('Dari Meta Events Manager, contoh: 1234567890123456'),
+                        Forms\Components\TextInput::make('tiktok_pixel_id')
+                            ->label('TikTok Pixel ID')
+                            ->helperText('Dari TikTok Events Manager, contoh: CXXXXXXXXXXXXXXXXXXX'),
+                        Forms\Components\TextInput::make('google_ads_id')
+                            ->label('Google Ads / Google Tag ID')
+                            ->helperText('Contoh: AW-1234567890 atau G-XXXXXXXXXX'),
+                    ])->columns(3),
 
                 Forms\Components\Section::make('Footer')
                     ->schema([
