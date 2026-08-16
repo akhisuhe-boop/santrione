@@ -184,7 +184,7 @@
     <div class="mx-auto max-w-7xl px-4 lg:px-8">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-14 items-center">
 
-            <div class="{{ $setting->hero_video_url ? 'lg:col-span-5' : 'lg:col-span-7' }} text-center lg:text-left space-y-8">
+            <div class="lg:col-span-7 text-center lg:text-left space-y-8">
                 <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-50 border border-slate-200 text-xs font-medium text-slate-700 mx-auto lg:mx-0 shadow-sm hover:shadow-md transition-all duration-300">
                     <span class="relative flex h-2 w-2">
                         <span class="absolute inline-flex h-full w-full rounded-full opacity-60 animate-ping" style="background-color:#00A39D;"></span>
@@ -248,16 +248,8 @@
                 </div>
             </div>
 
-            <div class="{{ $setting->hero_video_url ? 'lg:col-span-7' : 'lg:col-span-5' }}">
-                @if($setting->hero_video_url)
-                    <div class="rounded-2xl overflow-hidden border border-slate-200 shadow-2xl aspect-video bg-slate-900">
-                        @if($setting->heroVideoIsEmbed())
-                            <iframe src="{{ $setting->heroVideoEmbedUrl() }}" class="w-full h-full" title="Video {{ $setting->brand_name }}" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
-                        @else
-                            <video class="w-full h-full object-cover" src="{{ $setting->hero_video_url }}" autoplay muted loop playsinline controls></video>
-                        @endif
-                    </div>
-                @elseif($setting->hero_mockup_gambar)
+            <div class="lg:col-span-5">
+                @if($setting->hero_mockup_gambar)
                     <img src="{{ \Illuminate\Support\Facades\Storage::disk('r2-public')->url($setting->hero_mockup_gambar) }}"
                          alt="Tampilan Dashboard {{ $setting->brand_name }}"
                          class="w-full rounded-2xl border border-slate-200 shadow-2xl">
@@ -403,6 +395,23 @@
     </div>
 </div>
 </section>
+
+<!-- VIDEO DEMO - besar, center, dinamis -->
+@if($setting->hero_video_url)
+<section class="py-16 md:py-20 bg-white border-t border-slate-100">
+    <div class="mx-auto max-w-4xl px-4 lg:px-8 text-center">
+        <span class="text-xs font-bold tracking-wider text-primary-500 bg-primary-50 px-3.5 py-1.5 rounded-full border border-primary-100">Lihat Cara Kerjanya</span>
+        <h2 class="mt-4 text-3xl font-extrabold text-slate-900 sm:text-4xl">Kenali {{ $setting->brand_name }} Lebih Dekat</h2>
+        <div class="mt-10 rounded-2xl overflow-hidden border border-slate-200 shadow-2xl aspect-video bg-slate-900">
+            @if($setting->heroVideoIsEmbed())
+                <iframe src="{{ $setting->heroVideoEmbedUrl() }}" class="w-full h-full" title="Video {{ $setting->brand_name }}" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+            @else
+                <video class="w-full h-full object-cover" src="{{ $setting->hero_video_url }}" autoplay muted loop playsinline controls></video>
+            @endif
+        </div>
+    </div>
+</section>
+@endif
 
 <!-- SOLUSI EKOSISTEM - dinamis -->
 @if($ekosistemSolusi->isNotEmpty())
@@ -608,24 +617,29 @@
             <div id="testimoni-scroll" class="no-scrollbar flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth py-8 -my-8 px-1">
                 @foreach($testimonis as $t)
                 <div class="snap-center shrink-0 w-[88%] sm:w-[70%] md:w-[calc(50%-0.75rem)]">
-                    <div class="h-full bg-white rounded-2xl p-8 shadow-sm hover:shadow-lg transition-shadow duration-300 flex flex-col">
-                        <div class="flex text-amber-400 gap-0.5 mb-5">
-                            @for($i = 0; $i < $t->rating; $i++)
-                                <i data-lucide="star" class="fill-current w-4 h-4"></i>
-                            @endfor
+                    <div class="h-full bg-white rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col overflow-hidden">
+                        <div class="p-8 flex-1 flex flex-col">
+                            <div class="flex items-center justify-between mb-5">
+                                <div class="flex text-amber-400 gap-0.5">
+                                    @for($i = 0; $i < $t->rating; $i++)
+                                        <i data-lucide="star" class="fill-current w-4 h-4"></i>
+                                    @endfor
+                                </div>
+                                <i data-lucide="quote" class="w-7 h-7 text-primary-100"></i>
+                            </div>
+                            <p class="text-[15px] text-slate-700 leading-relaxed flex-1">{{ $t->isi }}</p>
                         </div>
-                        <p class="text-[15px] text-slate-700 leading-relaxed flex-1">{{ $t->isi }}</p>
-                        <div class="mt-8 pt-6 border-t border-slate-100 flex items-center gap-4">
+                        <div class="bg-slate-900 px-8 py-5 flex items-center gap-4">
                             @if($t->logoUrl())
-                                <img src="{{ $t->logoUrl() }}" alt="{{ $t->nama }}" class="w-12 h-12 rounded-full object-cover ring-2 ring-primary-100">
+                                <img src="{{ $t->logoUrl() }}" alt="{{ $t->nama }}" class="w-11 h-11 rounded-full object-cover ring-2 ring-white/20">
                             @else
-                                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center font-bold text-sm text-primary-700 ring-2 ring-primary-100">
+                                <div class="w-11 h-11 rounded-full bg-primary-500/20 flex items-center justify-center font-bold text-sm text-primary-300 ring-2 ring-white/20">
                                     {{ $t->inisial() }}
                                 </div>
                             @endif
                             <div>
-                                <h4 class="text-sm font-bold text-slate-900">{{ $t->nama }}</h4>
-                                <p class="text-xs text-slate-500">{{ $t->jabatan }}{{ $t->asal_pesantren ? ' - '.$t->asal_pesantren : '' }}</p>
+                                <h4 class="text-sm font-bold text-white">{{ $t->nama }}</h4>
+                                <p class="text-xs text-slate-400">{{ $t->jabatan }}{{ $t->asal_pesantren ? ' - '.$t->asal_pesantren : '' }}</p>
                             </div>
                         </div>
                     </div>
