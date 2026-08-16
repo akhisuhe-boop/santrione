@@ -43,6 +43,8 @@
         }
         .animate-marquee { animation: marquee 30s linear infinite; }
         .animate-marquee:hover { animation-play-state: paused; }
+        .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body class="gradient-bg antialiased">
@@ -58,6 +60,22 @@
           box-shadow: 0 10px 25px rgba(0,0,0,.25); cursor: pointer;">
     <i class="fa-brands fa-whatsapp" style="font-size:34px;color:#fff;"></i>
 </a>
+
+@if($buktiSosialList->isNotEmpty())
+<div id="social-proof-popup"
+     class="fixed left-4 bottom-4 md:left-6 md:bottom-6 z-[999998] max-w-[280px] bg-white rounded-2xl shadow-2xl border border-slate-100 p-4 flex items-center gap-3 opacity-0 translate-y-3 pointer-events-none transition-all duration-500 ease-out">
+    <div class="w-10 h-10 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center shrink-0">
+        <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+    </div>
+    <div class="min-w-0 flex-1">
+        <p id="social-proof-name" class="text-sm font-bold text-slate-900 truncate"></p>
+        <p class="text-xs text-slate-500">baru saja bergabung dengan {{ $setting->brand_name }}</p>
+    </div>
+    <button onclick="dismissSocialProof()" aria-label="Tutup" class="text-slate-300 hover:text-slate-500 shrink-0">
+        <i data-lucide="x" class="w-4 h-4"></i>
+    </button>
+</div>
+@endif
 
 <!-- HEADER -->
 <header class="fixed inset-x-0 top-0 z-40 w-full border-b border-slate-100 bg-white/70 backdrop-blur-xl">
@@ -117,7 +135,7 @@
 </header>
 
 <!-- HERO -->
-<section id="hero" class="relative pt-16 pb-24 md:pt-24 md:pb-32 overflow-hidden bg-gradient-to-b from-white via-white to-slate-50">
+<section id="hero" class="relative pt-28 pb-24 md:pt-36 md:pb-32 overflow-hidden bg-gradient-to-b from-white via-white to-slate-50">
     <div class="mx-auto max-w-7xl px-4 lg:px-8">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-14 items-center">
 
@@ -509,7 +527,7 @@
 @endif
 
 <!-- TESTIMONI - dinamis -->
-<section id="testimoni" class="py-20 bg-slate-50 border-t border-slate-100 overflow-hidden">
+<section id="testimoni" class="py-20 bg-slate-50 border-t border-slate-100">
     <div class="mx-auto max-w-7xl px-4 lg:px-8">
         <div class="text-center max-w-3xl mx-auto space-y-4">
             <span class="text-xs font-bold tracking-wider text-primary-500 bg-primary-50 px-3.5 py-1.5 rounded-full border border-primary-100">Testimonial</span>
@@ -520,56 +538,49 @@
         </div>
 
         @if($testimonis->isNotEmpty())
-        @php $testimoniChunks = $testimonis->chunk(2)->values(); @endphp
-        <div class="mt-16 relative max-w-5xl mx-auto">
-            <div class="overflow-hidden rounded-2xl">
-                <div id="testimoni-track" class="flex transition-transform duration-500 ease-out">
-                    @foreach($testimoniChunks as $chunk)
-                    <div class="w-full shrink-0 px-1">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            @foreach($chunk as $t)
-                            <div class="relative bg-white rounded-2xl p-8 border border-slate-100 shadow-lg overflow-hidden flex flex-col">
-                                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-400 to-primary-600"></div>
-                                <div class="flex items-center justify-between mb-5">
-                                    <div class="flex text-amber-400 gap-0.5">
-                                        @for($i = 0; $i < $t->rating; $i++)
-                                            <i data-lucide="star" class="fill-current w-4 h-4"></i>
-                                        @endfor
-                                    </div>
-                                    <i data-lucide="quote" class="w-7 h-7 text-primary-100"></i>
-                                </div>
-                                <p class="text-sm text-slate-600 leading-relaxed flex-1">{{ $t->isi }}</p>
-                                <div class="mt-8 flex items-center gap-4">
-                                    @if($t->logoUrl())
-                                        <img src="{{ $t->logoUrl() }}" alt="{{ $t->nama }}" class="w-12 h-12 rounded-full object-cover ring-2 ring-primary-100">
-                                    @else
-                                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center font-bold text-sm text-primary-700 ring-2 ring-primary-100">
-                                            {{ $t->inisial() }}
-                                        </div>
-                                    @endif
-                                    <div>
-                                        <h4 class="text-sm font-bold text-slate-900">{{ $t->nama }}</h4>
-                                        <p class="text-xs text-slate-500">{{ $t->jabatan }}{{ $t->asal_pesantren ? ' - '.$t->asal_pesantren : '' }}</p>
-                                    </div>
-                                </div>
+        <div class="mt-16 relative max-w-6xl mx-auto">
+            <div id="testimoni-scroll" class="no-scrollbar flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth py-3 -my-3 px-1">
+                @foreach($testimonis as $t)
+                <div class="snap-center shrink-0 w-[88%] sm:w-[70%] md:w-[calc(50%-0.75rem)]">
+                    <div class="relative h-full bg-white rounded-2xl p-8 border border-slate-100 shadow-lg flex flex-col">
+                        <div class="absolute top-0 left-0 w-full h-1 rounded-t-2xl bg-gradient-to-r from-primary-400 to-primary-600"></div>
+                        <div class="flex items-center justify-between mb-5">
+                            <div class="flex text-amber-400 gap-0.5">
+                                @for($i = 0; $i < $t->rating; $i++)
+                                    <i data-lucide="star" class="fill-current w-4 h-4"></i>
+                                @endfor
                             </div>
-                            @endforeach
+                            <i data-lucide="quote" class="w-7 h-7 text-primary-100"></i>
+                        </div>
+                        <p class="text-sm text-slate-600 leading-relaxed flex-1">{{ $t->isi }}</p>
+                        <div class="mt-8 flex items-center gap-4">
+                            @if($t->logoUrl())
+                                <img src="{{ $t->logoUrl() }}" alt="{{ $t->nama }}" class="w-12 h-12 rounded-full object-cover ring-2 ring-primary-100">
+                            @else
+                                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center font-bold text-sm text-primary-700 ring-2 ring-primary-100">
+                                    {{ $t->inisial() }}
+                                </div>
+                            @endif
+                            <div>
+                                <h4 class="text-sm font-bold text-slate-900">{{ $t->nama }}</h4>
+                                <p class="text-xs text-slate-500">{{ $t->jabatan }}{{ $t->asal_pesantren ? ' - '.$t->asal_pesantren : '' }}</p>
+                            </div>
                         </div>
                     </div>
-                    @endforeach
                 </div>
+                @endforeach
             </div>
 
-            @if($testimoniChunks->count() > 1)
+            @if($testimonis->count() > 1)
             <button id="testimoni-prev" aria-label="Sebelumnya" class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 md:-translate-x-14 w-10 h-10 rounded-full bg-white shadow-lg border border-slate-100 flex items-center justify-center hover:bg-primary-500 hover:text-white transition-colors">
                 <i data-lucide="chevron-left" class="w-5 h-5"></i>
             </button>
             <button id="testimoni-next" aria-label="Berikutnya" class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 md:translate-x-14 w-10 h-10 rounded-full bg-white shadow-lg border border-slate-100 flex items-center justify-center hover:bg-primary-500 hover:text-white transition-colors">
                 <i data-lucide="chevron-right" class="w-5 h-5"></i>
             </button>
-            <div id="testimoni-dots" class="flex justify-center gap-2 mt-6">
-                @foreach($testimoniChunks as $i => $chunk)
-                <button data-slide="{{ $i }}" class="testimoni-dot h-2 rounded-full transition-all {{ $i === 0 ? 'w-6 bg-primary-500' : 'w-2 bg-slate-300' }}"></button>
+            <div id="testimoni-dots" class="flex justify-center gap-2 mt-4">
+                @foreach($testimonis as $i => $t)
+                <button data-index="{{ $i }}" class="testimoni-dot h-2 rounded-full transition-all {{ $i === 0 ? 'w-6 bg-primary-500' : 'w-2 bg-slate-300' }}"></button>
                 @endforeach
             </div>
             @endif
@@ -665,7 +676,6 @@
             <div class="relative {{ $plan->termasuk_semua_modul ? 'md:-translate-y-2 bg-gradient-to-b from-slate-900 to-slate-950 text-white rounded-3xl shadow-2xl ring-2 ring-primary-500' : 'bg-white rounded-2xl border border-slate-200 shadow-[0_1px_3px_rgba(0,0,0,0.04)]' }} p-8 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
 
                 @if($plan->termasuk_semua_modul)
-                <div class="absolute inset-x-0 top-0 h-1.5 rounded-t-3xl bg-gradient-to-r from-primary-400 via-primary-500 to-primary-400"></div>
                 <div class="absolute -top-4 inset-x-0 flex justify-center z-10">
                     <div class="flex items-center gap-1.5 bg-gradient-to-r from-primary-400 to-primary-600 text-white text-xs font-bold py-1.5 px-4 rounded-full shadow-lg uppercase tracking-wider whitespace-nowrap">
                         <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Paling Populer
@@ -746,38 +756,41 @@
                 'Konseling' => 'heart-handshake',
             ];
         @endphp
-        <div class="mt-10 max-w-5xl mx-auto rounded-3xl bg-white border border-slate-200 shadow-xl overflow-hidden">
-            <div class="p-7 md:p-8 bg-gradient-to-r from-slate-900 to-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div class="flex items-center gap-4">
-                    <div class="w-11 h-11 rounded-xl bg-primary-500/20 text-primary-300 ring-1 ring-primary-400/30 flex items-center justify-center shrink-0">
-                        <i data-lucide="puzzle" class="w-5 h-5"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-lg font-bold text-white">Modul Tambahan</h3>
-                        <p class="text-xs text-slate-400 mt-0.5">Pilih sesuai kebutuhan, aktifkan kapan saja dari halaman Langganan</p>
-                    </div>
-                </div>
-                <a href="{{ route('public.daftar') }}" class="inline-flex items-center justify-center gap-2 rounded-full bg-primary-500 text-white hover:bg-primary-400 transition-all duration-300 text-sm font-bold py-2.5 px-6 shrink-0">
-                    Coba Gratis 14 Hari
-                </a>
+        <div class="mt-16 max-w-5xl mx-auto">
+            <div class="text-center max-w-xl mx-auto mb-8">
+                <span class="text-xs font-bold tracking-wider text-primary-500 bg-primary-50 px-3.5 py-1.5 rounded-full border border-primary-100">Modul Tambahan</span>
+                <h3 class="mt-4 text-2xl font-bold text-slate-900">Lengkapi Sesuai Kebutuhan</h3>
+                <p class="mt-2 text-sm text-slate-500">Aktifkan satu-satu kapan saja dari halaman Langganan, tanpa terikat paket.</p>
             </div>
 
-            <div class="divide-y divide-slate-100">
-                @foreach($modulePrices as $modul)
-                <div class="group flex items-center justify-between gap-4 px-7 md:px-8 py-4 hover:bg-slate-50 transition-colors">
-                    <div class="flex items-center gap-4 min-w-0">
-                        <div class="w-10 h-10 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center shrink-0 group-hover:bg-primary-500 group-hover:text-white transition-all duration-300">
-                            <i data-lucide="{{ $modulIcons[$modul->nama] ?? 'puzzle' }}" class="w-4.5 h-4.5"></i>
+            <div class="rounded-3xl border border-slate-200 bg-white shadow-xl p-5 md:p-7">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    @foreach($modulePrices as $modul)
+                    <div class="group flex items-center gap-4 rounded-2xl border border-slate-100 bg-slate-50/70 hover:bg-white hover:border-primary-300 hover:shadow-md transition-all duration-300 p-4">
+                        <div class="w-11 h-11 rounded-xl bg-white shadow-sm text-primary-600 flex items-center justify-center shrink-0 group-hover:bg-primary-500 group-hover:text-white transition-all duration-300">
+                            <i data-lucide="{{ $modulIcons[$modul->nama] ?? 'puzzle' }}" class="w-5 h-5"></i>
                         </div>
-                        <p class="text-sm font-semibold text-slate-800 truncate">{{ $modul->nama }}</p>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-sm font-semibold text-slate-800 truncate">{{ $modul->nama }}</p>
+                            @if($modul->is_gratis)
+                                <p class="text-xs font-semibold text-emerald-600 mt-0.5">Gratis</p>
+                            @else
+                                <p class="text-xs font-semibold text-slate-500 mt-0.5">Rp{{ number_format($modul->harga_bulanan / 1000, 0) }}rb/bulan</p>
+                            @endif
+                        </div>
+                        <span class="relative inline-flex h-5 w-9 items-center rounded-full bg-slate-200 group-hover:bg-primary-200 transition-colors shrink-0" aria-hidden="true">
+                            <span class="inline-block h-3.5 w-3.5 translate-x-1 rounded-full bg-white shadow transition-transform group-hover:translate-x-4"></span>
+                        </span>
                     </div>
-                    @if($modul->is_gratis)
-                        <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full shrink-0">Gratis</span>
-                    @else
-                        <span class="text-xs font-bold text-primary-600 bg-primary-50 px-3 py-1.5 rounded-full shrink-0">Rp{{ number_format($modul->harga_bulanan / 1000, 0) }}rb/bln</span>
-                    @endif
+                    @endforeach
                 </div>
-                @endforeach
+
+                <div class="mt-6 text-center">
+                    <a href="{{ route('public.daftar') }}" class="inline-flex items-center justify-center gap-2 rounded-full bg-primary-500 text-white hover:bg-primary-600 transition-all duration-300 text-sm font-bold py-3 px-8 shadow-md hover:shadow-lg">
+                        Coba Gratis 14 Hari
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </a>
+                </div>
             </div>
         </div>
         @endif
@@ -965,35 +978,38 @@
         window.open(url, "_blank");
     }
 
-    // Slider testimoni
+    // Slider testimoni (scroll-snap native, responsif otomatis)
     (function () {
-        const track = document.getElementById('testimoni-track');
-        if (!track) return;
+        const scroller = document.getElementById('testimoni-scroll');
+        if (!scroller) return;
 
-        const slides = track.children;
+        const cards = Array.from(scroller.children);
         const dots = document.querySelectorAll('.testimoni-dot');
         const prevBtn = document.getElementById('testimoni-prev');
         const nextBtn = document.getElementById('testimoni-next');
-        let current = 0;
         let autoTimer;
 
-        function goTo(index) {
-            current = (index + slides.length) % slides.length;
-            track.style.transform = 'translateX(-' + (current * 100) + '%)';
-            dots.forEach((d, i) => {
-                d.classList.toggle('w-6', i === current);
-                d.classList.toggle('bg-primary-500', i === current);
-                d.classList.toggle('w-2', i !== current);
-                d.classList.toggle('bg-slate-300', i !== current);
-            });
+        function step() {
+            const card = cards[0];
+            const style = getComputedStyle(scroller);
+            const gap = parseFloat(style.columnGap || style.gap || 0);
+            return card.getBoundingClientRect().width + gap;
         }
 
-        function next() { goTo(current + 1); }
-        function prev() { goTo(current - 1); }
+        function next() {
+            const atEnd = scroller.scrollLeft + scroller.clientWidth >= scroller.scrollWidth - 10;
+            scroller.scrollTo({ left: atEnd ? 0 : scroller.scrollLeft + step(), behavior: 'smooth' });
+        }
+        function prev() {
+            scroller.scrollTo({ left: Math.max(0, scroller.scrollLeft - step()), behavior: 'smooth' });
+        }
+        function goTo(i) {
+            scroller.scrollTo({ left: cards[i].offsetLeft - scroller.offsetLeft, behavior: 'smooth' });
+        }
 
         function startAuto() {
             stopAuto();
-            autoTimer = setInterval(next, 6000);
+            if (cards.length > 1) autoTimer = setInterval(next, 5500);
         }
         function stopAuto() {
             if (autoTimer) clearInterval(autoTimer);
@@ -1003,12 +1019,29 @@
         prevBtn?.addEventListener('click', () => { prev(); startAuto(); });
         dots.forEach((dot, i) => dot.addEventListener('click', () => { goTo(i); startAuto(); }));
 
-        const wrapper = track.closest('.relative');
-        wrapper?.addEventListener('mouseenter', stopAuto);
-        wrapper?.addEventListener('mouseleave', startAuto);
+        scroller.addEventListener('mouseenter', stopAuto);
+        scroller.addEventListener('mouseleave', startAuto);
+        scroller.addEventListener('touchstart', stopAuto, { passive: true });
 
-        goTo(0);
-        if (slides.length > 1) startAuto();
+        // Update dot aktif berdasarkan kartu yang paling terlihat
+        if (dots.length) {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting && entry.intersectionRatio > 0.6) {
+                        const idx = cards.indexOf(entry.target);
+                        dots.forEach((d, i) => {
+                            d.classList.toggle('w-6', i === idx);
+                            d.classList.toggle('bg-primary-500', i === idx);
+                            d.classList.toggle('w-2', i !== idx);
+                            d.classList.toggle('bg-slate-300', i !== idx);
+                        });
+                    }
+                });
+            }, { root: scroller, threshold: [0.6] });
+            cards.forEach((c) => observer.observe(c));
+        }
+
+        startAuto();
     })();
 
     const mobileMenuBtn = document.getElementById('mobile-menu-btn');
@@ -1055,6 +1088,47 @@
             }
         });
     });
+
+    // Pop-up social proof - muncul bergantian di pojok kiri bawah
+    (function () {
+        const popup = document.getElementById('social-proof-popup');
+        if (!popup) return;
+
+        const names = @json($buktiSosialList->map(fn($b) => $b->lokasi ? $b->nama_lembaga.', '.$b->lokasi : $b->nama_lembaga));
+        if (!names.length) return;
+
+        const nameEl = document.getElementById('social-proof-name');
+        let index = 0;
+        let dismissedManually = false;
+        let cycleTimer;
+
+        function show() {
+            if (dismissedManually) return;
+            nameEl.textContent = names[index];
+            popup.classList.remove('opacity-0', 'translate-y-3', 'pointer-events-none');
+            popup.classList.add('opacity-100', 'translate-y-0');
+            setTimeout(hide, 5500);
+        }
+
+        function hide() {
+            popup.classList.add('opacity-0', 'translate-y-3', 'pointer-events-none');
+            popup.classList.remove('opacity-100', 'translate-y-0');
+        }
+
+        window.dismissSocialProof = function () {
+            dismissedManually = true;
+            hide();
+            clearTimeout(cycleTimer);
+        };
+
+        function cycle() {
+            show();
+            index = (index + 1) % names.length;
+            cycleTimer = setTimeout(cycle, 9000);
+        }
+
+        setTimeout(cycle, 4000);
+    })();
 </script>
 </body>
 </html>

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BuktiSosial;
 use App\Models\EkosistemSolusi;
 use App\Models\FaqItem;
 use App\Models\LandingSetting;
@@ -24,15 +25,13 @@ class LandingController extends Controller
             'modulAplikasi' => ModulAplikasi::active()->get(),
             'mockupScreenshots' => MockupScreenshot::active()->get(),
             'testimonis' => Testimoni::active()->get(),
-            // Harga & modul dibaca LANGSUNG dari tabel billing asli (sama
-            // yang dipakai PublicRegistrationController & panel Platform >
-            // Billing & Harga), bukan tabel CMS terpisah.
             'subscriptionPlans' => SubscriptionPlan::where('is_active', true)->orderBy('urutan')->get(),
             'modulePrices' => ModulePrice::aktif()->orderBy('urutan')->get(),
             'faqItems' => FaqItem::active()->get(),
-            // Semua manual lewat panel admin -- tidak query live ke data
-            // operasional (siswa/pembayaran/dst).
             'studiKasusList' => StudiKasus::active()->get(),
+            // Pop-up social proof - nama diisi manual lewat panel, bukan
+            // ditarik otomatis dari data Yayasan asli.
+            'buktiSosialList' => BuktiSosial::active()->get(),
         ]);
     }
 }
