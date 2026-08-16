@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Lead;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
 use App\Models\Yayasan;
@@ -43,7 +44,7 @@ class PublicRegistrationController extends Controller
             'custom_domain' => ['nullable', 'string', 'max:255'],
         ]);
 
-        [$yayasan, $admin] = DB::transaction(function () use ($data) {
+        [$yayasan, $admin, $lead] = DB::transaction(function () use ($data) {
 
             $yayasan = Yayasan::create([
                 'nama' => $data['nama_yayasan'],
@@ -102,7 +103,20 @@ class PublicRegistrationController extends Controller
                 ]);
             }
 
-            return [$yayasan, $admin];
+            // Catat sebagai Lead di modul CRM -- supaya setiap pendaftaran
+            // trial otomatis masuk daftar follow-up sales, tidak cuma
+            // ada di tabel Yayasan yang lebih teknis.
+            $lead = Lead::create([
+                'yayasan_id' => $yayasan->id,
+                'nama_lembaga' => $data['nama_yayasan'],
+                'nama_pic' => $data['nama_admin'],
+                'email' => $data['email'],
+                'no_hp' => $data['no_hp'] ?? null,
+                'sumber' => 'Trial Signup',
+                'status' => 'baru',
+            ]);
+
+            return [$yayasan, $admin, $lead];
         });
 
         try {
@@ -116,6 +130,14 @@ class PublicRegistrationController extends Controller
             // Gagal kirim WA welcome TIDAK boleh menggagalkan pendaftaran
             // yang sudah sukses -- cukup dicatat ke log.
             \Illuminate\Support\Facades\Log::error("PublicRegistrationController: gagal kirim WA welcome untuk yayasan {$yayasan->id}: {$e->getMessage()}");
+        }
+
+        try {
+            \App\Services\NotificationService::sendLeadBaruInternal($lead);
+        } catch (\Throwable $e) {
+            // Sama seperti di atas -- gagal notif internal tidak boleh
+            // menggagalkan pendaftaran yang sudah sukses.
+            \Illuminate\Support\Facades\Log::error("PublicRegistrationController: gagal kirim notifikasi lead baru internal untuk lead {$lead->id}: {$e->getMessage()}");
         }
 
         Auth::guard('web')->login($admin);

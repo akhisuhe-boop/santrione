@@ -92,6 +92,9 @@ class PlatformPanelProvider extends PanelProvider
 
                 NavigationGroup::make('Komunikasi')
                     ->icon('heroicon-o-megaphone'),
+
+                NavigationGroup::make('CRM')
+                    ->icon('heroicon-o-user-group'),
             ])
             ->colors([
                 'primary' => Color::hex('#00A39D'),

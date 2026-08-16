@@ -1318,4 +1318,55 @@ class NotificationService
         return true;
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | CRM - LEAD BARU (notifikasi internal, bukan ke calon client)
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Notifikasi WA ke tim internal (sales/admin Qinara) setiap ada lead
+     * baru mendaftar trial lewat /daftar. Nomor tujuan diambil dari
+     * LandingSetting->crm_notif_wa_numbers (dipisah koma, bisa lebih
+     * dari satu nomor). Kalau field itu kosong, fungsi ini tidak
+     * mengirim apa-apa (lead tetap tercatat di CRM seperti biasa).
+     */
+    public static function sendLeadBaruInternal(\App\Models\Lead $lead): bool
+    {
+        $setting = \App\Models\LandingSetting::current();
+        $nomorMentah = $setting->crm_notif_wa_numbers ?? null;
+
+        if (! $nomorMentah) {
+            return false;
+        }
+
+        $pesan = \App\Models\NotificationTemplate::render('lead_baru_internal', [
+            'nama_lembaga' => $lead->nama_lembaga,
+            'nama_pic' => $lead->nama_pic ?? '-',
+            'no_hp' => $lead->no_hp ?? '-',
+            'email' => $lead->email ?? '-',
+            'tanggal' => $lead->created_at?->locale('id')->translatedFormat('d M Y, H:i') ?? '-',
+        ], default:
+            "*LEAD BARU MASUK*\n\nLembaga: {$lead->nama_lembaga}\nPIC: " .
+            ($lead->nama_pic ?? '-') . "\nNo. HP: " . ($lead->no_hp ?? '-') .
+            "\nEmail: " . ($lead->email ?? '-') .
+            "\n\nSegera follow up dari panel CRM."
+        );
+
+        $terkirim = false;
+
+        foreach (explode(',', $nomorMentah) as $nomor) {
+            $nomor = trim($nomor);
+
+            if ($nomor === '') {
+                continue;
+            }
+
+            self::waPlatform(self::formatPhone($nomor), $pesan);
+            $terkirim = true;
+        }
+
+        return $terkirim;
+    }
+
 }

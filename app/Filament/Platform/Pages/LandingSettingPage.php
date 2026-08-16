@@ -145,6 +145,17 @@ class LandingSettingPage extends Page implements HasForms
                             ->helperText('Contoh: AW-1234567890 atau G-XXXXXXXXXX'),
                     ])->columns(3),
 
+                Forms\Components\Section::make('Notifikasi CRM (Lead Baru)')
+                    ->description('Nomor WA yang akan otomatis dikirimi notifikasi setiap ada calon client baru daftar trial lewat /daftar. Bisa lebih dari satu, pisahkan dengan koma.')
+                    ->schema([
+                        Forms\Components\Textarea::make('crm_notif_wa_numbers')
+                            ->label('Nomor WA Internal (pisahkan dengan koma)')
+                            ->rows(2)
+                            ->columnSpanFull()
+                            ->placeholder('62812xxxxxxxx, 62813xxxxxxxx')
+                            ->helperText('Kosongkan kalau belum mau ada notifikasi WA internal -- lead tetap tercatat otomatis di menu CRM > Lead apa pun isian ini.'),
+                    ]),
+
                 Forms\Components\Section::make('Footer')
                     ->schema([
                         Forms\Components\TextInput::make('footer_text')

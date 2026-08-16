@@ -14,6 +14,7 @@ class LandingSetting extends Model
         'social_proof_text', 'stat_efisiensi', 'stat_modul', 'stat_akses', 'stat_digitalisasi',
         'footer_text', 'footer_legalitas', 'nomor_nib', 'nomor_akta',
         'meta_pixel_id', 'tiktok_pixel_id', 'google_ads_id',
+        'crm_notif_wa_numbers',
     ];
 
     /**
