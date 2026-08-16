@@ -21,6 +21,10 @@
                             50: '#E6F6F5', 100: '#CCECEB', 200: '#99DAD7', 300: '#66C7C3', 400: '#33B5B0',
                             500: '#00A39D', 600: '#00938E', 700: '#00736F', 800: '#00524F', 900: '#00312F',
                         },
+                        accent: {
+                            50: '#FFF4EA', 100: '#FFE4CC', 200: '#FFC896', 300: '#FFA85C',
+                            400: '#FF9130', 500: '#F5820D', 600: '#DC6D02', 700: '#B85705', 800: '#8F4306',
+                        },
                         slate: { 900: '#0F172A' }
                     },
                     boxShadow: {
@@ -153,7 +157,7 @@
 
         <div class="hidden md:flex items-center gap-4">
             <a href="{{ route('public.daftar') }}"
-                class="rounded-full bg-primary-500 px-5 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-primary-600 hover:scale-[1.02] active:scale-[0.98] transition-all">
+                class="rounded-full bg-accent-500 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-accent-500/20 hover:bg-accent-600 hover:scale-[1.02] active:scale-[0.98] transition-all">
                 Coba Demo Gratis
             </a>
         </div>
@@ -173,7 +177,7 @@
         <a href="#testimoni" class="block py-2 text-sm font-medium text-slate-700 hover:text-primary-500">Testimoni</a>
         <a href="#harga" class="block py-2 text-sm font-medium text-slate-700 hover:text-primary-500">Harga</a>
         <a href="#faq" class="block py-2 text-sm font-medium text-slate-700 hover:text-primary-500">FAQ</a>
-        <a href="{{ route('public.daftar') }}" class="block text-center w-full rounded-full bg-primary-500 py-3 text-sm font-semibold text-white shadow-md">
+        <a href="{{ route('public.daftar') }}" class="block text-center w-full rounded-full bg-accent-500 py-3 text-sm font-semibold text-white shadow-md">
             Coba Demo Gratis
         </a>
     </div>
@@ -219,7 +223,7 @@
 
                 <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                     <a href="{{ route('public.daftar') }}"
-                        class="inline-flex items-center justify-center gap-2 rounded-full bg-primary-600 px-8 py-4 text-white font-bold shadow-lg hover:bg-primary-700 hover:scale-[1.02] transition">
+                        class="inline-flex items-center justify-center gap-2 rounded-full bg-accent-500 px-8 py-4 text-white font-bold shadow-lg shadow-accent-500/25 hover:bg-accent-600 hover:scale-[1.02] transition">
                         Coba Demo Gratis
                         <i data-lucide="arrow-right" class="w-5 h-5"></i>
                     </a>
@@ -760,14 +764,14 @@
 
                 @if($plan->termasuk_semua_modul)
                 <div class="absolute -top-5 inset-x-0 flex justify-center z-10">
-                    <div class="flex items-center gap-2 bg-gradient-to-r from-primary-400 to-primary-600 text-white text-sm font-bold py-2 px-5 rounded-full shadow-lg uppercase tracking-wider whitespace-nowrap">
+                    <div class="flex items-center gap-2 bg-gradient-to-r from-accent-400 to-accent-600 text-white text-sm font-bold py-2 px-5 rounded-full shadow-lg shadow-accent-500/30 uppercase tracking-wider whitespace-nowrap">
                         <i data-lucide="sparkles" class="w-4 h-4"></i> Paling Populer
                     </div>
                 </div>
                 @endif
 
                 <div>
-                    <div class="w-11 h-11 flex items-center justify-center rounded-xl mb-4 {{ $plan->termasuk_semua_modul ? 'bg-primary-500/20 text-primary-300 ring-1 ring-primary-400/30' : 'bg-primary-50 text-primary-600 ring-1 ring-primary-100' }}">
+                    <div class="w-11 h-11 flex items-center justify-center rounded-xl mb-4 {{ $plan->termasuk_semua_modul ? 'bg-accent-500/20 text-accent-400 ring-1 ring-accent-400/30' : 'bg-primary-50 text-primary-600 ring-1 ring-primary-100' }}">
                         <i data-lucide="{{ $plan->termasuk_semua_modul ? 'crown' : 'zap' }}" class="w-5 h-5"></i>
                     </div>
 
@@ -938,7 +942,7 @@
             </span>
         </div>
         <div class="flex flex-col sm:flex-row justify-center items-center gap-4 pt-4">
-            <a href="{{ route('public.daftar') }}" class="w-full sm:w-auto flex items-center justify-center gap-2 rounded-full bg-primary-500 px-8 py-4 text-base font-bold text-white shadow-premium hover:bg-primary-600 hover:scale-105 active:scale-95 transition-all">
+            <a href="{{ route('public.daftar') }}" class="w-full sm:w-auto flex items-center justify-center gap-2 rounded-full bg-accent-500 px-8 py-4 text-base font-bold text-white shadow-xl shadow-accent-500/30 hover:bg-accent-600 hover:scale-105 active:scale-95 transition-all">
                 Coba Demo Gratis Sekarang
                 <i data-lucide="sparkles" class="w-5 h-5"></i>
             </a>
