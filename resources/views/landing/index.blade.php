@@ -1096,10 +1096,13 @@
         const popup = document.getElementById('social-proof-popup');
         if (!popup) return;
 
-        const entries = @json($buktiSosialList->map(fn($b) => [
-            'nama' => $b->lokasi ? $b->nama_lembaga.', '.$b->lokasi : $b->nama_lembaga,
-            'waktu' => $b->waktuBergabungText(),
-        ]));
+        @php
+            $buktiSosialEntries = $buktiSosialList->map(fn($b) => [
+                'nama' => $b->lokasi ? $b->nama_lembaga.', '.$b->lokasi : $b->nama_lembaga,
+                'waktu' => $b->waktuBergabungText(),
+            ]);
+        @endphp
+        const entries = @json($buktiSosialEntries);
         if (!entries.length) return;
 
         const nameEl = document.getElementById('social-proof-name');
