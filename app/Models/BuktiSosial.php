@@ -23,8 +23,11 @@ class BuktiSosial extends Model
 
     /**
      * Teks waktu relatif Bahasa Indonesia, dihitung dari tanggal_bergabung.
-     * Ditulis manual (bukan pakai diffForHumans() bawaan Carbon) supaya
-     * hasilnya selalu Indonesia, tidak tergantung locale Carbon di app.
+     *
+     * Dihitung manual lewat selisih timestamp Unix (bukan Carbon::diffInDays())
+     * -- versi sebelumnya salah menghasilkan "Hari ini" untuk tanggal yang
+     * sebenarnya sudah 16 hari lalu, jadi diganti ke perhitungan yang tidak
+     * bergantung pada perilaku spesifik versi Carbon sama sekali.
      */
     public function waktuBergabungText(): ?string
     {
@@ -32,7 +35,9 @@ class BuktiSosial extends Model
             return null;
         }
 
-        $days = (int) now()->startOfDay()->diffInDays($this->tanggal_bergabung->copy()->startOfDay());
+        $today = now()->startOfDay()->timestamp;
+        $joined = $this->tanggal_bergabung->copy()->startOfDay()->timestamp;
+        $days = (int) floor(($today - $joined) / 86400);
 
         if ($days <= 0) {
             return 'Hari ini';
@@ -44,18 +49,12 @@ class BuktiSosial extends Model
             return $days.' hari yang lalu';
         }
         if ($days < 30) {
-            $weeks = intdiv($days, 7);
-
-            return $weeks.' minggu yang lalu';
+            return intdiv($days, 7).' minggu yang lalu';
         }
         if ($days < 365) {
-            $months = intdiv($days, 30);
-
-            return $months.' bulan yang lalu';
+            return intdiv($days, 30).' bulan yang lalu';
         }
 
-        $years = intdiv($days, 365);
-
-        return $years.' tahun yang lalu';
+        return intdiv($days, 365).' tahun yang lalu';
     }
 }
