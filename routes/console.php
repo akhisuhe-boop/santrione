@@ -31,3 +31,7 @@ Schedule::command('subscription:send-trial-reminders')->dailyAt('09:00');
 // permanen tidak perlu buru-buru), Senin jam 03:00 (dini hari, di
 // luar jam sibuk).
 Schedule::command('subscription:purge-expired-trials')->weeklyOn(1, '03:00');
+
+// Kirim broadcast terjadwal (CRM) yang jadwal_kirim-nya sudah tiba --
+// dicek tiap 5 menit supaya broadcast "kirim sekarang" tidak nunggu lama.
+Schedule::command('crm:kirim-broadcast-terjadwal')->everyFiveMinutes();

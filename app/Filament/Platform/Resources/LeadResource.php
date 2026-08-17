@@ -40,6 +40,18 @@ class LeadResource extends BaseResource
         return (bool) auth()->user()?->is_platform_admin;
     }
 
+    public static function getNavigationBadge(): ?string
+    {
+        $jumlah = Lead::perluFollowUp()->count();
+
+        return $jumlah > 0 ? (string) $jumlah : null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'danger';
+    }
+
     public static function form(Form $form): Form
     {
         return $form->schema([
@@ -52,13 +64,30 @@ class LeadResource extends BaseResource
                     Forms\Components\TextInput::make('sumber')->default('Trial Signup'),
                 ])->columns(2),
 
-            Forms\Components\Section::make('Status Follow-up')
+            Forms\Components\Section::make('Status & Follow-up')
                 ->schema([
                     Forms\Components\Select::make('status')
                         ->options(Lead::STATUSES)
                         ->required()
-                        ->default('baru'),
-                ]),
+                        ->default('baru')
+                        ->live(),
+                    Forms\Components\Select::make('prioritas')
+                        ->label('Prioritas')
+                        ->options(Lead::PRIORITAS)
+                        ->required()
+                        ->default('hangat'),
+                    Forms\Components\DatePicker::make('next_follow_up_at')
+                        ->label('Follow-up Berikutnya')
+                        ->native(false)
+                        ->helperText('Muncul di badge notifikasi menu Lead begitu tanggalnya tiba/terlewat.'),
+                    Forms\Components\Textarea::make('alasan_batal')
+                        ->label('Alasan Batal')
+                        ->rows(2)
+                        ->columnSpanFull()
+                        ->visible(fn (Forms\Get $get) => $get('status') === 'batal')
+                        ->required(fn (Forms\Get $get) => $get('status') === 'batal')
+                        ->helperText('Wajib diisi supaya bisa dianalisis nanti (kemahalan, pilih kompetitor, dll).'),
+                ])->columns(2),
         ]);
     }
 
@@ -71,6 +100,15 @@ class LeadResource extends BaseResource
                 Tables\Columns\TextColumn::make('no_hp')->label('No. HP')
                     ->url(fn (Lead $record) => $record->no_hp ? 'https://wa.me/'.preg_replace('/\D/', '', $record->no_hp) : null)
                     ->openUrlInNewTab(),
+                Tables\Columns\TextColumn::make('prioritas')
+                    ->badge()
+                    ->formatStateUsing(fn (string $state) => Lead::PRIORITAS[$state] ?? $state)
+                    ->color(fn (string $state) => match ($state) {
+                        'panas' => 'danger',
+                        'hangat' => 'warning',
+                        'dingin' => 'info',
+                        default => 'gray',
+                    }),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->formatStateUsing(fn (string $state) => Lead::STATUSES[$state] ?? $state)
@@ -82,6 +120,17 @@ class LeadResource extends BaseResource
                         'batal' => 'danger',
                         default => 'gray',
                     }),
+                Tables\Columns\TextColumn::make('next_follow_up_at')
+                    ->label('Follow-up Berikutnya')
+                    ->date('d M Y')
+                    ->placeholder('-')
+                    ->color(fn (Lead $record) => match ($record->followUpUrgency()) {
+                        'terlewat' => 'danger',
+                        'hari_ini' => 'warning',
+                        default => 'gray',
+                    })
+                    ->weight(fn (Lead $record) => in_array($record->followUpUrgency(), ['terlewat', 'hari_ini']) ? 'bold' : 'normal')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('sumber')->badge()->color('gray'),
                 Tables\Columns\TextColumn::make('notes_count')->label('Catatan')->counts('notes'),
                 Tables\Columns\TextColumn::make('created_at')->label('Tanggal Masuk')->dateTime('d M Y, H:i')->sortable(),
@@ -89,6 +138,10 @@ class LeadResource extends BaseResource
             ->defaultSort('created_at', 'desc')
             ->filters([
                 Tables\Filters\SelectFilter::make('status')->options(Lead::STATUSES),
+                Tables\Filters\SelectFilter::make('prioritas')->options(Lead::PRIORITAS),
+                Tables\Filters\Filter::make('perlu_follow_up')
+                    ->label('Perlu Follow-up (Hari Ini/Terlewat)')
+                    ->query(fn ($query) => $query->perluFollowUp()),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
