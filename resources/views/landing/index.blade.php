@@ -425,7 +425,7 @@
 <section id="solusi" class="py-20 md:py-28 bg-[#FFFFFF]">
     <div class="mx-auto max-w-7xl px-4 lg:px-8">
         <div class="text-center max-w-3xl mx-auto space-y-4">
-            <span class="text-xs font-bold tracking-wider text-accent-600 bg-accent-50 px-3 py-1 rounded-full">Solusi Terpadu</span>
+            <span class="text-xs font-bold tracking-wider text-teal-600 bg-teal-50 px-3 py-1 rounded-full">Solusi Terpadu</span>
             <h2 class="text-3xl font-extrabold text-slate-900 sm:text-4xl tracking-tight">
                 Satu Platform, Solusi untuk Semua Kebutuhan Lembaga Pendidikan Islam
             </h2>
