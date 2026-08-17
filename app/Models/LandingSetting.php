@@ -15,6 +15,12 @@ class LandingSetting extends Model
         'footer_text', 'footer_legalitas', 'nomor_nib', 'nomor_akta',
         'meta_pixel_id', 'tiktok_pixel_id', 'google_ads_id',
         'crm_notif_wa_numbers',
+        'promo_aktif', 'promo_teks', 'promo_persen', 'promo_berakhir_pada', 'tahunan_diskon_persen',
+    ];
+
+    protected $casts = [
+        'promo_aktif' => 'boolean',
+        'promo_berakhir_pada' => 'datetime',
     ];
 
     /**
@@ -25,21 +31,12 @@ class LandingSetting extends Model
         return static::firstOrCreate(['id' => 1], ['brand_name' => 'Qinara Apps']);
     }
 
-    /**
-     * Deteksi apakah hero_video_url itu link embed YouTube (perlu <iframe>)
-     * atau file video langsung / URL video lain (perlu <video>).
-     */
     public function heroVideoIsEmbed(): bool
     {
         return $this->hero_video_url
             && (str_contains($this->hero_video_url, 'youtube.com') || str_contains($this->hero_video_url, 'youtu.be'));
     }
 
-    /**
-     * Untuk embed YouTube, tambahkan parameter autoplay+mute+rel=0+
-     * modestbranding otomatis supaya langsung main tanpa overlay
-     * thumbnail/nama channel yang mencolok.
-     */
     public function heroVideoEmbedUrl(): ?string
     {
         if (! $this->hero_video_url) {
@@ -53,5 +50,16 @@ class LandingSetting extends Model
         $separator = str_contains($this->hero_video_url, '?') ? '&' : '?';
 
         return $this->hero_video_url.$separator.'autoplay=1&mute=1&rel=0&modestbranding=1&playsinline=1';
+    }
+
+    /**
+     * Promo dianggap aktif kalau togglenya nyala DAN tanggal berakhirnya
+     * masih di masa depan.
+     */
+    public function promoSedangBerjalan(): bool
+    {
+        return $this->promo_aktif
+            && $this->promo_berakhir_pada
+            && $this->promo_berakhir_pada->isFuture();
     }
 }

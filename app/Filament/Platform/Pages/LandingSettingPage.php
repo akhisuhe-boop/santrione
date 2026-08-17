@@ -145,15 +145,35 @@ class LandingSettingPage extends Page implements HasForms
                             ->helperText('Contoh: AW-1234567890 atau G-XXXXXXXXXX'),
                     ])->columns(3),
 
-                Forms\Components\Section::make('Notifikasi CRM (Lead Baru)')
-                    ->description('Nomor WA yang akan otomatis dikirimi notifikasi setiap ada calon client baru daftar trial lewat /daftar. Bisa lebih dari satu, pisahkan dengan koma.')
+                Forms\Components\Section::make('Promo & Countdown Timer')
+                    ->description('Banner urgensi di atas Harga -- TIDAK mengubah harga asli di Billing & Harga, cuma tampilan diskon sementara yang dihitung otomatis dari harga asli. Kalau tanggal berakhir sudah lewat, banner otomatis hilang sendiri (baik togglenya masih nyala atau tidak).')
                     ->schema([
-                        Forms\Components\Textarea::make('crm_notif_wa_numbers')
-                            ->label('Nomor WA Internal (pisahkan dengan koma)')
-                            ->rows(2)
-                            ->columnSpanFull()
-                            ->placeholder('62812xxxxxxxx, 62813xxxxxxxx')
-                            ->helperText('Kosongkan kalau belum mau ada notifikasi WA internal -- lead tetap tercatat otomatis di menu CRM > Lead apa pun isian ini.'),
+                        Forms\Components\Toggle::make('promo_aktif')
+                            ->label('Aktifkan Promo')
+                            ->live(),
+                        Forms\Components\TextInput::make('promo_teks')
+                            ->label('Teks Promo')
+                            ->placeholder('Contoh: Diskon Spesial Peluncuran!')
+                            ->visible(fn (Forms\Get $get) => $get('promo_aktif')),
+                        Forms\Components\TextInput::make('promo_persen')
+                            ->label('Persen Diskon')
+                            ->numeric()->minValue(1)->maxValue(90)
+                            ->suffix('%')
+                            ->visible(fn (Forms\Get $get) => $get('promo_aktif')),
+                        Forms\Components\DateTimePicker::make('promo_berakhir_pada')
+                            ->label('Promo Berakhir Pada')
+                            ->native(false)
+                            ->visible(fn (Forms\Get $get) => $get('promo_aktif')),
+                    ])->columns(2),
+
+                Forms\Components\Section::make('Diskon Tampilan Tahunan')
+                    ->description('Persen "hemat" yang ditampilkan di toggle Bulanan/Tahunan pada section Harga. CATATAN PENTING: ini murni tampilan di landing page -- sistem billing/pembayaran belum benar-benar memproses langganan tahunan, jadi orang yang klik "Coba Gratis 14 Hari" tetap masuk alur pendaftaran yang sama seperti biasa apa pun toggle yang mereka pilih.')
+                    ->schema([
+                        Forms\Components\TextInput::make('tahunan_diskon_persen')
+                            ->label('Persen Hemat (Tahunan)')
+                            ->numeric()->minValue(0)->maxValue(90)
+                            ->suffix('%')
+                            ->default(15),
                     ]),
 
                 Forms\Components\Section::make('Footer')

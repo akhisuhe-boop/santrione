@@ -54,6 +54,8 @@
         .reveal-on-scroll:nth-child(1) { transition-delay: 0ms; }
         .reveal-on-scroll:nth-child(2) { transition-delay: 120ms; }
         .reveal-on-scroll:nth-child(3) { transition-delay: 240ms; }
+        .billing-toggle-btn { color: #64748b; }
+        .billing-toggle-btn.active { background: white; color: #0F172A; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
     </style>
 
     {{-- Meta (Facebook) Pixel --}}
@@ -228,8 +230,8 @@
                         <i data-lucide="arrow-right" class="w-5 h-5"></i>
                     </a>
                     <button onclick="hubungiSales()"
-                        class="inline-flex items-center justify-center gap-2 rounded-full bg-[#F97316] px-8 py-4 font-semibold text-white hover:bg-[#EA580C] transition-all duration-300 shadow-md hover:shadow-lg">
-                        <i data-lucide="message-circle" class="w-5 h-5 text-white"></i>
+                        class="inline-flex items-center justify-center gap-2 rounded-full bg-accent-500 px-8 py-4 font-semibold text-white hover:bg-accent-600 transition shadow-md shadow-accent-500/20">
+                        <i data-lucide="message-circle" class="w-5 h-5"></i>
                         Konsultasi Gratis
                     </button>
                 </div>
@@ -425,7 +427,7 @@
 <section id="solusi" class="py-20 md:py-28 bg-[#FFFFFF]">
     <div class="mx-auto max-w-7xl px-4 lg:px-8">
         <div class="text-center max-w-3xl mx-auto space-y-4">
-            <span class="text-xs font-bold tracking-wider text-teal-600 bg-teal-50 px-3 py-1 rounded-full">Solusi Terpadu</span>
+            <span class="text-xs font-bold tracking-wider text-primary-500 bg-primary-50 px-3 py-1 rounded-full">Solusi Terpadu</span>
             <h2 class="text-3xl font-extrabold text-slate-900 sm:text-4xl tracking-tight">
                 Satu Platform, Solusi untuk Semua Kebutuhan Lembaga Pendidikan Islam
             </h2>
@@ -734,6 +736,32 @@
             </p>
         </div>
 
+        @if($setting->promoSedangBerjalan())
+        <div id="promo-banner" class="mt-8 max-w-xl mx-auto rounded-2xl bg-gradient-to-r from-accent-500 to-accent-600 text-white px-5 py-3.5 flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-2.5 shadow-lg shadow-accent-500/25">
+            <div class="flex items-center gap-2 font-bold text-sm text-center sm:text-left">
+                <i data-lucide="flame" class="w-4.5 h-4.5 shrink-0"></i>
+                {{ $setting->promo_teks }} — Hemat {{ $setting->promo_persen }}%
+            </div>
+            <div class="flex items-center gap-1.5 font-mono text-sm bg-white/15 rounded-full px-4 py-1.5 shrink-0" data-promo-end="{{ $setting->promo_berakhir_pada->toIso8601String() }}">
+                <i data-lucide="timer" class="w-4 h-4"></i>
+                <span id="promo-countdown-text">--:--:--</span>
+            </div>
+        </div>
+        @endif
+
+        <div class="mt-8 flex flex-col items-center gap-2">
+            <div class="inline-flex items-center bg-slate-100 rounded-full p-1 gap-1">
+                <button type="button" id="toggle-bulanan" class="billing-toggle-btn active px-5 py-2 rounded-full text-sm font-bold transition-all">
+                    Bulanan
+                </button>
+                <button type="button" id="toggle-tahunan" class="billing-toggle-btn px-5 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-1.5">
+                    Tahunan
+                    <span class="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full">Hemat {{ $setting->tahunan_diskon_persen }}%</span>
+                </button>
+            </div>
+            <p class="text-xs text-slate-400">*Estimasi harga tahunan — detail final dikonfirmasi tim kami saat pendaftaran.</p>
+        </div>
+
         @php
             // Paket "Semua Modul Termasuk" DIPAKSA selalu di posisi tengah,
             // apa pun jumlah paket lain yang aktif -- supaya urutan tampil
@@ -778,9 +806,18 @@
                     <h3 class="text-2xl font-bold {{ $plan->termasuk_semua_modul ? 'text-white' : 'text-slate-900' }}">{{ $plan->nama }}</h3>
                     <p class="text-sm {{ $plan->termasuk_semua_modul ? 'text-slate-300' : 'text-slate-600' }} mt-2 leading-relaxed">{{ $plan->deskripsi }}</p>
 
-                    <div class="mt-6 flex items-baseline">
-                        <span class="text-4xl font-extrabold tracking-tight {{ $plan->termasuk_semua_modul ? 'text-white' : 'text-slate-900' }}">Rp {{ number_format($plan->harga_bulanan, 0, ',', '.') }}</span>
-                        <span class="text-xs {{ $plan->termasuk_semua_modul ? 'text-slate-400' : 'text-slate-500' }} ml-1">/ bulan</span>
+                    @php
+                        $hargaTahunanPerBulan = (int) round($plan->harga_bulanan * (100 - $setting->tahunan_diskon_persen) / 100);
+                    @endphp
+                    <div class="price-block mt-6" data-monthly="{{ (int) $plan->harga_bulanan }}" data-yearly="{{ $hargaTahunanPerBulan }}" data-promo-persen="{{ $setting->promoSedangBerjalan() ? $setting->promo_persen : 0 }}">
+                        <div class="price-strike text-sm line-through {{ $plan->termasuk_semua_modul ? 'text-slate-500' : 'text-slate-400' }} hidden mb-0.5"></div>
+                        <div class="flex items-baseline gap-2 flex-wrap">
+                            <span class="flex items-baseline">
+                                <span class="price-value text-4xl font-extrabold tracking-tight {{ $plan->termasuk_semua_modul ? 'text-white' : 'text-slate-900' }}">Rp {{ number_format($plan->harga_bulanan, 0, ',', '.') }}</span>
+                                <span class="period-label text-xs {{ $plan->termasuk_semua_modul ? 'text-slate-400' : 'text-slate-500' }} ml-1">/ bulan</span>
+                            </span>
+                            <span class="price-savings-badge hidden text-[10px] font-bold bg-accent-50 text-accent-600 px-2 py-0.5 rounded-full"></span>
+                        </div>
                     </div>
                     <p class="text-xs {{ $plan->termasuk_semua_modul ? 'text-slate-400' : 'text-slate-500' }} mt-2">
                         Termasuk {{ $plan->maks_siswa ?? 'tanpa batas' }} siswa
@@ -821,10 +858,9 @@
 
                 <div class="mt-8">
                     <a href="{{ route('public.daftar') }}"
-                        class="group/btn flex items-center justify-center gap-2 w-full rounded-full py-3.5 px-6 text-sm font-bold transition-all duration-300 shadow-md hover:shadow-lg bg-[#0D9488] text-white hover:bg-[#0F766E]">
+                        class="group/btn flex items-center justify-center gap-2 w-full rounded-full py-3.5 px-6 text-sm font-bold transition-all duration-300 shadow-md hover:shadow-lg bg-primary-500 text-white hover:bg-primary-600">
                         Coba Gratis 14 Hari
-                        <i data-lucide="arrow-right"
-                            class="w-4 h-4 group-hover/btn:translate-x-0.5 transition-transform"></i>
+                        <i data-lucide="arrow-right" class="w-4 h-4 group-hover/btn:translate-x-0.5 transition-transform"></i>
                     </a>
                 </div>
             </div>
@@ -874,8 +910,7 @@
                 </div>
 
                 <div class="mt-6 text-center">
-                    <a href="{{ route('public.daftar') }}"
-                        class="inline-flex items-center justify-center gap-2 rounded-full bg-[#0D9488] text-white hover:bg-[#0F766E] transition-all duration-300 text-sm font-bold py-3 px-8 shadow-md hover:shadow-lg">
+                    <a href="{{ route('public.daftar') }}" class="inline-flex items-center justify-center gap-2 rounded-full bg-accent-500 text-white hover:bg-accent-600 transition-all duration-300 text-sm font-bold py-3 px-8 shadow-md hover:shadow-lg">
                         Coba Gratis 14 Hari
                         <i data-lucide="arrow-right" class="w-4 h-4"></i>
                     </a>
@@ -1250,6 +1285,110 @@
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') window.closeLightbox();
         });
+    })();
+
+    // Toggle Bulanan/Tahunan + Countdown Promo (Harga)
+    (function () {
+        const btnBulanan = document.getElementById('toggle-bulanan');
+        const btnTahunan = document.getElementById('toggle-tahunan');
+        const priceBlocks = document.querySelectorAll('.price-block');
+        if (!priceBlocks.length) return;
+
+        let cycle = 'bulanan';
+        let promoActive = false;
+
+        function formatRupiah(n) {
+            return 'Rp ' + n.toLocaleString('id-ID');
+        }
+
+        function render() {
+            priceBlocks.forEach((block) => {
+                const monthly = parseInt(block.dataset.monthly, 10) || 0;
+                const yearly = parseInt(block.dataset.yearly, 10) || 0;
+                const promoPersen = parseInt(block.dataset.promoPersen, 10) || 0;
+
+                const base = cycle === 'tahunan' ? yearly : monthly;
+                let final = base;
+                let strikeValue = null;
+                let savingsLabel = null;
+
+                if (cycle === 'tahunan' && monthly > 0) {
+                    strikeValue = monthly;
+                    savingsLabel = 'Hemat ' + Math.round((1 - yearly / monthly) * 100) + '%';
+                }
+
+                if (promoActive && promoPersen > 0) {
+                    final = Math.round(base * (100 - promoPersen) / 100);
+                    strikeValue = base;
+                    savingsLabel = 'Hemat ' + promoPersen + '%';
+                }
+
+                const valueEl = block.querySelector('.price-value');
+                const periodEl = block.querySelector('.period-label');
+                const strikeEl = block.querySelector('.price-strike');
+                const badgeEl = block.querySelector('.price-savings-badge');
+
+                valueEl.textContent = formatRupiah(final);
+                periodEl.textContent = cycle === 'tahunan' ? '/ bulan (ditagih tahunan)' : '/ bulan';
+
+                if (strikeValue && strikeValue !== final) {
+                    strikeEl.textContent = formatRupiah(strikeValue);
+                    strikeEl.classList.remove('hidden');
+                } else {
+                    strikeEl.classList.add('hidden');
+                }
+
+                if (savingsLabel) {
+                    badgeEl.textContent = savingsLabel;
+                    badgeEl.classList.remove('hidden');
+                } else {
+                    badgeEl.classList.add('hidden');
+                }
+            });
+        }
+
+        btnBulanan?.addEventListener('click', () => {
+            cycle = 'bulanan';
+            btnBulanan.classList.add('active');
+            btnTahunan.classList.remove('active');
+            render();
+        });
+        btnTahunan?.addEventListener('click', () => {
+            cycle = 'tahunan';
+            btnTahunan.classList.add('active');
+            btnBulanan.classList.remove('active');
+            render();
+        });
+
+        // Countdown promo
+        const promoEl = document.querySelector('[data-promo-end]');
+        if (promoEl) {
+            promoActive = true;
+            const endTime = new Date(promoEl.dataset.promoEnd).getTime();
+            const textEl = document.getElementById('promo-countdown-text');
+            const banner = document.getElementById('promo-banner');
+
+            function tickCountdown() {
+                const diff = endTime - Date.now();
+                if (diff <= 0) {
+                    banner?.remove();
+                    promoActive = false;
+                    render();
+                    clearInterval(timer);
+                    return;
+                }
+                const d = Math.floor(diff / 86400000);
+                const h = Math.floor((diff % 86400000) / 3600000);
+                const m = Math.floor((diff % 3600000) / 60000);
+                const s = Math.floor((diff % 60000) / 1000);
+                const pad = (n) => String(n).padStart(2, '0');
+                textEl.textContent = (d > 0 ? d + 'h ' : '') + pad(h) + ':' + pad(m) + ':' + pad(s);
+            }
+            tickCountdown();
+            var timer = setInterval(tickCountdown, 1000);
+        }
+
+        render();
     })();
 
     // Animasi reveal saat kartu harga masuk viewport
