@@ -166,14 +166,11 @@ class LandingSettingPage extends Page implements HasForms
                             ->visible(fn (Forms\Get $get) => $get('promo_aktif')),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Diskon Tampilan Tahunan')
-                    ->description('Persen "hemat" yang ditampilkan di toggle Bulanan/Tahunan pada section Harga. CATATAN PENTING: ini murni tampilan di landing page -- sistem billing/pembayaran belum benar-benar memproses langganan tahunan, jadi orang yang klik "Coba Gratis 14 Hari" tetap masuk alur pendaftaran yang sama seperti biasa apa pun toggle yang mereka pilih.')
+                Forms\Components\Section::make('Diskon Tahunan di Landing Page')
                     ->schema([
-                        Forms\Components\TextInput::make('tahunan_diskon_persen')
-                            ->label('Persen Hemat (Tahunan)')
-                            ->numeric()->minValue(0)->maxValue(90)
-                            ->suffix('%')
-                            ->default(15),
+                        Forms\Components\Placeholder::make('info_diskon_tahunan')
+                            ->label('')
+                            ->content('Angka diskon tahunan yang tampil di landing page sekarang otomatis mengikuti diskon per paket yang sudah diatur di Billing & Harga > Paket Langganan (field "Diskon Kalau Bayar Tahunan"), bukan angka terpisah lagi -- supaya landing page tidak pernah beda sendiri dari sistem billing yang sesungguhnya. Atur di sana, bukan di sini.'),
                     ]),
 
                 Forms\Components\Section::make('Footer')

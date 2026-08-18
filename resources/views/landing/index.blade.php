@@ -749,17 +749,16 @@
         </div>
         @endif
 
-        <div class="mt-8 flex flex-col items-center gap-2">
-            <div class="inline-flex items-center bg-slate-100 rounded-full p-1 gap-1">
-                <button type="button" id="toggle-bulanan" class="billing-toggle-btn active px-5 py-2 rounded-full text-sm font-bold transition-all">
+        <div class="mt-8 flex flex-col items-center gap-3">
+            <div class="inline-flex items-center bg-slate-100 rounded-full p-1">
+                <button type="button" id="toggle-bulanan" class="billing-toggle-btn active px-6 py-2.5 rounded-full text-sm font-bold transition-all">
                     Bulanan
                 </button>
-                <button type="button" id="toggle-tahunan" class="billing-toggle-btn px-5 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-1.5">
+                <button type="button" id="toggle-tahunan" class="billing-toggle-btn px-6 py-2.5 rounded-full text-sm font-bold transition-all">
                     Tahunan
-                    <span class="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full">Hemat {{ $setting->tahunan_diskon_persen }}%</span>
                 </button>
             </div>
-            <p class="text-xs text-slate-400">*Estimasi harga tahunan — detail final dikonfirmasi tim kami saat pendaftaran.</p>
+            <p class="text-xs text-slate-400">Hemat lebih banyak dengan pembayaran tahunan</p>
         </div>
 
         @php
@@ -807,7 +806,15 @@
                     <p class="text-sm {{ $plan->termasuk_semua_modul ? 'text-slate-300' : 'text-slate-600' }} mt-2 leading-relaxed">{{ $plan->deskripsi }}</p>
 
                     @php
-                        $hargaTahunanPerBulan = (int) round($plan->harga_bulanan * (100 - $setting->tahunan_diskon_persen) / 100);
+                        // Diskon tahunan sekarang dibaca LANGSUNG dari plan
+                        // asli ($plan->diskon_tahunan_persen di tabel
+                        // subscription_plans -- field yang sama dipakai
+                        // sistem billing sungguhan), BUKAN dari angka
+                        // global terpisah lagi. Jadi kalau admin ubah
+                        // diskon tahunan per paket di Billing & Harga,
+                        // landing page otomatis ikut berubah, tidak bisa
+                        // beda sendiri dari sistem asli.
+                        $hargaTahunanPerBulan = (int) round($plan->harga_bulanan * (100 - $plan->diskon_tahunan_persen) / 100);
                     @endphp
                     <div class="price-block mt-6" data-monthly="{{ (int) $plan->harga_bulanan }}" data-yearly="{{ $hargaTahunanPerBulan }}" data-promo-persen="{{ $setting->promoSedangBerjalan() ? $setting->promo_persen : 0 }}">
                         <div class="price-strike text-sm line-through {{ $plan->termasuk_semua_modul ? 'text-slate-500' : 'text-slate-400' }} hidden mb-0.5"></div>
