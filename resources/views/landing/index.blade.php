@@ -857,14 +857,17 @@
                             <span class="font-medium text-white">Semua modul aplikasi tanpa kecuali</span>
                         </li>
                         @else
-                            @foreach($plan->fitur ?? [] as $fiturKey)
+                            @php
+                                $modulGratisNama = $modulePrices->where('is_gratis', true)->pluck('nama');
+                            @endphp
+                            @if($modulGratisNama->isNotEmpty())
                             <li class="flex items-center gap-2.5">
                                 <span class="flex items-center justify-center w-5 h-5 rounded-full bg-primary-50 shrink-0">
                                     <i data-lucide="check" class="w-3 h-3 text-primary-600"></i>
                                 </span>
-                                <span>{{ \App\Support\FeatureGate::label($fiturKey) }}</span>
+                                <span>Sudah termasuk gratis: {{ $modulGratisNama->implode(' + ') }}</span>
                             </li>
-                            @endforeach
+                            @endif
                             <li class="flex items-center gap-2.5 text-slate-400">
                                 <span class="flex items-center justify-center w-5 h-5 rounded-full bg-slate-50 shrink-0">
                                     <i data-lucide="plus" class="w-3 h-3"></i>
