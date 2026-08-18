@@ -757,17 +757,17 @@
                 </p>
                 @endif
                 <div class="flex items-center justify-center gap-2" data-promo-end="{{ $setting->promo_berakhir_pada->toIso8601String() }}" data-diskon-aktif="0">
-                    <div class="flex flex-col items-center bg-white/80 border border-white rounded-lg px-3.5 py-2 min-w-[60px] shadow-sm">
+                    <div class="flex flex-col items-center bg-white/80 border border-white rounded-lg px-3.5 py-1.5 min-w-[60px] shadow-sm">
                         <span id="promo-cd-h" class="text-red-600 font-extrabold text-2xl font-mono tabular-nums leading-none">00</span>
                         <span class="text-slate-400 text-[9px] uppercase tracking-wide mt-1">Jam</span>
                     </div>
                     <span class="text-slate-300 font-bold text-xl">:</span>
-                    <div class="flex flex-col items-center bg-white/80 border border-white rounded-lg px-3.5 py-2 min-w-[60px] shadow-sm">
+                    <div class="flex flex-col items-center bg-white/80 border border-white rounded-lg px-3.5 py-1.5 min-w-[60px] shadow-sm">
                         <span id="promo-cd-m" class="text-red-600 font-extrabold text-2xl font-mono tabular-nums leading-none">00</span>
                         <span class="text-slate-400 text-[9px] uppercase tracking-wide mt-1">Menit</span>
                     </div>
                     <span class="text-slate-300 font-bold text-xl">:</span>
-                    <div id="promo-cd-s-box" class="flex flex-col items-center bg-red-500 rounded-lg px-3.5 py-2 min-w-[60px] shadow-sm">
+                    <div id="promo-cd-s-box" class="flex flex-col items-center bg-red-500 rounded-lg px-3.5 py-1.5 min-w-[60px] shadow-sm">
                         <span id="promo-cd-s" class="text-white font-extrabold text-2xl font-mono tabular-nums leading-none">00</span>
                         <span class="text-white/70 text-[9px] uppercase tracking-wide mt-1">Detik</span>
                     </div>
@@ -786,17 +786,17 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-2" data-promo-end="{{ $setting->promo_berakhir_pada->toIso8601String() }}" data-diskon-aktif="{{ $setting->promoAdaDiskon() ? '1' : '0' }}">
-                    <div class="flex flex-col items-center bg-white/15 border border-white/20 rounded-lg px-3.5 py-2 min-w-[60px]">
-                        <span id="promo-cd-h" class="text-white font-extrabold text-2xl font-mono tabular-nums leading-none">00</span>
-                        <span class="text-white/70 text-[9px] uppercase tracking-wide mt-1">Jam</span>
+                    <div class="flex flex-col items-center bg-white/80 border border-white rounded-lg px-3.5 py-1.5 min-w-[60px] shadow-sm">
+                        <span id="promo-cd-h" class="text-red-600 font-extrabold text-2xl font-mono tabular-nums leading-none">00</span>
+                        <span class="text-red-400/80 text-[9px] uppercase tracking-wide mt-1">Jam</span>
                     </div>
                         <span class="text-white/40 font-bold text-xl">:</span>
-                    <div class="flex flex-col items-center bg-white/15 border border-white/20 rounded-lg px-3.5 py-2 min-w-[60px]">
-                        <span id="promo-cd-m" class="text-white font-extrabold text-2xl font-mono tabular-nums leading-none">00</span>
-                        <span class="text-white/70 text-[9px] uppercase tracking-wide mt-1">Menit</span>
+                    <div class="flex flex-col items-center bg-white/80 border border-white rounded-lg px-3.5 py-1.5 min-w-[60px] shadow-sm">
+                        <span id="promo-cd-m" class="text-red-600 font-extrabold text-2xl font-mono tabular-nums leading-none">00</span>
+                        <span class="text-red-400/80 text-[9px] uppercase tracking-wide mt-1">Menit</span>
                     </div>
                     <span class="text-white/40 font-bold text-xl">:</span>
-                    <div id="promo-cd-s-box" class="flex flex-col items-center bg-white rounded-lg px-3.5 py-2 min-w-[60px]">
+                    <div id="promo-cd-s-box" class="flex flex-col items-center bg-white rounded-lg px-3.5 py-1.5 min-w-[60px] shadow-sm">
                         <span id="promo-cd-s" class="text-red-600 font-extrabold text-2xl font-mono tabular-nums leading-none">00</span>
                         <span class="text-red-500/70 text-[9px] uppercase tracking-wide mt-1">Detik</span>
                     </div>
