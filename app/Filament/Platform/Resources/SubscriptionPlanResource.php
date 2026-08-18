@@ -81,6 +81,15 @@ class SubscriptionPlanResource extends BaseResource
                             ->prefix('Rp')
                             ->helperText('Dikenakan untuk lembaga di atas Maks. Lembaga.'),
 
+                        Forms\Components\TextInput::make('diskon_tahunan_persen')
+                            ->label('Diskon Kalau Bayar Tahunan')
+                            ->numeric()
+                            ->minValue(0)
+                            ->maxValue(90)
+                            ->suffix('%')
+                            ->default(0)
+                            ->helperText('Diskon yang didapat Yayasan pemakai paket ini kalau bayar 1 tahun sekaligus (dihitung dari total 12 bulan). Kosongkan/0 = tidak ada diskon tahunan untuk paket ini.'),
+
                         Forms\Components\TextInput::make('maks_lembaga')
                             ->label('Maks. Lembaga')
                             ->numeric()
@@ -148,6 +157,11 @@ class SubscriptionPlanResource extends BaseResource
                     ->label('+Lembaga')
                     ->toggleable()
                     ->formatStateUsing(fn ($state) => $state ? 'Rp ' . number_format($state, 0, ',', '.') : '—'),
+
+                Tables\Columns\TextColumn::make('diskon_tahunan_persen')
+                    ->label('Diskon Tahunan')
+                    ->toggleable()
+                    ->formatStateUsing(fn ($state) => $state > 0 ? $state . '%' : '—'),
 
                 Tables\Columns\TextColumn::make('maks_lembaga')
                     ->label('Maks. Lembaga')

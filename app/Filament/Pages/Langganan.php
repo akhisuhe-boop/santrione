@@ -28,6 +28,13 @@ use Illuminate\Support\Facades\Auth;
  * Platform" tetap ada di database sebagai basis biaya dasar, tapi
  * dibuat OTOMATIS saat daftar (lihat PublicRegistrationController),
  * tidak lagi dipilih manual oleh tenant.
+ *
+ * $billingCycle (baru): toggle Bulanan/Tahunan yang BENERAN
+ * fungsional -- menentukan siklus_billing pada Subscription yang
+ * dibuat lewat bayarSekarang()/aktifkanPaketFull(), bukan cuma
+ * tampilan. Nilai ini TIDAK disimpan permanen di database sampai
+ * tenant benar-benar menekan salah satu tombol bayar/aktifkan --
+ * sebelum itu murni preferensi tampilan di sesi ini.
  */
 class Langganan extends Page
 {
@@ -38,6 +45,8 @@ class Langganan extends Page
     protected static ?string $slug = 'langganan';
 
     protected static string $view = 'filament.pages.langganan';
+
+    public string $billingCycle = 'bulanan';
 
     public static function canAccess(): bool
     {
@@ -57,9 +66,30 @@ class Langganan extends Page
         return Auth::user()->yayasan;
     }
 
+    public function setBillingCycle(string $cycle): void
+    {
+        $this->billingCycle = in_array($cycle, ['bulanan', 'tahunan'], true) ? $cycle : 'bulanan';
+    }
+
+    public function isTahunanDipilih(): bool
+    {
+        return $this->billingCycle === 'tahunan';
+    }
+
+    /**
+     * Estimasi yang ditampilkan mengikuti toggle $billingCycle --
+     * SELALU dihitung ulang dari TenantBillingCalculator (harga
+     * modul/plan/diskon tahunan TERKINI), tidak pernah angka lama
+     * yang dibekukan.
+     */
     public function getEstimasi(): array
     {
-        return app(TenantBillingCalculator::class)->hitungYayasan($this->getYayasan());
+        $calculator = app(TenantBillingCalculator::class);
+        $yayasan = $this->getYayasan();
+
+        return $this->isTahunanDipilih()
+            ? $calculator->hitungYayasanTahunan($yayasan)
+            : $calculator->hitungYayasan($yayasan);
     }
 
     public function getModulOptions()
@@ -154,14 +184,32 @@ class Langganan extends Page
             ?? null;
     }
 
+    /**
+     * Bayar sesuai $billingCycle yang sedang dipilih tenant --
+     * computed_amount/computed_breakdown dihitung lewat calculator
+     * yang sesuai (bulanan atau tahunan), siklus_billing tersimpan di
+     * baris Subscription yang baru supaya command autopilot bulanan/
+     * tahunan tahu harus memperlakukan Yayasan ini seperti apa mulai
+     * sekarang.
+     */
     public function bayarSekarang(): void
     {
         $yayasan = $this->getYayasan();
         $plan = \App\Models\SubscriptionPlan::where('slug', 'akses-platform')->firstOrFail();
+        $calculator = app(TenantBillingCalculator::class);
+        $tahunan = $this->isTahunanDipilih();
+
+        $hasil = $tahunan
+            ? $calculator->hitungYayasanTahunan($yayasan)
+            : $calculator->hitungYayasan($yayasan);
 
         $subscription = $yayasan->subscriptions()->create([
             'subscription_plan_id' => $plan->id,
+            'siklus_billing' => $tahunan ? 'tahunan' : 'bulanan',
             'status' => 'pending',
+            'computed_amount' => $hasil['total'],
+            'computed_breakdown' => $hasil,
+            'periode' => $tahunan ? (string) now()->addYear()->year : now()->format('Y-m'),
         ]);
 
         try {
@@ -184,11 +232,14 @@ class Langganan extends Page
      * TenantBillingCalculator tidak menghitung modul dobel di atas
      * harga flat-nya) DAN aktifkan semua modul di semua Lembaga milik
      * yayasan ini, supaya tercatat & terlihat "termasuk" di rincian.
+     * Siklus billing (bulanan/tahunan) ikut $billingCycle yang sedang
+     * dipilih tenant, sama seperti bayarSekarang().
      */
     public function aktifkanPaketFull(): void
     {
         $yayasan = $this->getYayasan();
         $planFull = \App\Models\SubscriptionPlan::where('slug', 'paket-full')->first();
+        $tahunan = $this->isTahunanDipilih();
 
         if (! $planFull) {
             Notification::make()->title('Paket Full belum tersedia')->danger()->send();
@@ -199,10 +250,14 @@ class Langganan extends Page
         $subAktif = $yayasan->activeSubscription();
 
         if ($subAktif) {
-            $subAktif->update(['subscription_plan_id' => $planFull->id]);
+            $subAktif->update([
+                'subscription_plan_id' => $planFull->id,
+                'siklus_billing' => $tahunan ? 'tahunan' : 'bulanan',
+            ]);
         } else {
             $yayasan->subscriptions()->create([
                 'subscription_plan_id' => $planFull->id,
+                'siklus_billing' => $tahunan ? 'tahunan' : 'bulanan',
                 'status' => 'active',
                 'mulai_pada' => now(),
                 'berakhir_pada' => $yayasan->trial_ends_at ?? now()->addDays(config('subscription.trial_days', 14)),

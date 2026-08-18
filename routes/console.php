@@ -21,6 +21,12 @@ Schedule::command('absensi:tandai-alpa')->dailyAt('16:00');
 // langganan expired (01:00) supaya invoice baru sudah terbit duluan.
 Schedule::command('subscription:generate-monthly-invoice')->monthlyOn(1, '02:00');
 
+// Autopilot billing TAHUNAN -- rekan dari billing bulanan di atas.
+// Dijalankan HARIAN (bukan tanggal tetap) karena tiap Yayasan punya
+// tanggal ulang tahun langganan sendiri-sendiri. Jam 02:30 (setelah
+// billing bulanan jam 02:00, sebelum cek expired jam 01:00 besoknya).
+Schedule::command('subscription:generate-annual-invoice')->dailyAt('02:30');
+
 // Reminder WA H-7/H-3/H-1 sebelum trial habis — jam 09:00 (jam kerja,
 // supaya notifikasi WA tidak masuk tengah malam).
 Schedule::command('subscription:send-trial-reminders')->dailyAt('09:00');

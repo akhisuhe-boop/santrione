@@ -9,10 +9,39 @@
         $broadcasts = $this->getBroadcasts();
         $riwayat = $this->getRiwayatPembayaran();
         $paketFullAktif = $this->isPaketFullAktif();
+        $tahunanDipilih = $this->isTahunanDipilih();
     @endphp
 
-    {{-- TAGIHAN BULANAN --}}
-    <x-filament::section heading="Tagihan Bulanan" icon="heroicon-o-document-text">
+    {{-- TOGGLE SIKLUS BILLING --}}
+    <div class="flex flex-col items-center gap-2 mb-2">
+        <div class="inline-flex items-center bg-gray-100 dark:bg-gray-800 rounded-full p-1 gap-1">
+            <button
+                type="button"
+                wire:click="setBillingCycle('bulanan')"
+                class="px-5 py-2 rounded-full text-sm font-bold transition-all {{ ! $tahunanDipilih ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500' }}"
+            >
+                Bulanan
+            </button>
+            <button
+                type="button"
+                wire:click="setBillingCycle('tahunan')"
+                class="px-5 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-1.5 {{ $tahunanDipilih ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500' }}"
+            >
+                Tahunan
+                @if ($subAktif?->plan?->diskon_tahunan_persen)
+                    <span class="text-[10px] font-bold bg-success-100 text-success-700 px-1.5 py-0.5 rounded-full">
+                        Hemat {{ $subAktif->plan->diskon_tahunan_persen }}%
+                    </span>
+                @endif
+            </button>
+        </div>
+        @if ($tahunanDipilih)
+            <p class="text-xs text-gray-400">Bayar 1 tahun sekaligus, langsung dapat diskon. Berlaku untuk pembayaran/aktivasi berikutnya.</p>
+        @endif
+    </div>
+
+    {{-- TAGIHAN --}}
+    <x-filament::section :heading="$tahunanDipilih ? 'Tagihan Tahunan' : 'Tagihan Bulanan'" icon="heroicon-o-document-text">
 
         <div class="flex items-center justify-between flex-wrap gap-3 mb-4 text-sm">
             <div class="text-gray-500">
@@ -22,6 +51,12 @@
             <div class="flex items-center gap-3">
                 @if ($paketFullAktif)
                     <x-filament::badge color="warning" icon="heroicon-o-sparkles">Paket Full Aktif</x-filament::badge>
+                @endif
+
+                @if ($subAktif)
+                    <x-filament::badge :color="$subAktif->isTahunan() ? 'success' : 'gray'">
+                        Langganan Aktif: {{ $subAktif->isTahunan() ? 'Tahunan' : 'Bulanan' }}
+                    </x-filament::badge>
                 @endif
 
                 <div class="text-gray-500">
@@ -40,9 +75,9 @@
                         <th class="px-2 py-2 font-semibold">Lembaga</th>
                         <th class="px-2 py-2 font-semibold">Siswa</th>
                         <th class="px-2 py-2 font-semibold">Akses Platform</th>
-                        <th class="px-2 py-2 font-semibold">Diskon</th>
+                        <th class="px-2 py-2 font-semibold">Diskon Volume</th>
                         <th class="px-2 py-2 font-semibold">Modul</th>
-                        <th class="px-2 py-2 font-semibold text-right">Subtotal</th>
+                        <th class="px-2 py-2 font-semibold text-right">Subtotal / bulan</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -70,10 +105,27 @@
                     @endforeach
                 </tbody>
                 <tfoot>
-                    <tr>
-                        <td colspan="5" class="px-2 py-3 font-bold text-gray-900 dark:text-white">TOTAL YAYASAN</td>
-                        <td class="px-2 py-3 text-right font-bold text-primary-600">Rp {{ number_format($estimasi['total'], 0, ',', '.') }}</td>
-                    </tr>
+                    @if ($tahunanDipilih)
+                        <tr class="text-gray-500">
+                            <td colspan="5" class="px-2 py-2">Total {{ count($estimasi['lembaga']) }} lembaga × 12 bulan</td>
+                            <td class="px-2 py-2 text-right">Rp {{ number_format($estimasi['total_tahunan_sebelum_diskon'], 0, ',', '.') }}</td>
+                        </tr>
+                        @if ($estimasi['diskon_tahunan_persen'] > 0)
+                        <tr class="text-success-600">
+                            <td colspan="5" class="px-2 py-2 font-medium">Diskon Tahunan ({{ $estimasi['diskon_tahunan_persen'] }}%)</td>
+                            <td class="px-2 py-2 text-right font-medium">- Rp {{ number_format($estimasi['total_tahunan_sebelum_diskon'] - $estimasi['total'], 0, ',', '.') }}</td>
+                        </tr>
+                        @endif
+                        <tr>
+                            <td colspan="5" class="px-2 py-3 font-bold text-gray-900 dark:text-white">TOTAL DIBAYAR (1 TAHUN)</td>
+                            <td class="px-2 py-3 text-right font-bold text-primary-600">Rp {{ number_format($estimasi['total'], 0, ',', '.') }}</td>
+                        </tr>
+                    @else
+                        <tr>
+                            <td colspan="5" class="px-2 py-3 font-bold text-gray-900 dark:text-white">TOTAL YAYASAN / BULAN</td>
+                            <td class="px-2 py-3 text-right font-bold text-primary-600">Rp {{ number_format($estimasi['total'], 0, ',', '.') }}</td>
+                        </tr>
+                    @endif
                 </tfoot>
             </table>
         </div>
@@ -97,7 +149,7 @@
             <div class="flex items-center justify-between flex-wrap gap-3">
                 <div>
                     <div class="font-semibold text-gray-900 dark:text-white">Belum ada langganan aktif</div>
-                    <div class="text-sm text-gray-500">Aktifkan sekarang lewat Xendit (QRIS / VA / E-Wallet).</div>
+                    <div class="text-sm text-gray-500">Aktifkan sekarang lewat Xendit (QRIS / VA / E-Wallet) — siklus {{ $tahunanDipilih ? 'tahunan' : 'bulanan' }} sesuai pilihan di atas.</div>
                 </div>
                 <x-filament::button wire:click="bayarSekarang" color="primary" icon="heroicon-o-credit-card">
                     Bayar Sekarang
@@ -214,7 +266,10 @@
         @forelse ($riwayat as $sub)
             <div class="flex items-center justify-between text-sm border-b border-gray-100 dark:border-gray-700 py-3 last:border-0">
                 <div>
-                    <div class="font-medium text-gray-800 dark:text-gray-100">{{ $sub->plan->nama ?? '—' }}</div>
+                    <div class="font-medium text-gray-800 dark:text-gray-100">
+                        {{ $sub->plan->nama ?? '—' }}
+                        <span class="text-xs font-normal text-gray-400">({{ $sub->isTahunan() ? 'Tahunan' : 'Bulanan' }})</span>
+                    </div>
                     <div class="text-gray-400 text-xs">{{ $sub->created_at->locale('id')->translatedFormat('d M Y H:i') }}</div>
                 </div>
                 <x-filament::badge :color="match($sub->status) { 'active' => 'success', 'pending' => 'warning', default => 'gray' }">

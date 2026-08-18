@@ -14,7 +14,11 @@ use Illuminate\Support\Facades\Log;
  * routes/console.php.
  *
  * Untuk tiap Yayasan yang pakai plan bergaya "Akses Platform" (ditandai
- * harga_per_siswa_tambahan terisi — lihat TenantBillingCalculator):
+ * harga_per_siswa_tambahan terisi — lihat TenantBillingCalculator)
+ * DAN siklus_billing subscription aktifnya 'bulanan' (pelanggan
+ * TAHUNAN sengaja DIKECUALIKAN dari sini -- mereka ditagih lewat
+ * command terpisah subscription:generate-annual-invoice, supaya tidak
+ * dobel tagih dalam periode yang sama):
  *
  *  1. Kunci snapshot jumlah siswa aktif tiap Lembaga (jumlah_siswa_billing)
  *     — supaya siswa masuk/keluar di TENGAH bulan tidak mengubah
@@ -33,7 +37,7 @@ class GenerateTenantInvoices extends Command
 {
     protected $signature = 'subscription:generate-monthly-invoice {--dry-run : Hitung & tampilkan saja, jangan simpan/tagih}';
 
-    protected $description = 'Kunci snapshot siswa, hitung tagihan bulanan (Akses Platform + modul + diskon), lalu buat transaksi Xendit otomatis untuk tiap Yayasan';
+    protected $description = 'Kunci snapshot siswa, hitung tagihan bulanan (Akses Platform + modul + diskon), lalu buat transaksi Xendit otomatis untuk tiap Yayasan (siklus bulanan saja)';
 
     public function handle(TenantBillingCalculator $calculator, XenditSubscriptionService $xendit): int
     {
@@ -44,6 +48,7 @@ class GenerateTenantInvoices extends Command
             ->where('status', 'active')
             ->whereHas('subscriptions', function ($q) {
                 $q->where('status', 'active')
+                    ->where('siklus_billing', 'bulanan')
                     ->where('berakhir_pada', '>', now())
                     ->whereHas('plan', fn ($p) => $p->whereNotNull('harga_per_siswa_tambahan'));
             })
@@ -90,6 +95,7 @@ class GenerateTenantInvoices extends Command
 
             $subscription = $yayasan->subscriptions()->create([
                 'subscription_plan_id' => $planAksesPlatform->id,
+                'siklus_billing' => 'bulanan',
                 'status' => 'pending',
                 'computed_amount' => $hasil['total'],
                 'computed_breakdown' => $hasil,

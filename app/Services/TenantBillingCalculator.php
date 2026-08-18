@@ -19,6 +19,15 @@ use App\Models\Yayasan;
  * (bukan angka terpisah yang bisa "lupa disinkron"), kesalahan jenis
  * itu tidak mungkin terjadi lagi — lihat test
  * tests/Unit/TenantBillingCalculatorTest.php yang menjaga invarian ini.
+ *
+ * hitungYayasanTahunan() (baru) TIDAK bikin jalur hitung baru dari nol
+ * -- selalu memanggil hitungYayasan() di atas dulu (angka bulanan
+ * SELALU dihitung ulang dari harga_bulanan/ModulePrice yang berlaku
+ * SEKARANG, bukan disimpan terpisah), baru dikali 12 dan dipotong
+ * diskon_tahunan_persen milik plan yang bersangkutan. Kalau admin ubah
+ * harga modul atau plan kapan pun, angka tahunan otomatis ikut
+ * berubah di kunjungan/hitung berikutnya -- tidak ada angka tahunan
+ * yang "kebekukan" dari harga lama.
  */
 class TenantBillingCalculator
 {
@@ -141,5 +150,37 @@ class TenantBillingCalculator
             'total_siswa' => array_sum(array_column($rincianLembaga, 'jumlah_siswa')),
             'total' => $total,
         ];
+    }
+
+    /**
+     * Hitung tagihan TAHUNAN gabungan seluruh Lembaga dalam 1 Yayasan.
+     * Selalu turunan dari hitungYayasan() (angka bulanan) x 12, dipotong
+     * diskon_tahunan_persen milik plan Akses Platform yang dipakai
+     * Yayasan ini SAAT INI -- jadi kalau admin ubah harga modul/plan
+     * atau ubah persen diskon tahunan kapan pun, angka ini otomatis
+     * ikut berubah di panggilan berikutnya, tidak pernah "kebekukan".
+     *
+     * 'total' di hasil ini SUDAH berarti total tahunan final (bukan
+     * bulanan) -- konsisten dengan pola hitungYayasan() supaya kode
+     * pemanggil (invoice generator, halaman Langganan) bisa langsung
+     * pakai $hasil['total'] tanpa perlu tahu ini hasil bulanan atau
+     * tahunan.
+     */
+    public function hitungYayasanTahunan(Yayasan $yayasan): array
+    {
+        $bulanan = $this->hitungYayasan($yayasan);
+        $plan = $this->aksesPlatformPlan($yayasan);
+
+        $diskonPersen = (int) ($plan->diskon_tahunan_persen ?? 0);
+        $totalTahunanSebelumDiskon = $bulanan['total'] * 12;
+        $totalTahunanFinal = (int) round($totalTahunanSebelumDiskon * (100 - $diskonPersen) / 100);
+
+        return array_merge($bulanan, [
+            'siklus_billing' => 'tahunan',
+            'total_bulanan' => $bulanan['total'],
+            'total_tahunan_sebelum_diskon' => $totalTahunanSebelumDiskon,
+            'diskon_tahunan_persen' => $diskonPersen,
+            'total' => $totalTahunanFinal,
+        ]);
     }
 }

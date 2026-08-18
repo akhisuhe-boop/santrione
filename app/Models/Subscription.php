@@ -9,6 +9,7 @@ class Subscription extends Model
     protected $fillable = [
         'yayasan_id',
         'subscription_plan_id',
+        'siklus_billing',
         'status',
         'mulai_pada',
         'berakhir_pada',
@@ -38,6 +39,11 @@ class Subscription extends Model
     public function totalTagihan(): int
     {
         return (int) ($this->computed_amount ?? $this->plan?->harga_bulanan ?? 0);
+    }
+
+    public function isTahunan(): bool
+    {
+        return $this->siklus_billing === 'tahunan';
     }
 
     public function yayasan()

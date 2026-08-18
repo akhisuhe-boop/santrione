@@ -21,6 +21,12 @@ use RuntimeException;
  * QRIS/VA/e-wallet di halaman itu) -- polanya sama seperti Duitku
  * Payment Page yang sudah dipakai sebelumnya, jadi UX-nya konsisten,
  * tidak perlu bangun UI render QR sendiri.
+ *
+ * amount SELALU dari $subscription->totalTagihan() (computed_amount
+ * yang sudah dihitung TenantBillingCalculator sebelum baris Subscription
+ * ini dibuat -- lihat GenerateTenantInvoices / GenerateAnnualInvoices /
+ * Langganan::bayarSekarang()) -- service ini TIDAK menghitung ulang
+ * apa pun, cuma membungkus angka yang sudah final jadi invoice Xendit.
  */
 class XenditSubscriptionService
 {
@@ -50,13 +56,14 @@ class XenditSubscriptionService
 
         $amount = $subscription->totalTagihan() ?: (int) $plan->harga_bulanan;
         $externalId = 'SUB-' . $subscription->id . '-' . time();
+        $labelSiklus = $subscription->isTahunan() ? '1 tahun' : '1 bulan';
 
         $response = Http::withHeaders($this->authHeader())
             ->post('https://api.xendit.co/v2/invoices', [
                 'external_id' => $externalId,
                 'amount' => $amount,
                 'payer_email' => $email,
-                'description' => 'Langganan ' . $plan->nama . ' (1 bulan) — ' . $subscription->yayasan->nama,
+                'description' => 'Langganan ' . $plan->nama . ' (' . $labelSiklus . ') — ' . $subscription->yayasan->nama,
                 'currency' => 'IDR',
                 'success_redirect_url' => route('subscription.show'),
                 'failure_redirect_url' => route('subscription.show'),

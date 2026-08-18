@@ -1369,4 +1369,32 @@ class NotificationService
         return $terkirim;
     }
 
+    public static function sendTagihanSubscriptionTahunan($yayasan, $totalTagihan, $paymentUrl, $tahunPeriode)
+    {
+        $nomor = $yayasan->telepon ?? null;
+
+        if (! $nomor) {
+            return;
+        }
+
+        $nomor = self::formatPhone($nomor);
+
+        $pesan = \App\Models\NotificationTemplate::render('tagihan_subscription_tahunan', [
+            'nama_yayasan' => $yayasan->nama,
+            'tahun_periode' => $tahunPeriode,
+            'total_tagihan' => 'Rp ' . number_format($totalTagihan, 0, ',', '.'),
+            'link_pembayaran' => $paymentUrl,
+        ], default:
+            "*TAGIHAN LANGGANAN TAHUNAN QINARA APPS*\n\n" .
+            "Yth. {$yayasan->nama},\n\n" .
+            "Tagihan perpanjangan langganan TAHUNAN untuk periode *{$tahunPeriode}* telah terbit.\n\n" .
+            "Total Tagihan (1 Tahun) : *Rp " . number_format($totalTagihan, 0, ',', '.') . "*\n\n" .
+            "Silakan lakukan pembayaran melalui link berikut:\n" .
+            $paymentUrl . "\n\n" .
+            "Terima kasih telah berlangganan Qinara Apps."
+        );
+
+        self::waPlatform($nomor, $pesan);
+    }
+
 }

@@ -94,7 +94,7 @@ class XenditWebhookController extends Controller
                 $subscription->update([
                     'status' => 'active',
                     'mulai_pada' => now(),
-                    'berakhir_pada' => now()->addMonth(),
+                    'berakhir_pada' => $subscription->isTahunan() ? now()->addYear() : now()->addMonth(),
                 ]);
 
                 $yayasan->update(['status' => 'active']);

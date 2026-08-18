@@ -15,6 +15,7 @@ class SubscriptionPlan extends Model
         'maks_siswa',
         'harga_per_siswa_tambahan',
         'harga_per_lembaga_tambahan',
+        'diskon_tahunan_persen',
         'fitur',
         'termasuk_semua_modul',
         'is_active',
