@@ -749,13 +749,25 @@
         </div>
         @endif
 
+        @php
+            // Dipakai buat badge "Hemat X%" di toggle -- ambil dari paket
+            // UNGGULAN (Paket Full), karena itu yang paling relevan
+            // ditonjolkan di sini. Tiap kartu di bawah tetap punya badge
+            // sendiri-sendiri yang akurat sesuai diskon paketnya
+            // masing-masing (bisa beda dari angka ini).
+            $diskonUnggulan = (int) ($subscriptionPlans->firstWhere('termasuk_semua_modul', true)?->diskon_tahunan_persen ?? 0);
+        @endphp
+
         <div class="mt-8 flex flex-col items-center gap-3">
             <div class="inline-flex items-center bg-slate-100 rounded-full p-1">
                 <button type="button" id="toggle-bulanan" class="billing-toggle-btn active px-6 py-2.5 rounded-full text-sm font-bold transition-all">
                     Bulanan
                 </button>
-                <button type="button" id="toggle-tahunan" class="billing-toggle-btn px-6 py-2.5 rounded-full text-sm font-bold transition-all">
+                <button type="button" id="toggle-tahunan" class="billing-toggle-btn px-6 py-2.5 rounded-full text-sm font-bold transition-all flex items-center gap-2">
                     Tahunan
+                    @if($diskonUnggulan > 0)
+                        <span class="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">Hemat {{ $diskonUnggulan }}%</span>
+                    @endif
                 </button>
             </div>
             <p class="text-xs text-slate-400">Hemat lebih banyak dengan pembayaran tahunan</p>

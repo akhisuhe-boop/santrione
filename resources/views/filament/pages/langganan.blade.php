@@ -13,24 +13,35 @@
     @endphp
 
     {{-- TOGGLE SIKLUS BILLING --}}
-    <div class="flex flex-col items-center gap-2 mb-2">
-        <div class="inline-flex items-center bg-gray-100 dark:bg-gray-800 rounded-full p-1 gap-1">
+    @php
+        // Badge "Hemat X%" ambil dari plan yang sedang aktif kalau ada;
+        // kalau tenant baru belum punya langganan aktif sama sekali,
+        // fallback ke diskon paket "Akses Platform" (basis default)
+        // supaya badge-nya tetap muncul, tidak kosong begitu saja.
+        $diskonUntukBadge = (int) (
+            $subAktif?->plan?->diskon_tahunan_persen
+            ?? \App\Models\SubscriptionPlan::where('slug', 'akses-platform')->value('diskon_tahunan_persen')
+            ?? 0
+        );
+    @endphp
+    <div class="flex flex-col items-center gap-2.5 mb-2">
+        <div class="inline-flex items-center bg-gray-100 dark:bg-gray-800 rounded-full p-1">
             <button
                 type="button"
                 wire:click="setBillingCycle('bulanan')"
-                class="px-5 py-2 rounded-full text-sm font-bold transition-all {{ ! $tahunanDipilih ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500' }}"
+                class="px-6 py-2.5 rounded-full text-sm font-bold transition-all {{ ! $tahunanDipilih ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500' }}"
             >
                 Bulanan
             </button>
             <button
                 type="button"
                 wire:click="setBillingCycle('tahunan')"
-                class="px-5 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-1.5 {{ $tahunanDipilih ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500' }}"
+                class="px-6 py-2.5 rounded-full text-sm font-bold transition-all flex items-center gap-2 {{ $tahunanDipilih ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500' }}"
             >
                 Tahunan
-                @if ($subAktif?->plan?->diskon_tahunan_persen)
-                    <span class="text-[10px] font-bold bg-success-100 text-success-700 px-1.5 py-0.5 rounded-full">
-                        Hemat {{ $subAktif->plan->diskon_tahunan_persen }}%
+                @if ($diskonUntukBadge > 0)
+                    <span class="text-[10px] font-bold bg-success-100 text-success-700 px-2 py-0.5 rounded-full">
+                        Hemat {{ $diskonUntukBadge }}%
                     </span>
                 @endif
             </button>
