@@ -737,14 +737,14 @@
         </div>
 
         @if($setting->promoSedangBerjalan())
-        <div id="promo-banner" class="mt-8 max-w-2xl mx-auto rounded-2xl bg-slate-900 border border-white/10 px-5 py-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xl shadow-accent-500/10">
+        <div id="promo-banner" class="mt-8 max-w-2xl mx-auto rounded-2xl bg-gradient-to-br from-primary-900 via-slate-900 to-slate-900 border border-primary-400/10 px-5 py-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xl shadow-primary-500/10">
             <div class="flex items-center gap-3 text-center sm:text-left">
-                <span class="flex items-center justify-center w-9 h-9 rounded-full bg-accent-500/15 shrink-0">
-                    <i data-lucide="flame" class="w-4.5 h-4.5 text-accent-400"></i>
+                <span class="flex items-center justify-center w-9 h-9 rounded-full bg-primary-500/15 shrink-0">
+                    <i data-lucide="flame" class="w-4.5 h-4.5 text-primary-300"></i>
                 </span>
                 <div>
                     <p class="text-white font-bold text-sm leading-tight">{{ $setting->promo_teks }}</p>
-                    <p class="text-accent-400 text-xs font-bold">Hemat {{ $setting->promo_persen }}%</p>
+                    <p class="text-primary-300 text-xs font-bold">Hemat {{ $setting->promo_persen }}%</p>
                 </div>
             </div>
             <div class="flex items-center gap-1.5" data-promo-end="{{ $setting->promo_berakhir_pada->toIso8601String() }}">
@@ -758,7 +758,7 @@
                     <span class="text-white/40 text-[9px] uppercase tracking-wide mt-0.5">Menit</span>
                 </div>
                 <span class="text-white/20 font-bold">:</span>
-                <div class="flex flex-col items-center bg-accent-500 rounded-lg px-3 py-1.5 min-w-[52px]">
+                <div class="flex flex-col items-center bg-primary-500 rounded-lg px-3 py-1.5 min-w-[52px]">
                     <span id="promo-cd-s" class="text-white font-extrabold text-lg font-mono tabular-nums leading-none">00</span>
                     <span class="text-white/70 text-[9px] uppercase tracking-wide mt-0.5">Detik</span>
                 </div>
@@ -1346,20 +1346,24 @@
                 const yearly = parseInt(block.dataset.yearly, 10) || 0;
                 const promoPersen = parseInt(block.dataset.promoPersen, 10) || 0;
 
-                const base = cycle === 'tahunan' ? yearly : monthly;
-                let final = base;
-                let strikeValue = null;
-                let savingsLabel = null;
-
-                if (cycle === 'tahunan' && monthly > 0) {
-                    strikeValue = monthly;
-                    savingsLabel = 'Hemat ' + Math.round((1 - yearly / monthly) * 100) + '%';
-                }
+                let final, strikeValue = null, savingsLabel = null;
 
                 if (promoActive && promoPersen > 0) {
-                    final = Math.round(base * (100 - promoPersen) / 100);
-                    strikeValue = base;
+                    // Promo MENANG -- diskon tahunan diabaikan sepenuhnya
+                    // selagi promo aktif, apa pun toggle yang dipilih.
+                    // Promo selalu dipotong dari harga bulanan DASAR
+                    // (bukan dari harga yang sudah didiskon tahunan),
+                    // supaya tidak numpuk jadi diskon gabungan yang lebih
+                    // besar dari yang dimaksud.
+                    final = Math.round(monthly * (100 - promoPersen) / 100);
+                    strikeValue = monthly;
                     savingsLabel = 'Hemat ' + promoPersen + '%';
+                } else if (cycle === 'tahunan' && monthly > 0) {
+                    final = yearly;
+                    strikeValue = monthly;
+                    savingsLabel = 'Hemat ' + Math.round((1 - yearly / monthly) * 100) + '%';
+                } else {
+                    final = monthly;
                 }
 
                 const valueEl = block.querySelector('.price-value');
@@ -1368,7 +1372,7 @@
                 const badgeEl = block.querySelector('.price-savings-badge');
 
                 valueEl.textContent = formatRupiah(final);
-                periodEl.textContent = cycle === 'tahunan' ? '/ bulan (ditagih tahunan)' : '/ bulan';
+                periodEl.textContent = (cycle === 'tahunan' && !(promoActive && promoPersen > 0)) ? '/ bulan (ditagih tahunan)' : '/ bulan';
 
                 if (strikeValue && strikeValue !== final) {
                     strikeEl.textContent = formatRupiah(strikeValue);
