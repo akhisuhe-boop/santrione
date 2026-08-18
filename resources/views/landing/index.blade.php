@@ -737,30 +737,30 @@
         </div>
 
         @if($setting->promoSedangBerjalan())
-        <div id="promo-banner" class="mt-8 max-w-2xl mx-auto rounded-2xl bg-gradient-to-br from-primary-900 via-slate-900 to-slate-900 border border-primary-400/10 px-5 py-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xl shadow-primary-500/10">
+        <div id="promo-banner" class="mt-8 max-w-2xl mx-auto rounded-2xl bg-gradient-to-r from-primary-500 to-primary-600 px-5 py-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl shadow-primary-500/25">
             <div class="flex items-center gap-3 text-center sm:text-left">
-                <span class="flex items-center justify-center w-9 h-9 rounded-full bg-primary-500/15 shrink-0">
-                    <i data-lucide="flame" class="w-4.5 h-4.5 text-primary-300"></i>
+                <span class="flex items-center justify-center w-9 h-9 rounded-full bg-white/20 shrink-0">
+                    <i data-lucide="flame" class="w-4.5 h-4.5 text-white"></i>
                 </span>
                 <div>
                     <p class="text-white font-bold text-sm leading-tight">{{ $setting->promo_teks }}</p>
-                    <p class="text-primary-300 text-xs font-bold">Hemat {{ $setting->promo_persen }}%</p>
+                    <p class="text-white/90 text-xs font-bold">Hemat {{ $setting->promo_persen }}%</p>
                 </div>
             </div>
-            <div class="flex items-center gap-1.5" data-promo-end="{{ $setting->promo_berakhir_pada->toIso8601String() }}">
-                <div class="flex flex-col items-center bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 min-w-[52px]">
-                    <span id="promo-cd-h" class="text-white font-extrabold text-lg font-mono tabular-nums leading-none">00</span>
-                    <span class="text-white/40 text-[9px] uppercase tracking-wide mt-0.5">Jam</span>
+            <div class="flex items-center gap-2" data-promo-end="{{ $setting->promo_berakhir_pada->toIso8601String() }}">
+                <div class="flex flex-col items-center bg-white/15 border border-white/20 rounded-lg px-3.5 py-2 min-w-[60px]">
+                    <span id="promo-cd-h" class="text-white font-extrabold text-2xl font-mono tabular-nums leading-none">00</span>
+                    <span class="text-white/70 text-[9px] uppercase tracking-wide mt-1">Jam</span>
                 </div>
-                <span class="text-white/20 font-bold">:</span>
-                <div class="flex flex-col items-center bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 min-w-[52px]">
-                    <span id="promo-cd-m" class="text-white font-extrabold text-lg font-mono tabular-nums leading-none">00</span>
-                    <span class="text-white/40 text-[9px] uppercase tracking-wide mt-0.5">Menit</span>
+                <span class="text-white/40 font-bold text-xl">:</span>
+                <div class="flex flex-col items-center bg-white/15 border border-white/20 rounded-lg px-3.5 py-2 min-w-[60px]">
+                    <span id="promo-cd-m" class="text-white font-extrabold text-2xl font-mono tabular-nums leading-none">00</span>
+                    <span class="text-white/70 text-[9px] uppercase tracking-wide mt-1">Menit</span>
                 </div>
-                <span class="text-white/20 font-bold">:</span>
-                <div class="flex flex-col items-center bg-primary-500 rounded-lg px-3 py-1.5 min-w-[52px]">
-                    <span id="promo-cd-s" class="text-white font-extrabold text-lg font-mono tabular-nums leading-none">00</span>
-                    <span class="text-white/70 text-[9px] uppercase tracking-wide mt-0.5">Detik</span>
+                <span class="text-white/40 font-bold text-xl">:</span>
+                <div class="flex flex-col items-center bg-white rounded-lg px-3.5 py-2 min-w-[60px]">
+                    <span id="promo-cd-s" class="text-primary-600 font-extrabold text-2xl font-mono tabular-nums leading-none">00</span>
+                    <span class="text-primary-500/70 text-[9px] uppercase tracking-wide mt-1">Detik</span>
                 </div>
             </div>
         </div>
@@ -1372,7 +1372,7 @@
                 const badgeEl = block.querySelector('.price-savings-badge');
 
                 valueEl.textContent = formatRupiah(final);
-                periodEl.textContent = (cycle === 'tahunan' && !(promoActive && promoPersen > 0)) ? '/ bulan (ditagih tahunan)' : '/ bulan';
+                periodEl.textContent = cycle === 'tahunan' ? '/ bulan (ditagih tahunan)' : '/ bulan';
 
                 if (strikeValue && strikeValue !== final) {
                     strikeEl.textContent = formatRupiah(strikeValue);

@@ -53,13 +53,17 @@ class LandingSetting extends Model
     }
 
     /**
-     * Promo dianggap aktif kalau togglenya nyala DAN tanggal berakhirnya
-     * masih di masa depan.
+     * Promo dianggap SUNGGUH-SUNGGUH berjalan kalau: togglenya nyala,
+     * tanggal berakhirnya masih di masa depan, DAN persen diskonnya
+     * sudah diisi >0. Sengaja cek persen di sini juga -- kalau admin
+     * baru nyalakan toggle tapi belum sempat isi angka persennya,
+     * banner "Hemat 0%" yang membingungkan tidak akan ikut muncul.
      */
     public function promoSedangBerjalan(): bool
     {
         return $this->promo_aktif
             && $this->promo_berakhir_pada
-            && $this->promo_berakhir_pada->isFuture();
+            && $this->promo_berakhir_pada->isFuture()
+            && (int) ($this->promo_persen ?? 0) > 0;
     }
 }
