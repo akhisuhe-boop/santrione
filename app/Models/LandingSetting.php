@@ -16,11 +16,13 @@ class LandingSetting extends Model
         'meta_pixel_id', 'tiktok_pixel_id', 'google_ads_id',
         'crm_notif_wa_numbers',
         'promo_aktif', 'promo_teks', 'promo_persen', 'promo_berakhir_pada', 'tahunan_diskon_persen',
+        'promo_hanya_countdown',
     ];
 
     protected $casts = [
         'promo_aktif' => 'boolean',
         'promo_berakhir_pada' => 'datetime',
+        'promo_hanya_countdown' => 'boolean',
     ];
 
     /**
@@ -53,17 +55,31 @@ class LandingSetting extends Model
     }
 
     /**
-     * Promo dianggap SUNGGUH-SUNGGUH berjalan kalau: togglenya nyala,
-     * tanggal berakhirnya masih di masa depan, DAN persen diskonnya
-     * sudah diisi >0. Sengaja cek persen di sini juga -- kalau admin
-     * baru nyalakan toggle tapi belum sempat isi angka persennya,
-     * banner "Hemat 0%" yang membingungkan tidak akan ikut muncul.
+     * Promo/countdown dianggap berjalan kalau togglenya nyala DAN
+     * tanggal berakhirnya masih di masa depan -- SENGAJA tidak
+     * mewajibkan persen diskon terisi, supaya banner bisa dipakai
+     * sebagai "countdown murni" (tanpa diskon harga sama sekali,
+     * cuma teks + hitung mundur) kalau memang itu yang diinginkan.
+     * Guard "Hemat 0%" yang membingungkan ditangani di level tampilan
+     * (blade/JS), bukan di sini -- lihat promoAdaDiskon().
      */
     public function promoSedangBerjalan(): bool
     {
         return $this->promo_aktif
             && $this->promo_berakhir_pada
-            && $this->promo_berakhir_pada->isFuture()
+            && $this->promo_berakhir_pada->isFuture();
+    }
+
+    /**
+     * True cuma kalau promo berjalan, BUKAN mode "hanya countdown", DAN
+     * persen diskonnya benar-benar diisi (>0) -- dipakai buat memutuskan
+     * apakah baris "Hemat X%" ditampilkan/diterapkan ke harga, terpisah
+     * dari apakah banner countdown-nya sendiri tampil atau tidak.
+     */
+    public function promoAdaDiskon(): bool
+    {
+        return $this->promoSedangBerjalan()
+            && ! $this->promo_hanya_countdown
             && (int) ($this->promo_persen ?? 0) > 0;
     }
 }

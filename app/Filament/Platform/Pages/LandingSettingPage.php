@@ -151,17 +151,22 @@ class LandingSettingPage extends Page implements HasForms
                         Forms\Components\Toggle::make('promo_aktif')
                             ->label('Aktifkan Promo')
                             ->live(),
+                        Forms\Components\Toggle::make('promo_hanya_countdown')
+                            ->label('Cuma Countdown (Tanpa Diskon Harga)')
+                            ->helperText('Kalau AKTIF: banner cuma tampilkan timer polos (tanpa judul/badge persen), dan harga di kartu paket TIDAK ikut didiskon sama sekali -- cocok buat urgensi umum (mis. "gelombang 1 tutup dalam...") yang tidak terkait diskon harga.')
+                            ->live()
+                            ->visible(fn (Forms\Get $get) => $get('promo_aktif')),
                         Forms\Components\TextInput::make('promo_teks')
                             ->label('Teks Promo')
                             ->placeholder('Contoh: Diskon Spesial Peluncuran!')
-                            ->visible(fn (Forms\Get $get) => $get('promo_aktif')),
+                            ->visible(fn (Forms\Get $get) => $get('promo_aktif') && ! $get('promo_hanya_countdown')),
                         Forms\Components\TextInput::make('promo_persen')
                             ->label('Persen Diskon')
                             ->numeric()->minValue(1)->maxValue(90)
                             ->suffix('%')
-                            ->visible(fn (Forms\Get $get) => $get('promo_aktif')),
+                            ->visible(fn (Forms\Get $get) => $get('promo_aktif') && ! $get('promo_hanya_countdown')),
                         Forms\Components\DateTimePicker::make('promo_berakhir_pada')
-                            ->label('Promo Berakhir Pada')
+                            ->label('Promo/Countdown Berakhir Pada')
                             ->native(false)
                             ->visible(fn (Forms\Get $get) => $get('promo_aktif')),
                     ])->columns(2),

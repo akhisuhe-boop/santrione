@@ -88,6 +88,7 @@ class SubscriptionPlanResource extends BaseResource
                             ->maxValue(90)
                             ->suffix('%')
                             ->default(0)
+                            ->dehydrateStateUsing(fn ($state) => $state === null || $state === '' ? 0 : $state)
                             ->helperText('Diskon yang didapat Yayasan pemakai paket ini kalau bayar 1 tahun sekaligus (dihitung dari total 12 bulan). Kosongkan/0 = tidak ada diskon tahunan untuk paket ini.'),
 
                         Forms\Components\TextInput::make('maks_lembaga')

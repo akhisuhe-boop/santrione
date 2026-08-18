@@ -56,6 +56,16 @@
         .reveal-on-scroll:nth-child(3) { transition-delay: 240ms; }
         .billing-toggle-btn { color: #64748b; }
         .billing-toggle-btn.active { background: white; color: #0F172A; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        @keyframes promo-glow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.45); }
+            50% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+        }
+        .animate-promo-glow { animation: promo-glow 2s ease-in-out infinite; }
+        @keyframes promo-flash {
+            0% { transform: scale(1.18); }
+            100% { transform: scale(1); }
+        }
+        .animate-promo-flash { animation: promo-flash 0.35s ease-out; }
     </style>
 
     {{-- Meta (Facebook) Pixel --}}
@@ -737,7 +747,8 @@
         </div>
 
         @if($setting->promoSedangBerjalan())
-        <div id="promo-banner" class="mt-8 max-w-2xl mx-auto rounded-2xl bg-gradient-to-r from-primary-500 to-primary-600 px-5 py-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl shadow-primary-500/25">
+        <div id="promo-banner" class="mt-8 max-w-2xl mx-auto rounded-2xl bg-gradient-to-r from-red-500 to-red-600 px-5 py-4 sm:px-6 flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-4 shadow-xl shadow-red-500/30 animate-promo-glow">
+            @if(! $setting->promo_hanya_countdown)
             <div class="flex items-center gap-3 text-center sm:text-left">
                 <span class="flex items-center justify-center w-9 h-9 rounded-full bg-white/20 shrink-0">
                     <i data-lucide="flame" class="w-4.5 h-4.5 text-white"></i>
@@ -747,7 +758,8 @@
                     <p class="text-white/90 text-xs font-bold">Hemat {{ $setting->promo_persen }}%</p>
                 </div>
             </div>
-            <div class="flex items-center gap-2" data-promo-end="{{ $setting->promo_berakhir_pada->toIso8601String() }}">
+            @endif
+            <div class="flex items-center gap-2" data-promo-end="{{ $setting->promo_berakhir_pada->toIso8601String() }}" data-diskon-aktif="{{ $setting->promoAdaDiskon() ? '1' : '0' }}">
                 <div class="flex flex-col items-center bg-white/15 border border-white/20 rounded-lg px-3.5 py-2 min-w-[60px]">
                     <span id="promo-cd-h" class="text-white font-extrabold text-2xl font-mono tabular-nums leading-none">00</span>
                     <span class="text-white/70 text-[9px] uppercase tracking-wide mt-1">Jam</span>
@@ -758,21 +770,24 @@
                     <span class="text-white/70 text-[9px] uppercase tracking-wide mt-1">Menit</span>
                 </div>
                 <span class="text-white/40 font-bold text-xl">:</span>
-                <div class="flex flex-col items-center bg-white rounded-lg px-3.5 py-2 min-w-[60px]">
-                    <span id="promo-cd-s" class="text-primary-600 font-extrabold text-2xl font-mono tabular-nums leading-none">00</span>
-                    <span class="text-primary-500/70 text-[9px] uppercase tracking-wide mt-1">Detik</span>
+                <div id="promo-cd-s-box" class="flex flex-col items-center bg-white rounded-lg px-3.5 py-2 min-w-[60px]">
+                    <span id="promo-cd-s" class="text-red-600 font-extrabold text-2xl font-mono tabular-nums leading-none">00</span>
+                    <span class="text-red-500/70 text-[9px] uppercase tracking-wide mt-1">Detik</span>
                 </div>
             </div>
         </div>
         @endif
 
         @php
-            // Dipakai buat badge "Hemat X%" di toggle -- ambil dari paket
-            // UNGGULAN (Paket Full), karena itu yang paling relevan
-            // ditonjolkan di sini. Tiap kartu di bawah tetap punya badge
-            // sendiri-sendiri yang akurat sesuai diskon paketnya
-            // masing-masing (bisa beda dari angka ini).
-            $diskonUnggulan = (int) ($subscriptionPlans->firstWhere('termasuk_semua_modul', true)?->diskon_tahunan_persen ?? 0);
+            // Dipakai buat badge "Hemat X%" di toggle -- kalau promo lagi
+            // memberi diskon sungguhan, tampilkan angka PROMO itu (karena
+            // itu yang benar-benar berlaku ke harga sekarang). Kalau
+            // tidak ada promo, balik ke diskon tahunan paket UNGGULAN
+            // (Paket Full) seperti biasa. Tiap kartu di bawah tetap
+            // punya badge sendiri-sendiri yang akurat.
+            $diskonUnggulan = $setting->promoAdaDiskon()
+                ? (int) $setting->promo_persen
+                : (int) ($subscriptionPlans->firstWhere('termasuk_semua_modul', true)?->diskon_tahunan_persen ?? 0);
         @endphp
 
         <div class="mt-8 flex flex-col items-center gap-3">
@@ -843,9 +858,9 @@
                         // diskon tahunan per paket di Billing & Harga,
                         // landing page otomatis ikut berubah, tidak bisa
                         // beda sendiri dari sistem asli.
-                        $hargaTahunanPerBulan = (int) round($plan->harga_bulanan * (100 - $plan->diskon_tahunan_persen) / 100);
+                        $hargaTahunanPerBulan = (int) round($plan->harga_bulanan * (100 - (int) ($plan->diskon_tahunan_persen ?? 0)) / 100);
                     @endphp
-                    <div class="price-block mt-6" data-monthly="{{ (int) $plan->harga_bulanan }}" data-yearly="{{ $hargaTahunanPerBulan }}" data-promo-persen="{{ $setting->promoSedangBerjalan() ? $setting->promo_persen : 0 }}">
+                    <div class="price-block mt-6" data-monthly="{{ (int) $plan->harga_bulanan }}" data-yearly="{{ $hargaTahunanPerBulan }}" data-promo-persen="{{ $setting->promoAdaDiskon() ? $setting->promo_persen : 0 }}">
                         <div class="price-strike text-sm line-through {{ $plan->termasuk_semua_modul ? 'text-slate-500' : 'text-slate-400' }} hidden mb-0.5"></div>
                         <div class="flex items-baseline gap-2 flex-wrap">
                             <span class="flex items-baseline">
@@ -1360,8 +1375,11 @@
                     savingsLabel = 'Hemat ' + promoPersen + '%';
                 } else if (cycle === 'tahunan' && monthly > 0) {
                     final = yearly;
-                    strikeValue = monthly;
-                    savingsLabel = 'Hemat ' + Math.round((1 - yearly / monthly) * 100) + '%';
+                    const persenTahunan = Math.round((1 - yearly / monthly) * 100);
+                    if (persenTahunan > 0) {
+                        strikeValue = monthly;
+                        savingsLabel = 'Hemat ' + persenTahunan + '%';
+                    }
                 } else {
                     final = monthly;
                 }
@@ -1406,11 +1424,12 @@
         // Countdown promo
         const promoEl = document.querySelector('[data-promo-end]');
         if (promoEl) {
-            promoActive = true;
+            promoActive = promoEl.dataset.diskonAktif === '1';
             const endTime = new Date(promoEl.dataset.promoEnd).getTime();
             const hEl = document.getElementById('promo-cd-h');
             const mEl = document.getElementById('promo-cd-m');
             const sEl = document.getElementById('promo-cd-s');
+            const sBox = document.getElementById('promo-cd-s-box');
             const banner = document.getElementById('promo-banner');
 
             function tickCountdown() {
@@ -1429,6 +1448,12 @@
                 hEl.textContent = pad(totalHours);
                 mEl.textContent = pad(m);
                 sEl.textContent = pad(s);
+
+                // Efek "klap-klip" -- kotak detik berkedip singkat tiap
+                // detik berganti, biar terasa hidup/urgent.
+                sBox?.classList.remove('animate-promo-flash');
+                void sBox?.offsetWidth; // paksa reflow supaya animasi bisa diulang
+                sBox?.classList.add('animate-promo-flash');
             }
             tickCountdown();
             var timer = setInterval(tickCountdown, 1000);
