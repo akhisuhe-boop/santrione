@@ -38,6 +38,18 @@
         @if ($tahunanDipilih)
             <p class="text-xs text-gray-400">Bayar 1 tahun sekaligus, langsung dapat diskon. Berlaku untuk pembayaran/aktivasi berikutnya.</p>
         @endif
+
+        @if ($this->isPreviewBerbedaDariAktif())
+            <div class="max-w-xl mx-auto text-xs bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 rounded-lg px-4 py-2.5 flex items-start gap-2">
+                <x-heroicon-o-information-circle class="w-4 h-4 shrink-0 mt-0.5" />
+                <span>
+                    Langganan Anda saat ini masih siklus <strong>{{ $subAktif->isTahunan() ? 'Tahunan' : 'Bulanan' }}</strong> sampai <strong>{{ $subAktif->berakhir_pada?->locale('id')->translatedFormat('d M Y') }}</strong>.
+                    Tampilan di atas cuma pratinjau kalau pilih <strong>{{ $tahunanDipilih ? 'Tahunan' : 'Bulanan' }}</strong> —
+                    belum ada tagihan sekarang. Perubahan baru benar-benar berlaku (dan mulai ditagih) begitu tanggal jatuh tempo itu tiba,
+                    atau kalau Anda klik salah satu tombol aktivasi di bawah.
+                </span>
+            </div>
+        @endif
     </div>
 
     {{-- TAGIHAN --}}

@@ -48,6 +48,15 @@ class Langganan extends Page
 
     public string $billingCycle = 'bulanan';
 
+    public function mount(): void
+    {
+        // Toggle mulai dari siklus yang BENAR-BENAR sedang aktif (kalau
+        // ada) -- supaya tidak kelihatan "salah sinkron" kayak sebelumnya
+        // (toggle selalu nunjukin Bulanan padahal langganan aktifnya
+        // Tahunan).
+        $this->billingCycle = $this->getSubscriptionAktif()?->siklus_billing ?? 'bulanan';
+    }
+
     public static function canAccess(): bool
     {
         // Platform admin tidak perlu halaman ini (urusan billing per
@@ -74,6 +83,18 @@ class Langganan extends Page
     public function isTahunanDipilih(): bool
     {
         return $this->billingCycle === 'tahunan';
+    }
+
+    /**
+     * True kalau toggle yang sedang dipilih BEDA dari siklus_billing
+     * langganan yang benar-benar aktif -- dipakai buat munculkan banner
+     * penjelasan "ini cuma pratinjau, belum ada tagihan sekarang".
+     */
+    public function isPreviewBerbedaDariAktif(): bool
+    {
+        $aktif = $this->getSubscriptionAktif();
+
+        return $aktif && $aktif->status === 'active' && $aktif->siklus_billing !== $this->billingCycle;
     }
 
     /**
