@@ -153,13 +153,12 @@ class LandingSettingPage extends Page implements HasForms
                             ->live(),
                         Forms\Components\Toggle::make('promo_hanya_countdown')
                             ->label('Cuma Countdown (Tanpa Diskon Harga)')
-                            ->helperText('Kalau AKTIF: banner cuma tampilkan timer polos (tanpa judul/badge persen), dan harga di kartu paket TIDAK ikut didiskon sama sekali -- cocok buat urgensi umum (mis. "gelombang 1 tutup dalam...") yang tidak terkait diskon harga.')
                             ->live()
                             ->visible(fn (Forms\Get $get) => $get('promo_aktif')),
                         Forms\Components\TextInput::make('promo_teks')
-                            ->label('Teks Promo')
-                            ->placeholder('Contoh: Diskon Spesial Peluncuran!')
-                            ->visible(fn (Forms\Get $get) => $get('promo_aktif') && ! $get('promo_hanya_countdown')),
+                            ->label(fn (Forms\Get $get) => $get('promo_hanya_countdown') ? 'Keterangan Urgensi' : 'Teks Promo')
+                            ->placeholder(fn (Forms\Get $get) => $get('promo_hanya_countdown') ? 'Contoh: Gelombang 1 Ditutup Dalam' : 'Contoh: Diskon Spesial Peluncuran!')
+                            ->visible(fn (Forms\Get $get) => $get('promo_aktif')),
                         Forms\Components\TextInput::make('promo_persen')
                             ->label('Persen Diskon')
                             ->numeric()->minValue(1)->maxValue(90)

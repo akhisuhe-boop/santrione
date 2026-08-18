@@ -52,7 +52,15 @@ class PublicRegistrationController extends Controller
             // setelahnya. Berlaku SATU KALI untuk tagihan pertama Yayasan
             // ini saja (lihat TenantBillingCalculator + command invoice).
             $landingSetting = \App\Models\LandingSetting::current();
-            $promoAktifSaatDaftar = $landingSetting->promoSedangBerjalan();
+            // PENTING: pakai promoAdaDiskon(), BUKAN promoSedangBerjalan().
+            // promoSedangBerjalan() cuma nunjukin "banner-nya tampil atau
+            // tidak" (termasuk mode "Cuma Countdown" yang sengaja TANPA
+            // diskon harga sama sekali) -- kalau dipakai di sini, sekolah
+            // yang daftar pas mode Cuma Countdown aktif bisa keliru
+            // tercatat dapat promo (bahkan mungkin angka lama yang masih
+            // nyangkut di kolom promo_persen). promoAdaDiskon() sudah
+            // pasti berarti diskon sungguhan sedang berlaku.
+            $promoAktifSaatDaftar = $landingSetting->promoAdaDiskon();
 
             $yayasan = Yayasan::create([
                 'nama' => $data['nama_yayasan'],
