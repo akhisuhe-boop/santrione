@@ -747,62 +747,45 @@
         </div>
 
         @if($setting->promoSedangBerjalan())
-            @if($setting->promo_hanya_countdown)
-            {{-- MODE CUMA COUNTDOWN -- efek kaca, center, tanpa diskon harga --}}
-            <div id="promo-banner" class="mt-8 max-w-md mx-auto rounded-2xl bg-white/50 backdrop-blur-xl border border-white/80 shadow-xl shadow-red-500/10 px-6 py-6 text-center animate-promo-glow">
-                @if($setting->promo_teks)
-                <p class="text-sm font-bold text-red-600 flex items-center justify-center gap-1.5 mb-4">
-                    <i data-lucide="alarm-clock" class="w-4 h-4"></i>
-                    {{ $setting->promo_teks }}
-                </p>
+            @php $hanyaCountdown = $setting->promo_hanya_countdown; @endphp
+            <div id="promo-banner" class="mt-8 {{ $hanyaCountdown ? 'max-w-sm text-center' : 'max-w-2xl' }} mx-auto rounded-2xl bg-white border border-red-100 shadow-lg shadow-red-500/5 px-6 py-5 flex {{ $hanyaCountdown ? 'flex-col items-center' : 'flex-col sm:flex-row items-center justify-center sm:justify-between' }} gap-4">
+
+                @if($hanyaCountdown)
+                    @if($setting->promo_teks)
+                    <p class="text-sm font-bold text-slate-800 flex items-center justify-center gap-1.5">
+                        <i data-lucide="alarm-clock" class="w-4 h-4 text-red-500"></i>
+                        {{ $setting->promo_teks }}
+                    </p>
+                    @endif
+                @else
+                <div class="flex items-center gap-3 text-center sm:text-left">
+                    <span class="flex items-center justify-center w-10 h-10 rounded-xl bg-red-50 shrink-0">
+                        <i data-lucide="flame" class="w-5 h-5 text-red-500"></i>
+                    </span>
+                    <div>
+                        <p class="text-slate-900 font-bold text-sm leading-tight">{{ $setting->promo_teks }}</p>
+                        <p class="text-red-500 text-xs font-bold">Hemat {{ $setting->promo_persen }}%</p>
+                    </div>
+                </div>
                 @endif
-                <div class="flex items-center justify-center gap-2" data-promo-end="{{ $setting->promo_berakhir_pada->toIso8601String() }}" data-diskon-aktif="0">
-                    <div class="flex flex-col items-center bg-white/80 border border-white rounded-lg px-3.5 py-1.5 min-w-[60px] shadow-sm">
-                        <span id="promo-cd-h" class="text-red-600 font-extrabold text-2xl font-mono tabular-nums leading-none">00</span>
+
+                <div class="flex items-center gap-1.5" data-promo-end="{{ $setting->promo_berakhir_pada->toIso8601String() }}" data-diskon-aktif="{{ $setting->promoAdaDiskon() ? '1' : '0' }}">
+                    <div class="flex flex-col items-center bg-slate-50 rounded-xl px-3.5 py-2 min-w-[58px]">
+                        <span id="promo-cd-h" class="text-slate-900 font-extrabold text-xl font-mono tabular-nums leading-none">00</span>
                         <span class="text-slate-400 text-[9px] uppercase tracking-wide mt-1">Jam</span>
                     </div>
-                    <span class="text-slate-300 font-bold text-xl">:</span>
-                    <div class="flex flex-col items-center bg-white/80 border border-white rounded-lg px-3.5 py-1.5 min-w-[60px] shadow-sm">
-                        <span id="promo-cd-m" class="text-red-600 font-extrabold text-2xl font-mono tabular-nums leading-none">00</span>
+                    <span class="text-slate-300 font-bold">:</span>
+                    <div class="flex flex-col items-center bg-slate-50 rounded-xl px-3.5 py-2 min-w-[58px]">
+                        <span id="promo-cd-m" class="text-slate-900 font-extrabold text-xl font-mono tabular-nums leading-none">00</span>
                         <span class="text-slate-400 text-[9px] uppercase tracking-wide mt-1">Menit</span>
                     </div>
-                    <span class="text-slate-300 font-bold text-xl">:</span>
-                    <div id="promo-cd-s-box" class="flex flex-col items-center bg-red-500 rounded-lg px-3.5 py-1.5 min-w-[60px] shadow-sm">
-                        <span id="promo-cd-s" class="text-white font-extrabold text-2xl font-mono tabular-nums leading-none">00</span>
+                    <span class="text-slate-300 font-bold">:</span>
+                    <div id="promo-cd-s-box" class="flex flex-col items-center bg-red-500 rounded-xl px-3.5 py-2 min-w-[58px]">
+                        <span id="promo-cd-s" class="text-white font-extrabold text-xl font-mono tabular-nums leading-none">00</span>
                         <span class="text-white/70 text-[9px] uppercase tracking-wide mt-1">Detik</span>
                     </div>
                 </div>
             </div>
-            @else
-            {{-- MODE PROMO DISKON -- solid merah, judul + badge persen + timer --}}
-            <div id="promo-banner" class="mt-8 max-w-2xl mx-auto rounded-2xl bg-gradient-to-r from-red-500 to-red-600 px-5 py-4 sm:px-6 flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-4 shadow-xl shadow-red-500/30 animate-promo-glow">
-                <div class="flex items-center gap-3 text-center sm:text-left">
-                    <span class="flex items-center justify-center w-9 h-9 rounded-full bg-white/20 shrink-0">
-                        <i data-lucide="flame" class="w-4.5 h-4.5 text-white"></i>
-                    </span>
-                    <div>
-                        <p class="text-white font-bold text-sm leading-tight">{{ $setting->promo_teks }}</p>
-                        <p class="text-white/90 text-xs font-bold">Hemat {{ $setting->promo_persen }}%</p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-2" data-promo-end="{{ $setting->promo_berakhir_pada->toIso8601String() }}" data-diskon-aktif="{{ $setting->promoAdaDiskon() ? '1' : '0' }}">
-                    <div class="flex flex-col items-center bg-white/80 border border-white rounded-lg px-3.5 py-1.5 min-w-[60px] shadow-sm">
-                        <span id="promo-cd-h" class="text-red-600 font-extrabold text-2xl font-mono tabular-nums leading-none">00</span>
-                        <span class="text-red-400/80 text-[9px] uppercase tracking-wide mt-1">Jam</span>
-                    </div>
-                        <span class="text-white/40 font-bold text-xl">:</span>
-                    <div class="flex flex-col items-center bg-white/80 border border-white rounded-lg px-3.5 py-1.5 min-w-[60px] shadow-sm">
-                        <span id="promo-cd-m" class="text-red-600 font-extrabold text-2xl font-mono tabular-nums leading-none">00</span>
-                        <span class="text-red-400/80 text-[9px] uppercase tracking-wide mt-1">Menit</span>
-                    </div>
-                    <span class="text-white/40 font-bold text-xl">:</span>
-                    <div id="promo-cd-s-box" class="flex flex-col items-center bg-white rounded-lg px-3.5 py-1.5 min-w-[60px] shadow-sm">
-                        <span id="promo-cd-s" class="text-red-600 font-extrabold text-2xl font-mono tabular-nums leading-none">00</span>
-                        <span class="text-red-500/70 text-[9px] uppercase tracking-wide mt-1">Detik</span>
-                    </div>
-                </div>
-            </div>
-            @endif
         @endif
 
         @php
