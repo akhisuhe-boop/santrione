@@ -131,7 +131,15 @@
                             <td colspan="5" class="px-2 py-2">Total {{ count($estimasi['lembaga']) }} lembaga × 12 bulan</td>
                             <td class="px-2 py-2 text-right">Rp {{ number_format($estimasi['total_tahunan_sebelum_diskon'], 0, ',', '.') }}</td>
                         </tr>
-                        @if ($estimasi['diskon_tahunan_persen'] > 0)
+                        @if (($estimasi['promo_pendaftaran_persen'] ?? 0) > 0)
+                        <tr class="text-accent-600">
+                            <td colspan="5" class="px-2 py-2 font-medium">
+                                Diskon Pendaftaran "{{ $estimasi['promo_pendaftaran_teks'] }}" ({{ $estimasi['promo_pendaftaran_persen'] }}%)
+                                <span class="block text-[11px] font-normal text-gray-400">Cuma berlaku 1x untuk tagihan pertama ini saja</span>
+                            </td>
+                            <td class="px-2 py-2 text-right font-medium">- Rp {{ number_format($estimasi['total_tahunan_sebelum_diskon'] - $estimasi['total'], 0, ',', '.') }}</td>
+                        </tr>
+                        @elseif ($estimasi['diskon_tahunan_persen'] > 0)
                         <tr class="text-success-600">
                             <td colspan="5" class="px-2 py-2 font-medium">Diskon Tahunan ({{ $estimasi['diskon_tahunan_persen'] }}%)</td>
                             <td class="px-2 py-2 text-right font-medium">- Rp {{ number_format($estimasi['total_tahunan_sebelum_diskon'] - $estimasi['total'], 0, ',', '.') }}</td>
@@ -142,6 +150,19 @@
                             <td class="px-2 py-3 text-right font-bold text-primary-600">Rp {{ number_format($estimasi['total'], 0, ',', '.') }}</td>
                         </tr>
                     @else
+                        @if (($estimasi['promo_pendaftaran_persen'] ?? 0) > 0)
+                        <tr class="text-gray-500">
+                            <td colspan="5" class="px-2 py-2">Subtotal Yayasan / bulan</td>
+                            <td class="px-2 py-2 text-right">Rp {{ number_format($estimasi['subtotal_sebelum_promo'], 0, ',', '.') }}</td>
+                        </tr>
+                        <tr class="text-accent-600">
+                            <td colspan="5" class="px-2 py-2 font-medium">
+                                Diskon Pendaftaran "{{ $estimasi['promo_pendaftaran_teks'] }}" ({{ $estimasi['promo_pendaftaran_persen'] }}%)
+                                <span class="block text-[11px] font-normal text-gray-400">Cuma berlaku 1x untuk tagihan pertama ini saja</span>
+                            </td>
+                            <td class="px-2 py-2 text-right font-medium">- Rp {{ number_format($estimasi['subtotal_sebelum_promo'] - $estimasi['total'], 0, ',', '.') }}</td>
+                        </tr>
+                        @endif
                         <tr>
                             <td colspan="5" class="px-2 py-3 font-bold text-gray-900 dark:text-white">TOTAL YAYASAN / BULAN</td>
                             <td class="px-2 py-3 text-right font-bold text-primary-600">Rp {{ number_format($estimasi['total'], 0, ',', '.') }}</td>

@@ -102,6 +102,26 @@ class GenerateTenantInvoices extends Command
                 'periode' => $periode,
             ]);
 
+            // Promo pendaftaran (kalau ada & baru saja dipakai di tagihan
+            // ini) -- tandai terpakai supaya tagihan BERIKUTNYA Yayasan
+            // ini otomatis kembali ke harga normal, tidak dapat diskon
+            // lagi. Kirim WA terpisah yang menjelaskan ini jelas, supaya
+            // tidak jadi tanda tanya waktu tagihan berikutnya lebih besar.
+            if (($hasil['promo_pendaftaran_persen'] ?? 0) > 0) {
+                $yayasan->update(['promo_pendaftaran_terpakai' => true]);
+
+                try {
+                    \App\Services\NotificationService::sendBroadcastYayasan(
+                        $yayasan,
+                        'Diskon Pendaftaran Diterapkan',
+                        "Tagihan pertama Anda sudah termasuk diskon pendaftaran \"{$hasil['promo_pendaftaran_teks']}\" ({$hasil['promo_pendaftaran_persen']}%). " .
+                        "Diskon ini berlaku SATU KALI untuk tagihan pertama saja -- tagihan bulan berikutnya akan kembali ke harga normal sesuai modul yang aktif."
+                    );
+                } catch (\Throwable $e) {
+                    Log::error("GenerateTenantInvoices: gagal kirim notif penjelasan promo untuk yayasan {$yayasan->id}: {$e->getMessage()}");
+                }
+            }
+
             try {
                 $paymentUrl = $xendit->createTransaction(
                     $subscription,

@@ -737,14 +737,31 @@
         </div>
 
         @if($setting->promoSedangBerjalan())
-        <div id="promo-banner" class="mt-8 max-w-xl mx-auto rounded-2xl bg-gradient-to-r from-accent-500 to-accent-600 text-white px-5 py-3.5 flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-2.5 shadow-lg shadow-accent-500/25">
-            <div class="flex items-center gap-2 font-bold text-sm text-center sm:text-left">
-                <i data-lucide="flame" class="w-4.5 h-4.5 shrink-0"></i>
-                {{ $setting->promo_teks }} — Hemat {{ $setting->promo_persen }}%
+        <div id="promo-banner" class="mt-8 max-w-2xl mx-auto rounded-2xl bg-slate-900 border border-white/10 px-5 py-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xl shadow-accent-500/10">
+            <div class="flex items-center gap-3 text-center sm:text-left">
+                <span class="flex items-center justify-center w-9 h-9 rounded-full bg-accent-500/15 shrink-0">
+                    <i data-lucide="flame" class="w-4.5 h-4.5 text-accent-400"></i>
+                </span>
+                <div>
+                    <p class="text-white font-bold text-sm leading-tight">{{ $setting->promo_teks }}</p>
+                    <p class="text-accent-400 text-xs font-bold">Hemat {{ $setting->promo_persen }}%</p>
+                </div>
             </div>
-            <div class="flex items-center gap-1.5 font-mono text-sm bg-white/15 rounded-full px-4 py-1.5 shrink-0" data-promo-end="{{ $setting->promo_berakhir_pada->toIso8601String() }}">
-                <i data-lucide="timer" class="w-4 h-4"></i>
-                <span id="promo-countdown-text">--:--:--</span>
+            <div class="flex items-center gap-1.5" data-promo-end="{{ $setting->promo_berakhir_pada->toIso8601String() }}">
+                <div class="flex flex-col items-center bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 min-w-[52px]">
+                    <span id="promo-cd-h" class="text-white font-extrabold text-lg font-mono tabular-nums leading-none">00</span>
+                    <span class="text-white/40 text-[9px] uppercase tracking-wide mt-0.5">Jam</span>
+                </div>
+                <span class="text-white/20 font-bold">:</span>
+                <div class="flex flex-col items-center bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 min-w-[52px]">
+                    <span id="promo-cd-m" class="text-white font-extrabold text-lg font-mono tabular-nums leading-none">00</span>
+                    <span class="text-white/40 text-[9px] uppercase tracking-wide mt-0.5">Menit</span>
+                </div>
+                <span class="text-white/20 font-bold">:</span>
+                <div class="flex flex-col items-center bg-accent-500 rounded-lg px-3 py-1.5 min-w-[52px]">
+                    <span id="promo-cd-s" class="text-white font-extrabold text-lg font-mono tabular-nums leading-none">00</span>
+                    <span class="text-white/70 text-[9px] uppercase tracking-wide mt-0.5">Detik</span>
+                </div>
             </div>
         </div>
         @endif
@@ -797,7 +814,7 @@
             };
         @endphp
 
-        <div class="mt-20 pt-6 grid grid-cols-1 {{ $gridColsClass }} gap-8 max-w-6xl mx-auto items-stretch">
+        <div class="mt-12 pt-6 grid grid-cols-1 {{ $gridColsClass }} gap-8 max-w-6xl mx-auto items-stretch">
             @foreach($orderedPlans as $plan)
             <div class="reveal-on-scroll relative {{ $plan->termasuk_semua_modul ? 'md:-translate-y-2 bg-gradient-to-b from-slate-900 to-slate-950 text-white rounded-3xl shadow-2xl ring-2 ring-primary-500' : 'bg-white rounded-2xl border border-slate-200 shadow-[0_1px_3px_rgba(0,0,0,0.04)]' }} p-8 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:shadow-2xl cursor-default">
 
@@ -1387,7 +1404,9 @@
         if (promoEl) {
             promoActive = true;
             const endTime = new Date(promoEl.dataset.promoEnd).getTime();
-            const textEl = document.getElementById('promo-countdown-text');
+            const hEl = document.getElementById('promo-cd-h');
+            const mEl = document.getElementById('promo-cd-m');
+            const sEl = document.getElementById('promo-cd-s');
             const banner = document.getElementById('promo-banner');
 
             function tickCountdown() {
@@ -1399,12 +1418,13 @@
                     clearInterval(timer);
                     return;
                 }
-                const d = Math.floor(diff / 86400000);
-                const h = Math.floor((diff % 86400000) / 3600000);
+                const totalHours = Math.floor(diff / 3600000);
                 const m = Math.floor((diff % 3600000) / 60000);
                 const s = Math.floor((diff % 60000) / 1000);
                 const pad = (n) => String(n).padStart(2, '0');
-                textEl.textContent = (d > 0 ? d + 'h ' : '') + pad(h) + ':' + pad(m) + ':' + pad(s);
+                hEl.textContent = pad(totalHours);
+                mEl.textContent = pad(m);
+                sEl.textContent = pad(s);
             }
             tickCountdown();
             var timer = setInterval(tickCountdown, 1000);

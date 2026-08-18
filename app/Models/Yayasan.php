@@ -129,12 +129,16 @@ class Yayasan extends Model implements HasName
     'domain',
     'status',
     'trial_ends_at',
+    'promo_pendaftaran_persen',
+    'promo_pendaftaran_teks',
+    'promo_pendaftaran_terpakai',
     ];
 
     protected function casts(): array
     {
         return [
             'trial_ends_at' => 'datetime',
+            'promo_pendaftaran_terpakai' => 'boolean',
         ];
     }
 
@@ -272,5 +276,17 @@ class Yayasan extends Model implements HasName
         return $this->lembagas()
             ->whereHas('activeModules.modulePrice', fn ($q) => $q->where('key', $key))
             ->exists();
+    }
+
+    /**
+     * True kalau Yayasan ini punya promo pendaftaran yang masih BELUM
+     * dipakai (belum pernah diterapkan ke tagihan mana pun). Dipakai
+     * TenantBillingCalculator untuk tahu apakah tagihan BERIKUTNYA yang
+     * dihitung untuk Yayasan ini harus dapat diskon promo tersebut.
+     */
+    public function promoPendaftaranBelumDipakai(): bool
+    {
+        return ! $this->promo_pendaftaran_terpakai
+            && (int) ($this->promo_pendaftaran_persen ?? 0) > 0;
     }
 }

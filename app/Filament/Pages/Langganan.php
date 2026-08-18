@@ -233,6 +233,21 @@ class Langganan extends Page
             'periode' => $tahunan ? (string) now()->addYear()->year : now()->format('Y-m'),
         ]);
 
+        if (($hasil['promo_pendaftaran_persen'] ?? 0) > 0) {
+            $yayasan->update(['promo_pendaftaran_terpakai' => true]);
+
+            try {
+                \App\Services\NotificationService::sendBroadcastYayasan(
+                    $yayasan,
+                    'Diskon Pendaftaran Diterapkan',
+                    "Tagihan ini sudah termasuk diskon pendaftaran \"{$hasil['promo_pendaftaran_teks']}\" ({$hasil['promo_pendaftaran_persen']}%). " .
+                    'Diskon ini berlaku SATU KALI untuk tagihan ini saja -- tagihan berikutnya akan kembali ke harga normal.'
+                );
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error("Langganan::bayarSekarang: gagal kirim notif penjelasan promo untuk yayasan {$yayasan->id}: {$e->getMessage()}");
+            }
+        }
+
         try {
             $invoiceUrl = app(\App\Services\XenditSubscriptionService::class)
                 ->createTransaction($subscription, $plan, $yayasan->email ?? Auth::user()->email);

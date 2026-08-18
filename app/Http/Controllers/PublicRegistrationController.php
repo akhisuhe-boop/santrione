@@ -46,11 +46,21 @@ class PublicRegistrationController extends Controller
 
         [$yayasan, $admin, $lead] = DB::transaction(function () use ($data) {
 
+            // Kalau ada promo landing page yang SEDANG AKTIF pas pendaftaran
+            // ini terjadi, snapshot ke Yayasan -- terpisah total dari
+            // LandingSetting->promo_* yang bisa berubah/berakhir kapan pun
+            // setelahnya. Berlaku SATU KALI untuk tagihan pertama Yayasan
+            // ini saja (lihat TenantBillingCalculator + command invoice).
+            $landingSetting = \App\Models\LandingSetting::current();
+            $promoAktifSaatDaftar = $landingSetting->promoSedangBerjalan();
+
             $yayasan = Yayasan::create([
                 'nama' => $data['nama_yayasan'],
                 'email' => $data['email'],
                 'telepon' => $data['no_hp'] ?? null,
                 'domain' => $data['custom_domain'] ?? null,
+                'promo_pendaftaran_persen' => $promoAktifSaatDaftar ? $landingSetting->promo_persen : null,
+                'promo_pendaftaran_teks' => $promoAktifSaatDaftar ? $landingSetting->promo_teks : null,
                 // status & trial_ends_at otomatis ke-set 'trial' +
                 // trial_days ke depan lewat Yayasan::booted().
             ]);

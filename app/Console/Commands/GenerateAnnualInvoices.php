@@ -121,6 +121,21 @@ class GenerateAnnualInvoices extends Command
                 'periode' => $periodeTarget,
             ]);
 
+            if (($hasil['promo_pendaftaran_persen'] ?? 0) > 0) {
+                $yayasan->update(['promo_pendaftaran_terpakai' => true]);
+
+                try {
+                    \App\Services\NotificationService::sendBroadcastYayasan(
+                        $yayasan,
+                        'Diskon Pendaftaran Diterapkan',
+                        "Tagihan pertama Anda sudah termasuk diskon pendaftaran \"{$hasil['promo_pendaftaran_teks']}\" ({$hasil['promo_pendaftaran_persen']}%). " .
+                        "Diskon ini berlaku SATU KALI untuk tagihan pertama saja -- perpanjangan tahun berikutnya akan kembali ke harga normal."
+                    );
+                } catch (\Throwable $e) {
+                    Log::error("GenerateAnnualInvoices: gagal kirim notif penjelasan promo untuk yayasan {$yayasan->id}: {$e->getMessage()}");
+                }
+            }
+
             try {
                 $paymentUrl = $xendit->createTransaction(
                     $subscriptionBaru,

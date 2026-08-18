@@ -20,14 +20,17 @@ use App\Models\Yayasan;
  * itu tidak mungkin terjadi lagi — lihat test
  * tests/Unit/TenantBillingCalculatorTest.php yang menjaga invarian ini.
  *
- * hitungYayasanTahunan() (baru) TIDAK bikin jalur hitung baru dari nol
- * -- selalu memanggil hitungYayasan() di atas dulu (angka bulanan
- * SELALU dihitung ulang dari harga_bulanan/ModulePrice yang berlaku
- * SEKARANG, bukan disimpan terpisah), baru dikali 12 dan dipotong
- * diskon_tahunan_persen milik plan yang bersangkutan. Kalau admin ubah
- * harga modul atau plan kapan pun, angka tahunan otomatis ikut
- * berubah di kunjungan/hitung berikutnya -- tidak ada angka tahunan
- * yang "kebekukan" dari harga lama.
+ * PROMO PENDAFTARAN (baru): kalau Yayasan pernah daftar saat promo
+ * landing page aktif (snapshot di Yayasan->promo_pendaftaran_*, lihat
+ * PublicRegistrationController) dan BELUM PERNAH dipakai, promo itu
+ * MENANG atas diskon tahunan untuk TEPAT SATU tagihan berikutnya
+ * (siapa pun caller-nya -- generate-monthly-invoice, generate-annual-
+ * invoice, atau bayarSekarang() manual). Method di sini HANYA
+ * menghitung apakah promo itu akan berlaku -- yang MENANDAI promo
+ * sebagai "terpakai" adalah tanggung jawab kode yang benar-benar
+ * membuat baris Subscription (bukan di sini), supaya method hitung di
+ * class ini tetap murni/tidak override) dan aman dipanggil berkali-kali
+ * cuma untuk preview (halaman Langganan) tanpa efek samping.
  */
 class TenantBillingCalculator
 {
@@ -128,11 +131,12 @@ class TenantBillingCalculator
     }
 
     /**
-     * Hitung tagihan gabungan seluruh Lembaga dalam 1 Yayasan. `total`
-     * SELALU dihasilkan dari array_sum() subtotal per-Lembaga di atas
-     * — tidak pernah nilai terpisah yang bisa tidak sinkron.
+     * Hitung tagihan gabungan seluruh Lembaga dalam 1 Yayasan, TANPA
+     * diskon tahunan/promo apa pun -- angka dasar "murni" yang dipakai
+     * ulang oleh hitungYayasan() dan hitungYayasanTahunan() di bawah,
+     * supaya kedua-duanya selalu mulai dari titik yang sama persis.
      */
-    public function hitungYayasan(Yayasan $yayasan): array
+    protected function hitungYayasanMurni(Yayasan $yayasan): array
     {
         $rincianLembaga = $yayasan->lembagas()
             ->orderBy('id')
@@ -153,33 +157,62 @@ class TenantBillingCalculator
     }
 
     /**
+     * Hitung tagihan BULANAN gabungan seluruh Lembaga. Kalau Yayasan
+     * ini punya promo pendaftaran yang belum dipakai, diterapkan di
+     * sini (satu kali, ke tagihan bulanan berikutnya).
+     */
+    public function hitungYayasan(Yayasan $yayasan): array
+    {
+        $murni = $this->hitungYayasanMurni($yayasan);
+
+        $promoPersen = $yayasan->promoPendaftaranBelumDipakai() ? (int) $yayasan->promo_pendaftaran_persen : 0;
+        $total = $promoPersen > 0
+            ? (int) round($murni['total'] * (100 - $promoPersen) / 100)
+            : $murni['total'];
+
+        return array_merge($murni, [
+            'total' => $total,
+            'subtotal_sebelum_promo' => $murni['total'],
+            'promo_pendaftaran_persen' => $promoPersen,
+            'promo_pendaftaran_teks' => $promoPersen > 0 ? $yayasan->promo_pendaftaran_teks : null,
+        ]);
+    }
+
+    /**
      * Hitung tagihan TAHUNAN gabungan seluruh Lembaga dalam 1 Yayasan.
-     * Selalu turunan dari hitungYayasan() (angka bulanan) x 12, dipotong
-     * diskon_tahunan_persen milik plan Akses Platform yang dipakai
-     * Yayasan ini SAAT INI -- jadi kalau admin ubah harga modul/plan
-     * atau ubah persen diskon tahunan kapan pun, angka ini otomatis
-     * ikut berubah di panggilan berikutnya, tidak pernah "kebekukan".
+     * Selalu turunan dari angka bulanan MURNI (belum ada diskon apa
+     * pun) x 12, baru salah SATU dari dua hal berikut diterapkan --
+     * TIDAK PERNAH DUA-DUANYA SEKALIGUS, supaya tidak ada diskon
+     * menumpuk di luar kendali:
      *
-     * 'total' di hasil ini SUDAH berarti total tahunan final (bukan
-     * bulanan) -- konsisten dengan pola hitungYayasan() supaya kode
-     * pemanggil (invoice generator, halaman Langganan) bisa langsung
-     * pakai $hasil['total'] tanpa perlu tahu ini hasil bulanan atau
-     * tahunan.
+     *  - Kalau ada promo pendaftaran yang belum dipakai -> promo itu
+     *    yang berlaku (diskon_tahunan_persen paket diabaikan untuk
+     *    tagihan pertama ini).
+     *  - Kalau tidak ada promo -> diskon_tahunan_persen paket yang
+     *    berlaku seperti biasa.
      */
     public function hitungYayasanTahunan(Yayasan $yayasan): array
     {
-        $bulanan = $this->hitungYayasan($yayasan);
+        $murni = $this->hitungYayasanMurni($yayasan);
         $plan = $this->aksesPlatformPlan($yayasan);
 
-        $diskonPersen = (int) ($plan->diskon_tahunan_persen ?? 0);
-        $totalTahunanSebelumDiskon = $bulanan['total'] * 12;
-        $totalTahunanFinal = (int) round($totalTahunanSebelumDiskon * (100 - $diskonPersen) / 100);
+        $totalTahunanSebelumDiskon = $murni['total'] * 12;
+        $promoPersen = $yayasan->promoPendaftaranBelumDipakai() ? (int) $yayasan->promo_pendaftaran_persen : 0;
 
-        return array_merge($bulanan, [
-            'siklus_billing' => 'tahunan',
-            'total_bulanan' => $bulanan['total'],
+        if ($promoPersen > 0) {
+            $diskonTahunanPersen = 0;
+            $totalTahunanFinal = (int) round($totalTahunanSebelumDiskon * (100 - $promoPersen) / 100);
+        } else {
+            $diskonTahunanPersen = (int) ($plan->diskon_tahunan_persen ?? 0);
+            $totalTahunanFinal = (int) round($totalTahunanSebelumDiskon * (100 - $diskonTahunanPersen) / 100);
+        }
+
+        return array_merge($murni, [
+            'total_bulanan' => $murni['total'],
             'total_tahunan_sebelum_diskon' => $totalTahunanSebelumDiskon,
-            'diskon_tahunan_persen' => $diskonPersen,
+            'diskon_tahunan_persen' => $diskonTahunanPersen,
+            'promo_pendaftaran_persen' => $promoPersen,
+            'promo_pendaftaran_teks' => $promoPersen > 0 ? $yayasan->promo_pendaftaran_teks : null,
             'total' => $totalTahunanFinal,
         ]);
     }
