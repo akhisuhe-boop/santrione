@@ -770,16 +770,16 @@
                 @endif
 
                 <div class="flex items-center gap-1.5" data-promo-end="{{ $setting->promo_berakhir_pada->toIso8601String() }}" data-diskon-aktif="{{ $setting->promoAdaDiskon() ? '1' : '0' }}">
-                    <div class="flex flex-col items-center bg-slate-50 rounded-xl px-3.5 py-2 min-w-[58px]">
+                    <div class="flex flex-col items-center bg-red-50 rounded-xl px-3.5 py-2 min-w-[58px]">
                         <span id="promo-cd-h" class="text-slate-900 font-extrabold text-xl font-mono tabular-nums leading-none">00</span>
-                        <span class="text-slate-400 text-[9px] uppercase tracking-wide mt-1">Jam</span>
+                        <span class="text-red-300 text-[9px] uppercase tracking-wide mt-1">Jam</span>
                     </div>
-                    <span class="text-slate-300 font-bold">:</span>
-                    <div class="flex flex-col items-center bg-slate-50 rounded-xl px-3.5 py-2 min-w-[58px]">
+                    <span class="text-red-200 font-bold">:</span>
+                    <div class="flex flex-col items-center bg-red-50 rounded-xl px-3.5 py-2 min-w-[58px]">
                         <span id="promo-cd-m" class="text-slate-900 font-extrabold text-xl font-mono tabular-nums leading-none">00</span>
-                        <span class="text-slate-400 text-[9px] uppercase tracking-wide mt-1">Menit</span>
+                        <span class="text-red-300 text-[9px] uppercase tracking-wide mt-1">Menit</span>
                     </div>
-                    <span class="text-slate-300 font-bold">:</span>
+                    <span class="text-red-200 font-bold">:</span>
                     <div id="promo-cd-s-box" class="flex flex-col items-center bg-red-500 rounded-xl px-3.5 py-2 min-w-[58px]">
                         <span id="promo-cd-s" class="text-white font-extrabold text-xl font-mono tabular-nums leading-none">00</span>
                         <span class="text-white/70 text-[9px] uppercase tracking-wide mt-1">Detik</span>
@@ -879,6 +879,7 @@
                             </span>
                             <span class="price-savings-badge hidden text-[10px] font-bold bg-accent-50 text-accent-600 px-2 py-0.5 rounded-full"></span>
                         </div>
+                        <p class="price-monthly-equiv hidden text-xs {{ $plan->termasuk_semua_modul ? 'text-slate-400' : 'text-slate-500' }} mt-1"></p>
                     </div>
                     <p class="text-xs {{ $plan->termasuk_semua_modul ? 'text-slate-400' : 'text-slate-500' }} mt-2">
                         Termasuk {{ $plan->maks_siswa ?? 'tanpa batas' }} siswa
@@ -1371,36 +1372,49 @@
                 const yearly = parseInt(block.dataset.yearly, 10) || 0;
                 const promoPersen = parseInt(block.dataset.promoPersen, 10) || 0;
 
-                let final, strikeValue = null, savingsLabel = null;
+                // Langkah 1: tentukan basis PER BULAN dulu -- promo
+                // (kalau aktif) selalu menang atas diskon tahunan biasa,
+                // dipotong dari harga bulanan DASAR supaya tidak numpuk.
+                let perBulan, persenHemat = 0;
 
                 if (promoActive && promoPersen > 0) {
-                    // Promo MENANG -- diskon tahunan diabaikan sepenuhnya
-                    // selagi promo aktif, apa pun toggle yang dipilih.
-                    // Promo selalu dipotong dari harga bulanan DASAR
-                    // (bukan dari harga yang sudah didiskon tahunan),
-                    // supaya tidak numpuk jadi diskon gabungan yang lebih
-                    // besar dari yang dimaksud.
-                    final = Math.round(monthly * (100 - promoPersen) / 100);
-                    strikeValue = monthly;
-                    savingsLabel = 'Hemat ' + promoPersen + '%';
+                    perBulan = Math.round(monthly * (100 - promoPersen) / 100);
+                    persenHemat = promoPersen;
                 } else if (cycle === 'tahunan' && monthly > 0) {
-                    final = yearly;
-                    const persenTahunan = Math.round((1 - yearly / monthly) * 100);
-                    if (persenTahunan > 0) {
-                        strikeValue = monthly;
-                        savingsLabel = 'Hemat ' + persenTahunan + '%';
-                    }
+                    perBulan = yearly;
+                    persenHemat = Math.round((1 - yearly / monthly) * 100);
                 } else {
-                    final = monthly;
+                    perBulan = monthly;
+                }
+
+                // Langkah 2: kalau mode Tahunan, tampilkan AKUMULASI total
+                // 12 bulan (bukan cuma angka per-bulan + keterangan) --
+                // apa pun basisnya (promo atau diskon tahunan biasa).
+                let final, strikeValue = null, savingsLabel = null, monthlyEquivText = null;
+
+                if (cycle === 'tahunan') {
+                    final = perBulan * 12;
+                    if (persenHemat > 0) {
+                        strikeValue = monthly * 12;
+                        savingsLabel = 'Hemat ' + persenHemat + '%';
+                    }
+                    monthlyEquivText = 'Setara Rp ' + perBulan.toLocaleString('id-ID') + ' / bulan';
+                } else {
+                    final = perBulan;
+                    if (persenHemat > 0) {
+                        strikeValue = monthly;
+                        savingsLabel = 'Hemat ' + persenHemat + '%';
+                    }
                 }
 
                 const valueEl = block.querySelector('.price-value');
                 const periodEl = block.querySelector('.period-label');
                 const strikeEl = block.querySelector('.price-strike');
                 const badgeEl = block.querySelector('.price-savings-badge');
+                const monthlyEquivEl = block.querySelector('.price-monthly-equiv');
 
                 valueEl.textContent = formatRupiah(final);
-                periodEl.textContent = cycle === 'tahunan' ? '/ bulan (ditagih tahunan)' : '/ bulan';
+                periodEl.textContent = cycle === 'tahunan' ? '/ tahun' : '/ bulan';
 
                 if (strikeValue && strikeValue !== final) {
                     strikeEl.textContent = formatRupiah(strikeValue);
@@ -1414,6 +1428,13 @@
                     badgeEl.classList.remove('hidden');
                 } else {
                     badgeEl.classList.add('hidden');
+                }
+
+                if (monthlyEquivText) {
+                    monthlyEquivEl.textContent = monthlyEquivText;
+                    monthlyEquivEl.classList.remove('hidden');
+                } else {
+                    monthlyEquivEl.classList.add('hidden');
                 }
             });
         }
