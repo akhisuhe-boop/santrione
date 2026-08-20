@@ -78,8 +78,8 @@ class SubscriptionPaymentResource extends BaseResource
 
                 Tables\Columns\BadgeColumn::make('metode')
                     ->colors([
-                        'info' => 'duitku',
-                        'primary' => 'midtrans',
+                        'info' => 'doku',
+                        'primary' => 'xendit',
                         'gray' => 'manual_transfer',
                     ]),
 
@@ -100,7 +100,7 @@ class SubscriptionPaymentResource extends BaseResource
                 Tables\Filters\SelectFilter::make('status')
                     ->options(['pending' => 'Pending', 'berhasil' => 'Berhasil', 'gagal' => 'Gagal']),
                 Tables\Filters\SelectFilter::make('metode')
-                    ->options(['midtrans' => 'Midtrans', 'manual_transfer' => 'Transfer Manual']),
+                    ->options(['doku' => 'DOKU', 'xendit' => 'Xendit', 'manual_transfer' => 'Transfer Manual']),
             ])
             ->actions([
 

@@ -41,11 +41,11 @@ return [
     'endpoint' => env('XSENDER_ENDPOINT', 'https://xsender.id/id/send-message'),
     ],
 
-    'duitku' => [
-    'merchant_code' => env('DUITKU_MERCHANT_CODE'),
-    'api_key'       => env('DUITKU_API_KEY'),
-    'sandbox'       => env('DUITKU_SANDBOX', true),
-    'mode'          => env('DUITKU_MODE', 'live'),
+    'doku' => [
+    'client_id'      => env('DOKU_CLIENT_ID'),
+    'secret_key'     => env('DOKU_SECRET_KEY'),
+    'is_production'  => env('DOKU_IS_PRODUCTION', false),
+    'fee_persen'     => env('DOKU_FEE_PERSEN', 1.0), // persentase fee Qinara dari tiap transaksi wali
     ],
 
     'xendit' => [

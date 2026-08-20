@@ -32,7 +32,7 @@ class Subscription extends Model
      * lewat TenantBillingCalculator (skema à la carte baru) pakai itu,
      * kalau belum (subscription lama / plan flat all-or-nothing)
      * fallback ke harga_bulanan plan seperti sebelumnya. SATU-SATUNYA
-     * tempat nominal tagihan ditentukan — DuitkuSubscriptionService
+     * tempat nominal tagihan ditentukan — SubscriptionController::payDoku()/payXendit()
      * dan tampilan invoice sama-sama wajib panggil method ini, supaya
      * angka yang ditagih dan angka yang ditampilkan tidak pernah beda.
      */

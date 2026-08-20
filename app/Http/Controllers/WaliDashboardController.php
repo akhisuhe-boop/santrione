@@ -11,9 +11,7 @@ use App\Models\Kas;
 use App\Models\Pembayaran;
 use App\Models\WalletTransaction;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
-use App\Services\DuitkuPaymentMapper;
 use Illuminate\Support\Facades\Hash;
 use App\Models\RaportNonAkademik;
 use App\Models\Nilai;
@@ -767,9 +765,10 @@ class WaliDashboardController extends Controller
                 );
         }
 
-    public function duitku(
+    public function doku(
     Request $request,
-    Tagihan $tagihan
+    Tagihan $tagihan,
+    \App\Services\DokuService $doku
     )
     {
         $request->validate([
@@ -783,80 +782,79 @@ class WaliDashboardController extends Controller
             403
         );
 
-        $allowedMethods = [
-            'BCA', 'BNI', 'BRI', 'MANDIRI', 'BSI',
-            'OV', 'DA', 'SP',
-            'QRIS',
-            'ALFAMART', 'INDOMARET'
-        ];
+        // BCA/BNI/BRI/MANDIRI/BSI -> channel VA (bank diisi kode bank).
+        // OV/DA/SP -> channel EWALLET. QRIS -> channel QRIS.
+        // ALFAMART/INDOMARET -> belum didukung method buatPaymentRequest()
+        // saat ini (channel Over The Counter DOKU beda struktur payload,
+        // lihat dokumentasi 'DOKU Retail Outlet' kalau mau ditambah nanti).
+        $vaBanks = ['BCA', 'BNI', 'BRI', 'MANDIRI', 'BSI'];
+        $ewalletCodes = ['OV', 'DA', 'SP'];
+
+        $allowedMethods = array_merge($vaBanks, $ewalletCodes, ['QRIS']);
 
         if (!in_array($request->payment_method, $allowedMethods)) {
             return back()->with('error', 'Metode pembayaran tidak valid.');
         }
 
-        $merchantCode = config('services.duitku.merchant_code');
-        $apiKey       = config('services.duitku.api_key');
+        $amount = (int) ($tagihan->nominal - $tagihan->nominal_terbayar);
+        $referenceId = 'TAGIHAN-' . $tagihan->id . '-' . time();
 
-        $amount = $tagihan->nominal - $tagihan->nominal_terbayar;
+        $channel = match (true) {
+            in_array($request->payment_method, $vaBanks, true) => 'VA',
+            in_array($request->payment_method, $ewalletCodes, true) => 'EWALLET',
+            default => 'QRIS',
+        };
 
-        $merchantOrderId = 'TAGIHAN-' . $tagihan->id . '-' . time();
+        $lembaga = $tagihan->siswa?->lembaga;
 
-        $signature = md5(
-            $merchantCode .
-            $merchantOrderId .
-            $amount .
-            $apiKey
-        );
-
-        $endpoint = config('services.duitku.sandbox')
-            ? 'https://sandbox.duitku.com/webapi/api/merchant/v2/inquiry'
-            : 'https://passport.duitku.com/webapi/api/merchant/v2/inquiry';
-
-        $response = Http::post($endpoint, [
-            'merchantCode'    => $merchantCode,
-            'paymentAmount'   => $amount,
-            'paymentMethod'   => $request->payment_method,
-            'merchantOrderId' => $merchantOrderId,
-            'productDetails'  => $tagihan->judul,
-
-            // ✅ FIX: email dari wali/ayah/ibu kalau ada
-            'email' => $siswa->email
-                ?? $siswa->wa_wali . '@dummy.id',
-
-            'phoneNumber' =>
-                $siswa->wa_wali
-                ?? $siswa->wa_ayah
-                ?? $siswa->wa_ibu
-                ?? '08123456789',
-
-            'customerVaName' => $siswa->nama_lengkap,
-            'callbackUrl' => route('duitku.callback'),
-            'returnUrl' => route('wali.keuangan'),
-            'signature' => $signature,
-        ]);
-
-        $result = $response->json();
-
-        if (!isset($result['paymentUrl'])) {
-            return back()->with(
-                'error',
-                $result['Message'] ?? 'Gagal membuat pembayaran'
+        try {
+            $result = $doku->buatPaymentRequest(
+                referenceId: $referenceId,
+                amount: $amount,
+                customerName: $siswa->nama_lengkap,
+                customerEmail: $siswa->email ?? ($siswa->wa_wali . '@dummy.id'),
+                judul: $tagihan->judul,
+                channel: $channel,
+                bank: $request->payment_method,
+                dokuSubAccountId: $lembaga?->doku_sub_account_id,
             );
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Gagal membuat pembayaran: ' . $e->getMessage());
+        }
+
+        // TODO: sesuaikan path field URL redirect dengan respons asli
+        // sandbox DOKU (lihat catatan sama di TopupController).
+        $paymentUrl = $result['response']['url']
+            ?? $result['payment']['url']
+            ?? $result['virtual_account_info']['virtual_account_number'] ?? null;
+
+        if (!$paymentUrl) {
+            return back()->with('error', $result['message'] ?? 'Gagal membuat pembayaran');
         }
 
         Pembayaran::create([
             'tagihan_id' => $tagihan->id,
             'siswa_id'   => $siswa->id,
             'nominal'    => $amount,
-            'metode'     => 'duitku',
+            'metode'     => 'gateway',
+            'gateway'    => 'doku',
             'status'     => 'pending',
-            'reference'  => $merchantOrderId,
+            'reference'  => $referenceId,
         ]);
 
-        return redirect($result['paymentUrl']);
+        // Untuk VA, DOKU biasanya tidak mengembalikan URL redirect
+        // (customer bayar manual ke nomor VA) -- kalau begitu, arahkan ke
+        // halaman konfirmasi yang menampilkan nomor VA-nya alih-alih
+        // redirect away(). Sesuaikan sesuai UX yang diinginkan setelah
+        // respons asli sandbox terlihat.
+        if ($channel === 'VA' && !str_starts_with((string) $paymentUrl, 'http')) {
+            return back()->with('success', 'Silakan transfer ke nomor VA: ' . $paymentUrl);
+        }
+
+        return redirect()->away($paymentUrl);
     }
 
-    public function showDuitkuForm(Tagihan $tagihan)
+    public function showDokuForm(Tagihan $tagihan)
     {
         $siswa = Siswa::findOrFail(session('siswa_id'));
 
@@ -931,7 +929,7 @@ class WaliDashboardController extends Controller
     ]);
 
         return view(
-            'wali.duitku',
+            'wali.doku',
             compact(
                 'tagihan',
                 'paymentMethods'

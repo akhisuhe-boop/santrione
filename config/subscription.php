@@ -35,23 +35,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Midtrans
-    |--------------------------------------------------------------------------
-    |
-    | Isi di .env setelah punya akun Midtrans (sandbox/production).
-    | Selama kosong, tombol bayar otomatis akan disembunyikan dan hanya
-    | jalur transfer manual yang aktif.
-    |
-    */
-
-    'midtrans' => [
-        'server_key' => env('MIDTRANS_SERVER_KEY'),
-        'client_key' => env('MIDTRANS_CLIENT_KEY'),
-        'is_production' => env('MIDTRANS_IS_PRODUCTION', false),
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
     | Rekening Transfer Manual
     |--------------------------------------------------------------------------
     |

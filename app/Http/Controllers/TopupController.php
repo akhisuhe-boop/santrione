@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Siswa;
 use App\Models\WalletTransaction;
-use App\Http\Controllers\DuitkuController;
+use App\Services\DokuService;
 
 class TopupController extends Controller
 {
@@ -25,7 +25,7 @@ class TopupController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request, DokuService $doku)
     {
         $amount = $request->custom_amount ?: $request->amount;
 
@@ -54,29 +54,37 @@ class TopupController extends Controller
             'amount'       => $amount,
             'status'       => 'pending',
             'reference_id' => $reference,
-            'description'  => 'Top Up Saldo via Duitku',
+            'gateway'      => 'doku',
+            'description'  => 'Top Up Saldo via DOKU',
         ]);
 
-        $duitku = app(DuitkuController::class);
+        try {
+            $result = $doku->buatPaymentRequest(
+                referenceId: $reference,
+                amount: (int) $amount,
+                customerName: $siswa->nama_lengkap,
+                customerEmail: $siswa->email ?? 'demo@mail.com',
+                judul: 'Top Up Saldo',
+                channel: 'QRIS'
+            );
+        } catch (\Throwable $e) {
+            $trx->update(['status' => 'failed']);
 
-        $paymentUrl = $duitku->createTopup([
-            'amount'    => $amount,
-            'customer'  => $siswa->nama_lengkap,
-            'email'     => $siswa->email ?? 'demo@mail.com',
-            'reference' => $reference,
-        ]);
-
-        // =========================
-        // 🔥 FIX ERROR ARRAY VS STRING
-        // =========================
-        if (is_array($paymentUrl)) {
-            $paymentUrl = $paymentUrl['paymentUrl'] ?? null;
+            return back()->with('error', 'Gagal membuat pembayaran: ' . $e->getMessage());
         }
+
+        // TODO: field URL redirect PERLU dicocokkan dengan respons asli
+        // sandbox DOKU Checkout -- beberapa kemungkinan field yang umum
+        // dipakai DOKU, dicoba berurutan.
+        $paymentUrl = $result['response']['url']
+            ?? $result['payment']['url']
+            ?? $result['url']
+            ?? null;
 
         if (!$paymentUrl) {
             $trx->update(['status' => 'failed']);
 
-            return back()->with('error', 'Gagal membuat pembayaran');
+            return back()->with('error', 'Gagal membuat pembayaran (URL tidak ditemukan di respons DOKU)');
         }
 
         return redirect()->away($paymentUrl);

@@ -393,7 +393,7 @@
             </div>
     
             <a
-            href="{{ route('ppdb.pembayaran.duitku.form', $tagihan) }}"
+            href="{{ route('ppdb.pembayaran.doku.form', $tagihan) }}"
             class="
                 mt-5
                 flex
@@ -409,7 +409,7 @@
                 font-semibold
                 transition
             ">
-            Bayar Dengan Duitku
+            Bayar Dengan DOKU
         </a>
     
         </div>

@@ -45,7 +45,7 @@
 <h2>4. Berbagi Data dengan Pihak Ketiga</h2>
 <p>Kami hanya membagikan data dengan pihak ketiga yang diperlukan untuk operasional layanan, meliputi:</p>
 <ul>
-    <li><strong>Penyedia payment gateway</strong> (seperti Midtrans, Xendit, atau Duitku) untuk memproses transaksi pembayaran.</li>
+    <li><strong>Penyedia payment gateway</strong> (seperti DOKU atau Xendit) untuk memproses transaksi pembayaran.</li>
     <li><strong>Penyedia layanan pesan</strong> (WhatsApp Business API) untuk mengirim notifikasi yang diaktifkan lembaga.</li>
     <li><strong>Penyedia infrastruktur cloud</strong> untuk penyimpanan data dan berkas secara aman.</li>
 </ul>

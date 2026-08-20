@@ -60,12 +60,10 @@ class SubscriptionController extends Controller
     }
 
     /**
-     * Bayar lewat Xendit — SATU-SATUNYA jalur pembayaran otomatis
-     * yang dipakai (revisi keputusan: hanya Xendit, tidak lagi
-     * Duitku/Midtrans untuk billing langganan). payDuitku() &
-     * payMidtrans() di bawah dibiarkan ada (tidak dihapus, supaya
-     * tidak kehilangan kode kalau suatu saat dibutuhkan lagi) tapi
-     * TIDAK dipanggil dari halaman "Langganan Saya" lagi.
+     * Bayar lewat Xendit -- dua jalur otomatis yang dipakai sekarang
+     * adalah Xendit (method ini) dan DOKU (payDoku() di bawah). Duitku
+     * & Midtrans sudah dihapus total dari aplikasi (lihat riwayat git)
+     * sesuai keputusan payment gateway final: Xendit + DOKU saja.
      */
     public function payXendit(Request $request, SubscriptionPlan $plan)
     {
@@ -95,13 +93,14 @@ class SubscriptionController extends Controller
     }
 
     /**
-     * Bayar lewat Duitku — DIPERTAHANKAN sebagai kode cadangan, TIDAK
-     * lagi dipakai di halaman "Langganan Saya" sejak keputusan
-     * revisi payment gateway ke Xendit-only.
+     * Bayar lewat DOKU -- pilihan kedua di samping Xendit (bukan split
+     * payment sub-account seperti pembayaran wali murid, karena ini
+     * billing Qinara -> Yayasan langsung, bukan dana yang perlu
+     * dirutekan ke sub-account manapun).
      */
-    public function payDuitku(Request $request, SubscriptionPlan $plan)
+    public function payDoku(Request $request, SubscriptionPlan $plan)
     {
-        if (blank(config('services.duitku.merchant_code'))) {
+        if (blank(config('services.doku.client_id'))) {
             return back()->with('error', 'Pembayaran otomatis belum diaktifkan. Silakan pakai transfer manual dulu.');
         }
 
@@ -115,47 +114,38 @@ class SubscriptionController extends Controller
             'status' => 'pending',
         ]);
 
-        $duitku = app(\App\Services\DuitkuSubscriptionService::class);
+        $amount = $subscription->totalTagihan() ?: (int) $plan->harga_bulanan;
+        $referenceId = 'SUB-' . $subscription->id . '-' . time();
+
+        $doku = app(\App\Services\DokuService::class);
 
         try {
-            $paymentUrl = $duitku->createTransaction($subscription, $plan, $yayasan->email ?? $user->email);
+            $result = $doku->buatPaymentRequest(
+                referenceId: $referenceId,
+                amount: $amount,
+                customerName: $yayasan->nama,
+                customerEmail: $yayasan->email ?? $user->email,
+                judul: 'Langganan ' . $plan->nama . ' (1 bulan) -- ' . $yayasan->nama,
+                channel: 'QRIS'
+            );
         } catch (\Throwable $e) {
             return back()->with('error', 'Gagal membuat transaksi pembayaran: ' . $e->getMessage());
         }
 
-        return redirect($paymentUrl);
-    }
+        $paymentUrl = $result['response']['url'] ?? $result['payment']['url'] ?? $result['url'] ?? null;
 
-    /**
-     * Bayar lewat Midtrans (Snap).
-     *
-     * BELUM AKTIF — butuh MIDTRANS_SERVER_KEY & MIDTRANS_CLIENT_KEY
-     * diisi di .env dulu (lihat config/subscription.php). Struktur
-     * kodenya sudah disiapkan (lihat App\Services\MidtransService),
-     * tinggal diisi kredensial sandbox/production Midtrans kalian.
-     * Duitku (payDuitku di atas) adalah jalur otomatis UTAMA karena
-     * sudah ada kredensialnya di aplikasi ini — pakai method ini
-     * hanya kalau memang mau tambah Midtrans sebagai pilihan kedua.
-     */
-    public function payMidtrans(Request $request, SubscriptionPlan $plan)
-    {
-        if (blank(config('subscription.midtrans.server_key'))) {
-            return back()->with('error', 'Pembayaran otomatis belum diaktifkan. Silakan pakai transfer manual dulu.');
+        if (! $paymentUrl) {
+            return back()->with('error', 'Gagal membuat transaksi pembayaran (URL tidak ditemukan di respons DOKU)');
         }
 
-        $yayasan = $request->user()->yayasan;
-
-        abort_if(! $yayasan, 404);
-
-        $subscription = $yayasan->subscriptions()->create([
-            'subscription_plan_id' => $plan->id,
+        $subscription->payments()->create([
+            'jumlah' => $amount,
+            'metode' => 'doku',
             'status' => 'pending',
+            'gateway_order_id' => $referenceId,
+            'gateway_raw_response' => $result,
         ]);
 
-        $midtrans = app(\App\Services\MidtransService::class);
-
-        $snapUrl = $midtrans->createTransaction($subscription, $plan);
-
-        return redirect($snapUrl);
+        return redirect($paymentUrl);
     }
 }

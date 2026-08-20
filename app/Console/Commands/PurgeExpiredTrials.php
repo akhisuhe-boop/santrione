@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Log;
  * INI TIDAK BOLEH dihapus, riwayat & datanya harus tetap ada. Kedua
  * jenis ini sama-sama berstatus 'suspended', jadi status saja tidak
  * cukup -- harus dicek riwayat SubscriptionPayment.status='berhasil'
- * (konsisten dipakai di Duitku/Midtrans/Xendit/verifikasi manual,
+ * (konsisten dipakai di DOKU/Xendit/verifikasi manual,
  * lihat commit sebelumnya).
  *
  * Dijadwalkan mingguan (bukan harian) -- penghapusan permanen,

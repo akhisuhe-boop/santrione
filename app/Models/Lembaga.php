@@ -43,6 +43,8 @@ class Lembaga extends Model
     'payment_gateway',
     'xendit_account_holder_id',
     'xendit_status',
+    'doku_sub_account_id',
+    'doku_status',
     ];
     
     protected static function booted()

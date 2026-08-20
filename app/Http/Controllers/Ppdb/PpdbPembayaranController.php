@@ -150,41 +150,107 @@ class PpdbPembayaranController extends Controller
     }
     
     /**
-     * Halaman Duitku
+     * Halaman DOKU
      */
-    public function showDuitkuForm(Tagihan $tagihan)
+    public function showDokuForm(Tagihan $tagihan)
     {
         $ppdb = Ppdb::findOrFail(session('ppdb_id'));
 
         abort_if($tagihan->ppdb_id != $ppdb->id, 403);
 
-        return view('ppdb.duitku', [
+        $paymentMethods = collect([
+            'BCA' => ['code' => 'BCA', 'name' => 'BCA Virtual Account', 'category' => 'Virtual Account'],
+            'BNI' => ['code' => 'BNI', 'name' => 'BNI Virtual Account', 'category' => 'Virtual Account'],
+            'BRI' => ['code' => 'BRI', 'name' => 'BRI Virtual Account', 'category' => 'Virtual Account'],
+            'BSI' => ['code' => 'BSI', 'name' => 'BSI Virtual Account', 'category' => 'Virtual Account'],
+            'MANDIRI' => ['code' => 'MANDIRI', 'name' => 'Mandiri Virtual Account', 'category' => 'Virtual Account'],
+            'OV' => ['code' => 'OV', 'name' => 'OVO', 'category' => 'E-Wallet'],
+            'DA' => ['code' => 'DA', 'name' => 'DANA', 'category' => 'E-Wallet'],
+            'SP' => ['code' => 'SP', 'name' => 'ShopeePay', 'category' => 'E-Wallet'],
+            'QRIS' => ['code' => 'QRIS', 'name' => 'QRIS', 'category' => 'QRIS'],
+        ]);
+
+        return view('ppdb.doku', [
             'ppdb' => $ppdb,
             'yayasan' => $ppdb->lembaga?->yayasan ?? \App\Models\Yayasan::first(),
             'tagihan' => $tagihan,
+            'paymentMethods' => $paymentMethods,
         ]);
     }
 
     /**
-     * Proses Duitku
+     * Proses DOKU -- pola PERSIS WaliDashboardController::doku(), cuma
+     * beda prefix reference_id ('PPDB-' bukan 'TAGIHAN-') supaya
+     * DokuWebhookController bisa membedakan keduanya, dan beda sumber
+     * identitas pembayar (Ppdb, bukan Siswa -- pendaftar PPDB belum
+     * tentu sudah jadi Siswa).
      */
-    public function duitku(Request $request, Tagihan $tagihan)
+    public function doku(Request $request, Tagihan $tagihan, \App\Services\DokuService $doku)
     {
         $ppdb = Ppdb::findOrFail(session('ppdb_id'));
 
         abort_if($tagihan->ppdb_id != $ppdb->id, 403);
 
-        /*
-        |--------------------------------------------------------------------------
-        | Nanti di sini tinggal copy logic Duitku milik Wali
-        |--------------------------------------------------------------------------
-        */
+        $request->validate([
+            'payment_method' => 'required|string',
+        ]);
 
-        return redirect()
-            ->route('ppdb.pembayaran')
-            ->with(
-                'success',
-                'Redirect ke Payment Gateway.'
+        $vaBanks = ['BCA', 'BNI', 'BRI', 'MANDIRI', 'BSI'];
+        $ewalletCodes = ['OV', 'DA', 'SP'];
+        $allowedMethods = array_merge($vaBanks, $ewalletCodes, ['QRIS']);
+
+        if (!in_array($request->payment_method, $allowedMethods)) {
+            return back()->with('error', 'Metode pembayaran tidak valid.');
+        }
+
+        $amount = (int) ($tagihan->nominal - $tagihan->nominal_terbayar);
+        $referenceId = 'PPDB-' . $tagihan->id . '-' . time();
+
+        $channel = match (true) {
+            in_array($request->payment_method, $vaBanks, true) => 'VA',
+            in_array($request->payment_method, $ewalletCodes, true) => 'EWALLET',
+            default => 'QRIS',
+        };
+
+        $lembaga = $ppdb->lembaga;
+
+        try {
+            $result = $doku->buatPaymentRequest(
+                referenceId: $referenceId,
+                amount: $amount,
+                customerName: $ppdb->nama_lengkap ?? $ppdb->nama ?? 'Pendaftar PPDB',
+                customerEmail: $ppdb->email ?? ($ppdb->wa_wali ?? '0000000000') . '@dummy.id',
+                judul: $tagihan->judul,
+                channel: $channel,
+                bank: $request->payment_method,
+                dokuSubAccountId: $lembaga?->doku_sub_account_id,
             );
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Gagal membuat pembayaran: ' . $e->getMessage());
+        }
+
+        $paymentUrl = $result['response']['url']
+            ?? $result['payment']['url']
+            ?? $result['virtual_account_info']['virtual_account_number'] ?? null;
+
+        if (!$paymentUrl) {
+            return back()->with('error', $result['message'] ?? 'Gagal membuat pembayaran');
+        }
+
+        Pembayaran::create([
+            'tagihan_id' => $tagihan->id,
+            'siswa_id' => $tagihan->siswa_id,
+            'nominal' => $amount,
+            'metode' => 'gateway',
+            'gateway' => 'doku',
+            'status' => 'pending',
+            'reference' => $referenceId,
+        ]);
+
+        if ($channel === 'VA' && !str_starts_with((string) $paymentUrl, 'http')) {
+            return back()->with('success', 'Silakan transfer ke nomor VA: ' . $paymentUrl);
+        }
+
+        return redirect()->away($paymentUrl);
     }
 }
