@@ -544,6 +544,7 @@ class WaliDashboardController extends Controller
     {
         $request->validate([
             'payment_method' => 'required|in:VA,QRIS,DANA,SHOPEEPAY,ALFAMART,INDOMARET,OVO',
+            'bank' => 'nullable|in:BCA,BNI,BRI,BSI,MANDIRI',
             'ovo_phone' => 'required_if:payment_method,OVO|nullable|string|min:9|max:15',
         ]);
 
@@ -692,6 +693,7 @@ class WaliDashboardController extends Controller
             'feeAdmin' => $feeAdmin,
             'amountCharged' => $amountCharged,
             'channel' => $channel,
+            'bankDipilih' => $request->bank,
             'vaNumber' => $vaNumber,
             'qrString' => $qrString,
             'paymentCode' => $paymentCode,

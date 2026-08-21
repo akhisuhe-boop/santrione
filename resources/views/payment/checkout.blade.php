@@ -76,7 +76,18 @@
 
             @if($channel === 'VA')
 
-                <div class="text-sm font-semibold text-slate-900 mb-1">Transfer ke Virtual Account</div>
+                @php
+                    $bankFile = strtolower($bankDipilih ?? '');
+                @endphp
+
+                <div class="flex items-center gap-3 mb-1">
+                    @if($bankDipilih)
+                        <img src="{{ asset('images/payment-logos/' . $bankFile . '.png') }}" alt="{{ $bankDipilih }}" class="h-6 object-contain">
+                    @endif
+                    <div class="text-sm font-semibold text-slate-900">
+                        Transfer ke Virtual Account{{ $bankDipilih ? ' ' . $bankDipilih : '' }}
+                    </div>
+                </div>
                 <p class="text-xs text-slate-500 mb-4">
                     Nomor ini bisa ditransfer dari <strong>bank/e-wallet manapun</strong> (m-banking, ATM, atau internet banking).
                 </p>
@@ -164,7 +175,10 @@
 
             @elseif($channel === 'ALFAMART' || $channel === 'INDOMARET')
 
-                <div class="text-sm font-semibold text-slate-900 mb-1">Bayar di {{ ucfirst(strtolower($channel)) }}</div>
+                <div class="flex items-center gap-3 mb-1">
+                    <img src="{{ asset('images/payment-logos/' . strtolower($channel) . '.png') }}" alt="{{ $channel }}" class="h-6 object-contain">
+                    <div class="text-sm font-semibold text-slate-900">Bayar di {{ ucfirst(strtolower($channel)) }}</div>
+                </div>
                 <p class="text-xs text-slate-500 mb-4">
                     Tunjukkan kode ini ke kasir {{ ucfirst(strtolower($channel)) }} terdekat untuk membayar tunai.
                 </p>
