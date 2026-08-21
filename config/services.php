@@ -45,7 +45,8 @@ return [
     'client_id'      => env('DOKU_CLIENT_ID'),
     'secret_key'     => env('DOKU_SECRET_KEY'),
     'is_production'  => env('DOKU_IS_PRODUCTION', false),
-    'fee_persen'     => env('DOKU_FEE_PERSEN', 1.0), // persentase fee Qinara dari tiap transaksi wali
+    'fee_persen'     => env('DOKU_FEE_PERSEN', 0.75), // persentase fee admin Qinara dari nominal tagihan
+    'fee_cap'        => env('DOKU_FEE_CAP', 10000), // batas maksimum fee admin per transaksi (Rupiah)
     // Private key RSA untuk endpoint SNAP (QRIS Direct API) -- lihat
     // catatan setup lengkap di DokuService::getAccessToken(). Isi di
     // .env sebagai DOKU_PRIVATE_KEY, format PEM dengan newline literal

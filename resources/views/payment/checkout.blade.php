@@ -11,7 +11,11 @@
 
             @if($logo)
                 <img src="{{ $logo }}" alt="{{ $namaLembaga }}"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
                      class="w-16 h-16 rounded-2xl object-cover shadow-sm border border-slate-200 mb-3">
+                <div class="w-16 h-16 rounded-2xl bg-[#00A39D] text-white items-center justify-center text-2xl font-bold shadow-sm mb-3" style="display:none;">
+                    {{ strtoupper(substr($namaLembaga, 0, 1)) }}
+                </div>
             @else
                 <div class="w-16 h-16 rounded-2xl bg-[#00A39D] text-white flex items-center justify-center text-2xl font-bold shadow-sm mb-3">
                     {{ strtoupper(substr($namaLembaga, 0, 1)) }}
@@ -44,9 +48,25 @@
 
             <div class="mt-4 pt-4 border-t border-dashed border-slate-200">
                 <div class="text-xs text-slate-400">{{ $judul }}</div>
-                <div class="text-2xl font-bold text-slate-900 mt-1">
-                    Rp {{ number_format($amount, 0, ',', '.') }}
-                </div>
+
+                @if(isset($feeAdmin) && $feeAdmin > 0)
+                    <div class="flex justify-between items-center text-sm text-slate-500 mt-2">
+                        <span>Tagihan</span>
+                        <span>Rp {{ number_format($amount, 0, ',', '.') }}</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm text-slate-500 mt-1">
+                        <span>Biaya Admin</span>
+                        <span>Rp {{ number_format($feeAdmin, 0, ',', '.') }}</span>
+                    </div>
+                    <div class="flex justify-between items-center mt-2 pt-2 border-t border-slate-100">
+                        <span class="text-sm font-semibold text-slate-700">Total Bayar</span>
+                        <span class="text-2xl font-bold text-slate-900">Rp {{ number_format($amountCharged, 0, ',', '.') }}</span>
+                    </div>
+                @else
+                    <div class="text-2xl font-bold text-slate-900 mt-1">
+                        Rp {{ number_format($amount, 0, ',', '.') }}
+                    </div>
+                @endif
             </div>
 
         </div>
@@ -61,7 +81,7 @@
                     Nomor ini bisa ditransfer dari <strong>bank/e-wallet manapun</strong> (m-banking, ATM, atau internet banking).
                 </p>
 
-                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-center justify-between gap-3">
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-center justify-between gap-3 mb-4">
                     <div class="text-xl font-mono font-bold tracking-widest text-slate-900 break-all">
                         {{ $vaNumber }}
                     </div>
@@ -70,6 +90,59 @@
                         <x-heroicon-o-clipboard-document class="w-4 h-4" />
                         Salin
                     </button>
+                </div>
+
+                {{-- Badge informasi -- VA ini 1 nomor, bisa dibayar dari
+                     bank manapun. Ini VISUAL saja, bukan pilihan yang
+                     mempengaruhi request ke DOKU. --}}
+                <div class="mb-5">
+                    <div class="text-[11px] text-slate-400 mb-2">Bisa dibayar dari bank manapun, termasuk:</div>
+                    <div class="flex flex-wrap gap-2">
+                        @foreach(['BCA', 'BNI', 'BRI', 'Mandiri', 'BSI', 'CIMB', 'Permata', 'Danamon'] as $bankNama)
+                            <span class="text-[10px] font-semibold text-slate-500 bg-slate-100 rounded-lg px-2.5 py-1.5">{{ $bankNama }}</span>
+                        @endforeach
+                        <span class="text-[10px] font-semibold text-slate-400 bg-slate-50 rounded-lg px-2.5 py-1.5">+ lainnya</span>
+                    </div>
+                </div>
+
+                {{-- Tata cara pembayaran --}}
+                <div class="border-t border-dashed border-slate-200 pt-4">
+                    <button type="button" onclick="document.getElementById('cara-bayar').classList.toggle('hidden')"
+                            class="w-full flex items-center justify-between text-sm font-semibold text-slate-700">
+                        <span class="flex items-center gap-2">
+                            <x-heroicon-o-information-circle class="w-4 h-4 text-slate-400" />
+                            Cara Pembayaran
+                        </span>
+                        <x-heroicon-o-chevron-down class="w-4 h-4 text-slate-400" />
+                    </button>
+
+                    <div id="cara-bayar" class="hidden mt-3 space-y-3">
+
+                        <div class="bg-slate-50 rounded-2xl p-3">
+                            <div class="text-xs font-semibold text-slate-700 mb-1.5">Lewat M-Banking</div>
+                            <ol class="text-xs text-slate-500 space-y-1 list-decimal list-inside">
+                                <li>Buka aplikasi m-banking bank Anda</li>
+                                <li>Pilih menu <strong>Transfer</strong> &rarr; <strong>Virtual Account / Ke Bank Lain</strong></li>
+                                <li>Masukkan nomor VA di atas, lalu salin nominal tagihan persis</li>
+                                <li>Pastikan nama penerima muncul sesuai, lalu konfirmasi</li>
+                            </ol>
+                        </div>
+
+                        <div class="bg-slate-50 rounded-2xl p-3">
+                            <div class="text-xs font-semibold text-slate-700 mb-1.5">Lewat ATM</div>
+                            <ol class="text-xs text-slate-500 space-y-1 list-decimal list-inside">
+                                <li>Masukkan kartu ATM, pilih <strong>Transfer</strong></li>
+                                <li>Pilih <strong>Ke Rekening Bank Lain / Virtual Account</strong></li>
+                                <li>Masukkan nomor VA di atas dan nominal tagihan</li>
+                                <li>Ikuti instruksi sampai selesai</li>
+                            </ol>
+                        </div>
+
+                        <p class="text-[11px] text-amber-600 bg-amber-50 rounded-xl px-3 py-2">
+                            Pastikan nominal transfer <strong>persis sama</strong> dengan Total Bayar (Rp {{ number_format($amountCharged ?? $amount, 0, ',', '.') }}) supaya pembayaran otomatis terverifikasi.
+                        </p>
+
+                    </div>
                 </div>
 
             @elseif($channel === 'QRIS')

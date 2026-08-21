@@ -130,6 +130,31 @@ class DokuService
      * ditemukan di sandbox. Helper ini memastikan pesan yang disimpan ke
      * session SELALU string, apapun bentuk aslinya dari DOKU.
      */
+    /**
+     * Hitung fee admin Qinara: persentase dari nominal tagihan, DIBATASI
+     * cap maksimum -- supaya adil untuk tagihan kecil (SPP bulanan,
+     * proporsional) maupun tagihan besar (PPDB/uang pangkal, tidak
+     * melonjak tanpa batas). Konfigurasi di .env: DOKU_FEE_PERSEN
+     * (default 0.75) dan DOKU_FEE_CAP (default Rp10.000).
+     *
+     * Nominal ini DITAMBAHKAN ke jumlah yang di-charge ke wali murid
+     * (order.amount ke DOKU) -- BUKAN dipotong dari tagihan. Sekolah
+     * tetap terima 100% nominal tagihan asli; fee ini murni tambahan
+     * di atasnya. Lihat catatan lengkap di migration
+     * add_fee_admin_to_pembayarans_table -- fee dicatat di kolom
+     * terpisah `fee_admin`, TIDAK ikut masuk hitungan pelunasan
+     * tagihan (nominal_terbayar).
+     */
+    public static function hitungFee(int $nominalTagihan): int
+    {
+        $persen = (float) config('services.doku.fee_persen', 0.75);
+        $cap = (int) config('services.doku.fee_cap', 10000);
+
+        $fee = (int) round($nominalTagihan * $persen / 100);
+
+        return min($fee, $cap);
+    }
+
     public static function pesanAman(mixed $pesan, string $default = 'Gagal membuat pembayaran'): string
     {
         if (is_string($pesan) && $pesan !== '') {

@@ -26,6 +26,7 @@ class Pembayaran extends Model
         'ppdb_id',
         'kode',
         'nominal',
+        'fee_admin',
         'metode',
         'diinput_oleh',
         'diverifikasi_oleh',

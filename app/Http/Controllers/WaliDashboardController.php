@@ -555,6 +555,8 @@ class WaliDashboardController extends Controller
         );
 
         $amount = (int) ($tagihan->nominal - $tagihan->nominal_terbayar);
+        $feeAdmin = \App\Services\DokuService::hitungFee($amount);
+        $amountCharged = $amount + $feeAdmin; // yang di-charge ke wali murid (tagihan + fee admin Qinara)
         $referenceId = 'TAGIHAN-' . $tagihan->id . '-' . time();
         $channel = $request->payment_method;
 
@@ -572,7 +574,7 @@ class WaliDashboardController extends Controller
             if ($channel === 'VA') {
                 $result = $doku->buatVaLangsung(
                     referenceId: $referenceId,
-                    amount: $amount,
+                    amount: $amountCharged,
                     judul: $tagihan->judul,
                     customerName: $customerName,
                     customerEmail: $customerEmail,
@@ -588,7 +590,7 @@ class WaliDashboardController extends Controller
             } elseif ($channel === 'QRIS') {
                 $result = $doku->buatQris(
                     referenceId: $referenceId,
-                    amount: $amount,
+                    amount: $amountCharged,
                 );
 
                 // TODO: field gambar/string QR PERLU dicocokkan dengan
@@ -604,7 +606,7 @@ class WaliDashboardController extends Controller
                 $result = $doku->buatEwalletSnap(
                     channel: $channel === 'DANA' ? 'EMONEY_DANA_SNAP' : 'EMONEY_SHOPEE_PAY_SNAP',
                     referenceId: $referenceId,
-                    amount: $amount,
+                    amount: $amountCharged,
                     returnUrl: route('wali.keuangan'),
                 );
 
@@ -617,7 +619,7 @@ class WaliDashboardController extends Controller
                 $result = $doku->buatOtc(
                     toko: $channel,
                     referenceId: $referenceId,
-                    amount: $amount,
+                    amount: $amountCharged,
                     customerName: $customerName,
                     customerEmail: $customerEmail,
                 );
@@ -631,7 +633,7 @@ class WaliDashboardController extends Controller
             } else { // OVO
                 $result = $doku->buatOvo(
                     referenceId: $referenceId,
-                    amount: $amount,
+                    amount: $amountCharged,
                     ovoId: $request->ovo_phone,
                 );
 
@@ -639,6 +641,7 @@ class WaliDashboardController extends Controller
                     'tagihan_id' => $tagihan->id,
                     'siswa_id'   => $siswa->id,
                     'nominal'    => $amount,
+                    'fee_admin'  => $feeAdmin,
                     'metode'     => 'gateway',
                     'gateway'    => 'doku',
                     'status'     => 'pending',
@@ -666,6 +669,7 @@ class WaliDashboardController extends Controller
             'tagihan_id' => $tagihan->id,
             'siswa_id'   => $siswa->id,
             'nominal'    => $amount,
+            'fee_admin'  => $feeAdmin,
             'metode'     => 'gateway',
             'gateway'    => 'doku',
             'status'     => 'pending',
@@ -685,6 +689,8 @@ class WaliDashboardController extends Controller
             'referenceId' => $referenceId,
             'judul' => $tagihan->judul,
             'amount' => $amount,
+            'feeAdmin' => $feeAdmin,
+            'amountCharged' => $amountCharged,
             'channel' => $channel,
             'vaNumber' => $vaNumber,
             'qrString' => $qrString,
