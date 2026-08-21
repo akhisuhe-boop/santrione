@@ -448,25 +448,59 @@
 
         </div>
 
-        <a
-        href="{{ route('wali.pembayaran.doku.form', $tagihan) }}"
-        class="
-            mt-5
-            flex
-            items-center
-            justify-center
-            w-full
-            h-10
-            rounded-2xl
-            bg-yellow-500
-            hover:bg-yellow-600
-            text-white
-            text-sm
-            font-semibold
-            transition
-        ">
-        Bayar Dengan DOKU
-    </a>
+        @if($isCicilan)
+
+            <form method="GET" action="{{ route('wali.pembayaran.doku.form', $tagihan) }}" class="mt-5">
+
+                <div class="mb-3">
+
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm font-medium text-slate-700">Nominal Pembayaran</span>
+                        <span class="text-xs text-slate-500">Sisa Rp {{ number_format($sisaTagihan,0,',','.') }}</span>
+                    </div>
+
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-medium">Rp</span>
+                        <input
+                            type="number"
+                            name="nominal"
+                            value="{{ $sisaTagihan }}"
+                            min="1000"
+                            max="{{ $sisaTagihan }}"
+                            required
+                            class="w-full pl-12 pr-4 py-3 rounded-2xl border border-slate-200 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full flex items-center justify-center h-10 rounded-2xl bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-semibold transition">
+                    Bayar Dengan DOKU
+                </button>
+
+            </form>
+
+        @else
+
+            <a
+            href="{{ route('wali.pembayaran.doku.form', $tagihan) }}"
+            class="
+                mt-5
+                flex
+                items-center
+                justify-center
+                w-full
+                h-10
+                rounded-2xl
+                bg-yellow-500
+                hover:bg-yellow-600
+                text-white
+                text-sm
+                font-semibold
+                transition
+            ">
+            Bayar Dengan DOKU
+        </a>
+
+        @endif
 
     </div>
 

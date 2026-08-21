@@ -555,7 +555,19 @@ class WaliDashboardController extends Controller
             403
         );
 
-        $amount = (int) ($tagihan->nominal - $tagihan->nominal_terbayar);
+        $sisaTagihan = (int) ($tagihan->nominal - $tagihan->nominal_terbayar);
+
+        // Tagihan cicilan boleh bayar sebagian -- nominal parsial yang
+        // sudah divalidasi & disimpan session oleh showDokuForm(). Kalau
+        // bukan cicilan (atau session kosong), tetap default bayar penuh
+        // sisa tagihan seperti sebelumnya.
+        $sessionKey = 'cicilan_nominal_' . $tagihan->id;
+        $amount = ($tagihan->jenisTagihan?->is_cicilan && session()->has($sessionKey))
+            ? min((int) session($sessionKey), $sisaTagihan)
+            : $sisaTagihan;
+
+        session()->forget($sessionKey);
+
         $referenceId = 'TAGIHAN-' . $tagihan->id . '-' . time();
         $channel = $request->payment_method;
         $feeAdmin = \App\Services\DokuService::hitungFeeTotal($amount, $channel); // fee Qinara + fee DOKU digabung
@@ -721,11 +733,24 @@ class WaliDashboardController extends Controller
         ]);
     }
 
-    public function showDokuForm(Tagihan $tagihan)
+    public function showDokuForm(Tagihan $tagihan, Request $request)
     {
         $siswa = Siswa::findOrFail(session('siswa_id'));
 
         abort_if($tagihan->siswa_id !== $siswa->id, 403);
+
+        // Tagihan cicilan -- nominal parsial dikirim lewat query string
+        // dari form nominal di halaman sebelumnya (wali/pembayaran.blade.php),
+        // divalidasi & disimpan di session supaya bisa dibaca lagi oleh
+        // doku() saat wali submit pilihan metode pembayaran.
+        if ($tagihan->jenisTagihan?->is_cicilan && $request->filled('nominal')) {
+            $sisaTagihan = (int) ($tagihan->nominal - $tagihan->nominal_terbayar);
+            $nominal = min((int) $request->nominal, $sisaTagihan);
+
+            if ($nominal > 0) {
+                session(['cicilan_nominal_' . $tagihan->id => $nominal]);
+            }
+        }
 
         return view('wali.doku', compact('tagihan'));
     }
