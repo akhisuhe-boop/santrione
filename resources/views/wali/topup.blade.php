@@ -35,7 +35,7 @@
             <p class="text-slate-500 text-sm">Pilih nominal atau masukkan sendiri</p>
         </div>
 
-        <form method="POST" action="{{ route('wali.topup.store') }}">
+        <form method="POST" action="{{ route('wali.topup.pilih-nominal') }}">
             @csrf
 
             {{-- QUICK AMOUNT --}}
@@ -100,60 +100,6 @@
                 </div>
             </div>
 
-            {{-- METODE PEMBAYARAN --}}
-            <div class="mb-6">
-                <label class="block text-sm font-medium text-slate-700 mb-2">Metode Pembayaran</label>
-
-                {{-- VA --}}
-                <label class="flex items-center gap-2 p-3 rounded-2xl border border-slate-200 has-[:checked]:border-[#00A39D] has-[:checked]:bg-[#00A39D]/5 cursor-pointer mb-2">
-                    <input type="radio" name="payment_method" value="VA" checked class="accent-[#00A39D]" onchange="toggleTopupVA(true)">
-                    <span class="text-sm font-medium text-slate-700">Virtual Account</span>
-                </label>
-
-                <div id="topup-va-bank" class="grid grid-cols-3 gap-2 mb-3">
-                    @foreach(['BCA' => 'bca', 'BNI' => 'bni', 'BRI' => 'bri', 'BSI' => 'bsi', 'MANDIRI' => 'mandiri', 'BJB' => 'bjb'] as $kode => $file)
-                        <label class="flex items-center justify-center p-2.5 h-14 rounded-xl border border-slate-200 has-[:checked]:border-[#00A39D] has-[:checked]:ring-2 has-[:checked]:ring-[#00A39D]/30 cursor-pointer bg-white">
-                            <input type="radio" name="bank" value="{{ $kode }}" {{ $loop->first ? 'checked' : '' }} class="hidden">
-                            <img src="{{ asset('images/payment-logos/' . $file . '.png') }}" alt="{{ $kode }}" class="max-h-5 max-w-[85%] object-contain">
-                        </label>
-                    @endforeach
-                </div>
-
-                {{-- QRIS --}}
-                <label class="flex items-center gap-3 p-3 rounded-2xl border border-slate-200 has-[:checked]:border-[#00A39D] has-[:checked]:bg-[#00A39D]/5 cursor-pointer mb-2">
-                    <input type="radio" name="payment_method" value="QRIS" class="accent-[#00A39D]" onchange="toggleTopupVA(false)">
-                    <img src="{{ asset('images/payment-logos/qris.png') }}" alt="QRIS" class="h-5 object-contain">
-                    <span class="text-sm font-medium text-slate-700">QRIS</span>
-                </label>
-
-                {{-- E-WALLET --}}
-                <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-3 mb-2">E-Wallet</div>
-                <div class="grid grid-cols-3 gap-2 mb-3">
-                    @foreach(['DANA' => 'dana', 'SHOPEEPAY' => 'shopeepay', 'OVO' => 'ovo'] as $val => $file)
-                        <label class="flex items-center justify-center p-2.5 h-14 rounded-xl border border-slate-200 has-[:checked]:border-[#00A39D] has-[:checked]:ring-2 has-[:checked]:ring-[#00A39D]/30 cursor-pointer bg-white">
-                            <input type="radio" name="payment_method" value="{{ $val }}" class="hidden" onchange="toggleTopupVA(false); toggleOvoField('{{ $val }}');">
-                            <img src="{{ asset('images/payment-logos/' . $file . '.png') }}" alt="{{ $val }}" class="max-h-5 max-w-[85%] object-contain">
-                        </label>
-                    @endforeach
-                </div>
-
-                <div id="topup-ovo-phone" class="hidden mb-3">
-                    <input type="tel" name="ovo_phone" placeholder="Nomor HP terdaftar OVO, mis. 08123456789"
-                           class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#00A39D]/30 focus:border-[#00A39D] outline-none transition">
-                </div>
-
-                {{-- MINIMARKET --}}
-                <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Minimarket</div>
-                <div class="grid grid-cols-2 gap-2">
-                    @foreach(['ALFAMART' => 'alfamart', 'INDOMARET' => 'indomaret'] as $val => $file)
-                        <label class="flex items-center justify-center p-2.5 h-14 rounded-xl border border-slate-200 has-[:checked]:border-[#00A39D] has-[:checked]:ring-2 has-[:checked]:ring-[#00A39D]/30 cursor-pointer bg-white">
-                            <input type="radio" name="payment_method" value="{{ $val }}" class="hidden" onchange="toggleTopupVA(false)">
-                            <img src="{{ asset('images/payment-logos/' . $file . '.png') }}" alt="{{ $val }}" class="max-h-5 max-w-[85%] object-contain">
-                        </label>
-                    @endforeach
-                </div>
-            </div>
-
             {{-- BUTTON --}}
             <button type="submit"
                 class="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-500
@@ -168,14 +114,5 @@
         </form>
     </div>
 </div>
-
-<script>
-function toggleTopupVA(show) {
-    document.getElementById('topup-va-bank').classList.toggle('hidden', !show);
-}
-function toggleOvoField(val) {
-    document.getElementById('topup-ovo-phone').classList.toggle('hidden', val !== 'OVO');
-}
-</script>
 
 @endsection

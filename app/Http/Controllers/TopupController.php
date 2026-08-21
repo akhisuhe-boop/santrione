@@ -25,12 +25,48 @@ class TopupController extends Controller
         ]);
     }
 
-    public function store(Request $request, DokuService $doku)
+    /**
+     * Langkah 1: simpan nominal yang dipilih ke session, lalu arahkan
+     * ke halaman pilih metode pembayaran -- alurnya disamakan dengan
+     * pembayaran tagihan (pilih dulu apa yang mau dibayar/berapa,
+     * BARU pilih metode, bukan digabung 1 form panjang).
+     */
+    public function pilihNominal(Request $request)
     {
         $amount = (int) ($request->custom_amount ?: $request->amount);
 
         if (!$amount || $amount < 10000) {
             return back()->with('error', 'Nominal minimal Rp 10.000');
+        }
+
+        session(['topup_amount' => $amount]);
+
+        return redirect()->route('wali.topup.metode');
+    }
+
+    /**
+     * Langkah 2: halaman pilih metode pembayaran (VA/QRIS/e-wallet/
+     * minimarket), tampilan SAMA seperti wali/pembayaran/{tagihan}/doku
+     * (resources/views/wali/topup-metode.blade.php meniru
+     * wali/doku.blade.php).
+     */
+    public function showMetode()
+    {
+        $amount = session('topup_amount');
+
+        if (!$amount) {
+            return redirect()->route('wali.topup')->with('error', 'Silakan pilih nominal top up terlebih dahulu.');
+        }
+
+        return view('wali.topup-metode', ['amount' => $amount]);
+    }
+
+    public function store(Request $request, DokuService $doku)
+    {
+        $amount = (int) session('topup_amount');
+
+        if (!$amount || $amount < 10000) {
+            return redirect()->route('wali.topup')->with('error', 'Silakan pilih nominal top up terlebih dahulu.');
         }
 
         $request->validate([
@@ -60,6 +96,7 @@ class TopupController extends Controller
         $amountCharged = $amount + $feeAdmin; // yang di-charge ke wali; saldo wallet tetap dikredit $amount penuh
 
         $reference = 'TOPUP-' . $siswa->id . '-' . time();
+        session()->forget('topup_amount');
 
         $trx = WalletTransaction::create([
             'wallet_id'    => $wallet->id,

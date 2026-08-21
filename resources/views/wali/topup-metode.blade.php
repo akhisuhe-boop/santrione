@@ -18,6 +18,11 @@
             <p class="text-sm text-slate-500 mt-0.5">Pilih salah satu metode di bawah</p>
         </div>
 
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 mb-4 flex items-center justify-between">
+            <div class="text-sm text-slate-500">Nominal Top Up</div>
+            <div class="text-lg font-bold text-slate-900">Rp {{ number_format($amount, 0, ',', '.') }}</div>
+        </div>
+
         <div class="bg-white rounded-3xl border border-slate-200/80 shadow-sm divide-y divide-slate-100 overflow-hidden">
 
             {{-- VIRTUAL ACCOUNT --}}
@@ -36,7 +41,7 @@
             <div id="va-bank-list" class="hidden bg-slate-50/60 px-4 py-3">
                 <div class="grid grid-cols-3 gap-2">
                     @foreach(['BCA' => 'bca', 'BNI' => 'bni', 'BRI' => 'bri', 'BSI' => 'bsi', 'MANDIRI' => 'mandiri', 'BJB' => 'bjb'] as $kode => $file)
-                        <form method="POST" action="{{ route('wali.pembayaran.doku', $tagihan) }}">
+                        <form method="POST" action="{{ route('wali.topup.store') }}">
                             @csrf
                             <input type="hidden" name="payment_method" value="VA">
                             <input type="hidden" name="bank" value="{{ $kode }}">
@@ -49,7 +54,7 @@
             </div>
 
             {{-- QRIS --}}
-            <form method="POST" action="{{ route('wali.pembayaran.doku', $tagihan) }}">
+            <form method="POST" action="{{ route('wali.topup.store') }}">
                 @csrf
                 <input type="hidden" name="payment_method" value="QRIS">
                 <button type="submit" class="w-full flex items-center gap-3.5 p-4 hover:bg-slate-50/80 transition-colors text-left">
@@ -65,7 +70,7 @@
             </form>
 
             {{-- E-WALLET --}}
-            <form method="POST" action="{{ route('wali.pembayaran.doku', $tagihan) }}">
+            <form method="POST" action="{{ route('wali.topup.store') }}">
                 @csrf
                 <input type="hidden" name="payment_method" value="DANA">
                 <button type="submit" class="w-full flex items-center gap-3.5 p-4 hover:bg-slate-50/80 transition-colors text-left">
@@ -80,7 +85,7 @@
                 </button>
             </form>
 
-            <form method="POST" action="{{ route('wali.pembayaran.doku', $tagihan) }}">
+            <form method="POST" action="{{ route('wali.topup.store') }}">
                 @csrf
                 <input type="hidden" name="payment_method" value="SHOPEEPAY">
                 <button type="submit" class="w-full flex items-center gap-3.5 p-4 hover:bg-slate-50/80 transition-colors text-left">
@@ -108,7 +113,7 @@
             </button>
 
             {{-- MINIMARKET --}}
-            <form method="POST" action="{{ route('wali.pembayaran.doku', $tagihan) }}">
+            <form method="POST" action="{{ route('wali.topup.store') }}">
                 @csrf
                 <input type="hidden" name="payment_method" value="ALFAMART">
                 <button type="submit" class="w-full flex items-center gap-3.5 p-4 hover:bg-slate-50/80 transition-colors text-left">
@@ -123,7 +128,7 @@
                 </button>
             </form>
 
-            <form method="POST" action="{{ route('wali.pembayaran.doku', $tagihan) }}">
+            <form method="POST" action="{{ route('wali.topup.store') }}">
                 @csrf
                 <input type="hidden" name="payment_method" value="INDOMARET">
                 <button type="submit" class="w-full flex items-center gap-3.5 p-4 hover:bg-slate-50/80 transition-colors text-left">
@@ -156,7 +161,7 @@
         <p class="text-xs text-slate-500 mb-4 leading-relaxed">
             Masukkan nomor HP yang terdaftar di OVO. Notifikasi approve pembayaran akan muncul di aplikasi OVO Anda (proses bisa memakan waktu sampai 1 menit).
         </p>
-        <form method="POST" action="{{ route('wali.pembayaran.doku', $tagihan) }}">
+        <form method="POST" action="{{ route('wali.topup.store') }}">
             @csrf
             <input type="hidden" name="payment_method" value="OVO">
             <input type="tel" name="ovo_phone" placeholder="08123456789" required minlength="9" maxlength="15"

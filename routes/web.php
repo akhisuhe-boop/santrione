@@ -245,6 +245,8 @@ Route::prefix('wali')->group(function () {
         Route::post('/izin-tidak-masuk', [WaliDashboardController::class, 'storeIzinTidakMasuk'])->name('wali.izin-tidak-masuk.store');
 
         Route::get('/topup', [TopupController::class, 'index'])->name('wali.topup');
+        Route::post('/topup/pilih-nominal', [TopupController::class, 'pilihNominal'])->name('wali.topup.pilih-nominal');
+        Route::get('/topup/metode', [TopupController::class, 'showMetode'])->name('wali.topup.metode');
         Route::post('/topup', [TopupController::class, 'store'])->name('wali.topup.store');
         Route::get('/topup/status/{reference}', [TopupController::class, 'status'])->name('wali.topup.status');
 
