@@ -543,7 +543,8 @@ class WaliDashboardController extends Controller
     )
     {
         $request->validate([
-            'payment_method' => 'required|in:VA,QRIS'
+            'payment_method' => 'required|in:VA,QRIS,DANA,SHOPEEPAY,ALFAMART,INDOMARET,OVO',
+            'ovo_phone' => 'required_if:payment_method,OVO|nullable|string|min:9|max:15',
         ]);
 
         $siswa = Siswa::findOrFail(session('siswa_id'));
@@ -558,6 +559,14 @@ class WaliDashboardController extends Controller
         $channel = $request->payment_method;
 
         $lembaga = $tagihan->siswa?->lembaga;
+        $customerName = $siswa->nama_lengkap;
+        $customerEmail = \App\Services\DokuService::emailAman($siswa->email, $siswa->wa_wali ?? $siswa->id);
+
+        $vaNumber = null;
+        $qrString = null;
+        $paymentCode = null;
+        $redirectUrl = null;
+        $howToPayPage = null;
 
         try {
             if ($channel === 'VA') {
@@ -565,15 +574,18 @@ class WaliDashboardController extends Controller
                     referenceId: $referenceId,
                     amount: $amount,
                     judul: $tagihan->judul,
+                    customerName: $customerName,
+                    customerEmail: $customerEmail,
                     dokuSubAccountId: $lembaga?->doku_sub_account_id,
                 );
 
                 $vaNumber = $result['virtual_account_info']['virtual_account_number'] ?? null;
+                $howToPayPage = $result['virtual_account_info']['how_to_pay_page'] ?? null;
 
                 if (!$vaNumber) {
                     return back()->with('error', \App\Services\DokuService::pesanAman($result['message'] ?? $result['error']['message'] ?? null));
                 }
-            } else {
+            } elseif ($channel === 'QRIS') {
                 $result = $doku->buatQris(
                     referenceId: $referenceId,
                     amount: $amount,
@@ -582,13 +594,69 @@ class WaliDashboardController extends Controller
                 // TODO: field gambar/string QR PERLU dicocokkan dengan
                 // respons asli sandbox (belum bisa dipastikan 100% dari
                 // dokumentasi publik) -- lihat catatan lengkap di
-                // DokuService::buatQris(). Dicoba beberapa kemungkinan
-                // field yang umum dipakai skema SNAP QRIS.
+                // DokuService::buatQris().
                 $qrString = $result['qrContent'] ?? $result['qrUrl'] ?? null;
 
                 if (!$qrString) {
                     return back()->with('error', \App\Services\DokuService::pesanAman($result['message'] ?? $result['responseMessage'] ?? null));
                 }
+            } elseif (in_array($channel, ['DANA', 'SHOPEEPAY'], true)) {
+                $result = $doku->buatEwalletSnap(
+                    channel: $channel === 'DANA' ? 'EMONEY_DANA_SNAP' : 'EMONEY_SHOPEE_PAY_SNAP',
+                    referenceId: $referenceId,
+                    amount: $amount,
+                    returnUrl: route('wali.keuangan'),
+                );
+
+                $redirectUrl = $result['webRedirectUrl'] ?? null;
+
+                if (!$redirectUrl) {
+                    return back()->with('error', \App\Services\DokuService::pesanAman($result['responseMessage'] ?? null));
+                }
+            } elseif (in_array($channel, ['ALFAMART', 'INDOMARET'], true)) {
+                $result = $doku->buatOtc(
+                    toko: $channel,
+                    referenceId: $referenceId,
+                    amount: $amount,
+                    customerName: $customerName,
+                    customerEmail: $customerEmail,
+                );
+
+                $paymentCode = $result['online_to_offline_info']['payment_code'] ?? null;
+                $howToPayPage = $result['online_to_offline_info']['how_to_pay_page'] ?? null;
+
+                if (!$paymentCode) {
+                    return back()->with('error', \App\Services\DokuService::pesanAman($result['message'] ?? $result['error']['message'] ?? null));
+                }
+            } else { // OVO
+                $result = $doku->buatOvo(
+                    referenceId: $referenceId,
+                    amount: $amount,
+                    ovoId: $request->ovo_phone,
+                );
+
+                Pembayaran::create([
+                    'tagihan_id' => $tagihan->id,
+                    'siswa_id'   => $siswa->id,
+                    'nominal'    => $amount,
+                    'metode'     => 'gateway',
+                    'gateway'    => 'doku',
+                    'status'     => 'pending',
+                    'reference'  => $referenceId,
+                ]);
+
+                // OVO Push Payment BLOCKING -- respons langsung berisi
+                // hasil approve/tolak/timeout dari HP customer (bukan
+                // link/kode untuk ditunda). Webhook tetap dipasang
+                // sebagai jaring pengaman, tapi untuk OVO biasanya
+                // status sudah bisa langsung diketahui dari respons ini.
+                $statusOvo = $result['transaction']['status'] ?? null;
+
+                return redirect()->route('wali.pembayaran.show', $tagihan)
+                    ->with(
+                        $statusOvo === 'SUCCESS' ? 'success' : 'error',
+                        'Status OVO: ' . \App\Services\DokuService::pesanAman($result['message'] ?? null, 'Menunggu konfirmasi dari HP Anda')
+                    );
             }
         } catch (\Throwable $e) {
             return back()->with('error', 'Gagal membuat pembayaran: ' . $e->getMessage());
@@ -604,6 +672,12 @@ class WaliDashboardController extends Controller
             'reference'  => $referenceId,
         ]);
 
+        // DANA/ShopeePay langsung redirect (app-to-app), tidak perlu
+        // halaman checkout custom.
+        if ($redirectUrl) {
+            return redirect()->away($redirectUrl);
+        }
+
         return view('payment.checkout', [
             'layout' => 'wali.layout.wali',
             'namaLembaga' => $lembaga?->nama ?? $siswa->yayasan?->nama ?? 'Qinara',
@@ -612,9 +686,11 @@ class WaliDashboardController extends Controller
             'judul' => $tagihan->judul,
             'amount' => $amount,
             'channel' => $channel,
-            'vaNumber' => $vaNumber ?? null,
-            'qrString' => $qrString ?? null,
-            'countdownTo' => now()->addMinutes(60)->toIso8601String(),
+            'vaNumber' => $vaNumber,
+            'qrString' => $qrString,
+            'paymentCode' => $paymentCode,
+            'howToPayPage' => $howToPayPage,
+            'countdownTo' => now()->addMinutes(in_array($channel, ['ALFAMART', 'INDOMARET'], true) ? 1440 : 60)->toIso8601String(),
             'statusUrl' => route('wali.pembayaran.doku.status', $referenceId),
             'successUrl' => route('wali.keuangan'),
         ]);

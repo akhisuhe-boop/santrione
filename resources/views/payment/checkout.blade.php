@@ -89,6 +89,24 @@
                     </div>
                 </div>
 
+            @elseif($channel === 'ALFAMART' || $channel === 'INDOMARET')
+
+                <div class="text-sm font-semibold text-slate-900 mb-1">Bayar di {{ ucfirst(strtolower($channel)) }}</div>
+                <p class="text-xs text-slate-500 mb-4">
+                    Tunjukkan kode ini ke kasir {{ ucfirst(strtolower($channel)) }} terdekat untuk membayar tunai.
+                </p>
+
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-center justify-between gap-3">
+                    <div class="text-xl font-mono font-bold tracking-widest text-slate-900 break-all">
+                        {{ $paymentCode }}
+                    </div>
+                    <button type="button" onclick="copyToClipboard('{{ $paymentCode }}', this)"
+                            class="shrink-0 flex items-center gap-1 px-3 py-2 rounded-xl bg-[#00A39D]/10 text-[#00A39D] text-xs font-semibold">
+                        <x-heroicon-o-clipboard-document class="w-4 h-4" />
+                        Salin
+                    </button>
+                </div>
+
             @endif
 
         </div>

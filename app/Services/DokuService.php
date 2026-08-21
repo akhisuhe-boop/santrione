@@ -180,7 +180,7 @@ class DokuService
         $digest = $this->generateDigest($rawBody);
         $signature = $this->generateSignature($requestId, $timestamp, $path, $digest);
 
-        $response = Http::withHeaders([
+        $response = Http::timeout(25)->withHeaders([
             'Client-Id' => $this->clientId(),
             'Request-Id' => $requestId,
             'Request-Timestamp' => $timestamp,
@@ -414,6 +414,8 @@ class DokuService
         string $referenceId,
         int $amount,
         string $judul,
+        string $customerName,
+        string $customerEmail,
         ?string $dokuSubAccountId = null
     ): array {
         $body = [
@@ -425,6 +427,13 @@ class DokuService
                 'expired_time' => 60, // menit
                 'reusable_status' => false,
                 'info1' => 'Qinara - ' . $judul,
+            ],
+            // WAJIB -- endpoint VA langsung (beda dari Checkout Link)
+            // menolak request tanpa customer, konfirmasi dari respons
+            // error sandbox: {"error":{"message":"customer is required"}}
+            'customer' => [
+                'name' => $customerName,
+                'email' => $customerEmail,
             ],
         ];
 
@@ -500,7 +509,7 @@ class DokuService
 
         openssl_sign($stringToSign, $signature, $privateKeyResource, OPENSSL_ALGO_SHA256);
 
-        $response = Http::withHeaders([
+        $response = Http::timeout(25)->withHeaders([
             'X-CLIENT-KEY' => $this->clientId(),
             'X-TIMESTAMP' => $timestamp,
             'X-SIGNATURE' => base64_encode($signature),
@@ -566,7 +575,7 @@ class DokuService
         $stringToSign = "POST:{$path}:{$token}:{$bodyHash}:{$timestamp}";
         $signature = base64_encode(hash_hmac('sha512', $stringToSign, $this->secretKey(), true));
 
-        $response = Http::withHeaders([
+        $response = Http::timeout(25)->withHeaders([
             'X-PARTNER-ID' => $this->clientId(),
             'X-EXTERNAL-ID' => $externalId,
             'X-TIMESTAMP' => $timestamp,
@@ -588,6 +597,200 @@ class DokuService
         $result = $response->json() ?? [];
 
         Log::info('DokuService::buatQris sukses', [
+            'reference' => $referenceId,
+            'full_response' => $result,
+        ]);
+
+        return $result;
+    }
+
+    /**
+     * DANA & ShopeePay (SNAP, satu endpoint dipakai untuk keduanya --
+     * dibedakan lewat additionalInfo.channel). Hasilnya link
+     * "webRedirectUrl" -- customer diarahkan ke app DANA/ShopeePay untuk
+     * approve pembayaran, lalu balik lagi ke Qinara. Endpoint &
+     * struktur body dikonfirmasi resmi dari
+     * developers.doku.com/.../e-wallet/dana & /shopeepay.
+     *
+     * $channel: 'EMONEY_DANA_SNAP' atau 'EMONEY_SHOPEE_PAY_SNAP'.
+     *
+     * PERLU getAccessToken() berhasil dulu -- lihat catatan setup
+     * keypair RSA di getAccessToken().
+     */
+    public function buatEwalletSnap(string $channel, string $referenceId, int $amount, string $returnUrl): array
+    {
+        $token = $this->getAccessToken();
+        $timestamp = $this->requestTimestamp();
+        $externalId = (string) random_int(1000000000, 9999999999);
+        $path = '/direct-debit/core/v1/debit/payment-host-to-host';
+
+        $body = [
+            'partnerReferenceNo' => $referenceId,
+            'pointOfInitiation' => 'mweb', // mobile web (browser) -- bukan 'app' karena Qinara bukan native app
+            'urlParam' => [
+                'url' => $returnUrl,
+                'type' => 'PAY_RETURN',
+                'isDeepLink' => 'Y',
+            ],
+            'amount' => [
+                'value' => number_format($amount, 2, '.', ''),
+                'currency' => 'IDR',
+            ],
+            'additionalInfo' => [
+                'channel' => $channel,
+            ],
+        ];
+
+        $rawBody = json_encode($body, JSON_UNESCAPED_SLASHES);
+        $bodyHash = strtolower(hash('sha256', $rawBody));
+        $stringToSign = "POST:{$path}:{$token}:{$bodyHash}:{$timestamp}";
+        $signature = base64_encode(hash_hmac('sha512', $stringToSign, $this->secretKey(), true));
+
+        $response = Http::timeout(25)->withHeaders([
+            'X-PARTNER-ID' => $this->clientId(),
+            'X-EXTERNAL-ID' => $externalId,
+            'X-TIMESTAMP' => $timestamp,
+            'X-SIGNATURE' => $signature,
+            'Authorization' => 'Bearer ' . $token,
+            'Content-Type' => 'application/json',
+        ])->withBody($rawBody, 'application/json')
+            ->post($this->baseUrl() . $path);
+
+        if ($response->failed()) {
+            Log::error('DokuService::buatEwalletSnap gagal', [
+                'channel' => $channel,
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            throw new RuntimeException('Gagal membuat pembayaran e-wallet DOKU: ' . $response->body());
+        }
+
+        $result = $response->json() ?? [];
+
+        Log::info('DokuService::buatEwalletSnap sukses', [
+            'reference' => $referenceId,
+            'channel' => $channel,
+            'full_response' => $result,
+        ]);
+
+        return $result;
+    }
+
+    /**
+     * Alfamart / Indomaret (Over The Counter -- O2O) -- Non-SNAP, skema
+     * & struktur body SAMA PERSIS dengan buatVaLangsung() yang sudah
+     * terbukti sukses (order/customer/online_to_offline_info), cuma
+     * beda endpoint & nama field respons (payment_code, bukan
+     * virtual_account_number). Struktur body dikonfirmasi resmi dari
+     * contoh developers.doku.com/.../convenience-store/indomaret.
+     *
+     * $toko: 'INDOMARET' atau 'ALFAMART'.
+     *
+     * CATATAN: path endpoint Alfamart BELUM 100% dikonfirmasi dari
+     * dokumentasi publik yang saya baca (Indomaret sudah, contoh
+     * lengkap dengan body & respons) -- saya samakan polanya mengikuti
+     * konvensi penamaan DOKU yang konsisten di semua channel lain
+     * (`{channel}-online-to-offline/v2/payment-code`). Kalau ternyata
+     * beda utnuk Alfamart, cek log error & sesuaikan path di bawah.
+     */
+    public function buatOtc(
+        string $toko,
+        string $referenceId,
+        int $amount,
+        string $customerName,
+        string $customerEmail
+    ): array {
+        $path = match (strtoupper($toko)) {
+            'INDOMARET' => '/indomaret-online-to-offline/v2/payment-code',
+            'ALFAMART' => '/alfa-online-to-offline/v2/payment-code',
+            default => throw new RuntimeException('Toko tidak dikenali: ' . $toko),
+        };
+
+        $body = [
+            'order' => [
+                'invoice_number' => $referenceId,
+                'amount' => $amount,
+            ],
+            'online_to_offline_info' => [
+                'expired_time' => 1440, // menit -- 24 jam, wajar untuk bayar di minimarket (tidak instan seperti VA)
+                'reusable_status' => false,
+                'info' => 'Pembayaran Qinara',
+            ],
+            'customer' => [
+                'name' => $customerName,
+                'email' => $customerEmail,
+            ],
+        ];
+
+        $result = $this->post($path, $body);
+
+        Log::info('DokuService::buatOtc sukses', [
+            'toko' => $toko,
+            'reference' => $referenceId,
+            'full_response' => $result,
+        ]);
+
+        return $result;
+    }
+
+    /**
+     * OVO Push Payment -- BEDA TOTAL dari semua method di atas: bukan
+     * "generate kode lalu customer bayar sendiri kapan saja", tapi
+     * DOKU langsung PUSH notifikasi ke aplikasi OVO milik nomor HP yang
+     * dikasih, customer approve dari HP-nya, dan API ini BLOCKING
+     * (nunggu) sampai customer approve/tolak/timeout -- maksimal 70
+     * detik sesuai dokumentasi resmi DOKU. Makanya timeout HTTP
+     * di-set lebih panjang dari method lain (75 detik, bukan 25).
+     *
+     * Skema signature juga beda -- BUKAN HMAC seperti method lain,
+     * tapi checksum SHA256 sederhana dari beberapa field yang
+     * digabung, sesuai contoh resmi:
+     * sha256(amount + client_id + invoice_number + ovo_id + secret_key)
+     *
+     * PERLU nomor HP yang terdaftar di OVO ($ovoId, format
+     * "081234567890") -- makanya UI checkout untuk OVO WAJIB minta
+     * input nomor HP dulu sebelum panggil method ini, beda dari
+     * VA/QRIS/OTC yang langsung generate tanpa input tambahan.
+     */
+    public function buatOvo(string $referenceId, int $amount, string $ovoId): array
+    {
+        $checksum = hash('sha256', $amount . $this->clientId() . $referenceId . $ovoId . $this->secretKey());
+
+        $body = [
+            'client' => ['id' => $this->clientId()],
+            'order' => [
+                'invoice_number' => $referenceId,
+                'amount' => $amount,
+            ],
+            'ovo_info' => ['ovo_id' => $ovoId],
+            'security' => ['check_sum' => $checksum],
+        ];
+
+        $rawBody = json_encode($body, JSON_UNESCAPED_SLASHES);
+
+        // PERLU DIVERIFIKASI: path endpoint persis untuk OVO Push
+        // Payment belum dikonfirmasi 100% dari dokumentasi publik yang
+        // saya baca -- ini tebakan berdasar konvensi penamaan channel
+        // lain (ovo-emoney/v2/payment). Sesuaikan begitu dapat respons
+        // asli sandbox.
+        $response = Http::timeout(75)->withHeaders([
+            'Content-Type' => 'application/json',
+        ])->withBody($rawBody, 'application/json')
+            ->post($this->baseUrl() . '/ovo-emoney/v2/payment');
+
+        if ($response->failed()) {
+            Log::error('DokuService::buatOvo gagal', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            throw new RuntimeException('Gagal membuat pembayaran OVO: ' . $response->body());
+        }
+
+        $result = $response->json() ?? [];
+
+        Log::info('DokuService::buatOvo sukses', [
             'reference' => $referenceId,
             'full_response' => $result,
         ]);
