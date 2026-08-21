@@ -13,16 +13,18 @@
             </div>
         @endif
 
-        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0B9A93] via-[#0FA6A1] to-[#17C3B8] p-5 mb-5 shadow-lg shadow-teal-900/10">
-            <div class="absolute -top-8 -right-8 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-            <div class="absolute -bottom-10 -left-6 w-28 h-28 bg-black/10 rounded-full blur-2xl"></div>
-            <div class="relative">
-                <h1 class="text-xl font-bold text-white">Metode Pembayaran</h1>
-                <p class="text-sm text-white/80 mt-0.5">Pilih salah satu metode di bawah</p>
-            </div>
-        </div>
+        <div class="rounded-3xl overflow-hidden shadow-sm border border-slate-200/80">
 
-        <div class="bg-white rounded-3xl border border-slate-200/80 shadow-sm divide-y divide-slate-100 overflow-hidden">
+            <div class="relative overflow-hidden bg-gradient-to-br from-[#0B9A93] via-[#0FA6A1] to-[#17C3B8] p-5">
+                <div class="absolute -top-8 -right-8 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+                <div class="absolute -bottom-10 -left-6 w-28 h-28 bg-black/10 rounded-full blur-2xl"></div>
+                <div class="relative">
+                    <h1 class="text-xl font-bold text-white">Metode Pembayaran</h1>
+                    <p class="text-sm text-white/80 mt-0.5">Pilih salah satu metode di bawah</p>
+                </div>
+            </div>
+
+            <div class="bg-white divide-y divide-slate-100">
 
             {{-- VIRTUAL ACCOUNT --}}
             <button type="button" onclick="toggleVA()"
@@ -142,6 +144,7 @@
                 </button>
             </form>
 
+            </div>
         </div>
 
         <div class="flex items-center justify-center gap-1.5 mt-6 text-[11px] text-slate-400">
