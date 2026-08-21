@@ -544,7 +544,7 @@ class WaliDashboardController extends Controller
     {
         $request->validate([
             'payment_method' => 'required|in:VA,QRIS,DANA,SHOPEEPAY,ALFAMART,INDOMARET,OVO',
-            'bank' => 'nullable|in:BCA,BNI,BRI,BSI,MANDIRI',
+            'bank' => 'nullable|in:BCA,BNI,BRI,BSI,MANDIRI,BJB',
             'ovo_phone' => 'required_if:payment_method,OVO|nullable|string|min:9|max:15',
         ]);
 

@@ -2,145 +2,144 @@
 
 @section('content')
 
-<div class="min-h-screen bg-gradient-to-br from-[#F6F8FB] via-white to-[#EEF7F6]">
+<div class="min-h-screen bg-gradient-to-b from-slate-50 to-white">
 
-    <div class="max-w-lg mx-auto px-4 py-8">
+    <div class="max-w-lg mx-auto px-4 py-6">
 
         @if(session('error'))
-            <div class="mb-6 rounded-2xl bg-red-50 border border-red-200 text-red-700 px-5 py-4 text-sm font-medium">
-                {{ session('error') }}
+            <div class="mb-5 rounded-2xl bg-red-50 border border-red-100 text-red-600 px-4 py-3.5 text-sm font-medium flex items-start gap-2.5">
+                <x-heroicon-o-exclamation-circle class="w-5 h-5 shrink-0 mt-0.5" />
+                <span>{{ session('error') }}</span>
             </div>
         @endif
 
-        <div class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
-
-            <div class="relative p-5 overflow-hidden">
-                <div class="absolute inset-0 bg-gradient-to-r from-[#056B66] via-[#0FA6A1] to-[#14B8B0]"></div>
-                <div class="relative">
-                    <div class="text-xl font-semibold text-white">Metode Pembayaran</div>
-                    <div class="text-sm text-white/80 mt-1">Pilih salah satu metode di bawah</div>
-                </div>
-            </div>
-
-            <div class="p-5 space-y-5">
-
-                {{-- VIRTUAL ACCOUNT -- klik buka pilihan bank --}}
-                <div>
-                    <button type="button" onclick="document.getElementById('va-bank-list').classList.toggle('hidden'); this.querySelector('.chevron').classList.toggle('rotate-90');"
-                        class="w-full flex items-center gap-4 p-4 rounded-2xl border border-slate-200 hover:border-[#00A39D] hover:bg-[#00A39D]/5 transition text-left">
-                        <div class="w-12 h-12 rounded-2xl bg-blue-100 flex items-center justify-center shrink-0">
-                            <x-heroicon-o-building-library class="w-6 h-6 text-blue-600" />
-                        </div>
-                        <div class="flex-1">
-                            <div class="font-semibold text-slate-900">Virtual Account</div>
-                            <div class="text-xs text-slate-500 mt-0.5">Pilih bank Anda</div>
-                        </div>
-                        <x-heroicon-o-chevron-right class="chevron w-5 h-5 text-slate-300 transition-transform" />
-                    </button>
-
-                    <div id="va-bank-list" class="hidden mt-2 grid grid-cols-3 gap-2 px-1">
-                        @foreach(['BCA' => 'bca', 'BNI' => 'bni', 'BRI' => 'bri', 'BSI' => 'bsi', 'MANDIRI' => 'mandiri'] as $kode => $file)
-                            <form method="POST" action="{{ route('wali.pembayaran.doku', $tagihan) }}">
-                                @csrf
-                                <input type="hidden" name="payment_method" value="VA">
-                                <input type="hidden" name="bank" value="{{ $kode }}">
-                                <button type="submit" class="w-full flex flex-col items-center justify-center gap-1 p-3 h-16 rounded-2xl border border-slate-200 hover:border-[#00A39D] hover:bg-[#00A39D]/5 transition bg-white">
-                                    <img src="{{ asset('images/payment-logos/' . $file . '.png') }}" alt="{{ $kode }}" class="h-6 object-contain">
-                                </button>
-                            </form>
-                        @endforeach
-                    </div>
-                </div>
-
-                <form method="POST" action="{{ route('wali.pembayaran.doku', $tagihan) }}">
-                    @csrf
-                    <input type="hidden" name="payment_method" value="QRIS">
-                    <button type="submit" class="w-full flex items-center gap-4 p-4 rounded-2xl border border-slate-200 hover:border-[#00A39D] hover:bg-[#00A39D]/5 transition text-left">
-                        <div class="w-12 h-12 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shrink-0">
-                            <img src="{{ asset('images/payment-logos/qris.png') }}" alt="QRIS" class="h-6 object-contain">
-                        </div>
-                        <div class="flex-1">
-                            <div class="font-semibold text-slate-900">QRIS</div>
-                            <div class="text-xs text-slate-500 mt-0.5">Scan pakai e-wallet/m-banking apapun</div>
-                        </div>
-                        <x-heroicon-o-chevron-right class="w-5 h-5 text-slate-300" />
-                    </button>
-                </form>
-
-                {{-- E-WALLET --}}
-                <div>
-                    <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 px-1">E-Wallet</div>
-                    <div class="grid grid-cols-3 gap-2">
-                        @foreach(['DANA' => 'dana', 'SHOPEEPAY' => 'shopeepay', 'OVO' => 'ovo'] as $val => $file)
-                            @if($val === 'OVO')
-                                <button type="button" onclick="document.getElementById('ovo-modal').classList.remove('hidden')"
-                                    class="w-full flex items-center justify-center p-3 h-16 rounded-2xl border border-slate-200 hover:border-[#00A39D] hover:bg-[#00A39D]/5 transition bg-white">
-                                    <img src="{{ asset('images/payment-logos/' . $file . '.png') }}" alt="{{ $val }}" class="h-6 object-contain">
-                                </button>
-                            @else
-                                <form method="POST" action="{{ route('wali.pembayaran.doku', $tagihan) }}">
-                                    @csrf
-                                    <input type="hidden" name="payment_method" value="{{ $val }}">
-                                    <button type="submit" class="w-full flex items-center justify-center p-3 h-16 rounded-2xl border border-slate-200 hover:border-[#00A39D] hover:bg-[#00A39D]/5 transition bg-white">
-                                        <img src="{{ asset('images/payment-logos/' . $file . '.png') }}" alt="{{ $val }}" class="h-6 object-contain">
-                                    </button>
-                                </form>
-                            @endif
-                        @endforeach
-                    </div>
-                </div>
-
-                {{-- MINIMARKET --}}
-                <div>
-                    <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 px-1">Minimarket</div>
-                    <div class="grid grid-cols-2 gap-2">
-                        @foreach(['ALFAMART' => 'alfamart', 'INDOMARET' => 'indomaret'] as $val => $file)
-                            <form method="POST" action="{{ route('wali.pembayaran.doku', $tagihan) }}">
-                                @csrf
-                                <input type="hidden" name="payment_method" value="{{ $val }}">
-                                <button type="submit" class="w-full flex items-center justify-center p-3 h-16 rounded-2xl border border-slate-200 hover:border-[#00A39D] hover:bg-[#00A39D]/5 transition bg-white">
-                                    <img src="{{ asset('images/payment-logos/' . $file . '.png') }}" alt="{{ $val }}" class="h-6 object-contain">
-                                </button>
-                            </form>
-                        @endforeach
-                    </div>
-                </div>
-
-            </div>
-
+        <div class="mb-5">
+            <h1 class="text-xl font-bold text-slate-900">Metode Pembayaran</h1>
+            <p class="text-sm text-slate-500 mt-0.5">Pilih salah satu metode di bawah</p>
         </div>
 
-        <p class="text-center text-xs text-slate-400 mt-4">
-            Secure Checkout &bull; Encrypted &bull; DOKU Gateway
-        </p>
+        {{-- VIRTUAL ACCOUNT --}}
+        <div class="mb-3">
+            <button type="button" onclick="toggleVA()"
+                class="w-full flex items-center gap-3.5 p-4 rounded-2xl bg-white border border-slate-200/80 shadow-sm hover:shadow-md hover:border-[#00A39D]/40 transition-all text-left">
+                <div class="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+                    <x-heroicon-o-building-library class="w-5 h-5 text-blue-500" />
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="font-semibold text-slate-900 text-sm">Virtual Account</div>
+                    <div class="text-xs text-slate-400 mt-0.5">Pilih bank Anda</div>
+                </div>
+                <x-heroicon-o-chevron-down id="va-chevron" class="w-4 h-4 text-slate-300 transition-transform shrink-0" />
+            </button>
+
+            <div id="va-bank-list" class="hidden mt-2 grid grid-cols-3 gap-2">
+                @foreach(['BCA' => 'bca', 'BNI' => 'bni', 'BRI' => 'bri', 'BSI' => 'bsi', 'MANDIRI' => 'mandiri', 'BJB' => 'bjb'] as $kode => $file)
+                    <form method="POST" action="{{ route('wali.pembayaran.doku', $tagihan) }}">
+                        @csrf
+                        <input type="hidden" name="payment_method" value="VA">
+                        <input type="hidden" name="bank" value="{{ $kode }}">
+                        <button type="submit" class="w-full flex items-center justify-center p-2.5 h-14 rounded-xl bg-white border border-slate-200/80 shadow-sm hover:shadow-md hover:border-[#00A39D]/40 transition-all">
+                            <img src="{{ asset('images/payment-logos/' . $file . '.png') }}" alt="{{ $kode }}" class="max-h-5 max-w-[85%] object-contain">
+                        </button>
+                    </form>
+                @endforeach
+            </div>
+        </div>
+
+        {{-- QRIS --}}
+        <form method="POST" action="{{ route('wali.pembayaran.doku', $tagihan) }}" class="mb-5">
+            @csrf
+            <input type="hidden" name="payment_method" value="QRIS">
+            <button type="submit" class="w-full flex items-center gap-3.5 p-4 rounded-2xl bg-white border border-slate-200/80 shadow-sm hover:shadow-md hover:border-[#00A39D]/40 transition-all text-left">
+                <div class="w-11 h-11 rounded-xl bg-white border border-slate-100 flex items-center justify-center shrink-0">
+                    <img src="{{ asset('images/payment-logos/qris.png') }}" alt="QRIS" class="h-5 object-contain">
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="font-semibold text-slate-900 text-sm">QRIS</div>
+                    <div class="text-xs text-slate-400 mt-0.5">Scan pakai e-wallet/m-banking apapun</div>
+                </div>
+                <x-heroicon-o-chevron-right class="w-4 h-4 text-slate-300 shrink-0" />
+            </button>
+        </form>
+
+        {{-- E-WALLET --}}
+        <div class="mb-5">
+            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 px-1">E-Wallet</div>
+            <div class="grid grid-cols-3 gap-2">
+                @foreach(['DANA' => 'dana', 'SHOPEEPAY' => 'shopeepay', 'OVO' => 'ovo'] as $val => $file)
+                    @if($val === 'OVO')
+                        <button type="button" onclick="document.getElementById('ovo-modal').classList.remove('hidden')"
+                            class="w-full flex items-center justify-center p-2.5 h-16 rounded-xl bg-white border border-slate-200/80 shadow-sm hover:shadow-md hover:border-[#00A39D]/40 transition-all">
+                            <img src="{{ asset('images/payment-logos/' . $file . '.png') }}" alt="{{ $val }}" class="max-h-5 max-w-[85%] object-contain">
+                        </button>
+                    @else
+                        <form method="POST" action="{{ route('wali.pembayaran.doku', $tagihan) }}">
+                            @csrf
+                            <input type="hidden" name="payment_method" value="{{ $val }}">
+                            <button type="submit" class="w-full flex items-center justify-center p-2.5 h-16 rounded-xl bg-white border border-slate-200/80 shadow-sm hover:shadow-md hover:border-[#00A39D]/40 transition-all">
+                                <img src="{{ asset('images/payment-logos/' . $file . '.png') }}" alt="{{ $val }}" class="max-h-5 max-w-[85%] object-contain">
+                            </button>
+                        </form>
+                    @endif
+                @endforeach
+            </div>
+        </div>
+
+        {{-- MINIMARKET --}}
+        <div>
+            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 px-1">Minimarket</div>
+            <div class="grid grid-cols-2 gap-2">
+                @foreach(['ALFAMART' => 'alfamart', 'INDOMARET' => 'indomaret'] as $val => $file)
+                    <form method="POST" action="{{ route('wali.pembayaran.doku', $tagihan) }}">
+                        @csrf
+                        <input type="hidden" name="payment_method" value="{{ $val }}">
+                        <button type="submit" class="w-full flex items-center justify-center p-2.5 h-16 rounded-xl bg-white border border-slate-200/80 shadow-sm hover:shadow-md hover:border-[#00A39D]/40 transition-all">
+                            <img src="{{ asset('images/payment-logos/' . $file . '.png') }}" alt="{{ $val }}" class="max-h-5 max-w-[85%] object-contain">
+                        </button>
+                    </form>
+                @endforeach
+            </div>
+        </div>
+
+        <div class="flex items-center justify-center gap-1.5 mt-8 text-[11px] text-slate-400">
+            <x-heroicon-o-shield-check class="w-3.5 h-3.5" />
+            <span>Secure Checkout &bull; Encrypted &bull; DOKU Gateway</span>
+        </div>
 
     </div>
 
 </div>
 
 {{-- MODAL INPUT NOMOR HP OVO --}}
-<div id="ovo-modal" class="hidden fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-3xl p-6 w-full max-w-sm">
-        <div class="text-lg font-semibold text-slate-900 mb-1">Bayar dengan OVO</div>
-        <p class="text-xs text-slate-500 mb-4">
+<div id="ovo-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-xl">
+        <div class="text-lg font-bold text-slate-900 mb-1">Bayar dengan OVO</div>
+        <p class="text-xs text-slate-500 mb-4 leading-relaxed">
             Masukkan nomor HP yang terdaftar di OVO. Notifikasi approve pembayaran akan muncul di aplikasi OVO Anda (proses bisa memakan waktu sampai 1 menit).
         </p>
         <form method="POST" action="{{ route('wali.pembayaran.doku', $tagihan) }}">
             @csrf
             <input type="hidden" name="payment_method" value="OVO">
             <input type="tel" name="ovo_phone" placeholder="08123456789" required minlength="9" maxlength="15"
-                   class="w-full border border-slate-200 rounded-2xl p-3 mb-4">
+                   class="w-full border border-slate-200 rounded-xl p-3 mb-4 text-sm focus:ring-2 focus:ring-[#00A39D]/30 focus:border-[#00A39D] outline-none transition">
             <div class="flex gap-2">
                 <button type="button" onclick="document.getElementById('ovo-modal').classList.add('hidden')"
-                        class="flex-1 h-11 rounded-2xl border border-slate-200 text-slate-600 text-sm font-semibold">
+                        class="flex-1 h-11 rounded-xl border border-slate-200 text-slate-600 text-sm font-semibold hover:bg-slate-50 transition">
                     Batal
                 </button>
-                <button type="submit" class="flex-1 h-11 rounded-2xl bg-[#00A39D] text-white text-sm font-semibold">
+                <button type="submit" class="flex-1 h-11 rounded-xl bg-[#00A39D] hover:bg-[#008f89] text-white text-sm font-semibold transition">
                     Kirim Approval
                 </button>
             </div>
         </form>
     </div>
 </div>
+
+<script>
+function toggleVA() {
+    document.getElementById('va-bank-list').classList.toggle('hidden');
+    document.getElementById('va-chevron').classList.toggle('rotate-180');
+}
+</script>
 
 @endsection

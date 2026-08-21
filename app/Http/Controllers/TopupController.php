@@ -27,13 +27,19 @@ class TopupController extends Controller
 
     public function store(Request $request, DokuService $doku)
     {
-        $amount = $request->custom_amount ?: $request->amount;
+        $amount = (int) ($request->custom_amount ?: $request->amount);
 
         if (!$amount || $amount < 10000) {
             return back()->with('error', 'Nominal minimal Rp 10.000');
         }
 
-        $channel = $request->payment_method === 'QRIS' ? 'QRIS' : 'VA';
+        $request->validate([
+            'payment_method' => 'required|in:VA,QRIS,DANA,SHOPEEPAY,ALFAMART,INDOMARET,OVO',
+            'bank' => 'nullable|in:BCA,BNI,BRI,BSI,MANDIRI,BJB',
+            'ovo_phone' => 'required_if:payment_method,OVO|nullable|string|min:9|max:15',
+        ]);
+
+        $channel = $request->payment_method;
 
         $siswa = Siswa::with('wallet')
             ->find(session('siswa_id'));
@@ -47,6 +53,11 @@ class TopupController extends Controller
         }
 
         $wallet = $siswa->wallet;
+        $customerName = $siswa->nama_lengkap;
+        $customerEmail = DokuService::emailAman($siswa->email, $siswa->id);
+
+        $feeAdmin = DokuService::hitungFeeTotal($amount, $channel);
+        $amountCharged = $amount + $feeAdmin; // yang di-charge ke wali; saldo wallet tetap dikredit $amount penuh
 
         $reference = 'TOPUP-' . $siswa->id . '-' . time();
 
@@ -60,14 +71,19 @@ class TopupController extends Controller
             'description'  => 'Top Up Saldo via DOKU',
         ]);
 
+        $vaNumber = null;
+        $qrString = null;
+        $paymentCode = null;
+        $redirectUrl = null;
+
         try {
             if ($channel === 'VA') {
                 $result = $doku->buatVaLangsung(
                     referenceId: $reference,
-                    amount: (int) $amount,
+                    amount: $amountCharged,
                     judul: 'Top Up Saldo',
-                    customerName: $siswa->nama_lengkap,
-                    customerEmail: DokuService::emailAman($siswa->email, $siswa->id),
+                    customerName: $customerName,
+                    customerEmail: $customerEmail,
                 );
 
                 $vaNumber = $result['virtual_account_info']['virtual_account_number'] ?? null;
@@ -77,10 +93,10 @@ class TopupController extends Controller
 
                     return back()->with('error', DokuService::pesanAman($result['message'] ?? $result['error']['message'] ?? null));
                 }
-            } else {
+            } elseif ($channel === 'QRIS') {
                 $result = $doku->buatQris(
                     referenceId: $reference,
-                    amount: (int) $amount,
+                    amount: $amountCharged,
                 );
 
                 $qrString = $result['qrContent'] ?? $result['qrUrl'] ?? null;
@@ -90,11 +106,60 @@ class TopupController extends Controller
 
                     return back()->with('error', DokuService::pesanAman($result['message'] ?? $result['responseMessage'] ?? null));
                 }
+            } elseif (in_array($channel, ['DANA', 'SHOPEEPAY'], true)) {
+                $result = $doku->buatEwalletSnap(
+                    channel: $channel === 'DANA' ? 'EMONEY_DANA_SNAP' : 'EMONEY_SHOPEE_PAY_SNAP',
+                    referenceId: $reference,
+                    amount: $amountCharged,
+                    returnUrl: route('wali.topup'),
+                );
+
+                $redirectUrl = $result['webRedirectUrl'] ?? null;
+
+                if (!$redirectUrl) {
+                    $trx->update(['status' => 'failed']);
+
+                    return back()->with('error', DokuService::pesanAman($result['responseMessage'] ?? null));
+                }
+            } elseif (in_array($channel, ['ALFAMART', 'INDOMARET'], true)) {
+                $result = $doku->buatOtc(
+                    toko: $channel,
+                    referenceId: $reference,
+                    amount: $amountCharged,
+                    customerName: $customerName,
+                    customerEmail: $customerEmail,
+                );
+
+                $paymentCode = $result['online_to_offline_info']['payment_code'] ?? null;
+
+                if (!$paymentCode) {
+                    $trx->update(['status' => 'failed']);
+
+                    return back()->with('error', DokuService::pesanAman($result['message'] ?? $result['error']['message'] ?? null));
+                }
+            } else { // OVO
+                $result = $doku->buatOvo(
+                    referenceId: $reference,
+                    amount: $amountCharged,
+                    ovoId: $request->ovo_phone,
+                );
+
+                $statusOvo = $result['transaction']['status'] ?? null;
+
+                return redirect()->route('wali.topup')
+                    ->with(
+                        $statusOvo === 'SUCCESS' ? 'success' : 'error',
+                        'Status OVO: ' . DokuService::pesanAman($result['message'] ?? null, 'Menunggu konfirmasi dari HP Anda')
+                    );
             }
         } catch (\Throwable $e) {
             $trx->update(['status' => 'failed']);
 
             return back()->with('error', 'Gagal membuat pembayaran: ' . $e->getMessage());
+        }
+
+        if ($redirectUrl) {
+            return redirect()->away($redirectUrl);
         }
 
         return view('payment.checkout', [
@@ -103,11 +168,15 @@ class TopupController extends Controller
             'logo' => $siswa->lembaga?->logo ? \Storage::disk('r2-public')->url($siswa->lembaga->logo) : null,
             'referenceId' => $reference,
             'judul' => 'Top Up Saldo',
-            'amount' => (int) $amount,
+            'amount' => $amount,
+            'feeAdmin' => $feeAdmin,
+            'amountCharged' => $amountCharged,
             'channel' => $channel,
-            'vaNumber' => $vaNumber ?? null,
-            'qrString' => $qrString ?? null,
-            'countdownTo' => now()->addMinutes(60)->toIso8601String(),
+            'bankDipilih' => $request->bank,
+            'vaNumber' => $vaNumber,
+            'qrString' => $qrString,
+            'paymentCode' => $paymentCode,
+            'countdownTo' => now()->addMinutes(in_array($channel, ['ALFAMART', 'INDOMARET'], true) ? 1440 : 60)->toIso8601String(),
             'statusUrl' => route('wali.topup.status', $reference),
             'successUrl' => route('wali.topup'),
         ]);
