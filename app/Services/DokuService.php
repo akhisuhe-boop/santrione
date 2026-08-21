@@ -155,6 +155,50 @@ class DokuService
         return min($fee, $cap);
     }
 
+    /**
+     * Estimasi fee DOKU sendiri untuk channel tertentu -- DIKONFIRMASI
+     * RESMI oleh tim DOKU: "sistem DOKU tidak memiliki fitur otomatis
+     * untuk membebankan biaya transaksi langsung kepada pelanggan.
+     * Biaya layanan akan dipotong dari settlement yang dikirimkan ke
+     * rekening Anda." Artinya kalau tidak ditambahkan manual di sini,
+     * fee ini akan otomatis MAKAN MARGIN QINARA saat settlement --
+     * bukan cuma tidak tampil ke wali, tapi benar-benar mengurangi
+     * uang yang diterima Qinara tanpa kita sadari.
+     */
+    public static function hitungFeeDoku(int $nominalDicharge, string $channel): int
+    {
+        $config = config('services.doku.fee_doku.' . strtoupper($channel));
+
+        if (!$config) {
+            return 0;
+        }
+
+        $flat = (int) ($config['flat'] ?? 0);
+        $persen = (float) ($config['persen'] ?? 0);
+
+        return $flat + (int) round($nominalDicharge * $persen / 100);
+    }
+
+    /**
+     * Fee TOTAL yang ditampilkan ke wali murid sebagai "Biaya Admin" --
+     * gabungan fee Qinara (hitungFee()) + estimasi fee DOKU
+     * (hitungFeeDoku()), SATU angka saja (sesuai keputusan: wali tidak
+     * perlu lihat 2 baris biaya admin terpisah yang membingungkan).
+     * Ini yang dipakai untuk hitung $amountCharged ke DOKU, BUKAN
+     * hitungFee() sendirian lagi.
+     */
+    public static function hitungFeeTotal(int $nominalTagihan, string $channel): int
+    {
+        $feeQinara = self::hitungFee($nominalTagihan);
+
+        // Fee DOKU dihitung dari nominal TAGIHAN + fee Qinara (mendekati
+        // nominal akhir yang akan di-charge) -- pendekatan iteratif
+        // sederhana, cukup akurat untuk komponen persen yang kecil.
+        $feeDoku = self::hitungFeeDoku($nominalTagihan + $feeQinara, $channel);
+
+        return $feeQinara + $feeDoku;
+    }
+
     public static function pesanAman(mixed $pesan, string $default = 'Gagal membuat pembayaran'): string
     {
         if (is_string($pesan) && $pesan !== '') {

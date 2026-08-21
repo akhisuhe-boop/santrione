@@ -45,8 +45,25 @@ return [
     'client_id'      => env('DOKU_CLIENT_ID'),
     'secret_key'     => env('DOKU_SECRET_KEY'),
     'is_production'  => env('DOKU_IS_PRODUCTION', false),
-    'fee_persen'     => env('DOKU_FEE_PERSEN', 0.75), // persentase fee admin Qinara dari nominal tagihan
-    'fee_cap'        => env('DOKU_FEE_CAP', 10000), // batas maksimum fee admin per transaksi (Rupiah)
+    'fee_persen'     => env('DOKU_FEE_PERSEN', 0.75), // persentase fee admin QINARA dari nominal tagihan
+    'fee_cap'        => env('DOKU_FEE_CAP', 10000), // batas maksimum fee admin Qinara per transaksi (Rupiah)
+    // Estimasi fee DOKU sendiri per channel -- DOKU MEMOTONG fee ini dari
+    // settlement (bukan nambah otomatis ke customer, dikonfirmasi resmi
+    // oleh tim DOKU). Supaya Qinara tidak "makan" fee ini dari margin
+    // sendiri, nilainya DITAMBAHKAN juga ke nominal yang di-charge ke
+    // wali murid (lihat DokuService::hitungFeeTotal()). Angka berikut
+    // berdasar price list resmi DOKU yang sudah dibandingkan sebelumnya
+    // -- SEBAIKNYA dikonfirmasi ulang ke akun sandbox/production Anda
+    // karena bisa beda per kontrak/tier volume.
+    'fee_doku' => [
+        'VA'        => ['flat' => 4000, 'persen' => 0],
+        'QRIS'      => ['flat' => 0,    'persen' => 0.7],
+        'DANA'      => ['flat' => 0,    'persen' => 1.5],
+        'SHOPEEPAY' => ['flat' => 0,    'persen' => 2.0],
+        'OVO'       => ['flat' => 0,    'persen' => 1.5],
+        'ALFAMART'  => ['flat' => 5000, 'persen' => 0],
+        'INDOMARET' => ['flat' => 5000, 'persen' => 0],
+    ],
     // Private key RSA untuk endpoint SNAP (QRIS Direct API) -- lihat
     // catatan setup lengkap di DokuService::getAccessToken(). Isi di
     // .env sebagai DOKU_PRIVATE_KEY, format PEM dengan newline literal

@@ -556,10 +556,10 @@ class WaliDashboardController extends Controller
         );
 
         $amount = (int) ($tagihan->nominal - $tagihan->nominal_terbayar);
-        $feeAdmin = \App\Services\DokuService::hitungFee($amount);
-        $amountCharged = $amount + $feeAdmin; // yang di-charge ke wali murid (tagihan + fee admin Qinara)
         $referenceId = 'TAGIHAN-' . $tagihan->id . '-' . time();
         $channel = $request->payment_method;
+        $feeAdmin = \App\Services\DokuService::hitungFeeTotal($amount, $channel); // fee Qinara + fee DOKU digabung
+        $amountCharged = $amount + $feeAdmin; // yang di-charge ke wali murid (tagihan + total biaya admin)
 
         $lembaga = $tagihan->siswa?->lembaga;
         $customerName = $siswa->nama_lengkap;
