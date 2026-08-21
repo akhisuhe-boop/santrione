@@ -112,6 +112,33 @@ class DokuService
         return 'HMACSHA256=' . $hmac;
     }
 
+    /**
+     * Pastikan email yang dikirim ke DOKU selalu format valid --
+     * ditambahkan setelah menemukan bug nyata di sandbox: fallback lama
+     * (menggabung nomor WA + '@dummy.id' begitu saja) menghasilkan email
+     * tidak valid kalau nomor WA kosong/null, atau kalau email asli
+     * siswa tersimpan sebagai string kosong ('' bukan null, sehingga
+     * operator '??' tidak ke-trigger). DOKU membalas error
+     * "customer.email is not valid" untuk kasus begini.
+     */
+    public static function emailAman(?string $emailAsli, string|int $fallbackSeed): string
+    {
+        if ($emailAsli && filter_var($emailAsli, FILTER_VALIDATE_EMAIL)) {
+            return $emailAsli;
+        }
+
+        // Bersihkan seed (nomor WA dkk) dari karakter yang tidak valid
+        // untuk local-part email, supaya hasil akhirnya PASTI valid
+        // walau seed-nya kosong/berantakan.
+        $seedBersih = preg_replace('/[^a-zA-Z0-9._-]/', '', (string) $fallbackSeed);
+
+        if (blank($seedBersih)) {
+            $seedBersih = 'user' . uniqid();
+        }
+
+        return $seedBersih . '@qinaraindonesia.id';
+    }
+
     protected function requestTimestamp(): string
     {
         // Format wajib DOKU: ISO 8601 dengan "Z" (UTC), contoh

@@ -219,7 +219,7 @@ class PpdbPembayaranController extends Controller
                 referenceId: $referenceId,
                 amount: $amount,
                 customerName: $ppdb->nama_lengkap ?? $ppdb->nama ?? 'Pendaftar PPDB',
-                customerEmail: $ppdb->email ?? ($ppdb->wa_wali ?? '0000000000') . '@dummy.id',
+                customerEmail: \App\Services\DokuService::emailAman($ppdb->email ?? null, $ppdb->wa_wali ?? $ppdb->id),
                 judul: $tagihan->judul,
                 channel: $channel,
                 bank: $request->payment_method,

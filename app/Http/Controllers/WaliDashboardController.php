@@ -812,7 +812,7 @@ class WaliDashboardController extends Controller
                 referenceId: $referenceId,
                 amount: $amount,
                 customerName: $siswa->nama_lengkap,
-                customerEmail: $siswa->email ?? ($siswa->wa_wali . '@dummy.id'),
+                customerEmail: \App\Services\DokuService::emailAman($siswa->email, $siswa->wa_wali ?? $siswa->id),
                 judul: $tagihan->judul,
                 channel: $channel,
                 bank: $request->payment_method,

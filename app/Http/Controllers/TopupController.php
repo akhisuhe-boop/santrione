@@ -63,7 +63,7 @@ class TopupController extends Controller
                 referenceId: $reference,
                 amount: (int) $amount,
                 customerName: $siswa->nama_lengkap,
-                customerEmail: $siswa->email ?? 'demo@mail.com',
+                customerEmail: \App\Services\DokuService::emailAman($siswa->email, $siswa->id),
                 judul: 'Top Up Saldo',
                 channel: 'QRIS'
             );
