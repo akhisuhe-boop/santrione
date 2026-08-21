@@ -56,13 +56,22 @@ return [
     // -- SEBAIKNYA dikonfirmasi ulang ke akun sandbox/production Anda
     // karena bisa beda per kontrak/tier volume.
     'fee_doku' => [
-        'VA'        => ['flat' => 4000, 'persen' => 0],
+        // Angka RESMI dari halaman harga DOKU (doku.com/harga), bukan
+        // estimasi lagi. VA: BCA khusus Rp4.500, bank lain Rp4.000 --
+        // TAPI implementasi VA kita saat ini pakai endpoint VA UNIVERSAL
+        // (bukan benar-benar per-bank di sisi DOKU, lihat catatan di
+        // DokuService::buatVaLangsung()), jadi saya pakai angka
+        // TERTINGGI (Rp4.500) untuk semua VA supaya Qinara tidak
+        // kekurangan margin kalau ternyata kena tarif BCA.
+        // OVO & ShopeePay resmi berupa RENTANG (OVO 2%-3,18%, ShopeePay
+        // 2%-4%) -- dipakai batas ATAS supaya aman, TIDAK rugi.
+        'VA'        => ['flat' => 4500, 'persen' => 0],
         'QRIS'      => ['flat' => 0,    'persen' => 0.7],
         'DANA'      => ['flat' => 0,    'persen' => 1.5],
-        'SHOPEEPAY' => ['flat' => 0,    'persen' => 2.0],
-        'OVO'       => ['flat' => 0,    'persen' => 1.5],
+        'SHOPEEPAY' => ['flat' => 0,    'persen' => 4.0],
+        'OVO'       => ['flat' => 0,    'persen' => 3.18],
         'ALFAMART'  => ['flat' => 5000, 'persen' => 0],
-        'INDOMARET' => ['flat' => 5000, 'persen' => 0],
+        'INDOMARET' => ['flat' => 6500, 'persen' => 0],
     ],
     // Private key RSA untuk endpoint SNAP (QRIS Direct API) -- lihat
     // catatan setup lengkap di DokuService::getAccessToken(). Isi di
