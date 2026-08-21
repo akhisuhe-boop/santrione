@@ -13,9 +13,17 @@
             </div>
         @endif
 
-        <div class="rounded-2xl bg-slate-900 text-white p-4 mb-4 flex items-center justify-between shadow-sm">
-            <div class="text-sm text-slate-300">Nominal Top Up</div>
-            <div class="text-xl font-bold">Rp {{ number_format($amount, 0, ',', '.') }}</div>
+        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0B9A93] via-[#0FA6A1] to-[#17C3B8] p-4 mb-4 shadow-sm">
+            <div class="absolute -top-6 -right-6 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
+            <div class="relative flex items-center gap-3">
+                <div class="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
+                    <x-heroicon-o-wallet class="w-5 h-5 text-white" />
+                </div>
+                <div class="flex-1">
+                    <div class="text-xs text-white/75">Nominal Top Up</div>
+                    <div class="text-xl font-bold text-white">Rp {{ number_format($amount, 0, ',', '.') }}</div>
+                </div>
+            </div>
         </div>
 
         <div class="rounded-3xl overflow-hidden shadow-sm border border-slate-200/80">
