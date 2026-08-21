@@ -62,29 +62,18 @@ class PpdbPembayaranController extends Controller
 
         abort_if($tagihan->ppdb_id != $ppdb->id, 403);
 
-        $paymentMethods = collect([
-            'BCA' => ['code' => 'BCA', 'name' => 'BCA Virtual Account', 'category' => 'Virtual Account'],
-            'BNI' => ['code' => 'BNI', 'name' => 'BNI Virtual Account', 'category' => 'Virtual Account'],
-            'BRI' => ['code' => 'BRI', 'name' => 'BRI Virtual Account', 'category' => 'Virtual Account'],
-            'BSI' => ['code' => 'BSI', 'name' => 'BSI Virtual Account', 'category' => 'Virtual Account'],
-            'MANDIRI' => ['code' => 'MANDIRI', 'name' => 'Mandiri Virtual Account', 'category' => 'Virtual Account'],
-            'OV' => ['code' => 'OV', 'name' => 'OVO', 'category' => 'E-Wallet'],
-            'DA' => ['code' => 'DA', 'name' => 'DANA', 'category' => 'E-Wallet'],
-            'SP' => ['code' => 'SP', 'name' => 'ShopeePay', 'category' => 'E-Wallet'],
-            'QRIS' => ['code' => 'QRIS', 'name' => 'QRIS', 'category' => 'QRIS'],
-        ]);
-
         return view('ppdb.doku', [
             'ppdb' => $ppdb,
             'yayasan' => $ppdb->lembaga?->yayasan ?? \App\Models\Yayasan::first(),
             'tagihan' => $tagihan,
-            'paymentMethods' => $paymentMethods,
         ]);
     }
 
     /**
-     * Proses DOKU -- pola PERSIS WaliDashboardController::doku(), cuma
-     * beda prefix reference_id ('PPDB-' bukan 'TAGIHAN-') supaya
+     * Proses DOKU -- checkout custom (VA universal / QRIS), branding
+     * sekolah/yayasan sendiri, TANPA redirect ke domain DOKU. Sama
+     * persis polanya dengan WaliDashboardController::doku(), cuma beda
+     * prefix reference_id ('PPDB-' bukan 'TAGIHAN-') supaya
      * DokuWebhookController bisa membedakan keduanya, dan beda sumber
      * identitas pembayar (Ppdb, bukan Siswa -- pendaftar PPDB belum
      * tentu sudah jadi Siswa).
@@ -96,50 +85,43 @@ class PpdbPembayaranController extends Controller
         abort_if($tagihan->ppdb_id != $ppdb->id, 403);
 
         $request->validate([
-            'payment_method' => 'required|string',
+            'payment_method' => 'required|in:VA,QRIS',
         ]);
-
-        $vaBanks = ['BCA', 'BNI', 'BRI', 'MANDIRI', 'BSI'];
-        $ewalletCodes = ['OV', 'DA', 'SP'];
-        $allowedMethods = array_merge($vaBanks, $ewalletCodes, ['QRIS']);
-
-        if (!in_array($request->payment_method, $allowedMethods)) {
-            return back()->with('error', 'Metode pembayaran tidak valid.');
-        }
 
         $amount = (int) ($tagihan->nominal - $tagihan->nominal_terbayar);
         $referenceId = 'PPDB-' . $tagihan->id . '-' . time();
-
-        $channel = match (true) {
-            in_array($request->payment_method, $vaBanks, true) => 'VA',
-            in_array($request->payment_method, $ewalletCodes, true) => 'EWALLET',
-            default => 'QRIS',
-        };
+        $channel = $request->payment_method;
 
         $lembaga = $ppdb->lembaga;
 
         try {
-            $result = $doku->buatPaymentRequest(
-                referenceId: $referenceId,
-                amount: $amount,
-                customerName: $ppdb->nama_lengkap ?? $ppdb->nama ?? 'Pendaftar PPDB',
-                customerEmail: \App\Services\DokuService::emailAman($ppdb->email ?? null, $ppdb->wa_wali ?? $ppdb->id),
-                judul: $tagihan->judul,
-                channel: $channel,
-                bank: $request->payment_method,
-                dokuSubAccountId: $lembaga?->doku_sub_account_id,
-            );
+            if ($channel === 'VA') {
+                $result = $doku->buatVaLangsung(
+                    referenceId: $referenceId,
+                    amount: $amount,
+                    judul: $tagihan->judul,
+                    dokuSubAccountId: $lembaga?->doku_sub_account_id,
+                );
+
+                $vaNumber = $result['virtual_account_info']['virtual_account_number'] ?? null;
+
+                if (!$vaNumber) {
+                    return back()->with('error', \App\Services\DokuService::pesanAman($result['message'] ?? $result['error']['message'] ?? null));
+                }
+            } else {
+                $result = $doku->buatQris(
+                    referenceId: $referenceId,
+                    amount: $amount,
+                );
+
+                $qrString = $result['qrContent'] ?? $result['qrUrl'] ?? null;
+
+                if (!$qrString) {
+                    return back()->with('error', \App\Services\DokuService::pesanAman($result['message'] ?? $result['responseMessage'] ?? null));
+                }
+            }
         } catch (\Throwable $e) {
             return back()->with('error', 'Gagal membuat pembayaran: ' . $e->getMessage());
-        }
-
-        // Field ini SUDAH DIKONFIRMASI dari respons sandbox asli
-        // (bukan lagi tebakan) -- DOKU Checkout membalas URL redirect
-        // di response.payment.url.
-        $paymentUrl = $result['response']['payment']['url'] ?? null;
-
-        if (!$paymentUrl) {
-            return back()->with('error', \App\Services\DokuService::pesanAman($result['message'] ?? $result['error']['message'] ?? null));
         }
 
         Pembayaran::create([
@@ -152,6 +134,30 @@ class PpdbPembayaranController extends Controller
             'reference' => $referenceId,
         ]);
 
-        return redirect()->away($paymentUrl);
+        return view('payment.checkout', [
+            'layout' => 'ppdb.layout.ppdb',
+            'namaLembaga' => $lembaga?->nama ?? $ppdb->lembaga?->yayasan?->nama ?? 'Qinara',
+            'logo' => $lembaga?->logo ? asset('storage/' . $lembaga->logo) : null,
+            'referenceId' => $referenceId,
+            'judul' => $tagihan->judul,
+            'amount' => $amount,
+            'channel' => $channel,
+            'vaNumber' => $vaNumber ?? null,
+            'qrString' => $qrString ?? null,
+            'countdownTo' => now()->addMinutes(60)->toIso8601String(),
+            'statusUrl' => route('ppdb.pembayaran.doku.status', $referenceId),
+            'successUrl' => route('ppdb.pembayaran'),
+        ]);
+    }
+
+    public function statusDoku(string $reference)
+    {
+        $pembayaran = Pembayaran::where('reference', $reference)->first();
+
+        abort_if(!$pembayaran, 404);
+
+        return response()->json([
+            'status' => $pembayaran->status,
+        ]);
     }
 }

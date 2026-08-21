@@ -100,6 +100,21 @@
                 </div>
             </div>
 
+            {{-- METODE PEMBAYARAN --}}
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-slate-700 mb-2">Metode Pembayaran</label>
+                <div class="grid grid-cols-2 gap-3">
+                    <label class="flex items-center gap-2 p-3 rounded-2xl border border-slate-200 has-[:checked]:border-[#00A39D] has-[:checked]:bg-[#00A39D]/5 cursor-pointer">
+                        <input type="radio" name="payment_method" value="VA" checked class="accent-[#00A39D]">
+                        <span class="text-sm font-medium text-slate-700">Virtual Account</span>
+                    </label>
+                    <label class="flex items-center gap-2 p-3 rounded-2xl border border-slate-200 has-[:checked]:border-[#00A39D] has-[:checked]:bg-[#00A39D]/5 cursor-pointer">
+                        <input type="radio" name="payment_method" value="QRIS" class="accent-[#00A39D]">
+                        <span class="text-sm font-medium text-slate-700">QRIS</span>
+                    </label>
+                </div>
+            </div>
+
             {{-- BUTTON --}}
             <button type="submit"
                 class="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-500

@@ -33,6 +33,8 @@ class TopupController extends Controller
             return back()->with('error', 'Nominal minimal Rp 10.000');
         }
 
+        $channel = $request->payment_method === 'QRIS' ? 'QRIS' : 'VA';
+
         $siswa = Siswa::with('wallet')
             ->find(session('siswa_id'));
 
@@ -59,31 +61,64 @@ class TopupController extends Controller
         ]);
 
         try {
-            $result = $doku->buatPaymentRequest(
-                referenceId: $reference,
-                amount: (int) $amount,
-                customerName: $siswa->nama_lengkap,
-                customerEmail: \App\Services\DokuService::emailAman($siswa->email, $siswa->id),
-                judul: 'Top Up Saldo',
-                channel: 'QRIS'
-            );
+            if ($channel === 'VA') {
+                $result = $doku->buatVaLangsung(
+                    referenceId: $reference,
+                    amount: (int) $amount,
+                    judul: 'Top Up Saldo',
+                );
+
+                $vaNumber = $result['virtual_account_info']['virtual_account_number'] ?? null;
+
+                if (!$vaNumber) {
+                    $trx->update(['status' => 'failed']);
+
+                    return back()->with('error', DokuService::pesanAman($result['message'] ?? $result['error']['message'] ?? null));
+                }
+            } else {
+                $result = $doku->buatQris(
+                    referenceId: $reference,
+                    amount: (int) $amount,
+                );
+
+                $qrString = $result['qrContent'] ?? $result['qrUrl'] ?? null;
+
+                if (!$qrString) {
+                    $trx->update(['status' => 'failed']);
+
+                    return back()->with('error', DokuService::pesanAman($result['message'] ?? $result['responseMessage'] ?? null));
+                }
+            }
         } catch (\Throwable $e) {
             $trx->update(['status' => 'failed']);
 
             return back()->with('error', 'Gagal membuat pembayaran: ' . $e->getMessage());
         }
 
-        // Field ini SUDAH DIKONFIRMASI dari respons sandbox asli
-        // (bukan lagi tebakan) -- DOKU Checkout membalas URL redirect
-        // di response.payment.url.
-        $paymentUrl = $result['response']['payment']['url'] ?? null;
+        return view('payment.checkout', [
+            'layout' => 'wali.layout.wali',
+            'namaLembaga' => $siswa->lembaga?->nama ?? $siswa->yayasan?->nama ?? 'Qinara',
+            'logo' => $siswa->lembaga?->logo ? asset('storage/' . $siswa->lembaga->logo) : null,
+            'referenceId' => $reference,
+            'judul' => 'Top Up Saldo',
+            'amount' => (int) $amount,
+            'channel' => $channel,
+            'vaNumber' => $vaNumber ?? null,
+            'qrString' => $qrString ?? null,
+            'countdownTo' => now()->addMinutes(60)->toIso8601String(),
+            'statusUrl' => route('wali.topup.status', $reference),
+            'successUrl' => route('wali.topup'),
+        ]);
+    }
 
-        if (!$paymentUrl) {
-            $trx->update(['status' => 'failed']);
+    public function status(string $reference)
+    {
+        $trx = WalletTransaction::where('reference_id', $reference)->first();
 
-            return back()->with('error', \App\Services\DokuService::pesanAman($result['message'] ?? $result['error']['message'] ?? null, 'Gagal membuat pembayaran (URL tidak ditemukan di respons DOKU)'));
-        }
+        abort_if(!$trx, 404);
 
-        return redirect()->away($paymentUrl);
+        return response()->json([
+            'status' => $trx->status,
+        ]);
     }
 }

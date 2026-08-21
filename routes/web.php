@@ -246,6 +246,7 @@ Route::prefix('wali')->group(function () {
 
         Route::get('/topup', [TopupController::class, 'index'])->name('wali.topup');
         Route::post('/topup', [TopupController::class, 'store'])->name('wali.topup.store');
+        Route::get('/topup/status/{reference}', [TopupController::class, 'status'])->name('wali.topup.status');
 
         Route::get('/pelanggaran', [WaliDashboardController::class, 'pelanggaran'])->name('wali.pelanggaran');
         Route::get('/prestasi', [WaliDashboardController::class, 'prestasi'])->name('wali.prestasi');
@@ -269,6 +270,9 @@ Route::prefix('wali')->group(function () {
 
         Route::post('/pembayaran/{tagihan}/doku', [WaliDashboardController::class, 'doku'])
             ->name('wali.pembayaran.doku');
+
+        Route::get('/pembayaran/doku/status/{reference}', [WaliDashboardController::class, 'statusDoku'])
+            ->name('wali.pembayaran.doku.status');
     });
 });
 
@@ -403,6 +407,9 @@ Route::prefix('wali')->group(function () {
         
         Route::post('/pembayaran/doku/{tagihan}', [PpdbPembayaranController::class, 'doku'])
             ->name('ppdb.pembayaran.doku');
+
+        Route::get('/pembayaran/doku/status/{reference}', [PpdbPembayaranController::class, 'statusDoku'])
+            ->name('ppdb.pembayaran.doku.status');
         
         // Formulir
         Route::get('/formulir', [PpdbFormulirController::class, 'index'])

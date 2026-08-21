@@ -392,4 +392,206 @@ class DokuService
 
         return hash_equals($expected, $signature);
     }
+
+    // =========================================================================
+    // CUSTOM CHECKOUT (Direct API) -- untuk halaman pembayaran ber-branding
+    // Qinara/sekolah sendiri, TANPA redirect ke domain DOKU. Menggantikan
+    // pendekatan Checkout Link untuk kebutuhan ini (Checkout Link tetap ada
+    // di buatPaymentRequest() di atas kalau suatu saat dibutuhkan lagi).
+    // =========================================================================
+
+    /**
+     * Buat VA langsung (Non-SNAP, endpoint yang SUDAH TERBUKTI sukses di
+     * sandbox -- lihat log 'DokuService::buatPaymentRequest sukses'
+     * dengan channel VA sebelumnya). VA yang dihasilkan bersifat
+     * UNIVERSAL DOKU (nomor sama bisa ditransfer dari bank manapun) --
+     * BUKAN VA khusus 1 bank seperti BCA/BNI terpisah. Ini keputusan
+     * SENGAJA supaya tidak bergantung pada endpoint per-bank yang belum
+     * terkonfirmasi -- juga menyederhanakan UI checkout custom (tidak
+     * perlu render logo/pilihan bank, cukup 1 nomor VA).
+     */
+    public function buatVaLangsung(
+        string $referenceId,
+        int $amount,
+        string $judul,
+        ?string $dokuSubAccountId = null
+    ): array {
+        $body = [
+            'order' => [
+                'invoice_number' => $referenceId,
+                'amount' => $amount,
+            ],
+            'virtual_account_info' => [
+                'expired_time' => 60, // menit
+                'reusable_status' => false,
+                'info1' => 'Qinara - ' . $judul,
+            ],
+        ];
+
+        if ($dokuSubAccountId) {
+            $body['additional_info'] = [
+                'account' => ['id' => $dokuSubAccountId],
+            ];
+        }
+
+        $result = $this->post('/doku-virtual-account/v2/payment-code', $body);
+
+        Log::info('DokuService::buatVaLangsung sukses', [
+            'reference' => $referenceId,
+            'full_response' => $result,
+        ]);
+
+        return $result;
+    }
+
+    /**
+     * Ambil OAuth access token SNAP (Asymmetric Signature) -- dipakai
+     * SEBELUM memanggil endpoint SNAP manapun (termasuk buatQris() di
+     * bawah). Endpoint & formula signature dikonfirmasi dari dokumentasi
+     * resmi developers.doku.com/get-started-with-doku-api.
+     *
+     * !! WAJIB SETUP DULU SEBELUM INI BISA JALAN !!
+     * Skema SNAP pakai signature ASIMETRIS (RSA-SHA256), BEDA dari
+     * skema Non-SNAP (HMAC-SHA256 pakai Secret-Key biasa) yang dipakai
+     * method lain di class ini. Anda perlu:
+     * 1. Generate keypair RSA (mis. `openssl genrsa -out doku_private.pem 2048`
+     *    lalu `openssl rsa -in doku_private.pem -pubout -out doku_public.pem`)
+     * 2. Daftarkan PUBLIC key ke DOKU (lewat dashboard SNAP atau minta
+     *    tim onboarding DOKU yang urus -- ini TIDAK bisa dilakukan lewat
+     *    kode, murni langkah administratif ke pihak DOKU)
+     * 3. Simpan PRIVATE key (bukan public) di server -- taruh isinya di
+     *    .env sebagai DOKU_PRIVATE_KEY (format PEM, escape newline jadi
+     *    \n literal), lalu load lewat config('services.doku.private_key')
+     *
+     * Sebelum langkah di atas selesai, method ini (dan buatQris()) akan
+     * gagal dengan error dari DOKU (kemungkinan invalid_signature atau
+     * unauthorized) -- ini EXPECTED, bukan bug kode.
+     */
+    protected function getAccessToken(): string
+    {
+        $cacheKey = 'doku_access_token';
+
+        $cached = \Illuminate\Support\Facades\Cache::get($cacheKey);
+
+        if ($cached) {
+            return $cached;
+        }
+
+        $privateKey = config('services.doku.private_key');
+
+        if (blank($privateKey)) {
+            throw new RuntimeException(
+                'DOKU_PRIVATE_KEY belum diisi di .env -- QRIS custom checkout butuh keypair RSA terdaftar ke DOKU terlebih dulu. Lihat dokumentasi di DokuService::getAccessToken().'
+            );
+        }
+
+        $timestamp = $this->requestTimestamp();
+
+        // Formula RESMI DOKU untuk Get Token (Asymmetric):
+        // stringToSign = Client-Id + "|" + X-Timestamp
+        $stringToSign = $this->clientId() . '|' . $timestamp;
+
+        $signature = null;
+        $privateKeyResource = openssl_pkey_get_private($privateKey);
+
+        if (! $privateKeyResource) {
+            throw new RuntimeException('DOKU_PRIVATE_KEY tidak valid (gagal di-parse OpenSSL) -- pastikan format PEM benar.');
+        }
+
+        openssl_sign($stringToSign, $signature, $privateKeyResource, OPENSSL_ALGO_SHA256);
+
+        $response = Http::withHeaders([
+            'X-CLIENT-KEY' => $this->clientId(),
+            'X-TIMESTAMP' => $timestamp,
+            'X-SIGNATURE' => base64_encode($signature),
+            'Content-Type' => 'application/json',
+        ])->post($this->baseUrl() . '/authorization/v1/access-token/b2b', [
+            'grantType' => 'client_credentials',
+        ]);
+
+        if ($response->failed()) {
+            Log::error('DokuService::getAccessToken gagal', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            throw new RuntimeException('Gagal ambil access token DOKU (SNAP): ' . $response->body());
+        }
+
+        $token = $response->json('accessToken');
+        $expiresIn = (int) ($response->json('expiresIn') ?? 900);
+
+        // Simpan di cache, kurangi 60 detik dari masa berlaku asli
+        // sebagai buffer aman.
+        \Illuminate\Support\Facades\Cache::put($cacheKey, $token, max($expiresIn - 60, 60));
+
+        return $token;
+    }
+
+    /**
+     * Generate QRIS dinamis (SNAP Direct API) -- dipakai untuk halaman
+     * checkout custom Qinara, tampilkan sebagai gambar QR di halaman
+     * kita sendiri (bukan redirect). Endpoint & header dikonfirmasi
+     * resmi dari developers.doku.com (path
+     * /snap-adapter/b2b/v1.0/qr/qr-mpm-generate).
+     *
+     * PERLU getAccessToken() berhasil dulu (lihat catatan setup di
+     * atas). Field response persis (nama field gambar QR/qr string)
+     * BELUM bisa dipastikan 100% dari dokumentasi publik yang saya
+     * baca -- WAJIB dicocokkan dengan respons asli begitu keypair RSA
+     * sudah terdaftar & sandbox bisa dipanggil (sama seperti proses
+     * yang kita lalui untuk VA/Checkout kemarin -- log full response-nya
+     * dulu, baru pastikan field mana yang dipakai).
+     */
+    public function buatQris(string $referenceId, int $amount): array
+    {
+        $token = $this->getAccessToken();
+        $timestamp = $this->requestTimestamp();
+        $externalId = (string) random_int(1000000000, 9999999999);
+        $path = '/snap-adapter/b2b/v1.0/qr/qr-mpm-generate';
+
+        $body = [
+            'partnerReferenceNo' => $referenceId,
+            'amount' => [
+                'value' => number_format($amount, 2, '.', ''),
+                'currency' => 'IDR',
+            ],
+        ];
+
+        $rawBody = json_encode($body, JSON_UNESCAPED_SLASHES);
+
+        // Formula RESMI DOKU untuk signature Transactional (Symmetric):
+        // stringToSign = HTTPMethod:EndpointUrl:AccessToken:Lowercase(HexEncode(SHA256(minify(RequestBody)))):TimeStamp
+        $bodyHash = strtolower(hash('sha256', $rawBody));
+        $stringToSign = "POST:{$path}:{$token}:{$bodyHash}:{$timestamp}";
+        $signature = base64_encode(hash_hmac('sha512', $stringToSign, $this->secretKey(), true));
+
+        $response = Http::withHeaders([
+            'X-PARTNER-ID' => $this->clientId(),
+            'X-EXTERNAL-ID' => $externalId,
+            'X-TIMESTAMP' => $timestamp,
+            'X-SIGNATURE' => $signature,
+            'Authorization' => 'Bearer ' . $token,
+            'Content-Type' => 'application/json',
+        ])->withBody($rawBody, 'application/json')
+            ->post($this->baseUrl() . $path);
+
+        if ($response->failed()) {
+            Log::error('DokuService::buatQris gagal', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            throw new RuntimeException('Gagal generate QRIS DOKU: ' . $response->body());
+        }
+
+        $result = $response->json() ?? [];
+
+        Log::info('DokuService::buatQris sukses', [
+            'reference' => $referenceId,
+            'full_response' => $result,
+        ]);
+
+        return $result;
+    }
 }

@@ -46,6 +46,12 @@ return [
     'secret_key'     => env('DOKU_SECRET_KEY'),
     'is_production'  => env('DOKU_IS_PRODUCTION', false),
     'fee_persen'     => env('DOKU_FEE_PERSEN', 1.0), // persentase fee Qinara dari tiap transaksi wali
+    // Private key RSA untuk endpoint SNAP (QRIS Direct API) -- lihat
+    // catatan setup lengkap di DokuService::getAccessToken(). Isi di
+    // .env sebagai DOKU_PRIVATE_KEY, format PEM dengan newline literal
+    // "\n" (bukan newline asli), contoh:
+    // DOKU_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMII...\n-----END PRIVATE KEY-----"
+    'private_key'    => str_replace('\n', "\n", (string) env('DOKU_PRIVATE_KEY', '')),
     ],
 
     'xendit' => [

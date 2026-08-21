@@ -543,7 +543,7 @@ class WaliDashboardController extends Controller
     )
     {
         $request->validate([
-            'payment_method' => 'required|string'
+            'payment_method' => 'required|in:VA,QRIS'
         ]);
 
         $siswa = Siswa::findOrFail(session('siswa_id'));
@@ -553,53 +553,45 @@ class WaliDashboardController extends Controller
             403
         );
 
-        // BCA/BNI/BRI/MANDIRI/BSI -> channel VA (bank diisi kode bank).
-        // OV/DA/SP -> channel EWALLET. QRIS -> channel QRIS.
-        // ALFAMART/INDOMARET -> belum didukung method buatPaymentRequest()
-        // saat ini (channel Over The Counter DOKU beda struktur payload,
-        // lihat dokumentasi 'DOKU Retail Outlet' kalau mau ditambah nanti).
-        $vaBanks = ['BCA', 'BNI', 'BRI', 'MANDIRI', 'BSI'];
-        $ewalletCodes = ['OV', 'DA', 'SP'];
-
-        $allowedMethods = array_merge($vaBanks, $ewalletCodes, ['QRIS']);
-
-        if (!in_array($request->payment_method, $allowedMethods)) {
-            return back()->with('error', 'Metode pembayaran tidak valid.');
-        }
-
         $amount = (int) ($tagihan->nominal - $tagihan->nominal_terbayar);
         $referenceId = 'TAGIHAN-' . $tagihan->id . '-' . time();
-
-        $channel = match (true) {
-            in_array($request->payment_method, $vaBanks, true) => 'VA',
-            in_array($request->payment_method, $ewalletCodes, true) => 'EWALLET',
-            default => 'QRIS',
-        };
+        $channel = $request->payment_method;
 
         $lembaga = $tagihan->siswa?->lembaga;
 
         try {
-            $result = $doku->buatPaymentRequest(
-                referenceId: $referenceId,
-                amount: $amount,
-                customerName: $siswa->nama_lengkap,
-                customerEmail: \App\Services\DokuService::emailAman($siswa->email, $siswa->wa_wali ?? $siswa->id),
-                judul: $tagihan->judul,
-                channel: $channel,
-                bank: $request->payment_method,
-                dokuSubAccountId: $lembaga?->doku_sub_account_id,
-            );
+            if ($channel === 'VA') {
+                $result = $doku->buatVaLangsung(
+                    referenceId: $referenceId,
+                    amount: $amount,
+                    judul: $tagihan->judul,
+                    dokuSubAccountId: $lembaga?->doku_sub_account_id,
+                );
+
+                $vaNumber = $result['virtual_account_info']['virtual_account_number'] ?? null;
+
+                if (!$vaNumber) {
+                    return back()->with('error', \App\Services\DokuService::pesanAman($result['message'] ?? $result['error']['message'] ?? null));
+                }
+            } else {
+                $result = $doku->buatQris(
+                    referenceId: $referenceId,
+                    amount: $amount,
+                );
+
+                // TODO: field gambar/string QR PERLU dicocokkan dengan
+                // respons asli sandbox (belum bisa dipastikan 100% dari
+                // dokumentasi publik) -- lihat catatan lengkap di
+                // DokuService::buatQris(). Dicoba beberapa kemungkinan
+                // field yang umum dipakai skema SNAP QRIS.
+                $qrString = $result['qrContent'] ?? $result['qrUrl'] ?? null;
+
+                if (!$qrString) {
+                    return back()->with('error', \App\Services\DokuService::pesanAman($result['message'] ?? $result['responseMessage'] ?? null));
+                }
+            }
         } catch (\Throwable $e) {
             return back()->with('error', 'Gagal membuat pembayaran: ' . $e->getMessage());
-        }
-
-        // Field ini SUDAH DIKONFIRMASI dari respons sandbox asli
-        // (bukan lagi tebakan) -- lihat full_response yang ter-log:
-        // DOKU Checkout membalas URL redirect di response.payment.url.
-        $paymentUrl = $result['response']['payment']['url'] ?? null;
-
-        if (!$paymentUrl) {
-            return back()->with('error', \App\Services\DokuService::pesanAman($result['message'] ?? $result['error']['message'] ?? null));
         }
 
         Pembayaran::create([
@@ -612,7 +604,37 @@ class WaliDashboardController extends Controller
             'reference'  => $referenceId,
         ]);
 
-        return redirect()->away($paymentUrl);
+        return view('payment.checkout', [
+            'layout' => 'wali.layout.wali',
+            'namaLembaga' => $lembaga?->nama ?? $siswa->yayasan?->nama ?? 'Qinara',
+            'logo' => $lembaga?->logo ? asset('storage/' . $lembaga->logo) : null,
+            'referenceId' => $referenceId,
+            'judul' => $tagihan->judul,
+            'amount' => $amount,
+            'channel' => $channel,
+            'vaNumber' => $vaNumber ?? null,
+            'qrString' => $qrString ?? null,
+            'countdownTo' => now()->addMinutes(60)->toIso8601String(),
+            'statusUrl' => route('wali.pembayaran.doku.status', $referenceId),
+            'successUrl' => route('wali.keuangan'),
+        ]);
+    }
+
+    /**
+     * Endpoint JSON dipanggil tombol "Cek Status Pembayaran" di halaman
+     * checkout custom -- polling manual (bukan realtime), cukup untuk
+     * kebutuhan sekarang karena webhook (DokuWebhookController) tetap
+     * jadi sumber kebenaran utama status pembayaran.
+     */
+    public function statusDoku(string $reference)
+    {
+        $pembayaran = Pembayaran::where('reference', $reference)->first();
+
+        abort_if(!$pembayaran, 404);
+
+        return response()->json([
+            'status' => $pembayaran->status,
+        ]);
     }
 
     public function showDokuForm(Tagihan $tagihan)
@@ -621,80 +643,6 @@ class WaliDashboardController extends Controller
 
         abort_if($tagihan->siswa_id !== $siswa->id, 403);
 
-        $paymentMethods = collect([
-        'BCA' => [
-            'code' => 'BCA',
-            'name' => 'BCA Virtual Account',
-            'category' => 'Virtual Account'
-        ],
-
-        'BNI' => [
-            'code' => 'BNI',
-            'name' => 'BNI Virtual Account',
-            'category' => 'Virtual Account'
-        ],
-
-        'BRI' => [
-            'code' => 'BRI',
-            'name' => 'BRI Virtual Account',
-            'category' => 'Virtual Account'
-        ],
-
-        'BSI' => [
-        'code' => 'BSI',
-        'name' => 'BSI Virtual Account',
-        'category' => 'Virtual Account'
-        ],
-
-        'MANDIRI' => [
-            'code' => 'MANDIRI',
-            'name' => 'Mandiri Virtual Account',
-            'category' => 'Virtual Account'
-        ],
-
-        'OV' => [
-            'code' => 'OV',
-            'name' => 'OVO',
-            'category' => 'E-Wallet'
-        ],
-
-        'DA' => [
-            'code' => 'DA',
-            'name' => 'DANA',
-            'category' => 'E-Wallet'
-        ],
-
-        'SP' => [
-            'code' => 'SP',
-            'name' => 'ShopeePay',
-            'category' => 'E-Wallet'
-        ],
-
-        'QRIS' => [
-            'code' => 'QRIS',
-            'name' => 'QRIS',
-            'category' => 'QRIS'
-        ],
-
-        'ALFAMART' => [
-            'code' => 'ALFAMART',
-            'name' => 'Alfamart',
-            'category' => 'Retail'
-        ],
-
-        'INDOMARET' => [
-            'code' => 'INDOMARET',
-            'name' => 'Indomaret',
-            'category' => 'Retail'
-        ],
-    ]);
-
-        return view(
-            'wali.doku',
-            compact(
-                'tagihan',
-                'paymentMethods'
-            )
-        );
+        return view('wali.doku', compact('tagihan'));
     }
 }
