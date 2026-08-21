@@ -6,6 +6,28 @@
 
     <div class="max-w-5xl mx-auto px-4 py-8">
 
+        @if(session('error'))
+            <div class="mb-6 rounded-2xl bg-red-50 border border-red-200 text-red-700 px-5 py-4 text-sm font-medium">
+                {{ session('error') }}
+            </div>
+        @endif
+
+        @if(session('success'))
+            <div class="mb-6 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 px-5 py-4 text-sm font-medium">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        <div class="mb-6 flex items-start gap-3 rounded-2xl bg-blue-50 border border-blue-100 px-5 py-4">
+            <x-heroicon-o-shield-check class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+            <p class="text-xs text-blue-700 leading-relaxed">
+                Setelah memilih metode, Anda akan diarahkan ke halaman pembayaran resmi
+                <strong>DOKU</strong> &mdash; partner payment gateway resmi Qinara yang berlisensi
+                Bank Indonesia. Nama <strong>Qinara</strong> akan tetap tampil sebagai penerima
+                pembayaran di halaman tersebut.
+            </p>
+        </div>
+
         <form method="POST" action="{{ route('wali.pembayaran.doku', $tagihan) }}">
             @csrf
 

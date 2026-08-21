@@ -317,6 +317,10 @@ class DokuService
         Log::info('DokuService::buatPaymentRequest sukses', [
             'reference' => $referenceId,
             'channel' => $channel,
+            // Full response body sengaja di-log supaya bisa dicocokkan
+            // field URL/nomor VA yang benar (nama field masih tebakan
+            // sampai ada respons sandbox asli).
+            'full_response' => $result,
         ]);
 
         return $result;

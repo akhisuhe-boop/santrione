@@ -264,12 +264,6 @@ Route::prefix('wali')->group(function () {
         Route::post('/pembayaran/{tagihan}/saldo', [WaliDashboardController::class, 'bayarSaldo'])
             ->name('wali.pembayaran.saldo');
 
-        Route::get('/pembayaran/{tagihan}/transfer', [WaliDashboardController::class, 'showTransferForm'])
-            ->name('wali.pembayaran.transfer');
-
-        Route::post('/pembayaran/{tagihan}/transfer', [WaliDashboardController::class, 'bayarTransfer'])
-            ->name('wali.pembayaran.transfer.store');
-
         Route::get('/pembayaran/{tagihan}/doku', [WaliDashboardController::class, 'showDokuForm'])
             ->name('wali.pembayaran.doku.form');
 
@@ -403,12 +397,6 @@ Route::prefix('wali')->group(function () {
         
         Route::post('/pembayaran/saldo/{tagihan}', [PpdbPembayaranController::class, 'bayarSaldo'])
             ->name('ppdb.pembayaran.saldo');
-        
-        Route::get('/pembayaran/transfer/{tagihan}', [PpdbPembayaranController::class, 'showTransferForm'])
-            ->name('ppdb.pembayaran.transfer');
-        
-        Route::post('/pembayaran/transfer/{tagihan}', [PpdbPembayaranController::class, 'bayarTransfer'])
-            ->name('ppdb.pembayaran.transfer.store');
         
         Route::get('/pembayaran/doku/{tagihan}', [PpdbPembayaranController::class, 'showDokuForm'])
             ->name('ppdb.pembayaran.doku.form');

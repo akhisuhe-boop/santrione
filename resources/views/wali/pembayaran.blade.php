@@ -416,61 +416,7 @@
 
     </div>
 
-    {{-- TRANSFER --}}
-<div
-    class="bg-[#EFF6FF]
-           border border-[#DBEAFE]
-           rounded-3xl p-5 mt-4 shadow-sm">
-
-    <div class="flex items-center gap-4">
-
-        <div
-            class="w-12 h-12 rounded-2xl
-                   bg-blue-100
-                   flex items-center justify-center">
-
-            <x-heroicon-o-building-library
-                class="w-6 h-6 text-blue-600" />
-
-        </div>
-
-        <div class="flex-1">
-
-            <h3 class="font-semibold text-slate-900">
-                Transfer Bank
-            </h3>
-
-            <p class="text-xs text-slate-500 mt-1">
-                Lihat rekening tujuan dan upload bukti transfer
-            </p>
-
-        </div>
-
-    </div>
-
-    <a
-        href="{{ route('wali.pembayaran.transfer', $tagihan) }}"
-        class="
-            mt-5
-            flex
-            items-center
-            justify-center
-            w-full
-            h-10
-            rounded-2xl
-            bg-blue-600
-            hover:bg-blue-700
-            text-white
-            text-sm
-            font-semibold
-            transition
-        ">
-        Bayar Via Transfer
-    </a>
-
-</div>
-
-    {{-- DUITKU --}}
+    {{-- DOKU --}}
     <div
         class="bg-[#FEFCE8]
                border border-[#FEF08A]
