@@ -66,6 +66,8 @@ class TopupController extends Controller
                     referenceId: $reference,
                     amount: (int) $amount,
                     judul: 'Top Up Saldo',
+                    customerName: $siswa->nama_lengkap,
+                    customerEmail: DokuService::emailAman($siswa->email, $siswa->id),
                 );
 
                 $vaNumber = $result['virtual_account_info']['virtual_account_number'] ?? null;
@@ -98,7 +100,7 @@ class TopupController extends Controller
         return view('payment.checkout', [
             'layout' => 'wali.layout.wali',
             'namaLembaga' => $siswa->lembaga?->nama ?? $siswa->yayasan?->nama ?? 'Qinara',
-            'logo' => $siswa->lembaga?->logo ? asset('storage/' . $siswa->lembaga->logo) : null,
+            'logo' => $siswa->lembaga?->logo ? \Storage::disk('r2-public')->url($siswa->lembaga->logo) : null,
             'referenceId' => $reference,
             'judul' => 'Top Up Saldo',
             'amount' => (int) $amount,

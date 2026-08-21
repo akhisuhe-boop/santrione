@@ -685,7 +685,7 @@ class WaliDashboardController extends Controller
         return view('payment.checkout', [
             'layout' => 'wali.layout.wali',
             'namaLembaga' => $lembaga?->nama ?? $siswa->yayasan?->nama ?? 'Qinara',
-            'logo' => $lembaga?->logo ? asset('storage/' . $lembaga->logo) : null,
+            'logo' => $lembaga?->logo ? \Storage::disk('r2-public')->url($lembaga->logo) : null,
             'referenceId' => $referenceId,
             'judul' => $tagihan->judul,
             'amount' => $amount,

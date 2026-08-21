@@ -100,6 +100,8 @@ class PpdbPembayaranController extends Controller
                     referenceId: $referenceId,
                     amount: $amount,
                     judul: $tagihan->judul,
+                    customerName: $ppdb->nama_lengkap ?? $ppdb->nama ?? 'Pendaftar PPDB',
+                    customerEmail: \App\Services\DokuService::emailAman($ppdb->email ?? null, $ppdb->wa_wali ?? $ppdb->id),
                     dokuSubAccountId: $lembaga?->doku_sub_account_id,
                 );
 
@@ -137,7 +139,7 @@ class PpdbPembayaranController extends Controller
         return view('payment.checkout', [
             'layout' => 'ppdb.layout.ppdb',
             'namaLembaga' => $lembaga?->nama ?? $ppdb->lembaga?->yayasan?->nama ?? 'Qinara',
-            'logo' => $lembaga?->logo ? asset('storage/' . $lembaga->logo) : null,
+            'logo' => $lembaga?->logo ? \Storage::disk('r2-public')->url($lembaga->logo) : null,
             'referenceId' => $referenceId,
             'judul' => $tagihan->judul,
             'amount' => $amount,
