@@ -229,12 +229,13 @@ class PpdbPembayaranController extends Controller
             return back()->with('error', 'Gagal membuat pembayaran: ' . $e->getMessage());
         }
 
-        $paymentUrl = $result['response']['url']
-            ?? $result['payment']['url']
-            ?? $result['virtual_account_info']['virtual_account_number'] ?? null;
+        // Field ini SUDAH DIKONFIRMASI dari respons sandbox asli
+        // (bukan lagi tebakan) -- DOKU Checkout membalas URL redirect
+        // di response.payment.url.
+        $paymentUrl = $result['response']['payment']['url'] ?? null;
 
         if (!$paymentUrl) {
-            return back()->with('error', $result['message'] ?? 'Gagal membuat pembayaran');
+            return back()->with('error', \App\Services\DokuService::pesanAman($result['message'] ?? $result['error']['message'] ?? null));
         }
 
         Pembayaran::create([
@@ -246,10 +247,6 @@ class PpdbPembayaranController extends Controller
             'status' => 'pending',
             'reference' => $referenceId,
         ]);
-
-        if ($channel === 'VA' && !str_starts_with((string) $paymentUrl, 'http')) {
-            return back()->with('success', 'Silakan transfer ke nomor VA: ' . $paymentUrl);
-        }
 
         return redirect()->away($paymentUrl);
     }

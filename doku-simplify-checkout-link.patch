@@ -1,0 +1,237 @@
+diff --git a/app/Http/Controllers/Ppdb/PpdbPembayaranController.php b/app/Http/Controllers/Ppdb/PpdbPembayaranController.php
+index c893dcb..b64a9f3 100644
+--- a/app/Http/Controllers/Ppdb/PpdbPembayaranController.php
++++ b/app/Http/Controllers/Ppdb/PpdbPembayaranController.php
+@@ -229,12 +229,13 @@ public function doku(Request $request, Tagihan $tagihan, \App\Services\DokuServi
+             return back()->with('error', 'Gagal membuat pembayaran: ' . $e->getMessage());
+         }
+ 
+-        $paymentUrl = $result['response']['url']
+-            ?? $result['payment']['url']
+-            ?? $result['virtual_account_info']['virtual_account_number'] ?? null;
++        // Field ini SUDAH DIKONFIRMASI dari respons sandbox asli
++        // (bukan lagi tebakan) -- DOKU Checkout membalas URL redirect
++        // di response.payment.url.
++        $paymentUrl = $result['response']['payment']['url'] ?? null;
+ 
+         if (!$paymentUrl) {
+-            return back()->with('error', $result['message'] ?? 'Gagal membuat pembayaran');
++            return back()->with('error', \App\Services\DokuService::pesanAman($result['message'] ?? $result['error']['message'] ?? null));
+         }
+ 
+         Pembayaran::create([
+@@ -247,10 +248,6 @@ public function doku(Request $request, Tagihan $tagihan, \App\Services\DokuServi
+             'reference' => $referenceId,
+         ]);
+ 
+-        if ($channel === 'VA' && !str_starts_with((string) $paymentUrl, 'http')) {
+-            return back()->with('success', 'Silakan transfer ke nomor VA: ' . $paymentUrl);
+-        }
+-
+         return redirect()->away($paymentUrl);
+     }
+ }
+\ No newline at end of file
+diff --git a/app/Http/Controllers/TopupController.php b/app/Http/Controllers/TopupController.php
+index 4b8cd1c..90889d0 100644
+--- a/app/Http/Controllers/TopupController.php
++++ b/app/Http/Controllers/TopupController.php
+@@ -73,18 +73,15 @@ public function store(Request $request, DokuService $doku)
+             return back()->with('error', 'Gagal membuat pembayaran: ' . $e->getMessage());
+         }
+ 
+-        // TODO: field URL redirect PERLU dicocokkan dengan respons asli
+-        // sandbox DOKU Checkout -- beberapa kemungkinan field yang umum
+-        // dipakai DOKU, dicoba berurutan.
+-        $paymentUrl = $result['response']['url']
+-            ?? $result['payment']['url']
+-            ?? $result['url']
+-            ?? null;
++        // Field ini SUDAH DIKONFIRMASI dari respons sandbox asli
++        // (bukan lagi tebakan) -- DOKU Checkout membalas URL redirect
++        // di response.payment.url.
++        $paymentUrl = $result['response']['payment']['url'] ?? null;
+ 
+         if (!$paymentUrl) {
+             $trx->update(['status' => 'failed']);
+ 
+-            return back()->with('error', 'Gagal membuat pembayaran (URL tidak ditemukan di respons DOKU)');
++            return back()->with('error', \App\Services\DokuService::pesanAman($result['message'] ?? $result['error']['message'] ?? null, 'Gagal membuat pembayaran (URL tidak ditemukan di respons DOKU)'));
+         }
+ 
+         return redirect()->away($paymentUrl);
+diff --git a/app/Http/Controllers/WaliDashboardController.php b/app/Http/Controllers/WaliDashboardController.php
+index 0303e1a..6c7cc90 100644
+--- a/app/Http/Controllers/WaliDashboardController.php
++++ b/app/Http/Controllers/WaliDashboardController.php
+@@ -822,14 +822,13 @@ public function doku(
+             return back()->with('error', 'Gagal membuat pembayaran: ' . $e->getMessage());
+         }
+ 
+-        // TODO: sesuaikan path field URL redirect dengan respons asli
+-        // sandbox DOKU (lihat catatan sama di TopupController).
+-        $paymentUrl = $result['response']['url']
+-            ?? $result['payment']['url']
+-            ?? $result['virtual_account_info']['virtual_account_number'] ?? null;
++        // Field ini SUDAH DIKONFIRMASI dari respons sandbox asli
++        // (bukan lagi tebakan) -- lihat full_response yang ter-log:
++        // DOKU Checkout membalas URL redirect di response.payment.url.
++        $paymentUrl = $result['response']['payment']['url'] ?? null;
+ 
+         if (!$paymentUrl) {
+-            return back()->with('error', $result['message'] ?? 'Gagal membuat pembayaran');
++            return back()->with('error', \App\Services\DokuService::pesanAman($result['message'] ?? $result['error']['message'] ?? null));
+         }
+ 
+         Pembayaran::create([
+@@ -842,15 +841,6 @@ public function doku(
+             'reference'  => $referenceId,
+         ]);
+ 
+-        // Untuk VA, DOKU biasanya tidak mengembalikan URL redirect
+-        // (customer bayar manual ke nomor VA) -- kalau begitu, arahkan ke
+-        // halaman konfirmasi yang menampilkan nomor VA-nya alih-alih
+-        // redirect away(). Sesuaikan sesuai UX yang diinginkan setelah
+-        // respons asli sandbox terlihat.
+-        if ($channel === 'VA' && !str_starts_with((string) $paymentUrl, 'http')) {
+-            return back()->with('success', 'Silakan transfer ke nomor VA: ' . $paymentUrl);
+-        }
+-
+         return redirect()->away($paymentUrl);
+     }
+ 
+diff --git a/app/Services/DokuService.php b/app/Services/DokuService.php
+index 82ace0f..d225891 100644
+--- a/app/Services/DokuService.php
++++ b/app/Services/DokuService.php
+@@ -121,6 +121,28 @@ protected function generateSignature(
+      * operator '??' tidak ke-trigger). DOKU membalas error
+      * "customer.email is not valid" untuk kasus begini.
+      */
++    /**
++     * DOKU kadang membalas 'message' error sebagai ARRAY/object (bukan
++     * string) -- terutama untuk error validasi per-field pada QRIS/
++     * Checkout API. Kalau ini langsung ditaruh ke session('error') dan
++     * ditampilkan lewat {{ session('error') }} di Blade, PHP akan crash
++     * (htmlspecialchars() butuh string, bukan array) -- persis bug yang
++     * ditemukan di sandbox. Helper ini memastikan pesan yang disimpan ke
++     * session SELALU string, apapun bentuk aslinya dari DOKU.
++     */
++    public static function pesanAman(mixed $pesan, string $default = 'Gagal membuat pembayaran'): string
++    {
++        if (is_string($pesan) && $pesan !== '') {
++            return $pesan;
++        }
++
++        if (is_array($pesan) || is_object($pesan)) {
++            return $default . ' (' . json_encode($pesan, JSON_UNESCAPED_SLASHES) . ')';
++        }
++
++        return $default;
++    }
++
+     public static function emailAman(?string $emailAsli, string|int $fallbackSeed): string
+     {
+         if ($emailAsli && filter_var($emailAsli, FILTER_VALIDATE_EMAIL)) {
+@@ -233,6 +255,26 @@ public function registerSubAccount(\App\Models\Lembaga $lembaga): array
+      * ternyata bisa 1 langkah, method ini perlu ditambah parameter
+      * 'split_rule' di payload sesuai dokumentasi yang dikonfirmasi.
+      */
++    /**
++     * Buat payment request lewat DOKU Checkout Link -- SATU endpoint
++     * untuk SEMUA metode (VA per bank, e-wallet, QRIS, kartu). Wali
++     * murid diarahkan ke halaman pembayaran resmi DOKU
++     * (staging.doku.com/checkout-link-v2/... di sandbox), tempat mereka
++     * pilih kanal spesifik (mis. VIRTUAL_ACCOUNT_BCA) -- DOKU yang
++     * urus routing ke bank yang benar, kita tidak perlu tebak endpoint
++     * per bank sendiri. Ini keputusan arsitektur SENGAJA (bukan
++     * keterbatasan) -- dipilih karena: (1) lebih aman -- detail
++     * pembayaran diproses sepenuhnya di halaman DOKU, Qinara tidak
++     * pernah pegang data kartu/VA mentah; (2) satu jalur terverifikasi
++     * dipakai untuk semua kanal, bukan endpoint per-bank yang belum
++     * pernah diuji; (3) DOKU otomatis update daftar kanal yang tersedia
++     * (payment_method_types) tanpa kita perlu ubah kode tiap ada bank
++     * baru.
++     *
++     * $channel di sini HANYA dipakai untuk mempersempit pilihan yang
++     * ditampilkan DOKU ke wali murid (lewat payment_method_types),
++     * bukan lagi untuk pilih endpoint berbeda.
++     */
+     public function buatPaymentRequest(
+         string $referenceId,
+         int $amount,
+@@ -254,6 +296,7 @@ public function buatPaymentRequest(
+             'order' => $order,
+             'payment' => [
+                 'payment_due_date' => 60, // menit
++                'payment_method_types' => $this->paymentMethodTypes($channel, $bank),
+             ],
+             'customer' => [
+                 'name' => $customerName,
+@@ -269,23 +312,7 @@ public function buatPaymentRequest(
+             ];
+         }
+ 
+-        $path = match (strtoupper($channel)) {
+-            'VA' => '/doku-virtual-account/v2/payment-code',
+-            'QRIS' => '/checkout/v1/payment', // QRIS dinamis lewat DOKU Checkout, redirect page menampilkan QR
+-            'EWALLET' => '/checkout/v1/payment',
+-            default => '/checkout/v1/payment',
+-        };
+-
+-        if (strtoupper($channel) === 'VA' && $bank) {
+-            $body['virtual_account_info'] = [
+-                'expired_time' => 60,
+-                'reusable_status' => false,
+-                'info1' => 'Qinara - ' . $judul,
+-            ];
+-            $body['virtual_account_bank'] = $bank; // sesuaikan nama field persis dari respons sandbox pertama
+-        }
+-
+-        $result = $this->post($path, $body);
++        $result = $this->post('/checkout/v1/payment', $body);
+ 
+         Log::info('DokuService::buatPaymentRequest sukses', [
+             'reference' => $referenceId,
+@@ -299,6 +326,41 @@ public function buatPaymentRequest(
+         return $result;
+     }
+ 
++    /**
++     * Terjemahkan pilihan bank/kanal dari UI Qinara ke daftar
++     * `payment_method_types` yang dikenali DOKU Checkout (persis nama
++     * enum yang terlihat di respons sandbox: VIRTUAL_ACCOUNT_BCA,
++     * VIRTUAL_ACCOUNT_BRI, VIRTUAL_ACCOUNT_BNI,
++     * VIRTUAL_ACCOUNT_BANK_SYARIAH_MANDIRI (BSI),
++     * VIRTUAL_ACCOUNT_BANK_MANDIRI, EMONEY_OVO, EMONEY_DANA,
++     * EMONEY_SHOPEE_PAY). Kalau kosong, DOKU otomatis tampilkan SEMUA
++     * kanal yang aktif untuk akun ini.
++     */
++    protected function paymentMethodTypes(string $channel, ?string $bank): array
++    {
++        // CATATAN: nama field 'payment_method_types' di BODY REQUEST ini
++        // masih perlu dikonfirmasi -- yang PASTI terverifikasi dari
++        // sandbox adalah field ini muncul di RESPONS (daftar kanal yang
++        // tersedia), belum tentu persis field yang sama dipakai untuk
++        // MEMPERSEMPIT pilihan di request. Kalau field ini ternyata
++        // diabaikan DOKU, dampaknya cuma kosmetik -- Checkout tetap
++        // jalan, wali murid cuma lihat semua kanal alih-alih kanal yang
++        // dia klik duluan di Qinara. Tidak mempengaruhi keberhasilan
++        // pembayaran.
++        return match (true) {
++            strtoupper($channel) === 'VA' && $bank === 'BCA' => ['VIRTUAL_ACCOUNT_BCA'],
++            strtoupper($channel) === 'VA' && $bank === 'BNI' => ['VIRTUAL_ACCOUNT_BNI'],
++            strtoupper($channel) === 'VA' && $bank === 'BRI' => ['VIRTUAL_ACCOUNT_BRI'],
++            strtoupper($channel) === 'VA' && $bank === 'BSI' => ['VIRTUAL_ACCOUNT_BANK_SYARIAH_MANDIRI'],
++            strtoupper($channel) === 'VA' && $bank === 'MANDIRI' => ['VIRTUAL_ACCOUNT_BANK_MANDIRI'],
++            strtoupper($channel) === 'EWALLET' && $bank === 'OV' => ['EMONEY_OVO'],
++            strtoupper($channel) === 'EWALLET' && $bank === 'DA' => ['EMONEY_DANA'],
++            strtoupper($channel) === 'EWALLET' && $bank === 'SP' => ['EMONEY_SHOPEE_PAY'],
++            strtoupper($channel) === 'QRIS' => [], // biarkan DOKU tampilkan opsi QRIS + lainnya
++            default => [],
++        };
++    }
++
+     /**
+      * Verifikasi signature notifikasi (webhook) DOKU -- implementasi
+      * PERSIS contoh resmi DOKU (Best Practice -- HTTP Notification),

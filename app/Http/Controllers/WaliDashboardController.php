@@ -822,14 +822,13 @@ class WaliDashboardController extends Controller
             return back()->with('error', 'Gagal membuat pembayaran: ' . $e->getMessage());
         }
 
-        // TODO: sesuaikan path field URL redirect dengan respons asli
-        // sandbox DOKU (lihat catatan sama di TopupController).
-        $paymentUrl = $result['response']['url']
-            ?? $result['payment']['url']
-            ?? $result['virtual_account_info']['virtual_account_number'] ?? null;
+        // Field ini SUDAH DIKONFIRMASI dari respons sandbox asli
+        // (bukan lagi tebakan) -- lihat full_response yang ter-log:
+        // DOKU Checkout membalas URL redirect di response.payment.url.
+        $paymentUrl = $result['response']['payment']['url'] ?? null;
 
         if (!$paymentUrl) {
-            return back()->with('error', $result['message'] ?? 'Gagal membuat pembayaran');
+            return back()->with('error', \App\Services\DokuService::pesanAman($result['message'] ?? $result['error']['message'] ?? null));
         }
 
         Pembayaran::create([
@@ -841,15 +840,6 @@ class WaliDashboardController extends Controller
             'status'     => 'pending',
             'reference'  => $referenceId,
         ]);
-
-        // Untuk VA, DOKU biasanya tidak mengembalikan URL redirect
-        // (customer bayar manual ke nomor VA) -- kalau begitu, arahkan ke
-        // halaman konfirmasi yang menampilkan nomor VA-nya alih-alih
-        // redirect away(). Sesuaikan sesuai UX yang diinginkan setelah
-        // respons asli sandbox terlihat.
-        if ($channel === 'VA' && !str_starts_with((string) $paymentUrl, 'http')) {
-            return back()->with('success', 'Silakan transfer ke nomor VA: ' . $paymentUrl);
-        }
 
         return redirect()->away($paymentUrl);
     }

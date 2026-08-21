@@ -73,18 +73,15 @@ class TopupController extends Controller
             return back()->with('error', 'Gagal membuat pembayaran: ' . $e->getMessage());
         }
 
-        // TODO: field URL redirect PERLU dicocokkan dengan respons asli
-        // sandbox DOKU Checkout -- beberapa kemungkinan field yang umum
-        // dipakai DOKU, dicoba berurutan.
-        $paymentUrl = $result['response']['url']
-            ?? $result['payment']['url']
-            ?? $result['url']
-            ?? null;
+        // Field ini SUDAH DIKONFIRMASI dari respons sandbox asli
+        // (bukan lagi tebakan) -- DOKU Checkout membalas URL redirect
+        // di response.payment.url.
+        $paymentUrl = $result['response']['payment']['url'] ?? null;
 
         if (!$paymentUrl) {
             $trx->update(['status' => 'failed']);
 
-            return back()->with('error', 'Gagal membuat pembayaran (URL tidak ditemukan di respons DOKU)');
+            return back()->with('error', \App\Services\DokuService::pesanAman($result['message'] ?? $result['error']['message'] ?? null, 'Gagal membuat pembayaran (URL tidak ditemukan di respons DOKU)'));
         }
 
         return redirect()->away($paymentUrl);

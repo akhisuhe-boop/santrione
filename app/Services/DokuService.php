@@ -121,6 +121,28 @@ class DokuService
      * operator '??' tidak ke-trigger). DOKU membalas error
      * "customer.email is not valid" untuk kasus begini.
      */
+    /**
+     * DOKU kadang membalas 'message' error sebagai ARRAY/object (bukan
+     * string) -- terutama untuk error validasi per-field pada QRIS/
+     * Checkout API. Kalau ini langsung ditaruh ke session('error') dan
+     * ditampilkan lewat {{ session('error') }} di Blade, PHP akan crash
+     * (htmlspecialchars() butuh string, bukan array) -- persis bug yang
+     * ditemukan di sandbox. Helper ini memastikan pesan yang disimpan ke
+     * session SELALU string, apapun bentuk aslinya dari DOKU.
+     */
+    public static function pesanAman(mixed $pesan, string $default = 'Gagal membuat pembayaran'): string
+    {
+        if (is_string($pesan) && $pesan !== '') {
+            return $pesan;
+        }
+
+        if (is_array($pesan) || is_object($pesan)) {
+            return $default . ' (' . json_encode($pesan, JSON_UNESCAPED_SLASHES) . ')';
+        }
+
+        return $default;
+    }
+
     public static function emailAman(?string $emailAsli, string|int $fallbackSeed): string
     {
         if ($emailAsli && filter_var($emailAsli, FILTER_VALIDATE_EMAIL)) {
@@ -233,6 +255,26 @@ class DokuService
      * ternyata bisa 1 langkah, method ini perlu ditambah parameter
      * 'split_rule' di payload sesuai dokumentasi yang dikonfirmasi.
      */
+    /**
+     * Buat payment request lewat DOKU Checkout Link -- SATU endpoint
+     * untuk SEMUA metode (VA per bank, e-wallet, QRIS, kartu). Wali
+     * murid diarahkan ke halaman pembayaran resmi DOKU
+     * (staging.doku.com/checkout-link-v2/... di sandbox), tempat mereka
+     * pilih kanal spesifik (mis. VIRTUAL_ACCOUNT_BCA) -- DOKU yang
+     * urus routing ke bank yang benar, kita tidak perlu tebak endpoint
+     * per bank sendiri. Ini keputusan arsitektur SENGAJA (bukan
+     * keterbatasan) -- dipilih karena: (1) lebih aman -- detail
+     * pembayaran diproses sepenuhnya di halaman DOKU, Qinara tidak
+     * pernah pegang data kartu/VA mentah; (2) satu jalur terverifikasi
+     * dipakai untuk semua kanal, bukan endpoint per-bank yang belum
+     * pernah diuji; (3) DOKU otomatis update daftar kanal yang tersedia
+     * (payment_method_types) tanpa kita perlu ubah kode tiap ada bank
+     * baru.
+     *
+     * $channel di sini HANYA dipakai untuk mempersempit pilihan yang
+     * ditampilkan DOKU ke wali murid (lewat payment_method_types),
+     * bukan lagi untuk pilih endpoint berbeda.
+     */
     public function buatPaymentRequest(
         string $referenceId,
         int $amount,
@@ -254,6 +296,7 @@ class DokuService
             'order' => $order,
             'payment' => [
                 'payment_due_date' => 60, // menit
+                'payment_method_types' => $this->paymentMethodTypes($channel, $bank),
             ],
             'customer' => [
                 'name' => $customerName,
@@ -269,23 +312,7 @@ class DokuService
             ];
         }
 
-        $path = match (strtoupper($channel)) {
-            'VA' => '/doku-virtual-account/v2/payment-code',
-            'QRIS' => '/checkout/v1/payment', // QRIS dinamis lewat DOKU Checkout, redirect page menampilkan QR
-            'EWALLET' => '/checkout/v1/payment',
-            default => '/checkout/v1/payment',
-        };
-
-        if (strtoupper($channel) === 'VA' && $bank) {
-            $body['virtual_account_info'] = [
-                'expired_time' => 60,
-                'reusable_status' => false,
-                'info1' => 'Qinara - ' . $judul,
-            ];
-            $body['virtual_account_bank'] = $bank; // sesuaikan nama field persis dari respons sandbox pertama
-        }
-
-        $result = $this->post($path, $body);
+        $result = $this->post('/checkout/v1/payment', $body);
 
         Log::info('DokuService::buatPaymentRequest sukses', [
             'reference' => $referenceId,
@@ -293,6 +320,41 @@ class DokuService
         ]);
 
         return $result;
+    }
+
+    /**
+     * Terjemahkan pilihan bank/kanal dari UI Qinara ke daftar
+     * `payment_method_types` yang dikenali DOKU Checkout (persis nama
+     * enum yang terlihat di respons sandbox: VIRTUAL_ACCOUNT_BCA,
+     * VIRTUAL_ACCOUNT_BRI, VIRTUAL_ACCOUNT_BNI,
+     * VIRTUAL_ACCOUNT_BANK_SYARIAH_MANDIRI (BSI),
+     * VIRTUAL_ACCOUNT_BANK_MANDIRI, EMONEY_OVO, EMONEY_DANA,
+     * EMONEY_SHOPEE_PAY). Kalau kosong, DOKU otomatis tampilkan SEMUA
+     * kanal yang aktif untuk akun ini.
+     */
+    protected function paymentMethodTypes(string $channel, ?string $bank): array
+    {
+        // CATATAN: nama field 'payment_method_types' di BODY REQUEST ini
+        // masih perlu dikonfirmasi -- yang PASTI terverifikasi dari
+        // sandbox adalah field ini muncul di RESPONS (daftar kanal yang
+        // tersedia), belum tentu persis field yang sama dipakai untuk
+        // MEMPERSEMPIT pilihan di request. Kalau field ini ternyata
+        // diabaikan DOKU, dampaknya cuma kosmetik -- Checkout tetap
+        // jalan, wali murid cuma lihat semua kanal alih-alih kanal yang
+        // dia klik duluan di Qinara. Tidak mempengaruhi keberhasilan
+        // pembayaran.
+        return match (true) {
+            strtoupper($channel) === 'VA' && $bank === 'BCA' => ['VIRTUAL_ACCOUNT_BCA'],
+            strtoupper($channel) === 'VA' && $bank === 'BNI' => ['VIRTUAL_ACCOUNT_BNI'],
+            strtoupper($channel) === 'VA' && $bank === 'BRI' => ['VIRTUAL_ACCOUNT_BRI'],
+            strtoupper($channel) === 'VA' && $bank === 'BSI' => ['VIRTUAL_ACCOUNT_BANK_SYARIAH_MANDIRI'],
+            strtoupper($channel) === 'VA' && $bank === 'MANDIRI' => ['VIRTUAL_ACCOUNT_BANK_MANDIRI'],
+            strtoupper($channel) === 'EWALLET' && $bank === 'OV' => ['EMONEY_OVO'],
+            strtoupper($channel) === 'EWALLET' && $bank === 'DA' => ['EMONEY_DANA'],
+            strtoupper($channel) === 'EWALLET' && $bank === 'SP' => ['EMONEY_SHOPEE_PAY'],
+            strtoupper($channel) === 'QRIS' => [], // biarkan DOKU tampilkan opsi QRIS + lainnya
+            default => [],
+        };
     }
 
     /**
