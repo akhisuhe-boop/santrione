@@ -523,6 +523,101 @@ class DokuService
     }
 
     /**
+     * VA SNAP per bank -- ENDPOINT & HEADER SUDAH TERKONFIRMASI RESMI
+     * dari developers.doku.com (bukan tebakan): 1 endpoint yang sama
+     * dipakai untuk SEMUA bank (BCA, BNI, BRI, Mandiri, BNC, BTN,
+     * Permata, Danamon), dibedakan lewat field `partnerServiceId` di
+     * body, BUKAN path URL berbeda per bank seperti dugaan awal.
+     *
+     * !! WAJIB SETUP DULU SEBELUM BISA DITES !!
+     * `partnerServiceId` itu KODE KHUSUS per bank yang DOKU terbitkan
+     * ke akun Anda (mirip nomor kanal), BUKAN sesuatu yang bisa kita
+     * karang sendiri -- WAJIB minta ke tim onboarding/sales DOKU:
+     * "Mohon partnerServiceId untuk VA SNAP channel BCA, BNI, BRI,
+     * Mandiri untuk akun sandbox kami (Client-Id: ...)". Isi hasilnya
+     * ke config/services.php -> doku.va_snap_partner_service_id.
+     *
+     * Field body & response BELUM 100% dipastikan lengkap dari
+     * dokumentasi publik (cuma sebagian field yang terlihat: trxId,
+     * totalAmount, virtualAccountTrxType, expiredDate) -- WAJIB
+     * dicocokkan lagi begitu sandbox bisa dipanggil beneran (pola yang
+     * sama seperti channel lain sebelumnya: log full response dulu,
+     * baru pastikan field yang dipakai).
+     */
+    public function buatVaSnap(
+        string $bankKode,
+        string $referenceId,
+        int $amount,
+        string $customerName
+    ): array {
+        $partnerServiceId = config('services.doku.va_snap_partner_service_id.' . strtoupper($bankKode));
+
+        if (blank($partnerServiceId)) {
+            throw new RuntimeException(
+                "partnerServiceId untuk bank {$bankKode} belum diisi di config/services.php -- minta ke tim DOKU dulu (lihat catatan lengkap di DokuService::buatVaSnap())."
+            );
+        }
+
+        $token = $this->getAccessToken();
+        $timestamp = $this->requestTimestamp();
+        $externalId = (string) random_int(1000000000, 9999999999);
+        $path = '/virtual-accounts/bi-snap-va/v1.1/transfer-va/create-va';
+
+        $body = [
+            'partnerServiceId' => $partnerServiceId,
+            'customerNo' => (string) random_int(100000, 999999),
+            'virtualAccountName' => $customerName,
+            'trxId' => $referenceId,
+            'totalAmount' => [
+                'value' => number_format($amount, 2, '.', ''),
+                'currency' => 'IDR',
+            ],
+            'virtualAccountTrxType' => 'C', // Closed Amount -- nominal tetap, tidak bisa diubah pembayar
+            'expiredDate' => now()->addHour()->toIso8601String(),
+            'additionalInfo' => [
+                'reference' => $referenceId,
+            ],
+        ];
+
+        $rawBody = json_encode($body, JSON_UNESCAPED_SLASHES);
+        $bodyHash = strtolower(hash('sha256', $rawBody));
+        $stringToSign = "POST:{$path}:{$token}:{$bodyHash}:{$timestamp}";
+        $signature = base64_encode(hash_hmac('sha512', $stringToSign, $this->secretKey(), true));
+
+        $response = Http::timeout(25)->withHeaders([
+            'X-TIMESTAMP' => $timestamp,
+            'X-SIGNATURE' => $signature,
+            'X-PARTNER-ID' => $this->clientId(),
+            'X-EXTERNAL-ID' => $externalId,
+            'CHANNEL-ID' => 'H2H',
+            'Authorization' => 'Bearer ' . $token,
+            'Content-Type' => 'application/json',
+        ])->withBody($rawBody, 'application/json')
+            ->post($this->baseUrl() . $path);
+
+        if ($response->failed()) {
+            Log::error('DokuService::buatVaSnap gagal', [
+                'bank' => $bankKode,
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            throw new RuntimeException('Gagal membuat VA SNAP DOKU: ' . $response->body());
+        }
+
+        $result = $response->json() ?? [];
+
+        Log::info('DokuService::buatVaSnap sukses', [
+            'bank' => $bankKode,
+            'reference' => $referenceId,
+            'full_response' => $result,
+        ]);
+
+        return $result;
+    }
+
+
+    /**
      * Ambil OAuth access token SNAP (Asymmetric Signature) -- dipakai
      * SEBELUM memanggil endpoint SNAP manapun (termasuk buatQris() di
      * bawah). Endpoint & formula signature dikonfirmasi dari dokumentasi

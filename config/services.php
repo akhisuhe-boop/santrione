@@ -55,6 +55,18 @@ return [
     // berdasar price list resmi DOKU yang sudah dibandingkan sebelumnya
     // -- SEBAIKNYA dikonfirmasi ulang ke akun sandbox/production Anda
     // karena bisa beda per kontrak/tier volume.
+    // partnerServiceId per bank untuk VA SNAP -- WAJIB diminta ke tim
+    // DOKU (bukan bisa dikarang sendiri), lihat catatan lengkap di
+    // DokuService::buatVaSnap(). Isi setelah dapat dari DOKU, format:
+    // 'BCA' => env('DOKU_VA_SNAP_BCA', ''),
+    'va_snap_partner_service_id' => [
+        'BCA' => env('DOKU_VA_SNAP_BCA', ''),
+        'BNI' => env('DOKU_VA_SNAP_BNI', ''),
+        'BRI' => env('DOKU_VA_SNAP_BRI', ''),
+        'MANDIRI' => env('DOKU_VA_SNAP_MANDIRI', ''),
+        'BSI' => env('DOKU_VA_SNAP_BSI', ''),
+        'BJB' => env('DOKU_VA_SNAP_BJB', ''),
+    ],
     'fee_doku' => [
         // Angka RESMI dari halaman harga DOKU (doku.com/harga), bukan
         // estimasi lagi. VA: BCA khusus Rp4.500, bank lain Rp4.000 --
