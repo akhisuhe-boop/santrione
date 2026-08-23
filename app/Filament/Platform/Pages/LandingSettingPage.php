@@ -149,7 +149,7 @@ class LandingSettingPage extends Page implements HasForms
                     ])->columns(3),
 
                 Forms\Components\Section::make('Promo & Countdown Timer')
-                    ->description('Banner urgensi di atas Harga -- TIDAK mengubah harga asli di Billing & Harga, cuma tampilan diskon sementara yang dihitung otomatis dari harga asli. Kalau tanggal berakhir sudah lewat, banner otomatis hilang sendiri (baik togglenya masih nyala atau tidak).')
+                    ->description('Banner urgensi di atas Harga -- TIDAK mengubah harga asli di Billing & Harga, cuma tampilan diskon sementara yang dihitung otomatis dari harga asli.')
                     ->schema([
                         Forms\Components\Toggle::make('promo_aktif')
                             ->label('Aktifkan Promo')
@@ -158,6 +158,16 @@ class LandingSettingPage extends Page implements HasForms
                             ->label('Cuma Countdown (Tanpa Diskon Harga)')
                             ->live()
                             ->visible(fn (Forms\Get $get) => $get('promo_aktif')),
+                        Forms\Components\Select::make('promo_mode')
+                            ->label('Tipe Countdown')
+                            ->options([
+                                'manual' => 'Manual -- 1 tanggal tetap, sama untuk semua pengunjung',
+                                'evergreen' => 'Evergreen -- tiap pengunjung dapat jendela waktu sendiri, mulai dari kunjungan pertama mereka',
+                            ])
+                            ->default('manual')
+                            ->live()
+                            ->visible(fn (Forms\Get $get) => $get('promo_aktif'))
+                            ->columnSpanFull(),
                         Forms\Components\TextInput::make('promo_teks')
                             ->label(fn (Forms\Get $get) => $get('promo_hanya_countdown') ? 'Keterangan Urgensi' : 'Teks Promo')
                             ->placeholder(fn (Forms\Get $get) => $get('promo_hanya_countdown') ? 'Contoh: Gelombang 1 Ditutup Dalam' : 'Contoh: Diskon Spesial Peluncuran!')
@@ -170,7 +180,15 @@ class LandingSettingPage extends Page implements HasForms
                         Forms\Components\DateTimePicker::make('promo_berakhir_pada')
                             ->label('Promo/Countdown Berakhir Pada')
                             ->native(false)
-                            ->visible(fn (Forms\Get $get) => $get('promo_aktif')),
+                            ->helperText('Berlaku sama untuk SEMUA pengunjung -- begitu tanggal ini lewat, banner hilang untuk semua orang, tidak peduli kapan mereka pertama lihat.')
+                            ->visible(fn (Forms\Get $get) => $get('promo_aktif') && $get('promo_mode') !== 'evergreen'),
+                        Forms\Components\TextInput::make('promo_evergreen_durasi_jam')
+                            ->label('Durasi Countdown per Pengunjung')
+                            ->numeric()->minValue(1)->maxValue(720)
+                            ->default(24)
+                            ->suffix('jam')
+                            ->helperText('Contoh: isi 24 -> tiap pengunjung baru lihat "Anda punya 24 jam sejak sekarang", dihitung dari kunjungan PERTAMA mereka (tersimpan di browser masing-masing). Begitu habis buat 1 orang, banner hilang buat orang itu saja -- pengunjung lain yang baru datang tetap dapat jendela 24 jam penuh dari awal.')
+                            ->visible(fn (Forms\Get $get) => $get('promo_aktif') && $get('promo_mode') === 'evergreen'),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Diskon Tahunan di Landing Page')
