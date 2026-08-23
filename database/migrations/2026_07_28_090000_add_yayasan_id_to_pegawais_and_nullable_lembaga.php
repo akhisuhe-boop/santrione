@@ -32,13 +32,19 @@ return new class extends Migration
         });
 
         // Backfill data lama lewat penugasan lembaga yang sudah ada.
-        DB::statement('
-            UPDATE pegawais
-            INNER JOIN pegawai_lembaga ON pegawai_lembaga.pegawai_id = pegawais.id
-            INNER JOIN lembagas ON lembagas.id = pegawai_lembaga.lembaga_id
-            SET pegawais.yayasan_id = lembagas.yayasan_id
-            WHERE pegawais.yayasan_id IS NULL
-        ');
+        // Sintaks UPDATE ... INNER JOIN ini khusus MySQL; di-skip saat
+        // testing (sqlite in-memory) karena database test dibuat
+        // kosong dari awal, jadi tidak ada data lama yang perlu
+        // di-backfill.
+        if (DB::connection()->getDriverName() === 'mysql') {
+            DB::statement('
+                UPDATE pegawais
+                INNER JOIN pegawai_lembaga ON pegawai_lembaga.pegawai_id = pegawais.id
+                INNER JOIN lembagas ON lembagas.id = pegawai_lembaga.lembaga_id
+                SET pegawais.yayasan_id = lembagas.yayasan_id
+                WHERE pegawais.yayasan_id IS NULL
+            ');
+        }
     }
 
     public function down(): void

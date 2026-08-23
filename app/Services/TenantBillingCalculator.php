@@ -79,7 +79,21 @@ class TenantBillingCalculator
 
         $jumlahSiswa = $lembaga->jumlah_siswa_billing ?? $lembaga->jumlahSiswaAktif();
 
-        $hargaDasar = (int) ($plan->harga_bulanan ?? 0);
+        $urutanKe = $lembaga->urutanBillingKe();
+
+        $kuotaLembaga = (int) ($plan->maks_lembaga ?? 1);
+        $hargaPerLembagaTambahan = (int) ($plan->harga_per_lembaga_tambahan ?? 0);
+
+        // Lembaga di dalam kuota paket (biasanya lembaga ke-1) pakai harga
+        // dasar penuh. Lembaga DI LUAR kuota (ke-2 dst kalau maks_lembaga=1)
+        // pakai harga_per_lembaga_tambahan, BUKAN harga dasar penuh lagi --
+        // sebelumnya di sini selalu pakai harga dasar untuk SEMUA lembaga,
+        // sehingga harga_per_lembaga_tambahan tidak pernah terpakai sama
+        // sekali (bug ditemukan 24 Agustus 2026).
+        $hargaDasar = $urutanKe > $kuotaLembaga
+            ? $hargaPerLembagaTambahan
+            : (int) ($plan->harga_bulanan ?? 0);
+
         $kuotaSiswa = (int) ($plan->maks_siswa ?? 100);
         $hargaPerSiswaTambahan = (int) ($plan->harga_per_siswa_tambahan ?? 0);
 
@@ -88,7 +102,6 @@ class TenantBillingCalculator
 
         $aksesPlatformSebelumDiskon = $hargaDasar + $biayaSiswaTambahan;
 
-        $urutanKe = $lembaga->urutanBillingKe();
         $diskonPersen = $this->diskonPersenUntukUrutan($urutanKe);
         $aksesPlatformSetelahDiskon = (int) round($aksesPlatformSebelumDiskon * (1 - $diskonPersen / 100));
 

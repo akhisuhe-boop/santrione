@@ -22,6 +22,11 @@ return new class extends Migration
      *    (nullable, bebas isi 'doku'/'xendit') untuk menyimpan nama
      *    provider sebenarnya, sementara `metode` tetap diisi 'gateway'
      *    sesuai enum yang berlaku.
+     *
+     * Statement ALTER ... MODIFY COLUMN ... ENUM(...) khusus MySQL,
+     * di-skip saat testing (sqlite in-memory) -- SQLite tidak punya
+     * ENUM/MODIFY COLUMN, dan kolomnya sudah longgar tanpa perlu
+     * diperlebar.
      */
     public function up(): void
     {
@@ -31,7 +36,9 @@ return new class extends Migration
                 ->default('belum_daftar')->after('doku_sub_account_id');
         });
 
-        DB::statement("ALTER TABLE lembagas MODIFY COLUMN payment_gateway ENUM('duitku','xendit','doku') NOT NULL DEFAULT 'duitku'");
+        if (DB::connection()->getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE lembagas MODIFY COLUMN payment_gateway ENUM('duitku','xendit','doku') NOT NULL DEFAULT 'duitku'");
+        }
 
         Schema::table('pembayarans', function (Blueprint $table) {
             $table->string('gateway')->nullable()->after('metode');
@@ -48,7 +55,9 @@ return new class extends Migration
             $table->dropColumn(['doku_sub_account_id', 'doku_status']);
         });
 
-        DB::statement("ALTER TABLE lembagas MODIFY COLUMN payment_gateway ENUM('duitku','xendit') NOT NULL DEFAULT 'duitku'");
+        if (DB::connection()->getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE lembagas MODIFY COLUMN payment_gateway ENUM('duitku','xendit') NOT NULL DEFAULT 'duitku'");
+        }
 
         Schema::table('pembayarans', function (Blueprint $table) {
             $table->dropColumn('gateway');
