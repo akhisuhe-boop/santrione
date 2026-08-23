@@ -15,7 +15,7 @@ class LandingSetting extends Model
         'footer_text', 'footer_legalitas', 'nomor_nib', 'nomor_akta',
         'meta_pixel_id', 'tiktok_pixel_id', 'google_ads_id',
         'crm_notif_wa_numbers',
-        'promo_aktif', 'promo_teks', 'promo_persen', 'promo_berakhir_pada', 'tahunan_diskon_persen',
+        'promo_aktif', 'promo_mode', 'promo_teks', 'promo_persen', 'promo_berakhir_pada', 'promo_evergreen_durasi_jam', 'tahunan_diskon_persen',
         'promo_hanya_countdown',
     ];
 
@@ -56,19 +56,31 @@ class LandingSetting extends Model
     }
 
     /**
-     * Promo/countdown dianggap berjalan kalau togglenya nyala DAN
-     * tanggal berakhirnya masih di masa depan -- SENGAJA tidak
-     * mewajibkan persen diskon terisi, supaya banner bisa dipakai
-     * sebagai "countdown murni" (tanpa diskon harga sama sekali,
-     * cuma teks + hitung mundur) kalau memang itu yang diinginkan.
-     * Guard "Hemat 0%" yang membingungkan ditangani di level tampilan
-     * (blade/JS), bukan di sini -- lihat promoAdaDiskon().
+     * Promo/countdown dianggap berjalan kalau togglenya nyala, DAN:
+     *  - mode 'manual' -> tanggal berakhirnya masih di masa depan
+     *    (1 tanggal tetap, sama untuk semua pengunjung).
+     *  - mode 'evergreen' -> SELALU dianggap berjalan selama togglenya
+     *    nyala -- tidak ada tanggal tetap di database sama sekali,
+     *    karena tiap pengunjung dapat jendela waktunya sendiri-sendiri
+     *    (dihitung di browser masing-masing lewat localStorage, mulai
+     *    dari kunjungan pertama mereka, lihat blok JS di landing page).
+     * SENGAJA tidak mewajibkan persen diskon terisi, supaya banner
+     * bisa dipakai sebagai "countdown murni" (tanpa diskon harga sama
+     * sekali, cuma teks + hitung mundur) kalau memang itu yang
+     * diinginkan. Guard "Hemat 0%" yang membingungkan ditangani di
+     * level tampilan (blade/JS), bukan di sini -- lihat promoAdaDiskon().
      */
     public function promoSedangBerjalan(): bool
     {
-        return $this->promo_aktif
-            && $this->promo_berakhir_pada
-            && $this->promo_berakhir_pada->isFuture();
+        if (! $this->promo_aktif) {
+            return false;
+        }
+
+        if ($this->promo_mode === 'evergreen') {
+            return true;
+        }
+
+        return $this->promo_berakhir_pada && $this->promo_berakhir_pada->isFuture();
     }
 
     /**

@@ -786,7 +786,11 @@
                 </div>
                 @endif
 
-                <div class="flex items-center gap-1.5" data-promo-end="{{ $setting->promo_berakhir_pada->toIso8601String() }}" data-diskon-aktif="{{ $setting->promoAdaDiskon() ? '1' : '0' }}">
+                <div class="flex items-center gap-1.5"
+                     data-promo-mode="{{ $setting->promo_mode }}"
+                     data-promo-end="{{ $setting->promo_mode === 'manual' && $setting->promo_berakhir_pada ? $setting->promo_berakhir_pada->toIso8601String() : '' }}"
+                     data-evergreen-jam="{{ $setting->promo_evergreen_durasi_jam ?? 24 }}"
+                     data-diskon-aktif="{{ $setting->promoAdaDiskon() ? '1' : '0' }}">
                     <div class="flex flex-col items-center bg-red-50 rounded-xl px-3.5 py-2 min-w-[58px]">
                         <span id="promo-cd-d" class="text-slate-900 font-extrabold text-xl font-mono tabular-nums leading-none">00</span>
                         <span class="text-red-300 text-[9px] uppercase tracking-wide mt-1">Hari</span>
@@ -1475,10 +1479,44 @@
         });
 
         // Countdown promo
-        const promoEl = document.querySelector('[data-promo-end]');
+        const promoEl = document.querySelector('[data-promo-mode]');
         if (promoEl) {
             promoActive = promoEl.dataset.diskonAktif === '1';
-            const endTime = new Date(promoEl.dataset.promoEnd).getTime();
+
+            // Mode 'manual' -> 1 tanggal tetap dari server, sama untuk
+            // semua orang. Mode 'evergreen' -> tiap pengunjung dapat
+            // jendela waktunya sendiri, mulai dihitung dari kunjungan
+            // PERTAMA mereka (disimpan di localStorage browser mereka
+            // sendiri, tidak pernah dikirim ke server) -- begitu
+            // tersimpan, tanggal itu TIDAK berubah lagi buat pengunjung
+            // itu, walau mereka reload/buka lagi besok, sampai
+            // durasinya habis.
+            function getPromoEndTime() {
+                if (promoEl.dataset.promoMode === 'evergreen') {
+                    const jam = parseInt(promoEl.dataset.evergreenJam, 10) || 24;
+                    const storageKey = 'qinara_promo_evergreen_mulai';
+                    let mulai;
+                    try {
+                        mulai = localStorage.getItem(storageKey);
+                        if (!mulai) {
+                            mulai = Date.now();
+                            localStorage.setItem(storageKey, String(mulai));
+                        } else {
+                            mulai = parseInt(mulai, 10);
+                        }
+                    } catch (e) {
+                        // localStorage diblokir (mode privat ketat dll) --
+                        // fallback aman: anggap baru mulai sekarang,
+                        // tidak akan konsisten antar reload tapi tetap
+                        // tidak error.
+                        mulai = Date.now();
+                    }
+                    return mulai + (jam * 3600000);
+                }
+                return new Date(promoEl.dataset.promoEnd).getTime();
+            }
+
+            const endTime = getPromoEndTime();
             const dEl = document.getElementById('promo-cd-d');
             const hEl = document.getElementById('promo-cd-h');
             const mEl = document.getElementById('promo-cd-m');
