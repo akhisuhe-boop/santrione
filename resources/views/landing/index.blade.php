@@ -771,6 +771,11 @@
 
                 <div class="flex items-center gap-1.5" data-promo-end="{{ $setting->promo_berakhir_pada->toIso8601String() }}" data-diskon-aktif="{{ $setting->promoAdaDiskon() ? '1' : '0' }}">
                     <div class="flex flex-col items-center bg-red-50 rounded-xl px-3.5 py-2 min-w-[58px]">
+                        <span id="promo-cd-d" class="text-slate-900 font-extrabold text-xl font-mono tabular-nums leading-none">00</span>
+                        <span class="text-red-300 text-[9px] uppercase tracking-wide mt-1">Hari</span>
+                    </div>
+                    <span class="text-red-200 font-bold">:</span>
+                    <div class="flex flex-col items-center bg-red-50 rounded-xl px-3.5 py-2 min-w-[58px]">
                         <span id="promo-cd-h" class="text-slate-900 font-extrabold text-xl font-mono tabular-nums leading-none">00</span>
                         <span class="text-red-300 text-[9px] uppercase tracking-wide mt-1">Jam</span>
                     </div>
@@ -1457,6 +1462,7 @@
         if (promoEl) {
             promoActive = promoEl.dataset.diskonAktif === '1';
             const endTime = new Date(promoEl.dataset.promoEnd).getTime();
+            const dEl = document.getElementById('promo-cd-d');
             const hEl = document.getElementById('promo-cd-h');
             const mEl = document.getElementById('promo-cd-m');
             const sEl = document.getElementById('promo-cd-s');
@@ -1472,11 +1478,13 @@
                     clearInterval(timer);
                     return;
                 }
-                const totalHours = Math.floor(diff / 3600000);
+                const d = Math.floor(diff / 86400000);
+                const h = Math.floor((diff % 86400000) / 3600000);
                 const m = Math.floor((diff % 3600000) / 60000);
                 const s = Math.floor((diff % 60000) / 1000);
                 const pad = (n) => String(n).padStart(2, '0');
-                hEl.textContent = pad(totalHours);
+                dEl.textContent = pad(d);
+                hEl.textContent = pad(h);
                 mEl.textContent = pad(m);
                 sEl.textContent = pad(s);
 
