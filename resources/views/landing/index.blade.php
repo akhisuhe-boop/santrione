@@ -198,7 +198,7 @@
 <!-- HERO -->
 <section id="hero" class="relative pt-28 pb-24 md:pt-36 md:pb-32 overflow-hidden bg-gradient-to-b from-white via-white to-slate-50">
     <div class="mx-auto max-w-7xl px-4 lg:px-8">
-        <div class="grid grid-cols-1 lg:grid-cols-[45%_55%] gap-14 items-center">
+        <div class="grid grid-cols-1 lg:grid-cols-[50%_50%] gap-14 items-center">
 
             <div class="text-center lg:text-left space-y-8">
                 <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-50 border border-slate-200 text-xs font-medium text-slate-700 mx-auto lg:mx-0 shadow-sm hover:shadow-md transition-all duration-300">
@@ -266,11 +266,11 @@
 
             <div>
                 @if($setting->hero_images && count($setting->hero_images) > 0)
-                    <div id="hero-slideshow" class="relative w-full aspect-[4/3] sm:aspect-[16/12] overflow-hidden rounded-2xl">
+                    <div id="hero-slideshow" class="relative w-full aspect-[16/11] overflow-hidden rounded-2xl">
                         @foreach($setting->hero_images as $i => $img)
                             <img src="{{ \Illuminate\Support\Facades\Storage::disk('r2-public')->url($img) }}"
                                  alt="Tampilan Aplikasi {{ $setting->brand_name }} {{ $i + 1 }}"
-                                 class="hero-slide absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ease-in-out {{ $i === 0 ? 'opacity-100' : 'opacity-0' }}">
+                                 class="hero-slide absolute inset-0 w-full h-full object-contain transition-opacity duration-700 ease-in-out {{ $i === 0 ? 'opacity-100' : 'opacity-0' }}">
                         @endforeach
                     </div>
                     @if(count($setting->hero_images) > 1)
