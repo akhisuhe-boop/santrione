@@ -3,10 +3,10 @@
 namespace App\Policies;
 
 use App\Models\User;
-use App\Models\Lembaga;
+use App\Models\IzinHarian;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
-class LembagaPolicy
+class IzinHarianPolicy
 {
     use HandlesAuthorization;
 
@@ -15,15 +15,15 @@ class LembagaPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_pengaturan::honor::pengganti');
+        return $user->can('view_any_izin::harian');
     }
 
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, Lembaga $lembaga): bool
+    public function view(User $user, IzinHarian $izinHarian): bool
     {
-        return $user->can('view_pengaturan::honor::pengganti');
+        return $user->can('view_izin::harian');
     }
 
     /**
@@ -31,23 +31,23 @@ class LembagaPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_pengaturan::honor::pengganti');
+        return $user->can('create_izin::harian');
     }
 
     /**
      * Determine whether the user can update the model.
      */
-    public function update(User $user, Lembaga $lembaga): bool
+    public function update(User $user, IzinHarian $izinHarian): bool
     {
-        return $user->can('update_pengaturan::honor::pengganti');
+        return $user->can('update_izin::harian');
     }
 
     /**
      * Determine whether the user can delete the model.
      */
-    public function delete(User $user, Lembaga $lembaga): bool
+    public function delete(User $user, IzinHarian $izinHarian): bool
     {
-        return $user->can('delete_pengaturan::honor::pengganti');
+        return $user->can('delete_izin::harian');
     }
 
     /**
@@ -55,15 +55,15 @@ class LembagaPolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_pengaturan::honor::pengganti');
+        return $user->can('delete_any_izin::harian');
     }
 
     /**
      * Determine whether the user can permanently delete.
      */
-    public function forceDelete(User $user, Lembaga $lembaga): bool
+    public function forceDelete(User $user, IzinHarian $izinHarian): bool
     {
-        return $user->can('force_delete_pengaturan::honor::pengganti');
+        return $user->can('force_delete_izin::harian');
     }
 
     /**
@@ -71,15 +71,15 @@ class LembagaPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_pengaturan::honor::pengganti');
+        return $user->can('force_delete_any_izin::harian');
     }
 
     /**
      * Determine whether the user can restore.
      */
-    public function restore(User $user, Lembaga $lembaga): bool
+    public function restore(User $user, IzinHarian $izinHarian): bool
     {
-        return $user->can('restore_pengaturan::honor::pengganti');
+        return $user->can('restore_izin::harian');
     }
 
     /**
@@ -87,15 +87,15 @@ class LembagaPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_pengaturan::honor::pengganti');
+        return $user->can('restore_any_izin::harian');
     }
 
     /**
      * Determine whether the user can replicate.
      */
-    public function replicate(User $user, Lembaga $lembaga): bool
+    public function replicate(User $user, IzinHarian $izinHarian): bool
     {
-        return $user->can('replicate_pengaturan::honor::pengganti');
+        return $user->can('replicate_izin::harian');
     }
 
     /**
@@ -103,6 +103,6 @@ class LembagaPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_pengaturan::honor::pengganti');
+        return $user->can('reorder_izin::harian');
     }
 }
