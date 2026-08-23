@@ -10,7 +10,7 @@ class LandingSetting extends Model
         'brand_name', 'logo', 'headline_baris1', 'headline_baris2', 'subheadline', 'badge_text',
         'whatsapp_number', 'whatsapp_pesan_default', 'email_kontak', 'alamat',
         'ig_url', 'fb_url', 'yt_url', 'x_url',
-        'hero_mockup_gambar', 'hero_video_url', 'video_deskripsi', 'hero_kpi_keuangan', 'hero_kpi_keuangan_growth', 'hero_kpi_kehadiran_persen',
+        'hero_mockup_gambar', 'hero_images', 'hero_video_url', 'video_deskripsi', 'hero_kpi_keuangan', 'hero_kpi_keuangan_growth', 'hero_kpi_kehadiran_persen',
         'social_proof_text', 'stat_efisiensi', 'stat_modul', 'stat_akses', 'stat_digitalisasi',
         'footer_text', 'footer_legalitas', 'nomor_nib', 'nomor_akta',
         'meta_pixel_id', 'tiktok_pixel_id', 'google_ads_id',
@@ -23,6 +23,7 @@ class LandingSetting extends Model
         'promo_aktif' => 'boolean',
         'promo_berakhir_pada' => 'datetime',
         'promo_hanya_countdown' => 'boolean',
+        'hero_images' => 'array',
     ];
 
     /**

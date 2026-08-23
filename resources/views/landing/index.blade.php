@@ -198,9 +198,9 @@
 <!-- HERO -->
 <section id="hero" class="relative pt-28 pb-24 md:pt-36 md:pb-32 overflow-hidden bg-gradient-to-b from-white via-white to-slate-50">
     <div class="mx-auto max-w-7xl px-4 lg:px-8">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-14 items-center">
+        <div class="grid grid-cols-1 lg:grid-cols-[45%_55%] gap-14 items-center">
 
-            <div class="lg:col-span-7 text-center lg:text-left space-y-8">
+            <div class="text-center lg:text-left space-y-8">
                 <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-50 border border-slate-200 text-xs font-medium text-slate-700 mx-auto lg:mx-0 shadow-sm hover:shadow-md transition-all duration-300">
                     <span class="relative flex h-2 w-2">
                         <span class="absolute inline-flex h-full w-full rounded-full opacity-60 animate-ping" style="background-color:#00A39D;"></span>
@@ -264,13 +264,30 @@
                 </div>
             </div>
 
-            <div class="lg:col-span-5">
-                @if($setting->hero_mockup_gambar)
+            <div>
+                @if($setting->hero_images && count($setting->hero_images) > 0)
+                    <div id="hero-slideshow" class="relative w-full aspect-[4/3] sm:aspect-[16/12] overflow-hidden rounded-2xl">
+                        @foreach($setting->hero_images as $i => $img)
+                            <img src="{{ \Illuminate\Support\Facades\Storage::disk('r2-public')->url($img) }}"
+                                 alt="Tampilan Aplikasi {{ $setting->brand_name }} {{ $i + 1 }}"
+                                 class="hero-slide absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ease-in-out {{ $i === 0 ? 'opacity-100' : 'opacity-0' }}">
+                        @endforeach
+                    </div>
+                    @if(count($setting->hero_images) > 1)
+                    <div class="flex items-center justify-center lg:justify-start gap-2 mt-5">
+                        @foreach($setting->hero_images as $i => $img)
+                            <button type="button"
+                                    class="hero-dot h-2 rounded-full transition-all duration-300 {{ $i === 0 ? 'w-6 bg-primary-500' : 'w-2 bg-slate-300 hover:bg-slate-400' }}"
+                                    aria-label="Slide {{ $i + 1 }}"></button>
+                        @endforeach
+                    </div>
+                    @endif
+                @elseif($setting->hero_mockup_gambar)
                     <img src="{{ \Illuminate\Support\Facades\Storage::disk('r2-public')->url($setting->hero_mockup_gambar) }}"
                          alt="Tampilan Dashboard {{ $setting->brand_name }}"
-                         class="w-full rounded-2xl border border-slate-200 shadow-2xl">
+                         class="w-full rounded-2xl">
                 @else
-                <div class="relative rounded-2xl bg-white border border-slate-200 shadow-2xl p-6">
+                <div class="relative rounded-2xl bg-white p-6">
                     <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
                         <div class="flex gap-1.5">
                             <span class="w-3 h-3 rounded-full bg-red-400"></span>
@@ -1499,6 +1516,50 @@
         }
 
         render();
+    })();
+
+    // Slideshow Hero -- auto-ganti tiap 4.5 detik, bisa juga diklik manual
+    // lewat titik navigasi. Kalau cuma 1 gambar (atau pakai fallback),
+    // script ini otomatis tidak ngapa-ngapain (aman, tidak error).
+    (function() {
+        const slides = document.querySelectorAll('.hero-slide');
+        const dots = document.querySelectorAll('.hero-dot');
+        if (slides.length <= 1) return;
+
+        let current = 0;
+        let timer = null;
+
+        function showSlide(idx) {
+            slides.forEach((s, i) => {
+                s.classList.toggle('opacity-100', i === idx);
+                s.classList.toggle('opacity-0', i !== idx);
+            });
+            dots.forEach((d, i) => {
+                d.classList.toggle('w-6', i === idx);
+                d.classList.toggle('bg-primary-500', i === idx);
+                d.classList.toggle('w-2', i !== idx);
+                d.classList.toggle('bg-slate-300', i !== idx);
+            });
+            current = idx;
+        }
+
+        function nextSlide() {
+            showSlide((current + 1) % slides.length);
+        }
+
+        function startTimer() {
+            timer = setInterval(nextSlide, 4500);
+        }
+
+        dots.forEach((dot, i) => {
+            dot.addEventListener('click', () => {
+                showSlide(i);
+                clearInterval(timer);
+                startTimer();
+            });
+        });
+
+        startTimer();
     })();
 
     // Animasi reveal saat kartu harga masuk viewport

@@ -85,19 +85,22 @@ class LandingSettingPage extends Page implements HasForms
                             ->label('Nomor Akta / AHU'),
                     ])->columns(3),
 
-                Forms\Components\Section::make('Kartu Hero (Gambar Mockup)')
-                    ->description('Prioritas tampil di hero: Gambar Mockup (kalau diisi) > kartu dashboard bawaan.')
+                Forms\Components\Section::make('Kartu Hero (Gambar/Slideshow)')
+                    ->description('Prioritas tampil di hero: Gambar Slideshow di bawah (kalau diisi lebih dari 1, otomatis jadi slideshow bergantian) > kartu dashboard bawaan. Urutan gambar bisa diatur drag & drop.')
                     ->schema([
-                        Forms\Components\FileUpload::make('hero_mockup_gambar')
-                            ->label('Gambar Mockup (opsional)')
+                        Forms\Components\FileUpload::make('hero_images')
+                            ->label('Gambar Hero (bisa lebih dari 1 untuk slideshow)')
                             ->image()
+                            ->multiple()
+                            ->reorderable()
+                            ->appendFiles()
                             ->disk('r2-public')
                             ->directory('landing/hero')
                             ->imageEditor()
                             ->columnSpanFull(),
                         Forms\Components\TextInput::make('hero_kpi_keuangan')
                             ->label('Angka Total Keuangan (contoh)')
-                            ->helperText('Hanya dipakai jika gambar mockup di atas kosong.'),
+                            ->helperText('Hanya dipakai jika gambar hero di atas kosong.'),
                         Forms\Components\TextInput::make('hero_kpi_keuangan_growth')
                             ->label('Teks Pertumbuhan (contoh: +12% bulan ini)'),
                         Forms\Components\TextInput::make('hero_kpi_kehadiran_persen')
