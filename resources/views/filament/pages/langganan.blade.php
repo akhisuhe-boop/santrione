@@ -299,6 +299,7 @@
                                     <td class="px-2 py-2.5 text-center">
                                         <input
                                             type="checkbox"
+                                            wire:key="modul-check-{{ $lembaga->id }}-{{ $modul->id }}-{{ $aktif ? 'on' : 'off' }}"
                                             @if (! $paketFullAktif) wire:click="toggleModule({{ $lembaga->id }}, {{ $modul->id }})" @endif
                                             {{ $aktif ? 'checked' : '' }}
                                             {{ $paketFullAktif ? 'disabled' : '' }}
