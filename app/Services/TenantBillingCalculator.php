@@ -83,6 +83,7 @@ class TenantBillingCalculator
 
         $kuotaLembaga = (int) ($plan->maks_lembaga ?? 1);
         $hargaPerLembagaTambahan = (int) ($plan->harga_per_lembaga_tambahan ?? 0);
+        $lembagaDiDalamKuota = $urutanKe <= $kuotaLembaga;
 
         // Lembaga di dalam kuota paket (biasanya lembaga ke-1) pakai harga
         // dasar penuh. Lembaga DI LUAR kuota (ke-2 dst kalau maks_lembaga=1)
@@ -90,9 +91,9 @@ class TenantBillingCalculator
         // sebelumnya di sini selalu pakai harga dasar untuk SEMUA lembaga,
         // sehingga harga_per_lembaga_tambahan tidak pernah terpakai sama
         // sekali (bug ditemukan 24 Agustus 2026).
-        $hargaDasar = $urutanKe > $kuotaLembaga
-            ? $hargaPerLembagaTambahan
-            : (int) ($plan->harga_bulanan ?? 0);
+        $hargaDasar = $lembagaDiDalamKuota
+            ? (int) ($plan->harga_bulanan ?? 0)
+            : $hargaPerLembagaTambahan;
 
         $kuotaSiswa = (int) ($plan->maks_siswa ?? 100);
         $hargaPerSiswaTambahan = (int) ($plan->harga_per_siswa_tambahan ?? 0);
@@ -114,7 +115,7 @@ class TenantBillingCalculator
             // Paket Full: modul sudah termasuk di harga Akses Platform
             // di atas — jangan dihitung lagi di sini, atau nominalnya
             // dobel. Tetap dicatat di rincian (harga=0, ditandai
-            // 'termasuk_paket') supaya invoice tetap menunjukkan modul
+            // 'termasuk_paket_full') supaya invoice tetap menunjukkan modul
             // apa saja yang aktif untuk Lembaga ini.
             return [
                 'key' => $mp->key,
@@ -134,6 +135,17 @@ class TenantBillingCalculator
             'lembaga_nama' => $lembaga->nama,
             'jumlah_siswa' => $jumlahSiswa,
             'urutan_ke' => $urutanKe,
+
+            // Rincian komponen Akses Platform, dipisah supaya tampilan
+            // (halaman Langganan) bisa tunjukkan baris per baris tanpa
+            // perlu hitung ulang aturan bisnisnya sendiri.
+            'lembaga_di_dalam_kuota' => $lembagaDiDalamKuota,
+            'harga_dasar' => $hargaDasar,
+            'kuota_siswa' => $kuotaSiswa,
+            'siswa_tambahan' => $siswaTambahan,
+            'harga_per_siswa_tambahan' => $hargaPerSiswaTambahan,
+            'biaya_siswa_tambahan' => $biayaSiswaTambahan,
+
             'akses_platform_sebelum_diskon' => $aksesPlatformSebelumDiskon,
             'diskon_persen' => $diskonPersen,
             'akses_platform' => $aksesPlatformSetelahDiskon,

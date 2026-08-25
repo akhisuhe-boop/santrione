@@ -9,6 +9,7 @@ use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Pages;
 use App\Models\Yayasan;
+use App\Http\Middleware\RedirectSuspendedYayasan;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -230,8 +231,35 @@ class AdminPanelProvider extends PanelProvider
                     && auth()->user()->hasRole('Admin Yayasan')),
         ])
 
+        // PERUBAHAN 24 Agustus 2026: begitu Yayasan tidak punya akses
+        // (lihat Yayasan::hasAccess()), SEMUA request tetap otomatis
+        // di-redirect ke halaman Langganan oleh RedirectSuspendedYayasan
+        // -- tapi sebelum patch ini, sidebar-nya masih nampilin semua
+        // menu lain (Master Data, Keuangan, dst) yang toh nggak akan
+        // pernah kebuka. Override ini bikin sidebar-nya SENDIRI ikut
+        // konsisten: cuma menu "Langganan" yang kelihatan, biar tidak
+        // membingungkan (bukan cuma soal fungsi, tapi soal tampilan).
+        // Platform admin & Yayasan yang masih normal TIDAK terpengaruh
+        // sama sekali -- closure ini langsung return builder aslinya.
+        ->navigation(function (\Filament\Navigation\NavigationBuilder $builder): \Filament\Navigation\NavigationBuilder {
+            $user = auth()->user();
+            $yayasan = ($user && ! $user->is_platform_admin) ? $user->yayasan : null;
+
+            if ($yayasan && ! $yayasan->hasAccess()) {
+                return $builder->items([
+                    \Filament\Navigation\NavigationItem::make('Langganan')
+                        ->icon('heroicon-o-credit-card')
+                        ->url('/langganan')
+                        ->isActiveWhen(fn (): bool => true),
+                ]);
+            }
+
+            return $builder;
+        })
+
         ->authMiddleware([
             Authenticate::class,
+            RedirectSuspendedYayasan::class,
         ]);
 }
 }

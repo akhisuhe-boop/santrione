@@ -89,87 +89,129 @@
             </div>
         </div>
 
-        <div class="overflow-x-auto -mx-2">
-            <table class="w-full text-sm">
-                <thead>
-                    <tr class="text-left text-xs uppercase text-gray-400 border-b border-gray-100 dark:border-gray-700">
-                        <th class="px-2 py-2 font-semibold">Lembaga</th>
-                        <th class="px-2 py-2 font-semibold">Siswa</th>
-                        <th class="px-2 py-2 font-semibold">Akses Platform</th>
-                        <th class="px-2 py-2 font-semibold">Diskon Volume</th>
-                        <th class="px-2 py-2 font-semibold">Modul</th>
-                        <th class="px-2 py-2 font-semibold text-right">Subtotal / bulan</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($estimasi['lembaga'] as $l)
-                        @php
-                            $modulAktifList = collect($l['modul'])->filter(fn ($m) => $m['harga'] > 0 || ($m['termasuk_paket_full'] ?? false));
-                            $modulLabel = $modulAktifList->isNotEmpty()
-                                ? $modulAktifList->pluck('nama')->implode(' + ') . ' = Rp ' . number_format($l['total_modul'], 0, ',', '.')
-                                : '—';
-                        @endphp
-                        <tr class="border-b border-gray-50 dark:border-gray-800 align-top">
-                            <td class="px-2 py-3 font-medium text-gray-800 dark:text-gray-100">{{ $l['lembaga_nama'] }}<br><span class="text-xs text-gray-400 font-normal">(Lembaga ke-{{ $l['urutan_ke'] }})</span></td>
-                            <td class="px-2 py-3 text-gray-600 dark:text-gray-300">{{ $l['jumlah_siswa'] }}</td>
-                            <td class="px-2 py-3 text-gray-600 dark:text-gray-300">Rp {{ number_format($l['akses_platform_sebelum_diskon'], 0, ',', '.') }}</td>
-                            <td class="px-2 py-3 text-gray-600 dark:text-gray-300">
-                                @if ($l['diskon_persen'] > 0)
-                                    <span class="text-success-600 font-medium">{{ $l['diskon_persen'] }}%</span> &rarr; Rp {{ number_format($l['akses_platform'], 0, ',', '.') }}
-                                @else
-                                    0%
-                                @endif
-                            </td>
-                            <td class="px-2 py-3 text-gray-600 dark:text-gray-300">{{ $modulLabel }}</td>
-                            <td class="px-2 py-3 text-right font-semibold text-gray-900 dark:text-white">Rp {{ number_format($l['subtotal'], 0, ',', '.') }}</td>
-                        </tr>
-                    @endforeach
-                </tbody>
-                <tfoot>
-                    @if ($tahunanDipilih)
-                        <tr class="text-gray-500">
-                            <td colspan="5" class="px-2 py-2">Total {{ count($estimasi['lembaga']) }} lembaga × 12 bulan</td>
-                            <td class="px-2 py-2 text-right">Rp {{ number_format($estimasi['total_tahunan_sebelum_diskon'], 0, ',', '.') }}</td>
-                        </tr>
-                        @if (($estimasi['promo_pendaftaran_persen'] ?? 0) > 0)
-                        <tr class="text-accent-600">
-                            <td colspan="5" class="px-2 py-2 font-medium">
-                                Diskon Pendaftaran "{{ $estimasi['promo_pendaftaran_teks'] }}" ({{ $estimasi['promo_pendaftaran_persen'] }}%)
-                                <span class="block text-[11px] font-normal text-gray-400">Cuma berlaku 1x untuk tagihan pertama ini saja</span>
-                            </td>
-                            <td class="px-2 py-2 text-right font-medium">- Rp {{ number_format($estimasi['total_tahunan_sebelum_diskon'] - $estimasi['total'], 0, ',', '.') }}</td>
-                        </tr>
-                        @elseif ($estimasi['diskon_tahunan_persen'] > 0)
-                        <tr class="text-success-600">
-                            <td colspan="5" class="px-2 py-2 font-medium">Diskon Tahunan ({{ $estimasi['diskon_tahunan_persen'] }}%)</td>
-                            <td class="px-2 py-2 text-right font-medium">- Rp {{ number_format($estimasi['total_tahunan_sebelum_diskon'] - $estimasi['total'], 0, ',', '.') }}</td>
-                        </tr>
+        {{-- RINCIAN PER LEMBAGA (kartu 3-kolom, bukan tabel — supaya baris
+             yang tidak relevan buat lembaga tsb bisa disembunyikan alih-alih
+             dipaksa masuk kolom yang sama buat semua lembaga) --}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            @foreach ($estimasi['lembaga'] as $l)
+                @php
+                    $modulAktifList = collect($l['modul'])->filter(fn ($m) => $m['harga'] > 0 || ($m['termasuk_paket_full'] ?? false));
+                    $semuaModulTermasukPaketFull = $modulAktifList->isNotEmpty()
+                        && $modulAktifList->every(fn ($m) => ($m['termasuk_paket_full'] ?? false) || $m['harga'] === 0);
+                    // Kartu sekarang lebih sempit (3 per baris) -- chip modul
+                    // dipotong biar kartu nggak jadi tinggi banget kalau
+                    // modulnya banyak. Daftar lengkapnya tetap ada, cuma di
+                    // "sembunyikan" jadi angka "+N lainnya".
+                    $modulTampil = $modulAktifList->take(3);
+                    $modulSisa = $modulAktifList->count() - $modulTampil->count();
+                @endphp
+                <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-3.5 flex flex-col">
+                    <div class="flex items-center justify-between gap-3 mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="font-semibold text-gray-900 dark:text-white">{{ $l['lembaga_nama'] }}</span>
+                            <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                                Lembaga ke-{{ $l['urutan_ke'] }}
+                            </span>
+                        </div>
+                        <span class="text-sm text-gray-500 dark:text-gray-400 shrink-0">{{ $l['jumlah_siswa'] }} siswa</span>
+                    </div>
+
+                    <div class="text-sm text-gray-500 dark:text-gray-400 space-y-1">
+                        <div class="flex justify-between gap-3">
+                            <span>{{ $l['lembaga_di_dalam_kuota'] ? 'Akses Platform dasar' : 'Biaya lembaga tambahan' }}</span>
+                            <span class="shrink-0">Rp {{ number_format($l['harga_dasar'], 0, ',', '.') }}</span>
+                        </div>
+                        @if ($l['siswa_tambahan'] > 0)
+                            <div class="flex justify-between gap-3">
+                                <span>Siswa tambahan ({{ $l['siswa_tambahan'] }} &times; Rp {{ number_format($l['harga_per_siswa_tambahan'], 0, ',', '.') }})</span>
+                                <span class="shrink-0">Rp {{ number_format($l['biaya_siswa_tambahan'], 0, ',', '.') }}</span>
+                            </div>
                         @endif
-                        <tr>
-                            <td colspan="5" class="px-2 py-3 font-bold text-gray-900 dark:text-white">TOTAL DIBAYAR (1 TAHUN)</td>
-                            <td class="px-2 py-3 text-right font-bold text-primary-600">Rp {{ number_format($estimasi['total'], 0, ',', '.') }}</td>
-                        </tr>
-                    @else
-                        @if (($estimasi['promo_pendaftaran_persen'] ?? 0) > 0)
-                        <tr class="text-gray-500">
-                            <td colspan="5" class="px-2 py-2">Subtotal Yayasan / bulan</td>
-                            <td class="px-2 py-2 text-right">Rp {{ number_format($estimasi['subtotal_sebelum_promo'], 0, ',', '.') }}</td>
-                        </tr>
-                        <tr class="text-accent-600">
-                            <td colspan="5" class="px-2 py-2 font-medium">
-                                Diskon Pendaftaran "{{ $estimasi['promo_pendaftaran_teks'] }}" ({{ $estimasi['promo_pendaftaran_persen'] }}%)
-                                <span class="block text-[11px] font-normal text-gray-400">Cuma berlaku 1x untuk tagihan pertama ini saja</span>
-                            </td>
-                            <td class="px-2 py-2 text-right font-medium">- Rp {{ number_format($estimasi['subtotal_sebelum_promo'] - $estimasi['total'], 0, ',', '.') }}</td>
-                        </tr>
+                        @if ($l['diskon_persen'] > 0)
+                            <div class="flex justify-between gap-3 text-success-600">
+                                <span>Diskon volume {{ $l['diskon_persen'] }}%</span>
+                                <span class="shrink-0">&minus; Rp {{ number_format($l['akses_platform_sebelum_diskon'] - $l['akses_platform'], 0, ',', '.') }}</span>
+                            </div>
                         @endif
-                        <tr>
-                            <td colspan="5" class="px-2 py-3 font-bold text-gray-900 dark:text-white">TOTAL YAYASAN / BULAN</td>
-                            <td class="px-2 py-3 text-right font-bold text-primary-600">Rp {{ number_format($estimasi['total'], 0, ',', '.') }}</td>
-                        </tr>
+                    </div>
+
+                    <div class="flex justify-between items-center mt-2 pt-2 border-t border-gray-100 dark:border-gray-800 font-medium text-gray-900 dark:text-white">
+                        <span>Akses Platform</span>
+                        <span>Rp {{ number_format($l['akses_platform'], 0, ',', '.') }}</span>
+                    </div>
+
+                    @if ($modulAktifList->isNotEmpty())
+                        <div class="flex flex-wrap gap-1.5 mt-3">
+                            @foreach ($modulTampil as $m)
+                                <span class="text-xs px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
+                                    {{ $m['nama'] }}
+                                </span>
+                            @endforeach
+                            @if ($modulSisa > 0)
+                                <span class="text-xs px-2.5 py-1 rounded-full bg-gray-50 dark:bg-gray-800/50 text-gray-400 dark:text-gray-500">
+                                    +{{ $modulSisa }} lainnya
+                                </span>
+                            @endif
+                        </div>
+                        @if ($semuaModulTermasukPaketFull)
+                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1.5 flex items-center gap-1">
+                                <x-heroicon-o-check class="w-3.5 h-3.5" />
+                                Semua modul termasuk Paket Full, tidak ada biaya tambahan
+                            </p>
+                        @endif
                     @endif
-                </tfoot>
-            </table>
+
+                    <div class="flex justify-between items-baseline mt-3 pt-2 border-t border-gray-100 dark:border-gray-800 mt-auto">
+                        <span class="text-sm text-gray-500 dark:text-gray-400">Subtotal lembaga</span>
+                        <span class="text-lg font-semibold text-gray-900 dark:text-white">Rp {{ number_format($l['subtotal'], 0, ',', '.') }}</span>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+
+        {{-- TOTAL --}}
+        <div class="rounded-xl bg-primary-50 dark:bg-primary-500/10 p-4 mt-4">
+            @if ($tahunanDipilih)
+                <div class="flex justify-between gap-3 text-sm text-gray-500 dark:text-gray-400 mb-1">
+                    <span>Total {{ count($estimasi['lembaga']) }} lembaga &times; 12 bulan</span>
+                    <span class="shrink-0">Rp {{ number_format($estimasi['total_tahunan_sebelum_diskon'], 0, ',', '.') }}</span>
+                </div>
+                @if (($estimasi['promo_pendaftaran_persen'] ?? 0) > 0)
+                    <div class="flex justify-between gap-3 text-sm text-accent-600 mb-1">
+                        <span>
+                            Diskon Pendaftaran "{{ $estimasi['promo_pendaftaran_teks'] }}" ({{ $estimasi['promo_pendaftaran_persen'] }}%)
+                            <span class="block text-[11px] font-normal text-gray-400">Cuma berlaku 1x untuk tagihan pertama ini saja</span>
+                        </span>
+                        <span class="shrink-0">&minus; Rp {{ number_format($estimasi['total_tahunan_sebelum_diskon'] - $estimasi['total'], 0, ',', '.') }}</span>
+                    </div>
+                @elseif ($estimasi['diskon_tahunan_persen'] > 0)
+                    <div class="flex justify-between gap-3 text-sm text-success-600 mb-1">
+                        <span>Diskon Tahunan ({{ $estimasi['diskon_tahunan_persen'] }}%)</span>
+                        <span class="shrink-0">&minus; Rp {{ number_format($estimasi['total_tahunan_sebelum_diskon'] - $estimasi['total'], 0, ',', '.') }}</span>
+                </div>
+            @else
+                @if (($estimasi['promo_pendaftaran_persen'] ?? 0) > 0)
+                    <div class="flex justify-between gap-3 text-sm text-gray-500 dark:text-gray-400 mb-1">
+                        <span>Subtotal Yayasan / bulan</span>
+                        <span class="shrink-0">Rp {{ number_format($estimasi['subtotal_sebelum_promo'], 0, ',', '.') }}</span>
+                    </div>
+                    <div class="flex justify-between gap-3 text-sm text-accent-600 mb-1">
+                        <span>
+                            Diskon Pendaftaran "{{ $estimasi['promo_pendaftaran_teks'] }}" ({{ $estimasi['promo_pendaftaran_persen'] }}%)
+                            <span class="block text-[11px] font-normal text-gray-400">Cuma berlaku 1x untuk tagihan pertama ini saja</span>
+                        </span>
+                        <span class="shrink-0">&minus; Rp {{ number_format($estimasi['subtotal_sebelum_promo'] - $estimasi['total'], 0, ',', '.') }}</span>
+                    </div>
+                @endif
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="text-sm font-medium text-primary-700 dark:text-primary-300">Total Yayasan / bulan</p>
+                        <p class="text-xs text-primary-500/70 dark:text-primary-400/60">{{ count($estimasi['lembaga']) }} lembaga digabung jadi 1 invoice</p>
+                    </div>
+                    <p class="text-2xl font-bold text-primary-600">Rp {{ number_format($estimasi['total'], 0, ',', '.') }}</p>
+                </div>
+            @endif
+            @endif
         </div>
     </x-filament::section>
 
@@ -257,7 +299,7 @@
         @foreach ($lembagas as $lembaga)
             <x-filament::section :heading="'Modul — ' . $lembaga->nama">
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     @foreach ($modulOptions as $modul)
                         @php $aktif = $paketFullAktif ? true : $this->isModuleActive($lembaga->id, $modul->id); @endphp
 
@@ -306,6 +348,24 @@
     {{-- RIWAYAT PEMBAYARAN --}}
     <x-filament::section heading="Riwayat Langganan" icon="heroicon-o-clock">
         @forelse ($riwayat as $sub)
+            @php
+                // Kolom status di baris Subscription TIDAK otomatis berubah
+                // saat masa berlakunya lewat (lihat CheckExpiredSubscriptions
+                // -- itu cuma nyuspend Yayasan, tidak pernah nurunin status
+                // baris Subscription lama). Jadi beberapa baris lama bisa
+                // sama-sama tercatat 'active' di database walau cuma SATU
+                // yang beneran berlaku (yang match $subAktif, dihitung by
+                // tanggal lewat activeSubscription()). Di sini kita
+                // cocokkan ID-nya supaya cuma yang beneran aktif yang
+                // ditandai hijau -- baris 'active' lain ditampilkan
+                // "Berakhir", bukan "Active" yang menyesatkan.
+                [$labelStatus, $warnaStatus] = match (true) {
+                    $sub->status === 'active' && $subAktif && $sub->id === $subAktif->id => ['Aktif', 'success'],
+                    $sub->status === 'active' => ['Berakhir', 'gray'],
+                    $sub->status === 'pending' => ['Menunggu Pembayaran', 'warning'],
+                    default => [ucfirst($sub->status), 'gray'],
+                };
+            @endphp
             <div class="flex items-center justify-between text-sm border-b border-gray-100 dark:border-gray-700 py-3 last:border-0">
                 <div>
                     <div class="font-medium text-gray-800 dark:text-gray-100">
@@ -314,8 +374,8 @@
                     </div>
                     <div class="text-gray-400 text-xs">{{ $sub->created_at->locale('id')->translatedFormat('d M Y H:i') }}</div>
                 </div>
-                <x-filament::badge :color="match($sub->status) { 'active' => 'success', 'pending' => 'warning', default => 'gray' }">
-                    {{ ucfirst($sub->status) }}
+                <x-filament::badge :color="$warnaStatus">
+                    {{ $labelStatus }}
                 </x-filament::badge>
             </div>
         @empty
