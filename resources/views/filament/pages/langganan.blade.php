@@ -89,84 +89,59 @@
             </div>
         </div>
 
-        {{-- RINCIAN PER LEMBAGA (kartu 3-kolom, bukan tabel — supaya baris
-             yang tidak relevan buat lembaga tsb bisa disembunyikan alih-alih
-             dipaksa masuk kolom yang sama buat semua lembaga) --}}
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            @foreach ($estimasi['lembaga'] as $l)
-                @php
-                    $modulAktifList = collect($l['modul'])->filter(fn ($m) => $m['harga'] > 0 || ($m['termasuk_paket_full'] ?? false));
-                    $semuaModulTermasukPaketFull = $modulAktifList->isNotEmpty()
-                        && $modulAktifList->every(fn ($m) => ($m['termasuk_paket_full'] ?? false) || $m['harga'] === 0);
-                    // Kartu sekarang lebih sempit (3 per baris) -- chip modul
-                    // dipotong biar kartu nggak jadi tinggi banget kalau
-                    // modulnya banyak. Daftar lengkapnya tetap ada, cuma di
-                    // "sembunyikan" jadi angka "+N lainnya".
-                    $modulTampil = $modulAktifList->take(3);
-                    $modulSisa = $modulAktifList->count() - $modulTampil->count();
-                @endphp
-                <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-3.5 flex flex-col">
-                    <div class="flex items-center justify-between gap-3 mb-3">
-                        <div class="flex items-center gap-2">
-                            <span class="font-semibold text-gray-900 dark:text-white">{{ $l['lembaga_nama'] }}</span>
-                            <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                                Lembaga ke-{{ $l['urutan_ke'] }}
-                            </span>
-                        </div>
-                        <span class="text-sm text-gray-500 dark:text-gray-400 shrink-0">{{ $l['jumlah_siswa'] }} siswa</span>
-                    </div>
-
-                    <div class="text-sm text-gray-500 dark:text-gray-400 space-y-1">
-                        <div class="flex justify-between gap-3">
-                            <span>{{ $l['lembaga_di_dalam_kuota'] ? 'Akses Platform dasar' : 'Biaya lembaga tambahan' }}</span>
-                            <span class="shrink-0">Rp {{ number_format($l['harga_dasar'], 0, ',', '.') }}</span>
-                        </div>
-                        @if ($l['siswa_tambahan'] > 0)
-                            <div class="flex justify-between gap-3">
-                                <span>Siswa tambahan ({{ $l['siswa_tambahan'] }} &times; Rp {{ number_format($l['harga_per_siswa_tambahan'], 0, ',', '.') }})</span>
-                                <span class="shrink-0">Rp {{ number_format($l['biaya_siswa_tambahan'], 0, ',', '.') }}</span>
-                            </div>
-                        @endif
-                        @if ($l['diskon_persen'] > 0)
-                            <div class="flex justify-between gap-3 text-success-600">
-                                <span>Diskon volume {{ $l['diskon_persen'] }}%</span>
-                                <span class="shrink-0">&minus; Rp {{ number_format($l['akses_platform_sebelum_diskon'] - $l['akses_platform'], 0, ',', '.') }}</span>
-                            </div>
-                        @endif
-                    </div>
-
-                    <div class="flex justify-between items-center mt-2 pt-2 border-t border-gray-100 dark:border-gray-800 font-medium text-gray-900 dark:text-white">
-                        <span>Akses Platform</span>
-                        <span>Rp {{ number_format($l['akses_platform'], 0, ',', '.') }}</span>
-                    </div>
-
-                    @if ($modulAktifList->isNotEmpty())
-                        <div class="flex flex-wrap gap-1.5 mt-3">
-                            @foreach ($modulTampil as $m)
-                                <span class="text-xs px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
-                                    {{ $m['nama'] }}
-                                </span>
-                            @endforeach
-                            @if ($modulSisa > 0)
-                                <span class="text-xs px-2.5 py-1 rounded-full bg-gray-50 dark:bg-gray-800/50 text-gray-400 dark:text-gray-500">
-                                    +{{ $modulSisa }} lainnya
-                                </span>
-                            @endif
-                        </div>
-                        @if ($semuaModulTermasukPaketFull)
-                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1.5 flex items-center gap-1">
-                                <x-heroicon-o-check class="w-3.5 h-3.5" />
-                                Semua modul termasuk Paket Full, tidak ada biaya tambahan
-                            </p>
-                        @endif
-                    @endif
-
-                    <div class="flex justify-between items-baseline mt-3 pt-2 border-t border-gray-100 dark:border-gray-800 mt-auto">
-                        <span class="text-sm text-gray-500 dark:text-gray-400">Subtotal lembaga</span>
-                        <span class="text-lg font-semibold text-gray-900 dark:text-white">Rp {{ number_format($l['subtotal'], 0, ',', '.') }}</span>
-                    </div>
-                </div>
-            @endforeach
+        {{-- RINCIAN PER LEMBAGA (tabel ringkas) --}}
+        <div class="overflow-x-auto -mx-2">
+            <table class="w-full text-sm border-collapse">
+                <thead>
+                    <tr class="text-left text-xs uppercase tracking-wide text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                        <th class="px-2 py-2 font-semibold">Lembaga</th>
+                        <th class="px-2 py-2 font-semibold text-right">Siswa</th>
+                        <th class="px-2 py-2 font-semibold text-right">Akses Platform</th>
+                        <th class="px-2 py-2 font-semibold">Modul Aktif</th>
+                        <th class="px-2 py-2 font-semibold text-right">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($estimasi['lembaga'] as $l)
+                        @php
+                            $modulAktifList = collect($l['modul'])->filter(fn ($m) => $m['harga'] > 0 || ($m['termasuk_paket_full'] ?? false));
+                            $modulTampil = $modulAktifList->take(2);
+                            $modulSisa = $modulAktifList->count() - $modulTampil->count();
+                        @endphp
+                        <tr class="border-b border-gray-100 dark:border-gray-800 align-top">
+                            <td class="px-2 py-3">
+                                <div class="font-medium text-gray-900 dark:text-white">{{ $l['lembaga_nama'] }}</div>
+                                <div class="text-xs text-gray-400">Lembaga ke-{{ $l['urutan_ke'] }}</div>
+                            </td>
+                            <td class="px-2 py-3 text-right text-gray-600 dark:text-gray-300">{{ $l['jumlah_siswa'] }}</td>
+                            <td class="px-2 py-3 text-right">
+                                <div class="text-gray-900 dark:text-white font-medium">Rp {{ number_format($l['akses_platform'], 0, ',', '.') }}</div>
+                                @if ($l['siswa_tambahan'] > 0 || $l['diskon_persen'] > 0)
+                                    <div class="text-xs text-gray-400 mt-0.5 whitespace-nowrap">
+                                        @if ($l['siswa_tambahan'] > 0)
+                                            +{{ $l['siswa_tambahan'] }} siswa
+                                        @endif
+                                        @if ($l['diskon_persen'] > 0)
+                                            <span class="text-success-600">diskon {{ $l['diskon_persen'] }}%</span>
+                                        @endif
+                                    </div>
+                                @endif
+                            </td>
+                            <td class="px-2 py-3 text-gray-600 dark:text-gray-300">
+                                @if ($modulAktifList->isEmpty())
+                                    <span class="text-gray-400">&mdash;</span>
+                                @else
+                                    {{ $modulTampil->pluck('nama')->implode(', ') }}
+                                    @if ($modulSisa > 0)
+                                        <span class="text-gray-400">+{{ $modulSisa }} lainnya</span>
+                                    @endif
+                                @endif
+                            </td>
+                            <td class="px-2 py-3 text-right font-semibold text-gray-900 dark:text-white">Rp {{ number_format($l['subtotal'], 0, ',', '.') }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
         </div>
 
         {{-- TOTAL --}}
@@ -188,6 +163,14 @@
                     <div class="flex justify-between gap-3 text-sm text-success-600 mb-1">
                         <span>Diskon Tahunan ({{ $estimasi['diskon_tahunan_persen'] }}%)</span>
                         <span class="shrink-0">&minus; Rp {{ number_format($estimasi['total_tahunan_sebelum_diskon'] - $estimasi['total'], 0, ',', '.') }}</span>
+                    </div>
+                @endif
+                <div class="flex justify-between items-center mt-2 pt-2 border-t border-primary-100 dark:border-primary-500/20">
+                    <div>
+                        <p class="text-sm font-medium text-primary-700 dark:text-primary-300">Total Yayasan / tahun</p>
+                        <p class="text-xs text-primary-500/70 dark:text-primary-400/60">{{ count($estimasi['lembaga']) }} lembaga digabung jadi 1 invoice</p>
+                    </div>
+                    <p class="text-2xl font-bold text-primary-600">Rp {{ number_format($estimasi['total'], 0, ',', '.') }}</p>
                 </div>
             @else
                 @if (($estimasi['promo_pendaftaran_persen'] ?? 0) > 0)
@@ -210,7 +193,6 @@
                     </div>
                     <p class="text-2xl font-bold text-primary-600">Rp {{ number_format($estimasi['total'], 0, ',', '.') }}</p>
                 </div>
-            @endif
             @endif
         </div>
     </x-filament::section>
@@ -295,38 +277,52 @@
         </x-filament::section>
     @else
 
-        {{-- PILIH MODUL PER LEMBAGA --}}
-        @foreach ($lembagas as $lembaga)
-            <x-filament::section :heading="'Modul — ' . $lembaga->nama">
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    @foreach ($modulOptions as $modul)
-                        @php $aktif = $paketFullAktif ? true : $this->isModuleActive($lembaga->id, $modul->id); @endphp
-
-                        <label class="flex items-center justify-between gap-3 rounded-xl border transition-colors {{ $aktif ? 'border-primary-400 bg-primary-50 dark:bg-primary-500/10' : 'border-gray-200 dark:border-gray-700 hover:border-primary-300' }} px-4 py-3 text-sm {{ $paketFullAktif ? '' : 'cursor-pointer' }}">
-                            <span class="flex items-center gap-3">
-                                <input
-                                    type="checkbox"
-                                    @if (! $paketFullAktif) wire:click="toggleModule({{ $lembaga->id }}, {{ $modul->id }})" @endif
-                                    {{ $aktif ? 'checked' : '' }}
-                                    {{ $paketFullAktif ? 'disabled' : '' }}
-                                    class="rounded text-primary-600 focus:ring-primary-500 disabled:opacity-60"
-                                >
-                                <span class="font-medium text-gray-700 dark:text-gray-200">{{ $modul->nama }}</span>
-                            </span>
-                            <span class="text-gray-500 text-xs font-medium">
-                                @if ($paketFullAktif && ! $modul->is_gratis)
-                                    Termasuk Paket Full
-                                @else
-                                    {{ $modul->is_gratis ? 'Gratis (dari wali murid)' : 'Rp ' . number_format($modul->harga_bulanan, 0, ',', '.') . '/bln' }}
-                                @endif
-                            </span>
-                        </label>
-                    @endforeach
-                </div>
-
-            </x-filament::section>
-        @endforeach
+        {{-- PILIH MODUL (matrix: modul x lembaga, supaya tidak memanjang) --}}
+        <x-filament::section heading="Pilih Modul per Lembaga">
+            <div class="overflow-x-auto -mx-2">
+                <table class="w-full text-sm border-collapse">
+                    <thead>
+                        <tr class="text-left text-xs uppercase tracking-wide text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                            <th class="px-2 py-2 font-semibold sticky left-0 bg-white dark:bg-gray-900">Modul</th>
+                            <th class="px-2 py-2 font-semibold whitespace-nowrap">Harga</th>
+                            @foreach ($lembagas as $lembaga)
+                                <th class="px-2 py-2 font-semibold text-center whitespace-nowrap">{{ $lembaga->nama }}</th>
+                            @endforeach
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($modulOptions as $modul)
+                            <tr class="border-b border-gray-100 dark:border-gray-800">
+                                <td class="px-2 py-2.5 font-medium text-gray-700 dark:text-gray-200 sticky left-0 bg-white dark:bg-gray-900">
+                                    {{ $modul->nama }}
+                                </td>
+                                <td class="px-2 py-2.5 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                    {{ $modul->is_gratis ? 'Gratis (wali murid)' : 'Rp ' . number_format($modul->harga_bulanan, 0, ',', '.') . '/bln' }}
+                                </td>
+                                @foreach ($lembagas as $lembaga)
+                                    @php $aktif = $paketFullAktif ? true : $this->isModuleActive($lembaga->id, $modul->id); @endphp
+                                    <td class="px-2 py-2.5 text-center">
+                                        <input
+                                            type="checkbox"
+                                            @if (! $paketFullAktif) wire:click="toggleModule({{ $lembaga->id }}, {{ $modul->id }})" @endif
+                                            {{ $aktif ? 'checked' : '' }}
+                                            {{ $paketFullAktif ? 'disabled' : '' }}
+                                            class="rounded text-primary-600 focus:ring-primary-500 disabled:opacity-60 {{ $paketFullAktif ? '' : 'cursor-pointer' }}"
+                                        >
+                                    </td>
+                                @endforeach
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            @if ($paketFullAktif)
+                <p class="text-xs text-gray-400 dark:text-gray-500 mt-3 flex items-center gap-1">
+                    <x-heroicon-o-check class="w-3.5 h-3.5" />
+                    Paket Full aktif — semua modul otomatis termasuk, tidak dihitung terpisah.
+                </p>
+            @endif
+        </x-filament::section>
 
     @endif
 
