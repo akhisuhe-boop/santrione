@@ -132,6 +132,7 @@ class Yayasan extends Model implements HasName
     'promo_pendaftaran_persen',
     'promo_pendaftaran_teks',
     'promo_pendaftaran_terpakai',
+    'modul_snapshot_sebelum_full',
     ];
 
     protected function casts(): array
@@ -139,6 +140,7 @@ class Yayasan extends Model implements HasName
         return [
             'trial_ends_at' => 'datetime',
             'promo_pendaftaran_terpakai' => 'boolean',
+            'modul_snapshot_sebelum_full' => 'array',
         ];
     }
 

@@ -132,8 +132,6 @@
                     @foreach ($estimasi['lembaga'] as $l)
                         @php
                             $modulAktifList = collect($l['modul'])->filter(fn ($m) => $m['harga'] > 0 || ($m['termasuk_paket_full'] ?? false));
-                            $modulTampil = $modulAktifList->take(2);
-                            $modulSisa = $modulAktifList->count() - $modulTampil->count();
                         @endphp
                         <tr class="border-b border-gray-100 dark:border-gray-800 align-top">
                             <td class="px-2 py-3">
@@ -158,10 +156,7 @@
                                 @if ($modulAktifList->isEmpty())
                                     <span class="text-gray-400">&mdash;</span>
                                 @else
-                                    {{ $modulTampil->pluck('nama')->implode(', ') }}
-                                    @if ($modulSisa > 0)
-                                        <span class="text-gray-400">+{{ $modulSisa }} lainnya</span>
-                                    @endif
+                                    {{ $modulAktifList->pluck('nama')->implode(', ') }}
                                 @endif
                             </td>
                             <td class="px-2 py-3 text-right font-semibold text-gray-900 dark:text-white">Rp {{ number_format($l['subtotal'], 0, ',', '.') }}</td>
@@ -327,7 +322,7 @@
     @endif
 
     {{-- INFO DARI QINARA + RIWAYAT LANGGANAN (2 card sejajar) --}}
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
 
         @if ($broadcasts->isNotEmpty())
             <x-filament::section heading="Info dari Qinara" icon="heroicon-o-megaphone">

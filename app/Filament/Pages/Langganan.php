@@ -270,6 +270,14 @@ class Langganan extends Page
      * yayasan ini, supaya tercatat & terlihat "termasuk" di rincian.
      * Siklus billing (bulanan/tahunan) ikut $billingCycle yang sedang
      * dipilih tenant, sama seperti bayarSekarang().
+     *
+     * Sebelum memaksa semua modul aktif, pilihan modul yang SEDANG
+     * berjalan (per Lembaga) di-snapshot dulu ke
+     * Yayasan::modul_snapshot_sebelum_full -- supaya kalau tenant
+     * nanti klik "Kembali Pilih Satu-satu" (batalkanPaketFull),
+     * pilihannya bisa dikembalikan persis seperti semula, bukan
+     * dibiarkan semua modul tetap aktif begitu saja (yang bisa bikin
+     * sekolah salah kira modul itu memang mereka pilih).
      */
     public function aktifkanPaketFull(): void
     {
@@ -281,6 +289,23 @@ class Langganan extends Page
             Notification::make()->title('Paket Full belum tersedia')->danger()->send();
 
             return;
+        }
+
+        // Snapshot cuma diambil kalau BELUM sedang Paket Full -- supaya
+        // klik "Aktifkan Paket Full" dua kali beruntun tidak menimpa
+        // snapshot lama dengan kondisi "semua aktif" (yang percuma).
+        if (! $this->isPaketFullAktif()) {
+            $snapshot = [];
+
+            foreach ($this->getLembagas() as $lembaga) {
+                $snapshot[$lembaga->id] = $lembaga->modules
+                    ->where('is_active', true)
+                    ->pluck('module_price_id')
+                    ->values()
+                    ->all();
+            }
+
+            $yayasan->update(['modul_snapshot_sebelum_full' => $snapshot]);
         }
 
         $subAktif = $yayasan->activeSubscription();
@@ -332,10 +357,13 @@ class Langganan extends Page
 
     /**
      * Kebalikan dari aktifkanPaketFull() -- pindah balik ke plan
-     * 'akses-platform', modul yang sudah aktif TETAP aktif (tidak
-     * dimatikan otomatis), tapi sekarang dihitung satu-satu lagi
-     * (bukan flat Paket Full). Tenant tinggal uncheck manual kalau
-     * mau kurangi.
+     * 'akses-platform', lalu KEMBALIKAN modul per Lembaga persis
+     * seperti sebelum Paket Full diaktifkan (dari
+     * modul_snapshot_sebelum_full). Kalau ternyata tidak ada snapshot
+     * tersimpan (misal data lama dari sebelum fitur ini ada), modul
+     * dibiarkan seperti apa adanya sekarang -- tidak dipaksa mati
+     * semua, supaya tidak tiba-tiba menghilangkan modul yang memang
+     * mau tetap dipakai tenant.
      */
     public function batalkanPaketFull(): void
     {
@@ -348,9 +376,30 @@ class Langganan extends Page
             $subAktif->update(['subscription_plan_id' => $planDasar->id]);
         }
 
+        $snapshot = $yayasan->modul_snapshot_sebelum_full;
+
+        if (is_array($snapshot)) {
+            foreach ($this->getLembagas() as $lembaga) {
+                $modulIdSebelumnya = $snapshot[$lembaga->id] ?? [];
+
+                foreach ($lembaga->modules as $lm) {
+                    $harusAktif = in_array($lm->module_price_id, $modulIdSebelumnya, true);
+
+                    if ($lm->is_active !== $harusAktif) {
+                        $lm->update([
+                            'is_active' => $harusAktif,
+                            'nonaktif_sejak' => $harusAktif ? null : now(),
+                        ]);
+                    }
+                }
+            }
+
+            $yayasan->update(['modul_snapshot_sebelum_full' => null]);
+        }
+
         Notification::make()
             ->title('Paket Full dibatalkan')
-            ->body('Sekarang dihitung per modul yang dicentang.')
+            ->body('Modul dikembalikan seperti pilihan Anda sebelumnya, dihitung per modul yang dicentang.')
             ->success()
             ->send();
     }
