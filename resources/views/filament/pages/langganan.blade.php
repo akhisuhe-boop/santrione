@@ -61,6 +61,33 @@
         @endif
     </div>
 
+    {{-- TAGIHAN PENDING / BELUM ADA LANGGANAN --}}
+    @if ($pendingUrl)
+        <x-filament::section>
+            <div class="flex items-center justify-between flex-wrap gap-3">
+                <div>
+                    <div class="font-semibold text-gray-900 dark:text-white">Ada tagihan menunggu pembayaran</div>
+                    <div class="text-sm text-gray-500">Selesaikan pembayaran supaya langganan tetap aktif.</div>
+                </div>
+                <a href="{{ $pendingUrl }}" target="_blank">
+                    <x-filament::button color="warning" icon="heroicon-o-credit-card">Bayar Sekarang</x-filament::button>
+                </a>
+            </div>
+        </x-filament::section>
+    @elseif (! $subAktif || $subAktif->status !== 'active')
+        <x-filament::section>
+            <div class="flex items-center justify-between flex-wrap gap-3">
+                <div>
+                    <div class="font-semibold text-gray-900 dark:text-white">Belum ada langganan aktif</div>
+                    <div class="text-sm text-gray-500">Aktifkan sekarang lewat Xendit (QRIS / VA / E-Wallet) — siklus {{ $tahunanDipilih ? 'tahunan' : 'bulanan' }} sesuai pilihan di atas.</div>
+                </div>
+                <x-filament::button wire:click="bayarSekarang" color="primary" icon="heroicon-o-credit-card">
+                    Bayar Sekarang
+                </x-filament::button>
+            </div>
+        </x-filament::section>
+    @endif
+
     {{-- TAGIHAN --}}
     <x-filament::section :heading="$tahunanDipilih ? 'Tagihan Tahunan' : 'Tagihan Bulanan'" icon="heroicon-o-document-text">
 
@@ -197,33 +224,6 @@
         </div>
     </x-filament::section>
 
-    {{-- TAGIHAN PENDING / BELUM ADA LANGGANAN --}}
-    @if ($pendingUrl)
-        <x-filament::section>
-            <div class="flex items-center justify-between flex-wrap gap-3">
-                <div>
-                    <div class="font-semibold text-gray-900 dark:text-white">Ada tagihan menunggu pembayaran</div>
-                    <div class="text-sm text-gray-500">Selesaikan pembayaran supaya langganan tetap aktif.</div>
-                </div>
-                <a href="{{ $pendingUrl }}" target="_blank">
-                    <x-filament::button color="warning" icon="heroicon-o-credit-card">Bayar Sekarang</x-filament::button>
-                </a>
-            </div>
-        </x-filament::section>
-    @elseif (! $subAktif || $subAktif->status !== 'active')
-        <x-filament::section>
-            <div class="flex items-center justify-between flex-wrap gap-3">
-                <div>
-                    <div class="font-semibold text-gray-900 dark:text-white">Belum ada langganan aktif</div>
-                    <div class="text-sm text-gray-500">Aktifkan sekarang lewat Xendit (QRIS / VA / E-Wallet) — siklus {{ $tahunanDipilih ? 'tahunan' : 'bulanan' }} sesuai pilihan di atas.</div>
-                </div>
-                <x-filament::button wire:click="bayarSekarang" color="primary" icon="heroicon-o-credit-card">
-                    Bayar Sekarang
-                </x-filament::button>
-            </div>
-        </x-filament::section>
-    @endif
-
     {{-- PAKET FULL SHORTCUT --}}
     @if (! $paketFullAktif)
         <x-filament::section>
@@ -326,57 +326,60 @@
 
     @endif
 
-    {{-- INFO DARI QINARA --}}
-    @if ($broadcasts->isNotEmpty())
-        <x-filament::section heading="Info dari Qinara" icon="heroicon-o-megaphone">
-            <div class="space-y-4">
-                @foreach ($broadcasts as $b)
-                    <div class="border-b border-gray-100 dark:border-gray-700 pb-4 last:border-0 last:pb-0">
-                        <div class="font-semibold text-gray-800 dark:text-gray-100">{{ $b->judul }}</div>
-                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1 whitespace-pre-line">{{ $b->pesan }}</p>
-                        <div class="text-xs text-gray-400 mt-2">{{ $b->dikirim_pada?->locale('id')->translatedFormat('d M Y') }}</div>
-                    </div>
-                @endforeach
-            </div>
-        </x-filament::section>
-    @endif
+    {{-- INFO DARI QINARA + RIWAYAT LANGGANAN (2 card sejajar) --}}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
 
-    {{-- RIWAYAT PEMBAYARAN --}}
-    <x-filament::section heading="Riwayat Langganan" icon="heroicon-o-clock">
-        @forelse ($riwayat as $sub)
-            @php
-                // Kolom status di baris Subscription TIDAK otomatis berubah
-                // saat masa berlakunya lewat (lihat CheckExpiredSubscriptions
-                // -- itu cuma nyuspend Yayasan, tidak pernah nurunin status
-                // baris Subscription lama). Jadi beberapa baris lama bisa
-                // sama-sama tercatat 'active' di database walau cuma SATU
-                // yang beneran berlaku (yang match $subAktif, dihitung by
-                // tanggal lewat activeSubscription()). Di sini kita
-                // cocokkan ID-nya supaya cuma yang beneran aktif yang
-                // ditandai hijau -- baris 'active' lain ditampilkan
-                // "Berakhir", bukan "Active" yang menyesatkan.
-                [$labelStatus, $warnaStatus] = match (true) {
-                    $sub->status === 'active' && $subAktif && $sub->id === $subAktif->id => ['Aktif', 'success'],
-                    $sub->status === 'active' => ['Berakhir', 'gray'],
-                    $sub->status === 'pending' => ['Menunggu Pembayaran', 'warning'],
-                    default => [ucfirst($sub->status), 'gray'],
-                };
-            @endphp
-            <div class="flex items-center justify-between text-sm border-b border-gray-100 dark:border-gray-700 py-3 last:border-0">
-                <div>
-                    <div class="font-medium text-gray-800 dark:text-gray-100">
-                        {{ $sub->plan->nama ?? '—' }}
-                        <span class="text-xs font-normal text-gray-400">({{ $sub->isTahunan() ? 'Tahunan' : 'Bulanan' }})</span>
-                    </div>
-                    <div class="text-gray-400 text-xs">{{ $sub->created_at->locale('id')->translatedFormat('d M Y H:i') }}</div>
+        @if ($broadcasts->isNotEmpty())
+            <x-filament::section heading="Info dari Qinara" icon="heroicon-o-megaphone">
+                <div class="space-y-4">
+                    @foreach ($broadcasts as $b)
+                        <div class="border-b border-gray-100 dark:border-gray-700 pb-4 last:border-0 last:pb-0">
+                            <div class="font-semibold text-gray-800 dark:text-gray-100">{{ $b->judul }}</div>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1 whitespace-pre-line">{{ $b->pesan }}</p>
+                            <div class="text-xs text-gray-400 mt-2">{{ $b->dikirim_pada?->locale('id')->translatedFormat('d M Y') }}</div>
+                        </div>
+                    @endforeach
                 </div>
-                <x-filament::badge :color="$warnaStatus">
-                    {{ $labelStatus }}
-                </x-filament::badge>
-            </div>
-        @empty
-            <p class="text-sm text-gray-400">Belum ada riwayat.</p>
-        @endforelse
-    </x-filament::section>
+            </x-filament::section>
+        @endif
+
+        <x-filament::section heading="Riwayat Langganan" icon="heroicon-o-clock">
+            @forelse ($riwayat as $sub)
+                @php
+                    // Kolom status di baris Subscription TIDAK otomatis berubah
+                    // saat masa berlakunya lewat (lihat CheckExpiredSubscriptions
+                    // -- itu cuma nyuspend Yayasan, tidak pernah nurunin status
+                    // baris Subscription lama). Jadi beberapa baris lama bisa
+                    // sama-sama tercatat 'active' di database walau cuma SATU
+                    // yang beneran berlaku (yang match $subAktif, dihitung by
+                    // tanggal lewat activeSubscription()). Di sini kita
+                    // cocokkan ID-nya supaya cuma yang beneran aktif yang
+                    // ditandai hijau -- baris 'active' lain ditampilkan
+                    // "Berakhir", bukan "Active" yang menyesatkan.
+                    [$labelStatus, $warnaStatus] = match (true) {
+                        $sub->status === 'active' && $subAktif && $sub->id === $subAktif->id => ['Aktif', 'success'],
+                        $sub->status === 'active' => ['Berakhir', 'gray'],
+                        $sub->status === 'pending' => ['Menunggu Pembayaran', 'warning'],
+                        default => [ucfirst($sub->status), 'gray'],
+                    };
+                @endphp
+                <div class="flex items-center justify-between text-sm border-b border-gray-100 dark:border-gray-700 py-3 last:border-0">
+                    <div>
+                        <div class="font-medium text-gray-800 dark:text-gray-100">
+                            {{ $sub->plan->nama ?? '—' }}
+                            <span class="text-xs font-normal text-gray-400">({{ $sub->isTahunan() ? 'Tahunan' : 'Bulanan' }})</span>
+                        </div>
+                        <div class="text-gray-400 text-xs">{{ $sub->created_at->locale('id')->translatedFormat('d M Y H:i') }}</div>
+                    </div>
+                    <x-filament::badge :color="$warnaStatus">
+                        {{ $labelStatus }}
+                    </x-filament::badge>
+                </div>
+            @empty
+                <p class="text-sm text-gray-400">Belum ada riwayat.</p>
+            @endforelse
+        </x-filament::section>
+
+    </div>
 
 </x-filament-panels::page>
