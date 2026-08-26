@@ -252,7 +252,29 @@ class Yayasan extends Model implements HasName
      *                             ke-block duluan lewat hasAccess(),
      *                             jadi ini praktis tidak pernah dicek
      */
+    // Cache in-memory PER KEY MODUL (bukan lintas request) -- hasFeature()
+    // sekarang dipanggil berkali-kali dalam 1 render sejak sidebar
+    // kembali auto-generate penuh (7 Sep 2026, lihat AdminPanelProvider):
+    // banyak Resource cek hasFeature() masing-masing buat tentukan
+    // tampil/tidaknya di menu, dan beberapa Resource kemungkinan cek key
+    // yang SAMA (mis. beberapa halaman e-Kantin semua cek 'e_kantin').
+    // Tanpa cache ini, tiap panggilan query subscriptions+lembagas+
+    // lembaga_modules+module_prices dari nol -- ditemukan sebagai
+    // penyebab render 1 halaman sempat tembus 213 query (turun dari 416
+    // setelah perbaikan activeSubscription(), tapi masih tinggi karena
+    // ini belum ikut di-cache).
+    protected array $hasFeatureCache = [];
+
     public function hasFeature(string $key): bool
+    {
+        if (array_key_exists($key, $this->hasFeatureCache)) {
+            return $this->hasFeatureCache[$key];
+        }
+
+        return $this->hasFeatureCache[$key] = $this->hitungHasFeature($key);
+    }
+
+    protected function hitungHasFeature(string $key): bool
     {
         // Selama trial: akses PENUH tanpa syarat, tidak peduli modul
         // mana yang sudah/belum dipilih -- ini SENGAJA (revisi final
