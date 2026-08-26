@@ -66,6 +66,7 @@ Route::post('/daftar', [PublicRegistrationController::class, 'store'])->name('pu
 // tidak pakai auth/CSRF, verifikasi lewat signature key di dalam
 // controller-nya sendiri).
 Route::post('/webhooks/doku', [DokuWebhookController::class, 'handle'])->name('webhooks.doku');
+Route::post('/webhooks/doku/token', [DokuWebhookController::class, 'tokenB2B'])->name('webhooks.doku.token');
 Route::post('/webhooks/xendit', [\App\Http\Controllers\XenditWebhookController::class, 'handle'])->name('webhooks.xendit');
 
 // Halaman langganan tenant (lihat status trial/aktif, upload bukti

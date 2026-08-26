@@ -8,8 +8,10 @@ use App\Models\WalletTransaction;
 use App\Services\DokuService;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 /**
  * Webhook DOKU -- satu endpoint untuk SEMUA domain pembayaran (topup
@@ -31,6 +33,101 @@ use Illuminate\Support\Facades\Log;
  */
 class DokuWebhookController extends Controller
 {
+    /**
+     * "Token URL" -- endpoint yang DIPANGGIL BALIK oleh DOKU (arah
+     * kebalikan dari DokuService::getAccessToken()) SEBELUM mereka
+     * kirim notifikasi SNAP. Ini standar resmi DOKU (format persis
+     * sama dengan respons Get Token B2B yang kita terima sendiri saat
+     * MEMANGGIL DOKU -- cuma sekarang posisinya kebalikan: DOKU jadi
+     * "client", kita jadi "server").
+     *
+     * DOKU menandatangani request ini pakai PRIVATE KEY MEREKA SENDIRI
+     * -- kita verifikasi pakai DOKU PUBLIC KEY (dari Settings > API
+     * Keys > "DOKU Public Key" di dashboard mereka, disalin ke
+     * DOKU_PUBLIC_KEY di .env). Formula stringToSign PERSIS sama
+     * dengan yang kita pakai di DokuService::getAccessToken(): 
+     * X-CLIENT-KEY + "|" + X-TIMESTAMP.
+     *
+     * URL endpoint ini (https://.../webhooks/doku/token) didaftarkan
+     * di dashboard DOKU: Settings > API Keys > Pengaturan SNAP >
+     * "Edit Token URL".
+     */
+    public function tokenB2B(Request $request)
+    {
+        $clientKey = $request->header('X-CLIENT-KEY');
+        $timestamp = $request->header('X-TIMESTAMP');
+        $signature = $request->header('X-SIGNATURE');
+
+        Log::info('DokuWebhookController::tokenB2B dipanggil', [
+            'headers' => $request->headers->all(),
+        ]);
+
+        if (!$clientKey || !$timestamp || !$signature) {
+            return response()->json([
+                'responseCode' => '4007301',
+                'responseMessage' => 'Missing mandatory header',
+            ], 400);
+        }
+
+        $dokuPublicKey = config('services.doku.doku_public_key');
+
+        if (blank($dokuPublicKey)) {
+            Log::error('DokuWebhookController::tokenB2B: DOKU_PUBLIC_KEY belum diisi di .env');
+
+            return response()->json([
+                'responseCode' => '5007300',
+                'responseMessage' => 'Internal Server Error',
+            ], 500);
+        }
+
+        $stringToSign = $clientKey . '|' . $timestamp;
+        $publicKeyResource = openssl_pkey_get_public($dokuPublicKey);
+
+        if (!$publicKeyResource) {
+            Log::error('DokuWebhookController::tokenB2B: DOKU_PUBLIC_KEY gagal di-parse OpenSSL');
+
+            return response()->json([
+                'responseCode' => '5007300',
+                'responseMessage' => 'Internal Server Error',
+            ], 500);
+        }
+
+        $signatureBinary = base64_decode($signature);
+        $valid = openssl_verify($stringToSign, $signatureBinary, $publicKeyResource, OPENSSL_ALGO_SHA256) === 1;
+
+        if (!$valid) {
+            Log::warning('DokuWebhookController::tokenB2B: signature tidak valid', [
+                'client_key' => $clientKey,
+            ]);
+
+            return response()->json([
+                'responseCode' => '4017300',
+                'responseMessage' => 'Unauthorized. Invalid Signature',
+            ], 401);
+        }
+
+        // Signature valid -- terbitkan access token, simpan di cache
+        // supaya bisa dicocokkan lagi saat DOKU pakai token ini untuk
+        // panggil endpoint notifikasi (handle() di bawah).
+        $token = Str::random(64);
+        $expiresIn = 900; // detik, standar DOKU
+
+        Cache::put('doku_incoming_token:' . $token, true, $expiresIn);
+
+        Log::info('DokuWebhookController::tokenB2B sukses, token diterbitkan', [
+            'client_key' => $clientKey,
+        ]);
+
+        return response()->json([
+            'responseCode' => '2007300',
+            'responseMessage' => 'Successful',
+            'accessToken' => $token,
+            'tokenType' => 'Bearer',
+            'expiresIn' => $expiresIn,
+            'additionalInfo' => '',
+        ]);
+    }
+
     public function handle(Request $request, DokuService $doku)
     {
         $rawBody = $request->getContent();
@@ -40,16 +137,44 @@ class DokuWebhookController extends Controller
             'body' => $rawBody,
         ]);
 
-        $valid = $doku->verifyNotificationSignature(
-            $request->headers->all(),
-            $rawBody,
-            $request->path() === '/' ? '/webhooks/doku' : '/' . ltrim($request->path(), '/')
-        );
+        // Kalau notifikasi ini SNAP (ada Authorization: Bearer <token>),
+        // jangan pakai verifikasi Non-SNAP (skema signature-nya beda
+        // total, pasti gagal kalau dipaksakan) -- cukup cocokkan Bearer
+        // token dengan yang PERNAH kita terbitkan lewat tokenB2B() di
+        // atas. Field notifikasi SNAP yang PERSIS belum terkonfirmasi
+        // dari dokumentasi publik -- begitu notifikasi SNAP pertama
+        // masuk, log ini akan tunjukkan struktur aslinya, baru kita
+        // pastikan verifikasi signature SNAP (kalau memang perlu
+        // tambahan selain Bearer token) dan field body yang dipakai.
+        $bearerToken = $request->bearerToken();
 
-        if (! $valid) {
-            Log::warning('DokuWebhookController: signature tidak valid', ['ip' => $request->ip()]);
+        if ($bearerToken) {
+            $tokenValid = Cache::has('doku_incoming_token:' . $bearerToken);
 
-            return response('INVALID SIGNATURE', 403);
+            Log::info('DokuWebhookController: notifikasi SNAP terdeteksi (ada Bearer token)', [
+                'token_cocok_dengan_yang_diterbitkan' => $tokenValid,
+            ]);
+
+            if (! $tokenValid) {
+                Log::warning('DokuWebhookController: Bearer token notifikasi SNAP tidak dikenali');
+
+                return response('INVALID TOKEN', 401);
+            }
+
+            // Token valid -- lewati verifikasi Non-SNAP di bawah,
+            // langsung proses body notifikasi.
+        } else {
+            $valid = $doku->verifyNotificationSignature(
+                $request->headers->all(),
+                $rawBody,
+                $request->path() === '/' ? '/webhooks/doku' : '/' . ltrim($request->path(), '/')
+            );
+
+            if (! $valid) {
+                Log::warning('DokuWebhookController: signature tidak valid', ['ip' => $request->ip()]);
+
+                return response('INVALID SIGNATURE', 403);
+            }
         }
 
         $payload = json_decode($rawBody, true) ?? [];
