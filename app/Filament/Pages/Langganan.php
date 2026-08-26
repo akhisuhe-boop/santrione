@@ -48,6 +48,21 @@ class Langganan extends Page
 
     public string $billingCycle = 'bulanan';
 
+    // Cache in-memory SEKALI PER REQUEST -- bukan cache permanen/lintas
+    // request (properti protected TIDAK di-serialize Livewire antar
+    // request, jadi otomatis "kosong lagi" tiap kali halaman di-load
+    // ulang -- tidak ada risiko data basi). Tujuannya cuma mencegah
+    // getLembagas()/getModulOptions() query database BERKALI-KALI
+    // dalam satu render yang sama -- sebelum ini, isModuleActive()
+    // (dipanggil per sel di tabel matrix modul x lembaga, bisa puluhan
+    // kali sekali render) memanggil getLembagas() SETIAP KALI, dan
+    // getLembagas() SELALU query baru -- ditemukan sebagai penyebab 1
+    // render halaman ini sempat menghasilkan 121 query / 929 model
+    // (7 Sep 2026, waktu debug soal RAM VPS yang mepet).
+    protected ?\Illuminate\Support\Collection $lembagasCache = null;
+
+    protected ?\Illuminate\Support\Collection $modulOptionsCache = null;
+
     public function mount(): void
     {
         // Toggle mulai dari siklus yang BENAR-BENAR sedang aktif (kalau
@@ -115,12 +130,12 @@ class Langganan extends Page
 
     public function getModulOptions()
     {
-        return ModulePrice::aktif()->orderBy('urutan')->get();
+        return $this->modulOptionsCache ??= ModulePrice::aktif()->orderBy('urutan')->get();
     }
 
     public function getLembagas()
     {
-        return $this->getYayasan()->lembagas()
+        return $this->lembagasCache ??= $this->getYayasan()->lembagas()
             ->with(['modules.modulePrice'])
             ->get();
     }
