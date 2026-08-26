@@ -321,7 +321,7 @@ class Langganan extends Page
                 'siklus_billing' => $tahunan ? 'tahunan' : 'bulanan',
                 'status' => 'active',
                 'mulai_pada' => now(),
-                'berakhir_pada' => $yayasan->trial_ends_at ?? now()->addDays(config('subscription.trial_days', 14)),
+                'berakhir_pada' => $tahunan ? now()->addYear() : now()->addMonth(),
             ]);
         }
 

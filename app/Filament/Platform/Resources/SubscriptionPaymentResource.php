@@ -116,7 +116,7 @@ class SubscriptionPaymentResource extends BaseResource
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->requiresConfirmation()
-                    ->modalDescription('Langganan yayasan ini akan langsung AKTIF 1 bulan ke depan sejak sekarang.')
+                    ->modalDescription(fn (SubscriptionPayment $record) => 'Langganan yayasan ini akan langsung AKTIF ' . ($record->subscription?->isTahunan() ? '1 tahun' : '1 bulan') . ' ke depan sejak sekarang.')
                     ->visible(fn (SubscriptionPayment $record) => $record->status === 'pending')
                     ->action(function (SubscriptionPayment $record) {
 
@@ -133,7 +133,7 @@ class SubscriptionPaymentResource extends BaseResource
                         $subscription->update([
                             'status' => 'active',
                             'mulai_pada' => now(),
-                            'berakhir_pada' => now()->addMonth(),
+                            'berakhir_pada' => $subscription->isTahunan() ? now()->addYear() : now()->addMonth(),
                         ]);
 
                         $yayasan->update(['status' => 'active']);

@@ -1261,6 +1261,40 @@ class NotificationService
         return true;
     }
 
+    /**
+     * Reminder WA untuk yayasan BERBAYAR yang telat perpanjang dan
+     * sedang dalam masa tenggang (akses sudah dibatasi ke menu
+     * Langganan saja sejak hari jatuh tempo -- pesan ini menjelaskan
+     * itu, bukan cuma "akan segera dibatasi" seperti trial).
+     */
+    public static function sendGracePeriodReminder($yayasan, int $sisaHari, $jatuhTempo): bool
+    {
+        $nomor = $yayasan->telepon ?? null;
+
+        if (! $nomor) {
+            return false;
+        }
+
+        $nomor = self::formatPhone($nomor);
+        $tanggalJatuhTempo = $jatuhTempo?->locale('id')->translatedFormat('d M Y');
+
+        $pesan = \App\Models\NotificationTemplate::render('grace_period_reminder', [
+            'nama_yayasan' => $yayasan->nama,
+            'sisa_hari' => $sisaHari,
+            'tanggal_jatuh_tempo' => $tanggalJatuhTempo,
+        ], default:
+            "*LANGGANAN QINARA APPS SUDAH JATUH TEMPO*\n\n" .
+            "Yth. {$yayasan->nama},\n\n" .
+            "Langganan Anda sudah lewat jatuh tempo ({$tanggalJatuhTempo}) dan saat ini akses aplikasi dibatasi hanya ke menu Langganan.\n\n" .
+            "Tinggal *{$sisaHari} hari lagi* sebelum masa tenggang berakhir. Segera lakukan pembayaran di menu \"Langganan\" supaya aplikasi bisa dipakai penuh lagi sesuai paket Anda.\n\n" .
+            "Terima kasih."
+        );
+
+        self::waPlatform($nomor, $pesan);
+
+        return true;
+    }
+
     /*
     |--------------------------------------------------------------------------
     | PENDAFTARAN BERHASIL & AKTIVASI

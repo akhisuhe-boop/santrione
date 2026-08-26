@@ -25,13 +25,18 @@ return [
     | Masa Tenggang Setelah Langganan Berakhir
     |--------------------------------------------------------------------------
     |
-    | Kalau langganan berbayar sudah lewat tanggal berakhir tapi belum
-    | diperpanjang, beri toleransi sekian hari sebelum akun benar-benar
-    | di-suspend (jaga-jaga keterlambatan transfer/konfirmasi).
+    | CATATAN (diubah 7 Sep 2026): dulu angka ini dipakai untuk MENUNDA
+    | restriksi akses (baru di-suspend N hari setelah jatuh tempo).
+    | Sekarang TIDAK LAGI begitu -- akses langsung dibatasi (sidebar
+    | cuma menu Langganan) begitu jatuh tempo lewat, lihat
+    | CheckExpiredSubscriptions. Angka ini sekarang murni jadi jendela
+    | pengingat WA H-5/H-3/H-1 (lihat SendGracePeriodReminders) --
+    | "masih ada N hari sejak jatuh tempo sebelum kami anggap benar-benar
+    | churn", walau secara akses sudah dibatasi dari hari pertama.
     |
     */
 
-    'grace_period_days' => env('SUBSCRIPTION_GRACE_PERIOD_DAYS', 3),
+    'grace_period_days' => env('SUBSCRIPTION_GRACE_PERIOD_DAYS', 7),
 
     /*
     |--------------------------------------------------------------------------

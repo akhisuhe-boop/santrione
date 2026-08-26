@@ -9,12 +9,10 @@ class CheckExpiredSubscriptions extends Command
 {
     protected $signature = 'subscription:check-expired';
 
-    protected $description = 'Suspend yayasan yang masa trial-nya habis atau langganannya lewat masa tenggang tanpa diperpanjang';
+    protected $description = 'Suspend yayasan yang masa trial-nya habis atau langganan berbayarnya sudah lewat jatuh tempo';
 
     public function handle(): int
     {
-        $graceDays = config('subscription.grace_period_days', 3);
-
         /*
         |--------------------------------------------------------------------------
         | TRIAL HABIS
@@ -33,8 +31,15 @@ class CheckExpiredSubscriptions extends Command
 
         /*
         |--------------------------------------------------------------------------
-        | LANGGANAN AKTIF TAPI SUDAH LEWAT TANGGAL BERAKHIR + GRACE PERIOD
+        | LANGGANAN AKTIF TAPI SUDAH LEWAT TANGGAL BERAKHIR
         |--------------------------------------------------------------------------
+        |
+        | PERUBAHAN 7 Sep 2026: dulu ada toleransi +grace_period_days
+        | sebelum di-suspend. Sekarang restriksi akses (sidebar cuma
+        | menu Langganan, lewat Yayasan::hasAccess()) berlaku LANGSUNG
+        | begitu jatuh tempo lewat -- grace_period_days sekarang cuma
+        | dipakai buat jendela pengingat WA H-5/H-3/H-1
+        | (SendGracePeriodReminders), bukan penunda restriksi ini.
         |
         | Hanya yayasan yang MEMANG punya riwayat Subscription yang
         | dievaluasi di sini — yayasan lama yang di-grandfather (status
@@ -58,9 +63,9 @@ class CheckExpiredSubscriptions extends Command
                 continue;
             }
 
-            if ($latest->berakhir_pada->addDays($graceDays)->isPast()) {
+            if ($latest->berakhir_pada->isPast()) {
                 $yayasan->update(['status' => 'suspended']);
-                $this->line("  ✓ Langganan lewat masa tenggang, di-suspend: {$yayasan->nama}");
+                $this->line("  ✓ Langganan lewat jatuh tempo, di-suspend: {$yayasan->nama}");
             }
         }
 
