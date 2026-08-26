@@ -245,6 +245,25 @@ class AdminPanelProvider extends PanelProvider
             $user = auth()->user();
             $yayasan = ($user && ! $user->is_platform_admin) ? $user->yayasan : null;
 
+            // DEBUG SEMENTARA (7 Sep 2026) -- HAPUS setelah selesai
+            // ditelusuri. Aktif cuma kalau ditambah ?navdebug=1 di URL,
+            // supaya tidak mengganggu user lain sama sekali.
+            if (request()->query('navdebug') === '1') {
+                dd([
+                    'user_email' => $user?->email,
+                    'is_platform_admin' => $user?->is_platform_admin,
+                    'yayasan_id' => $yayasan?->id,
+                    'has_access' => $yayasan?->hasAccess(),
+                    'has_role_admin_yayasan' => $user?->hasRole('Admin Yayasan'),
+                    'permissions_count' => $user?->getAllPermissions()->count(),
+                    'panel_resources_count' => count(\Filament\Facades\Filament::getPanel('admin')->getResources()),
+                    'panel_pages_count' => count(\Filament\Facades\Filament::getPanel('admin')->getPages()),
+                    'current_tenant' => \Filament\Facades\Filament::getTenant()?->id,
+                    'current_tenant_via_yayasan' => \Filament\Facades\Filament::getTenant(),
+                    'builder_raw' => $builder,
+                ]);
+            }
+
             if ($yayasan && ! $yayasan->hasAccess()) {
                 return $builder->items([
                     \Filament\Navigation\NavigationItem::make('Langganan')
