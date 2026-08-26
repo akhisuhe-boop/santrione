@@ -63,7 +63,7 @@ class SendGracePeriodReminders extends Command
                 ->filter(function (Yayasan $yayasan) use ($tanggalTarget) {
                     $latest = $yayasan->subscriptions()
                         ->whereNotNull('berakhir_pada')
-                        ->latest('berakhir_pada')
+                        ->latest('id')
                         ->first();
 
                     return $latest && $latest->berakhir_pada->toDateString() === $tanggalTarget;
@@ -73,7 +73,7 @@ class SendGracePeriodReminders extends Command
                 try {
                     $latest = $yayasan->subscriptions()
                         ->whereNotNull('berakhir_pada')
-                        ->latest('berakhir_pada')
+                        ->latest('id')
                         ->first();
 
                     $terkirim = NotificationService::sendGracePeriodReminder($yayasan, $sisaHari, $latest->berakhir_pada);

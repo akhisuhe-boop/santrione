@@ -54,9 +54,20 @@ class CheckExpiredSubscriptions extends Command
 
         foreach ($activeYayasans as $yayasan) {
 
+            // latest('id'), BUKAN latest('berakhir_pada') -- yayasan
+            // bisa punya banyak baris Subscription dari waktu ke waktu
+            // (tiap kali langganan lama sudah lewat tanggal berakhir
+            // lalu diaktifkan ulang, baris BARU dibuat, bukan update
+            // baris lama -- lihat Langganan::aktifkanPaketFull()).
+            // Baris paling akhir DIBUAT belum tentu punya berakhir_pada
+            // paling besar (mis. langganan lama tahunan yang sudah
+            // ditinggalkan bisa "kelihatan" berakhir lebih jauh dari
+            // langganan baru bulanan yang sedang aktif) -- jadi yang
+            // benar adalah baris paling BARU DIBUAT (id terbesar), bukan
+            // baris dengan tanggal berakhir terbesar.
             $latest = $yayasan->subscriptions()
                 ->whereNotNull('berakhir_pada')
-                ->latest('berakhir_pada')
+                ->latest('id')
                 ->first();
 
             if (! $latest) {
