@@ -160,13 +160,33 @@ class Yayasan extends Model implements HasName
      * ini ambil yang statusnya 'active' dan belum lewat tanggal
      * berakhir.
      */
+    // Cache in-memory SEKALI PER OBJEK (bukan lintas request -- properti
+    // protected, direset otomatis tiap kali Yayasan di-fetch ulang dari
+    // database). activeSubscription() dipanggil berkali-kali dalam 1
+    // render (TenantBillingCalculator::aksesPlatformPlan() misalnya
+    // manggil ini 1x per Lembaga + 1x lagi terpisah) -- tanpa cache ini,
+    // tiap panggilan query database dari nol. Pakai flag terpisah
+    // ($activeSubscriptionCached), BUKAN null-coalescing (??=), karena
+    // hasil "tidak ada subscription aktif" (null) itu sendiri VALID dan
+    // harus ikut di-cache -- ??= akan terus query ulang selama hasilnya
+    // null.
+    protected ?Subscription $activeSubscriptionCache = null;
+
+    protected bool $activeSubscriptionCached = false;
+
     public function activeSubscription(): ?Subscription
     {
-        return $this->subscriptions()
-            ->where('status', 'active')
-            ->where('berakhir_pada', '>', now())
-            ->latest('berakhir_pada')
-            ->first();
+        if (! $this->activeSubscriptionCached) {
+            $this->activeSubscriptionCache = $this->subscriptions()
+                ->where('status', 'active')
+                ->where('berakhir_pada', '>', now())
+                ->latest('berakhir_pada')
+                ->first();
+
+            $this->activeSubscriptionCached = true;
+        }
+
+        return $this->activeSubscriptionCache;
     }
 
     public function isOnTrial(): bool

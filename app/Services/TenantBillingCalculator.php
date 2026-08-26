@@ -166,7 +166,18 @@ class TenantBillingCalculator
         $rincianLembaga = $yayasan->lembagas()
             ->orderBy('id')
             ->get()
-            ->map(fn (Lembaga $lembaga) => $this->hitungLembaga($lembaga))
+            ->map(function (Lembaga $lembaga) use ($yayasan) {
+                // setRelation() di sini PENTING -- tanpa ini,
+                // hitungLembaga() (lewat $lembaga->yayasan) akan
+                // LAZY-LOAD ulang Yayasan dari database untuk SETIAP
+                // Lembaga, padahal objek $yayasan yang sama sudah ada
+                // di tangan. Ditemukan sebagai salah satu penyebab 1
+                // render halaman Langganan sempat query >100 kali
+                // (7 Sep 2026).
+                $lembaga->setRelation('yayasan', $yayasan);
+
+                return $this->hitungLembaga($lembaga);
+            })
             ->values()
             ->all();
 
