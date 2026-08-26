@@ -589,14 +589,23 @@ class DokuService
         $externalId = (string) random_int(1000000000, 9999999999);
         $path = '/virtual-accounts/bi-snap-va/v1.1/transfer-va/create-va';
 
+        $partnerServiceIdPadded = str_pad($partnerServiceId, 8, ' ', STR_PAD_LEFT);
+        $customerNo = (string) random_int(10000000, 99999999); // 8 digit
+
         $body = [
             // partnerServiceId WAJIB persis 8 karakter menurut standar
             // BI-SNAP -- kalau kurang dari 8 digit, DIBERI SPASI DI
             // KIRI (padding). Dikonfirmasi dari respons error sandbox:
             // "Invalid Field Format {partnerServiceId}" saat dikirim
             // tanpa padding (cuma 5 digit, "19008").
-            'partnerServiceId' => str_pad($partnerServiceId, 8, ' ', STR_PAD_LEFT),
-            'customerNo' => (string) random_int(100000, 999999),
+            'partnerServiceId' => $partnerServiceIdPadded,
+            'customerNo' => $customerNo,
+            // virtualAccountNo WAJIB gabungan partnerServiceId +
+            // customerNo (bukan boleh sembarang) -- dikonfirmasi dari
+            // error sandbox: "Transaction Not Permitted [Combination
+            // of partnerServiceId, customerNo, and virtualAccountNo]"
+            // saat field ini tidak dikirim sama sekali sebelumnya.
+            'virtualAccountNo' => $partnerServiceIdPadded . $customerNo,
             'virtualAccountName' => $customerName,
             'trxId' => $referenceId,
             'totalAmount' => [
