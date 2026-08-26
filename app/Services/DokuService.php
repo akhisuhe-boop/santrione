@@ -544,6 +544,32 @@ class DokuService
      * sama seperti channel lain sebelumnya: log full response dulu,
      * baru pastikan field yang dipakai).
      */
+    /**
+     * Peta kode bank internal Qinara -> nama channel resmi DOKU yang
+     * dipakai di field `additionalInfo.channel` -- KONFIRMASI dari
+     * respons error sandbox: field ini WAJIB diisi
+     * ("Invalid Mandatory Field {additionalInfo.channel}"). Nama
+     * channel per bank diambil dari daftar `payment_method_types` yang
+     * SUDAH TERKONFIRMASI muncul di respons DOKU Checkout sebelumnya
+     * (VIRTUAL_ACCOUNT_BCA, VIRTUAL_ACCOUNT_BANK_MANDIRI, dst) --
+     * KECUALI BJB yang belum pernah terlihat eksplisit di respons
+     * manapun, jadi nama channel-nya masih TEBAKAN mengikuti pola
+     * penamaan bank lain (VIRTUAL_ACCOUNT_BANK_{NAMA}), WAJIB
+     * dicocokkan kalau BJB dites dan gagal lagi.
+     */
+    protected function vaSnapChannelName(string $bankKode): string
+    {
+        return match (strtoupper($bankKode)) {
+            'BCA' => 'VIRTUAL_ACCOUNT_BCA',
+            'BNI' => 'VIRTUAL_ACCOUNT_BNI',
+            'BRI' => 'VIRTUAL_ACCOUNT_BRI',
+            'MANDIRI' => 'VIRTUAL_ACCOUNT_BANK_MANDIRI',
+            'BSI' => 'VIRTUAL_ACCOUNT_BANK_SYARIAH_MANDIRI',
+            'BJB' => 'VIRTUAL_ACCOUNT_BANK_BJB', // TEBAKAN -- belum terkonfirmasi, cek kalau gagal
+            default => 'VIRTUAL_ACCOUNT_DOKU',
+        };
+    }
+
     public function buatVaSnap(
         string $bankKode,
         string $referenceId,
@@ -575,6 +601,7 @@ class DokuService
             'virtualAccountTrxType' => 'C', // Closed Amount -- nominal tetap, tidak bisa diubah pembayar
             'expiredDate' => now()->addHour()->toIso8601String(),
             'additionalInfo' => [
+                'channel' => $this->vaSnapChannelName($bankKode),
                 'reference' => $referenceId,
             ],
         ];
