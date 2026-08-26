@@ -585,20 +585,46 @@ class WaliDashboardController extends Controller
 
         try {
             if ($channel === 'VA') {
-                $result = $doku->buatVaLangsung(
-                    referenceId: $referenceId,
-                    amount: $amountCharged,
-                    judul: $tagihan->judul,
-                    customerName: $customerName,
-                    customerEmail: $customerEmail,
-                    dokuSubAccountId: $lembaga?->doku_sub_account_id,
-                );
+                if ($request->bank) {
+                    // VA SNAP per bank -- jalur baru yang baru saja
+                    // selesai disetup (Merchant Public Key, Token URL,
+                    // Notify URL per-bank, partnerServiceId semua sudah
+                    // terdaftar).
+                    $result = $doku->buatVaSnap(
+                        bankKode: $request->bank,
+                        referenceId: $referenceId,
+                        amount: $amountCharged,
+                        customerName: $customerName,
+                    );
 
-                $vaNumber = $result['virtual_account_info']['virtual_account_number'] ?? null;
-                $howToPayPage = $result['virtual_account_info']['how_to_pay_page'] ?? null;
+                    // TODO: field response SNAP VA belum 100%
+                    // dipastikan dari dokumentasi publik -- pola umum
+                    // standar BI-SNAP VA membungkus hasil di
+                    // 'virtualAccountData', dicoba beberapa
+                    // kemungkinan field. Log full_response sudah ada
+                    // di DokuService::buatVaSnap() -- cocokkan lagi
+                    // begitu ada respons asli sandbox.
+                    $vaNumber = $result['virtualAccountData']['virtualAccountNo']
+                        ?? $result['virtualAccountNo']
+                        ?? null;
+                } else {
+                    // Fallback -- VA universal Non-SNAP (kalau entah
+                    // kenapa tidak ada bank dipilih).
+                    $result = $doku->buatVaLangsung(
+                        referenceId: $referenceId,
+                        amount: $amountCharged,
+                        judul: $tagihan->judul,
+                        customerName: $customerName,
+                        customerEmail: $customerEmail,
+                        dokuSubAccountId: $lembaga?->doku_sub_account_id,
+                    );
+
+                    $vaNumber = $result['virtual_account_info']['virtual_account_number'] ?? null;
+                    $howToPayPage = $result['virtual_account_info']['how_to_pay_page'] ?? null;
+                }
 
                 if (!$vaNumber) {
-                    return back()->with('error', \App\Services\DokuService::pesanAman($result['message'] ?? $result['error']['message'] ?? null));
+                    return back()->with('error', \App\Services\DokuService::pesanAman($result['message'] ?? $result['responseMessage'] ?? $result['error']['message'] ?? null));
                 }
             } elseif ($channel === 'QRIS') {
                 $result = $doku->buatQris(
