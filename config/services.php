@@ -41,11 +41,56 @@ return [
     'endpoint' => env('XSENDER_ENDPOINT', 'https://xsender.id/id/send-message'),
     ],
 
-    'duitku' => [
-    'merchant_code' => env('DUITKU_MERCHANT_CODE'),
-    'api_key'       => env('DUITKU_API_KEY'),
-    'sandbox'       => env('DUITKU_SANDBOX', true),
-    'mode'          => env('DUITKU_MODE', 'live'),
+    'doku' => [
+    'client_id'      => env('DOKU_CLIENT_ID'),
+    'secret_key'     => env('DOKU_SECRET_KEY'),
+    'is_production'  => env('DOKU_IS_PRODUCTION', false),
+    'fee_persen'     => env('DOKU_FEE_PERSEN', 0.75), // persentase fee admin QINARA dari nominal tagihan
+    'fee_cap'        => env('DOKU_FEE_CAP', 10000), // batas maksimum fee admin Qinara per transaksi (Rupiah)
+    // Estimasi fee DOKU sendiri per channel -- DOKU MEMOTONG fee ini dari
+    // settlement (bukan nambah otomatis ke customer, dikonfirmasi resmi
+    // oleh tim DOKU). Supaya Qinara tidak "makan" fee ini dari margin
+    // sendiri, nilainya DITAMBAHKAN juga ke nominal yang di-charge ke
+    // wali murid (lihat DokuService::hitungFeeTotal()). Angka berikut
+    // berdasar price list resmi DOKU yang sudah dibandingkan sebelumnya
+    // -- SEBAIKNYA dikonfirmasi ulang ke akun sandbox/production Anda
+    // karena bisa beda per kontrak/tier volume.
+    // partnerServiceId per bank untuk VA SNAP -- WAJIB diminta ke tim
+    // DOKU (bukan bisa dikarang sendiri), lihat catatan lengkap di
+    // DokuService::buatVaSnap(). Isi setelah dapat dari DOKU, format:
+    // 'BCA' => env('DOKU_VA_SNAP_BCA', ''),
+    'va_snap_partner_service_id' => [
+        'BCA' => env('DOKU_VA_SNAP_BCA', ''),
+        'BNI' => env('DOKU_VA_SNAP_BNI', ''),
+        'BRI' => env('DOKU_VA_SNAP_BRI', ''),
+        'MANDIRI' => env('DOKU_VA_SNAP_MANDIRI', ''),
+        'BSI' => env('DOKU_VA_SNAP_BSI', ''),
+        'BJB' => env('DOKU_VA_SNAP_BJB', ''),
+    ],
+    'fee_doku' => [
+        // Angka RESMI dari halaman harga DOKU (doku.com/harga), bukan
+        // estimasi lagi. VA: BCA khusus Rp4.500, bank lain Rp4.000 --
+        // TAPI implementasi VA kita saat ini pakai endpoint VA UNIVERSAL
+        // (bukan benar-benar per-bank di sisi DOKU, lihat catatan di
+        // DokuService::buatVaLangsung()), jadi saya pakai angka
+        // TERTINGGI (Rp4.500) untuk semua VA supaya Qinara tidak
+        // kekurangan margin kalau ternyata kena tarif BCA.
+        // OVO & ShopeePay resmi berupa RENTANG (OVO 2%-3,18%, ShopeePay
+        // 2%-4%) -- dipakai batas ATAS supaya aman, TIDAK rugi.
+        'VA'        => ['flat' => 4500, 'persen' => 0],
+        'QRIS'      => ['flat' => 0,    'persen' => 0.7],
+        'DANA'      => ['flat' => 0,    'persen' => 1.5],
+        'SHOPEEPAY' => ['flat' => 0,    'persen' => 4.0],
+        'OVO'       => ['flat' => 0,    'persen' => 3.18],
+        'ALFAMART'  => ['flat' => 5000, 'persen' => 0],
+        'INDOMARET' => ['flat' => 6500, 'persen' => 0],
+    ],
+    // Private key RSA untuk endpoint SNAP (QRIS Direct API) -- lihat
+    // catatan setup lengkap di DokuService::getAccessToken(). Isi di
+    // .env sebagai DOKU_PRIVATE_KEY, format PEM dengan newline literal
+    // "\n" (bukan newline asli), contoh:
+    // DOKU_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMII...\n-----END PRIVATE KEY-----"
+    'private_key'    => str_replace('\n', "\n", (string) env('DOKU_PRIVATE_KEY', '')),
     ],
 
     'xendit' => [

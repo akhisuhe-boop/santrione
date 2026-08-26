@@ -79,7 +79,22 @@ class TenantBillingCalculator
 
         $jumlahSiswa = $lembaga->jumlah_siswa_billing ?? $lembaga->jumlahSiswaAktif();
 
-        $hargaDasar = (int) ($plan->harga_bulanan ?? 0);
+        $urutanKe = $lembaga->urutanBillingKe();
+
+        $kuotaLembaga = (int) ($plan->maks_lembaga ?? 1);
+        $hargaPerLembagaTambahan = (int) ($plan->harga_per_lembaga_tambahan ?? 0);
+        $lembagaDiDalamKuota = $urutanKe <= $kuotaLembaga;
+
+        // Lembaga di dalam kuota paket (biasanya lembaga ke-1) pakai harga
+        // dasar penuh. Lembaga DI LUAR kuota (ke-2 dst kalau maks_lembaga=1)
+        // pakai harga_per_lembaga_tambahan, BUKAN harga dasar penuh lagi --
+        // sebelumnya di sini selalu pakai harga dasar untuk SEMUA lembaga,
+        // sehingga harga_per_lembaga_tambahan tidak pernah terpakai sama
+        // sekali (bug ditemukan 24 Agustus 2026).
+        $hargaDasar = $lembagaDiDalamKuota
+            ? (int) ($plan->harga_bulanan ?? 0)
+            : $hargaPerLembagaTambahan;
+
         $kuotaSiswa = (int) ($plan->maks_siswa ?? 100);
         $hargaPerSiswaTambahan = (int) ($plan->harga_per_siswa_tambahan ?? 0);
 
@@ -88,7 +103,6 @@ class TenantBillingCalculator
 
         $aksesPlatformSebelumDiskon = $hargaDasar + $biayaSiswaTambahan;
 
-        $urutanKe = $lembaga->urutanBillingKe();
         $diskonPersen = $this->diskonPersenUntukUrutan($urutanKe);
         $aksesPlatformSetelahDiskon = (int) round($aksesPlatformSebelumDiskon * (1 - $diskonPersen / 100));
 
@@ -101,7 +115,7 @@ class TenantBillingCalculator
             // Paket Full: modul sudah termasuk di harga Akses Platform
             // di atas — jangan dihitung lagi di sini, atau nominalnya
             // dobel. Tetap dicatat di rincian (harga=0, ditandai
-            // 'termasuk_paket') supaya invoice tetap menunjukkan modul
+            // 'termasuk_paket_full') supaya invoice tetap menunjukkan modul
             // apa saja yang aktif untuk Lembaga ini.
             return [
                 'key' => $mp->key,
@@ -121,6 +135,17 @@ class TenantBillingCalculator
             'lembaga_nama' => $lembaga->nama,
             'jumlah_siswa' => $jumlahSiswa,
             'urutan_ke' => $urutanKe,
+
+            // Rincian komponen Akses Platform, dipisah supaya tampilan
+            // (halaman Langganan) bisa tunjukkan baris per baris tanpa
+            // perlu hitung ulang aturan bisnisnya sendiri.
+            'lembaga_di_dalam_kuota' => $lembagaDiDalamKuota,
+            'harga_dasar' => $hargaDasar,
+            'kuota_siswa' => $kuotaSiswa,
+            'siswa_tambahan' => $siswaTambahan,
+            'harga_per_siswa_tambahan' => $hargaPerSiswaTambahan,
+            'biaya_siswa_tambahan' => $biayaSiswaTambahan,
+
             'akses_platform_sebelum_diskon' => $aksesPlatformSebelumDiskon,
             'diskon_persen' => $diskonPersen,
             'akses_platform' => $aksesPlatformSetelahDiskon,
@@ -141,7 +166,18 @@ class TenantBillingCalculator
         $rincianLembaga = $yayasan->lembagas()
             ->orderBy('id')
             ->get()
-            ->map(fn (Lembaga $lembaga) => $this->hitungLembaga($lembaga))
+            ->map(function (Lembaga $lembaga) use ($yayasan) {
+                // setRelation() di sini PENTING -- tanpa ini,
+                // hitungLembaga() (lewat $lembaga->yayasan) akan
+                // LAZY-LOAD ulang Yayasan dari database untuk SETIAP
+                // Lembaga, padahal objek $yayasan yang sama sudah ada
+                // di tangan. Ditemukan sebagai salah satu penyebab 1
+                // render halaman Langganan sempat query >100 kali
+                // (7 Sep 2026).
+                $lembaga->setRelation('yayasan', $yayasan);
+
+                return $this->hitungLembaga($lembaga);
+            })
             ->values()
             ->all();
 

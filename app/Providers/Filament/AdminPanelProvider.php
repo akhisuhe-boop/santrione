@@ -9,6 +9,7 @@ use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Pages;
 use App\Models\Yayasan;
+use App\Http\Middleware\RedirectSuspendedYayasan;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -230,8 +231,45 @@ class AdminPanelProvider extends PanelProvider
                     && auth()->user()->hasRole('Admin Yayasan')),
         ])
 
+        // PERUBAHAN 7 September 2026: closure ->navigation() custom yang
+        // sempat ditambahkan 24 Agustus 2026 (untuk sembunyikan menu
+        // lain di sidebar saat Yayasan suspended) DIHAPUS TOTAL --
+        // ternyata mematikan auto-generate navigasi bawaan Filament
+        // untuk SEMUA kondisi (bukan cuma saat suspended), karena
+        // $builder yang di-terima closure itu SELALU kosong dari awal
+        // (bukan "builder asli" yang sudah terisi 50 Resource + 18
+        // Page seperti yang diasumsikan sebelumnya) -- dikonfirmasi
+        // lewat dd() langsung di closure-nya (groups: [], items: [])
+        // dan lewat dokumentasi resmi Filament: "When using a custom
+        // navigation builder, automatic navigation generation is
+        // disabled. You must explicitly include all resources and
+        // pages you want to appear." Akibatnya SEMUA Yayasan (termasuk
+        // yang baru daftar & yang aksesnya normal) dapat sidebar KOSONG
+        // TOTAL -- bug ini baru ketahuan 7 Sep 2026, untungnya belum
+        // pernah ter-deploy ke production (cuma ada di branch dev).
+        //
+        // Sidebar sekarang balik ke auto-generate default Filament
+        // (aman, terbukti benar sebelum 24 Agustus). Konsekuensinya:
+        // saat Yayasan suspended, sidebar TIDAK LAGI otomatis
+        // dipersempit ke "Langganan" saja secara visual -- menu lain
+        // (Master Data, Keuangan, dst) tetap kelihatan di sidebar.
+        // TAPI ini cuma soal tampilan/UX, BUKAN celah keamanan: klik
+        // menu manapun selain Langganan tetap dipaksa redirect balik
+        // ke halaman Langganan oleh RedirectSuspendedYayasan (lihat
+        // authMiddleware di bawah) -- itu sudah dan tetap jadi
+        // satu-satunya sumber kebenaran soal boleh/tidaknya akses,
+        // tidak berubah sama sekali oleh perubahan ini.
+        //
+        // "Sembunyikan sidebar saat suspended" boleh dikerjakan lagi
+        // nanti sebagai perbaikan UX terpisah, TAPI harus lewat cara
+        // yang tidak mematikan auto-generate default (misal: cek
+        // hasAccess() di canAccess()/shouldRegisterNavigation() tiap
+        // Resource lewat trait bersama, bukan lewat ->navigation()
+        // closure lagi) -- supaya tidak mengulang bug yang sama.
+
         ->authMiddleware([
             Authenticate::class,
+            RedirectSuspendedYayasan::class,
         ]);
 }
 }

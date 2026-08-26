@@ -31,6 +31,11 @@ Schedule::command('subscription:generate-annual-invoice')->dailyAt('02:30');
 // supaya notifikasi WA tidak masuk tengah malam).
 Schedule::command('subscription:send-trial-reminders')->dailyAt('09:00');
 
+// Reminder WA H-5/H-3/H-1 untuk yayasan BERBAYAR yang telat perpanjang
+// dan sedang dalam masa tenggang — jam 09:30 (setelah reminder trial
+// di atas, supaya tidak numpuk di menit yang sama).
+Schedule::command('subscription:send-grace-reminders')->dailyAt('09:30');
+
 // Hapus permanen Yayasan trial yang sudah habis >14 hari (default,
 // bisa diatur lewat SUBSCRIPTION_PURGE_TRIAL_AFTER_DAYS) dan TIDAK
 // PERNAH bayar sama sekali -- mingguan (bukan harian, penghapusan

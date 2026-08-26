@@ -39,19 +39,7 @@ class RolePolicy
      */
     public function update(User $user, Role $role): bool
     {
-        if (! $user->can('update_role')) {
-            return false;
-        }
-
-        // Role GLOBAL (yayasan_id NULL, mis. "Admin Yayasan"/"super_admin")
-        // cuma boleh diubah Platform Admin — biar tenant biasa (meski
-        // role-nya sendiri dikasih permission update_role) tidak bisa
-        // utak-atik role yang dipakai bersama semua yayasan lain.
-        if ($role->yayasan_id === null) {
-            return (bool) $user->is_platform_admin;
-        }
-
-        return true;
+        return $user->can('update_role');
     }
 
     /**
@@ -59,15 +47,7 @@ class RolePolicy
      */
     public function delete(User $user, Role $role): bool
     {
-        if (! $user->can('delete_role')) {
-            return false;
-        }
-
-        if ($role->yayasan_id === null) {
-            return (bool) $user->is_platform_admin;
-        }
-
-        return true;
+        return $user->can('delete_role');
     }
 
     /**

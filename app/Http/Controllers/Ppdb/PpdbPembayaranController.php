@@ -54,111 +54,15 @@ class PpdbPembayaranController extends Controller
     }
 
     /**
-     * Halaman Transfer Bank
+     * Halaman DOKU
      */
-    public function showTransferForm(Tagihan $tagihan)
-    {
-        $ppdb = Ppdb::findOrFail(session('ppdb_id'));
-    
-        abort_if($tagihan->ppdb_id != $ppdb->id, 403);
-    
-        $isCicilan = optional($tagihan->jenisTagihan)->is_cicilan ?? false;
-    
-        $sisaTagihan = max(
-            $tagihan->nominal - $tagihan->nominal_terbayar,
-            0
-        );
-    
-        return view('ppdb.transfer', [
-            'ppdb'         => $ppdb,
-            'yayasan'      => $ppdb->lembaga?->yayasan ?? \App\Models\Yayasan::first(),
-            'tagihan'      => $tagihan,
-            'isCicilan'    => $isCicilan,
-            'sisaTagihan'  => $sisaTagihan,
-        ]);
-    }
-
-    /**
-     * Upload Bukti Transfer
-     */
-    public function bayarTransfer(Request $request, Tagihan $tagihan)
-    {
-        $ppdb = Ppdb::findOrFail(session('ppdb_id'));
-    
-        abort_if($tagihan->ppdb_id != $ppdb->id, 403);
-    
-        $sisa = $tagihan->nominal - $tagihan->nominal_terbayar;
-
-        $rules = [
-            'bukti_transfer_ppdb' => [
-                'required',
-                'image',
-                'mimes:jpg,jpeg,png,webp',
-                'max:4096',
-            ],
-        ];
-
-        // Kalau tagihan ini boleh dicicil, terima input nominal dari
-        // form (dulu di-hardcode selalu full, TODO lama yang belum
-        // dikerjakan). Kalau TIDAK boleh dicicil, tetap wajib bayar
-        // penuh sesuai sisa tagihan.
-        if ($tagihan->is_cicilan) {
-            $rules['nominal'] = ['required', 'numeric', 'min:1', 'max:' . $sisa];
-        }
-
-        $request->validate($rules);
-
-        $nominal = $tagihan->is_cicilan
-            ? (int) $request->input('nominal')
-            : $sisa;
-
-        // Cek apakah masih ada pembayaran pending
-        $pending = Pembayaran::where('tagihan_id', $tagihan->id)
-            ->where('status', 'pending')
-            ->exists();
-    
-        if ($pending) {
-            return back()->with(
-                'error',
-                'Masih ada pembayaran yang sedang menunggu verifikasi.'
-            );
-        }
-    
-        // Upload bukti transfer
-        $path = $request
-            ->file('bukti_transfer_ppdb')
-            ->store('ppdb-transfer', 'r2-private');
-    
-        // Simpan pembayaran
-        Pembayaran::create([
-            'tagihan_id'     => $tagihan->id,
-            'ppdb_id'        => $ppdb->id,
-            'nominal'        => $nominal,
-            'metode'         => 'transfer',
-            'reference'      => 'PPDB-' . now()->format('YmdHis') . rand(100,999),
-            'status'         => 'pending',
-            'bukti_transfer' => $path,
-            'tanggal_bayar'  => now(),
-        ]);
-    
-        return redirect()
-            ->route('ppdb.pembayaran.transfer', $tagihan)
-            ->with(
-                'success',
-                'Bukti transfer berhasil dikirim dan sedang menunggu verifikasi.'
-            );
-    }
-    
-    /**
-     * Halaman Duitku
-     */
-    public function showDuitkuForm(Tagihan $tagihan)
+    public function showDokuForm(Tagihan $tagihan)
     {
         $ppdb = Ppdb::findOrFail(session('ppdb_id'));
 
         abort_if($tagihan->ppdb_id != $ppdb->id, 403);
 
-        return view('ppdb.duitku', [
+        return view('ppdb.doku', [
             'ppdb' => $ppdb,
             'yayasan' => $ppdb->lembaga?->yayasan ?? \App\Models\Yayasan::first(),
             'tagihan' => $tagihan,
@@ -166,25 +70,96 @@ class PpdbPembayaranController extends Controller
     }
 
     /**
-     * Proses Duitku
+     * Proses DOKU -- checkout custom (VA universal / QRIS), branding
+     * sekolah/yayasan sendiri, TANPA redirect ke domain DOKU. Sama
+     * persis polanya dengan WaliDashboardController::doku(), cuma beda
+     * prefix reference_id ('PPDB-' bukan 'TAGIHAN-') supaya
+     * DokuWebhookController bisa membedakan keduanya, dan beda sumber
+     * identitas pembayar (Ppdb, bukan Siswa -- pendaftar PPDB belum
+     * tentu sudah jadi Siswa).
      */
-    public function duitku(Request $request, Tagihan $tagihan)
+    public function doku(Request $request, Tagihan $tagihan, \App\Services\DokuService $doku)
     {
         $ppdb = Ppdb::findOrFail(session('ppdb_id'));
 
         abort_if($tagihan->ppdb_id != $ppdb->id, 403);
 
-        /*
-        |--------------------------------------------------------------------------
-        | Nanti di sini tinggal copy logic Duitku milik Wali
-        |--------------------------------------------------------------------------
-        */
+        $request->validate([
+            'payment_method' => 'required|in:VA,QRIS',
+        ]);
 
-        return redirect()
-            ->route('ppdb.pembayaran')
-            ->with(
-                'success',
-                'Redirect ke Payment Gateway.'
-            );
+        $amount = (int) ($tagihan->nominal - $tagihan->nominal_terbayar);
+        $referenceId = 'PPDB-' . $tagihan->id . '-' . time();
+        $channel = $request->payment_method;
+
+        $lembaga = $ppdb->lembaga;
+
+        try {
+            if ($channel === 'VA') {
+                $result = $doku->buatVaLangsung(
+                    referenceId: $referenceId,
+                    amount: $amount,
+                    judul: $tagihan->judul,
+                    customerName: $ppdb->nama_lengkap ?? $ppdb->nama ?? 'Pendaftar PPDB',
+                    customerEmail: \App\Services\DokuService::emailAman($ppdb->email ?? null, $ppdb->wa_wali ?? $ppdb->id),
+                    dokuSubAccountId: $lembaga?->doku_sub_account_id,
+                );
+
+                $vaNumber = $result['virtual_account_info']['virtual_account_number'] ?? null;
+
+                if (!$vaNumber) {
+                    return back()->with('error', \App\Services\DokuService::pesanAman($result['message'] ?? $result['error']['message'] ?? null));
+                }
+            } else {
+                $result = $doku->buatQris(
+                    referenceId: $referenceId,
+                    amount: $amount,
+                );
+
+                $qrString = $result['qrContent'] ?? $result['qrUrl'] ?? null;
+
+                if (!$qrString) {
+                    return back()->with('error', \App\Services\DokuService::pesanAman($result['message'] ?? $result['responseMessage'] ?? null));
+                }
+            }
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Gagal membuat pembayaran: ' . $e->getMessage());
+        }
+
+        Pembayaran::create([
+            'tagihan_id' => $tagihan->id,
+            'siswa_id' => $tagihan->siswa_id,
+            'nominal' => $amount,
+            'metode' => 'gateway',
+            'gateway' => 'doku',
+            'status' => 'pending',
+            'reference' => $referenceId,
+        ]);
+
+        return view('payment.checkout', [
+            'layout' => 'ppdb.layout.ppdb',
+            'namaLembaga' => $lembaga?->nama ?? $ppdb->lembaga?->yayasan?->nama ?? 'Qinara',
+            'logo' => $lembaga?->logo ? \Storage::disk('r2-public')->url($lembaga->logo) : null,
+            'referenceId' => $referenceId,
+            'judul' => $tagihan->judul,
+            'amount' => $amount,
+            'channel' => $channel,
+            'vaNumber' => $vaNumber ?? null,
+            'qrString' => $qrString ?? null,
+            'countdownTo' => now()->addMinutes(60)->toIso8601String(),
+            'statusUrl' => route('ppdb.pembayaran.doku.status', $referenceId),
+            'successUrl' => route('ppdb.pembayaran'),
+        ]);
+    }
+
+    public function statusDoku(string $reference)
+    {
+        $pembayaran = Pembayaran::where('reference', $reference)->first();
+
+        abort_if(!$pembayaran, 404);
+
+        return response()->json([
+            'status' => $pembayaran->status,
+        ]);
     }
 }

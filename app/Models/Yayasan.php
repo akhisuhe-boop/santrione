@@ -132,6 +132,7 @@ class Yayasan extends Model implements HasName
     'promo_pendaftaran_persen',
     'promo_pendaftaran_teks',
     'promo_pendaftaran_terpakai',
+    'modul_snapshot_sebelum_full',
     ];
 
     protected function casts(): array
@@ -139,6 +140,7 @@ class Yayasan extends Model implements HasName
         return [
             'trial_ends_at' => 'datetime',
             'promo_pendaftaran_terpakai' => 'boolean',
+            'modul_snapshot_sebelum_full' => 'array',
         ];
     }
 
@@ -158,13 +160,33 @@ class Yayasan extends Model implements HasName
      * ini ambil yang statusnya 'active' dan belum lewat tanggal
      * berakhir.
      */
+    // Cache in-memory SEKALI PER OBJEK (bukan lintas request -- properti
+    // protected, direset otomatis tiap kali Yayasan di-fetch ulang dari
+    // database). activeSubscription() dipanggil berkali-kali dalam 1
+    // render (TenantBillingCalculator::aksesPlatformPlan() misalnya
+    // manggil ini 1x per Lembaga + 1x lagi terpisah) -- tanpa cache ini,
+    // tiap panggilan query database dari nol. Pakai flag terpisah
+    // ($activeSubscriptionCached), BUKAN null-coalescing (??=), karena
+    // hasil "tidak ada subscription aktif" (null) itu sendiri VALID dan
+    // harus ikut di-cache -- ??= akan terus query ulang selama hasilnya
+    // null.
+    protected ?Subscription $activeSubscriptionCache = null;
+
+    protected bool $activeSubscriptionCached = false;
+
     public function activeSubscription(): ?Subscription
     {
-        return $this->subscriptions()
-            ->where('status', 'active')
-            ->where('berakhir_pada', '>', now())
-            ->latest('berakhir_pada')
-            ->first();
+        if (! $this->activeSubscriptionCached) {
+            $this->activeSubscriptionCache = $this->subscriptions()
+                ->where('status', 'active')
+                ->where('berakhir_pada', '>', now())
+                ->latest('berakhir_pada')
+                ->first();
+
+            $this->activeSubscriptionCached = true;
+        }
+
+        return $this->activeSubscriptionCache;
     }
 
     public function isOnTrial(): bool
@@ -230,7 +252,29 @@ class Yayasan extends Model implements HasName
      *                             ke-block duluan lewat hasAccess(),
      *                             jadi ini praktis tidak pernah dicek
      */
+    // Cache in-memory PER KEY MODUL (bukan lintas request) -- hasFeature()
+    // sekarang dipanggil berkali-kali dalam 1 render sejak sidebar
+    // kembali auto-generate penuh (7 Sep 2026, lihat AdminPanelProvider):
+    // banyak Resource cek hasFeature() masing-masing buat tentukan
+    // tampil/tidaknya di menu, dan beberapa Resource kemungkinan cek key
+    // yang SAMA (mis. beberapa halaman e-Kantin semua cek 'e_kantin').
+    // Tanpa cache ini, tiap panggilan query subscriptions+lembagas+
+    // lembaga_modules+module_prices dari nol -- ditemukan sebagai
+    // penyebab render 1 halaman sempat tembus 213 query (turun dari 416
+    // setelah perbaikan activeSubscription(), tapi masih tinggi karena
+    // ini belum ikut di-cache).
+    protected array $hasFeatureCache = [];
+
     public function hasFeature(string $key): bool
+    {
+        if (array_key_exists($key, $this->hasFeatureCache)) {
+            return $this->hasFeatureCache[$key];
+        }
+
+        return $this->hasFeatureCache[$key] = $this->hitungHasFeature($key);
+    }
+
+    protected function hitungHasFeature(string $key): bool
     {
         // Selama trial: akses PENUH tanpa syarat, tidak peduli modul
         // mana yang sudah/belum dipilih -- ini SENGAJA (revisi final

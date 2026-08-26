@@ -15,7 +15,7 @@ class LembagaPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_lembaga');
+        return $user->can('view_any_pengaturan::honor::pengganti');
     }
 
     /**
@@ -23,7 +23,7 @@ class LembagaPolicy
      */
     public function view(User $user, Lembaga $lembaga): bool
     {
-        return $user->can('view_lembaga');
+        return $user->can('view_pengaturan::honor::pengganti');
     }
 
     /**
@@ -31,7 +31,7 @@ class LembagaPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_lembaga');
+        return $user->can('create_pengaturan::honor::pengganti');
     }
 
     /**
@@ -39,7 +39,7 @@ class LembagaPolicy
      */
     public function update(User $user, Lembaga $lembaga): bool
     {
-        return $user->can('update_lembaga');
+        return $user->can('update_pengaturan::honor::pengganti');
     }
 
     /**
@@ -47,7 +47,7 @@ class LembagaPolicy
      */
     public function delete(User $user, Lembaga $lembaga): bool
     {
-        return $user->can('delete_lembaga');
+        return $user->can('delete_pengaturan::honor::pengganti');
     }
 
     /**
@@ -55,7 +55,7 @@ class LembagaPolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_lembaga');
+        return $user->can('delete_any_pengaturan::honor::pengganti');
     }
 
     /**
@@ -63,7 +63,7 @@ class LembagaPolicy
      */
     public function forceDelete(User $user, Lembaga $lembaga): bool
     {
-        return $user->can('force_delete_lembaga');
+        return $user->can('force_delete_pengaturan::honor::pengganti');
     }
 
     /**
@@ -71,7 +71,7 @@ class LembagaPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_lembaga');
+        return $user->can('force_delete_any_pengaturan::honor::pengganti');
     }
 
     /**
@@ -79,7 +79,7 @@ class LembagaPolicy
      */
     public function restore(User $user, Lembaga $lembaga): bool
     {
-        return $user->can('restore_lembaga');
+        return $user->can('restore_pengaturan::honor::pengganti');
     }
 
     /**
@@ -87,7 +87,7 @@ class LembagaPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_lembaga');
+        return $user->can('restore_any_pengaturan::honor::pengganti');
     }
 
     /**
@@ -95,7 +95,7 @@ class LembagaPolicy
      */
     public function replicate(User $user, Lembaga $lembaga): bool
     {
-        return $user->can('replicate_lembaga');
+        return $user->can('replicate_pengaturan::honor::pengganti');
     }
 
     /**
@@ -103,6 +103,6 @@ class LembagaPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_lembaga');
+        return $user->can('reorder_pengaturan::honor::pengganti');
     }
 }

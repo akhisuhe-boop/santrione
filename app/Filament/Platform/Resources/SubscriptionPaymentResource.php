@@ -78,8 +78,8 @@ class SubscriptionPaymentResource extends BaseResource
 
                 Tables\Columns\BadgeColumn::make('metode')
                     ->colors([
-                        'info' => 'duitku',
-                        'primary' => 'midtrans',
+                        'info' => 'doku',
+                        'primary' => 'xendit',
                         'gray' => 'manual_transfer',
                     ]),
 
@@ -100,7 +100,7 @@ class SubscriptionPaymentResource extends BaseResource
                 Tables\Filters\SelectFilter::make('status')
                     ->options(['pending' => 'Pending', 'berhasil' => 'Berhasil', 'gagal' => 'Gagal']),
                 Tables\Filters\SelectFilter::make('metode')
-                    ->options(['midtrans' => 'Midtrans', 'manual_transfer' => 'Transfer Manual']),
+                    ->options(['doku' => 'DOKU', 'xendit' => 'Xendit', 'manual_transfer' => 'Transfer Manual']),
             ])
             ->actions([
 
@@ -116,7 +116,7 @@ class SubscriptionPaymentResource extends BaseResource
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->requiresConfirmation()
-                    ->modalDescription('Langganan yayasan ini akan langsung AKTIF 1 bulan ke depan sejak sekarang.')
+                    ->modalDescription(fn (SubscriptionPayment $record) => 'Langganan yayasan ini akan langsung AKTIF ' . ($record->subscription?->isTahunan() ? '1 tahun' : '1 bulan') . ' ke depan sejak sekarang.')
                     ->visible(fn (SubscriptionPayment $record) => $record->status === 'pending')
                     ->action(function (SubscriptionPayment $record) {
 
@@ -133,7 +133,7 @@ class SubscriptionPaymentResource extends BaseResource
                         $subscription->update([
                             'status' => 'active',
                             'mulai_pada' => now(),
-                            'berakhir_pada' => now()->addMonth(),
+                            'berakhir_pada' => $subscription->isTahunan() ? now()->addYear() : now()->addMonth(),
                         ]);
 
                         $yayasan->update(['status' => 'active']);

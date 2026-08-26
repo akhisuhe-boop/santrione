@@ -12,7 +12,7 @@
                 <div class="text-3xl font-bold text-success-600">Rp {{ number_format($totalKeseluruhan, 0, ',', '.') }}</div>
             </div>
             <div class="text-xs text-gray-400 max-w-xs text-right">
-                Hanya menghitung pembayaran yang BERHASIL dikonfirmasi (Duitku/Midtrans/Xendit/verifikasi manual) — bukan proyeksi/estimasi.
+                Hanya menghitung pembayaran yang BERHASIL dikonfirmasi (DOKU/Xendit/verifikasi manual) — bukan proyeksi/estimasi.
             </div>
         </div>
     </x-filament::section>

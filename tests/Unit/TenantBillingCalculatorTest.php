@@ -22,6 +22,14 @@ use Tests\TestCase;
  * belakangan oleh sekolah yang menghitung manual seperti kejadian
  * sebelumnya (Contoh 5 di draf dokumen sempat salah total Rp163.350
  * karena baris Lembaga ke-4 terhapus tapi totalnya lupa dihitung ulang).
+ *
+ * PERUBAHAN 24 Agustus 2026: sebelumnya Lembaga ke-2/3/4+ (di luar
+ * kuota maks_lembaga paket) SALAH memakai harga_bulanan (harga dasar
+ * penuh) untuk komponen Akses Platform-nya -- field harga_per_lembaga_
+ * tambahan di plan tidak pernah kepakai sama sekali. Angka-angka di
+ * bawah sudah disesuaikan ke rumus yang benar: Lembaga di dalam kuota
+ * pakai harga_bulanan, Lembaga di luar kuota pakai harga_per_lembaga_
+ * tambahan (baik dikenai diskon volume yang sama).
  */
 class TenantBillingCalculatorTest extends TestCase
 {
@@ -149,6 +157,10 @@ class TenantBillingCalculatorTest extends TestCase
      * terakhir: SDIT, MTs, MA — 350 siswa) -> total HARUS SAMA DENGAN
      * array_sum() subtotal ketiganya, TIDAK BOLEH ada angka terpisah
      * yang tidak sinkron (ini akar masalah yang ditemukan sebelumnya).
+     *
+     * SDIT = Lembaga ke-1, masih DALAM kuota paket -> pakai harga_bulanan.
+     * MTs & MA = Lembaga ke-2/3, DI LUAR kuota -> pakai harga_per_lembaga_
+     * tambahan (Rp100.000), bukan harga_bulanan (Rp99.000) lagi.
      */
     public function test_contoh_5_yayasan_multi_lembaga_total_selalu_sinkron(): void
     {
@@ -163,8 +175,8 @@ class TenantBillingCalculatorTest extends TestCase
         $hasilMa = $this->calculator->hitungLembaga($ma);
 
         $this->assertSame(398_000, $hasilSdit['subtotal']); // 149.000 + 249.000
-        $this->assertSame(395_200, $hasilMts['subtotal']);  // 95.200 + 300.000
-        $this->assertSame(529_200, $hasilMa['subtotal']);   // 79.200 + 450.000
+        $this->assertSame(396_000, $hasilMts['subtotal']);  // (100.000+20.000)x0.8=96.000 + 300.000
+        $this->assertSame(530_000, $hasilMa['subtotal']);   // 100.000x0.8=80.000 + 450.000
 
         $hasilYayasan = $this->calculator->hitungYayasan($yayasan->fresh());
 
@@ -174,7 +186,7 @@ class TenantBillingCalculatorTest extends TestCase
             $hasilSdit['subtotal'] + $hasilMts['subtotal'] + $hasilMa['subtotal'],
             $hasilYayasan['total']
         );
-        $this->assertSame(1_322_400, $hasilYayasan['total']);
+        $this->assertSame(1_324_000, $hasilYayasan['total']);
     }
 
     /** Diskon volume: Lembaga ke-4 dan seterusnya harus 35%, bukan 20%. */
@@ -190,7 +202,9 @@ class TenantBillingCalculatorTest extends TestCase
         $hasil = $this->calculator->hitungLembaga($keempat);
 
         $this->assertSame(35, $hasil['diskon_persen']);
-        // 99.000 x 0.65 = 64.350 + 99.000 (Tahfidz) = 163.350
-        $this->assertSame(163_350, $hasil['subtotal']);
+        // Lembaga ke-4 di luar kuota -> pakai harga_per_lembaga_tambahan
+        // (100.000), bukan harga_bulanan (99.000) lagi.
+        // 100.000 x 0.65 = 65.000 + 99.000 (Tahfidz) = 164.000
+        $this->assertSame(164_000, $hasil['subtotal']);
     }
 }

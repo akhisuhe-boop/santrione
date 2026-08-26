@@ -35,7 +35,7 @@
             <p class="text-slate-500 text-sm">Pilih nominal atau masukkan sendiri</p>
         </div>
 
-        <form method="POST" action="{{ route('wali.topup.store') }}">
+        <form method="POST" action="{{ route('wali.topup.pilih-nominal') }}">
             @csrf
 
             {{-- QUICK AMOUNT --}}

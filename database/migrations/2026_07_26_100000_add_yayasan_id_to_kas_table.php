@@ -34,12 +34,18 @@ return new class extends Migration
         // Backfill data lama: ambil yayasan_id dari lembaga yang sudah
         // ada di tiap baris (hampir semua baris lama pasti punya
         // lembaga_id, karena fitur "kosongkan lembaga" ini baru).
-        DB::statement('
-            UPDATE kas
-            INNER JOIN lembagas ON lembagas.id = kas.lembaga_id
-            SET kas.yayasan_id = lembagas.yayasan_id
-            WHERE kas.lembaga_id IS NOT NULL
-        ');
+        // Sintaks UPDATE ... INNER JOIN ini khusus MySQL; di-skip saat
+        // testing (sqlite in-memory) karena database test dibuat
+        // kosong dari awal, jadi tidak ada data lama yang perlu
+        // di-backfill.
+        if (DB::connection()->getDriverName() === 'mysql') {
+            DB::statement('
+                UPDATE kas
+                INNER JOIN lembagas ON lembagas.id = kas.lembaga_id
+                SET kas.yayasan_id = lembagas.yayasan_id
+                WHERE kas.lembaga_id IS NOT NULL
+            ');
+        }
     }
 
     public function down(): void

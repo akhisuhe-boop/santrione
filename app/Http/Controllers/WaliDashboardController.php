@@ -11,9 +11,7 @@ use App\Models\Kas;
 use App\Models\Pembayaran;
 use App\Models\WalletTransaction;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
-use App\Services\DuitkuPaymentMapper;
 use Illuminate\Support\Facades\Hash;
 use App\Models\RaportNonAkademik;
 use App\Models\Nilai;
@@ -538,242 +536,16 @@ class WaliDashboardController extends Controller
             );
             }
 
-                public function bayarTransfer(Request $request, Tagihan $tagihan)
-        {
-            $siswa = Siswa::findOrFail(session('siswa_id'));
-
-            abort_if(
-                $tagihan->siswa_id !== $siswa->id,
-                403
-            );
-
-            if (strtolower($tagihan->status) === 'lunas') {
-
-                return back()->with(
-                    'error',
-                    'Tagihan sudah lunas.'
-                );
-            }
-
-            $sisaTagihan =
-                $tagihan->nominal -
-                $tagihan->nominal_terbayar;
-
-            $isCicilan =
-                $tagihan->jenisTagihan?->is_cicilan ?? false;
-
-            $request->validate([
-                'nominal' => [
-                    $isCicilan ? 'required' : 'nullable',
-                    'numeric',
-                    'min:1000'
-                ],
-
-                'bukti_transfer' => [
-                    'required',
-                    'image',
-                    'mimes:jpg,jpeg,png,webp',
-                    'max:2048'
-                ],
-            ]);
-
-            $nominalBayar = $isCicilan
-                ? (int) $request->nominal
-                : $sisaTagihan;
-
-            if ($nominalBayar <= 0) {
-
-                return back()->with(
-                    'error',
-                    'Nominal pembayaran tidak valid.'
-                );
-            }
-
-            if ($nominalBayar > $sisaTagihan) {
-
-                return back()->with(
-                    'error',
-                    'Nominal melebihi sisa tagihan.'
-                );
-            }
-
-            $pending = Pembayaran::where(
-                'tagihan_id',
-                $tagihan->id
-            )
-            ->where(
-                'siswa_id',
-                $siswa->id
-            )
-            ->where(
-                'metode',
-                'transfer'
-            )
-            ->where(
-                'status',
-                'pending'
-            )
-            ->first();
-
-            if ($pending) {
-
-                return redirect()
-                ->route('wali.keuangan')
-                ->with(
-                    'success',
-                    'Bukti transfer berhasil dikirim dan menunggu verifikasi admin.'
-                );
-            }
-
-            $path = $request
-            ->file('bukti_transfer')
-            ->store(
-                'bukti-transfer',
-                'r2-private'
-            );
-
-        Pembayaran::create([
-            'tagihan_id'      => $tagihan->id,
-            'siswa_id'        => $siswa->id,
-            'nominal'         => $nominalBayar,
-            'metode'          => 'transfer',
-            'status'          => 'pending',
-            'tanggal_bayar'   => now(),
-            'bukti_transfer'  => $path,
-            'keterangan'      => 'Menunggu verifikasi admin',
-        ]);
-
-        return redirect()
-            ->route('wali.keuangan')
-            ->with(
-                'success',
-                'Bukti transfer berhasil dikirim dan menunggu verifikasi admin.'
-            );
-        }
-
-        public function showTransfer(Pembayaran $pembayaran)
-        {
-            $siswa = Siswa::findOrFail(session('siswa_id'));
-            abort_if(
-                $pembayaran->siswa_id !== $siswa->id,
-                403
-            );
-
-            $rekenings = \App\Models\Rekening::where(
-                'is_active',
-                true
-            )
-            ->where(
-                'tipe',
-                'bank'
-            )
-            ->get();
-
-            return view(
-                'wali.transfer',
-                compact(
-                    'siswa',
-                    'pembayaran',
-                    'rekenings'
-                )
-            );
-        }
-
-        public function showTransferForm(Tagihan $tagihan)
-        {
-            $siswa = Siswa::findOrFail(session('siswa_id'));
-
-            abort_if(
-                $tagihan->siswa_id !== $siswa->id,
-                403
-            );
-
-            $rekenings = \App\Models\Rekening::where(
-                'is_active',
-                true
-            )
-            ->where(
-                'tipe',
-                'bank'
-            )
-            ->get();
-
-            $sisaTagihan =
-                $tagihan->nominal -
-                $tagihan->nominal_terbayar;
-
-            return view(
-                'wali.transfer',
-                compact(
-                    'siswa',
-                    'tagihan',
-                    'rekenings',
-                    'sisaTagihan'
-                )
-            );
-        }
-
-        public function uploadBuktiTransfer(
-            Request $request,
-            Pembayaran $pembayaran
-        )
-        {
-            $siswa = Siswa::findOrFail(
-                session('siswa_id')
-            );
-
-            abort_if(
-                $pembayaran->siswa_id !== $siswa->id,
-                403
-            );
-
-            if ($pembayaran->metode !== 'transfer') {
-                abort(403);
-            }
-
-            if ($pembayaran->bukti_transfer) {
-                return back()->with(
-                    'error',
-                    'Bukti transfer sudah pernah dikirim.'
-                );
-            }
-
-            $request->validate([
-                'bukti_transfer' => [
-                    'required',
-                    'image',
-                    'max:2048'
-                ]
-            ]);
-
-            $path = $request
-                ->file('bukti_transfer')
-                ->store(
-                    'bukti-transfer',
-                    'r2-private'
-                );
-
-            $pembayaran->update([
-                'bukti_transfer' => $path,
-                'status' => 'pending',
-                'keterangan' => 'Menunggu verifikasi admin',
-            ]);
-
-            return redirect()
-                ->route('wali.keuangan')
-                ->with(
-                    'success',
-                    'Bukti transfer berhasil dikirim.'
-                );
-        }
-
-    public function duitku(
+    public function doku(
     Request $request,
-    Tagihan $tagihan
+    Tagihan $tagihan,
+    \App\Services\DokuService $doku
     )
     {
         $request->validate([
-            'payment_method' => 'required|string'
+            'payment_method' => 'required|in:VA,QRIS,DANA,SHOPEEPAY,ALFAMART,INDOMARET,OVO',
+            'bank' => 'nullable|in:BCA,BNI,BRI,BSI,MANDIRI,BJB',
+            'ovo_phone' => 'required_if:payment_method,OVO|nullable|string|min:9|max:15',
         ]);
 
         $siswa = Siswa::findOrFail(session('siswa_id'));
@@ -783,159 +555,203 @@ class WaliDashboardController extends Controller
             403
         );
 
-        $allowedMethods = [
-            'BCA', 'BNI', 'BRI', 'MANDIRI', 'BSI',
-            'OV', 'DA', 'SP',
-            'QRIS',
-            'ALFAMART', 'INDOMARET'
-        ];
+        $sisaTagihan = (int) ($tagihan->nominal - $tagihan->nominal_terbayar);
 
-        if (!in_array($request->payment_method, $allowedMethods)) {
-            return back()->with('error', 'Metode pembayaran tidak valid.');
-        }
+        // Tagihan cicilan boleh bayar sebagian -- nominal parsial yang
+        // sudah divalidasi & disimpan session oleh showDokuForm(). Kalau
+        // bukan cicilan (atau session kosong), tetap default bayar penuh
+        // sisa tagihan seperti sebelumnya.
+        $sessionKey = 'cicilan_nominal_' . $tagihan->id;
+        $amount = ($tagihan->jenisTagihan?->is_cicilan && session()->has($sessionKey))
+            ? min((int) session($sessionKey), $sisaTagihan)
+            : $sisaTagihan;
 
-        $merchantCode = config('services.duitku.merchant_code');
-        $apiKey       = config('services.duitku.api_key');
+        session()->forget($sessionKey);
 
-        $amount = $tagihan->nominal - $tagihan->nominal_terbayar;
+        $referenceId = 'TAGIHAN-' . $tagihan->id . '-' . time();
+        $channel = $request->payment_method;
+        $feeAdmin = \App\Services\DokuService::hitungFeeTotal($amount, $channel); // fee Qinara + fee DOKU digabung
+        $amountCharged = $amount + $feeAdmin; // yang di-charge ke wali murid (tagihan + total biaya admin)
 
-        $merchantOrderId = 'TAGIHAN-' . $tagihan->id . '-' . time();
+        $lembaga = $tagihan->siswa?->lembaga;
+        $customerName = $siswa->nama_lengkap;
+        $customerEmail = \App\Services\DokuService::emailAman($siswa->email, $siswa->wa_wali ?? $siswa->id);
 
-        $signature = md5(
-            $merchantCode .
-            $merchantOrderId .
-            $amount .
-            $apiKey
-        );
+        $vaNumber = null;
+        $qrString = null;
+        $paymentCode = null;
+        $redirectUrl = null;
+        $howToPayPage = null;
 
-        $endpoint = config('services.duitku.sandbox')
-            ? 'https://sandbox.duitku.com/webapi/api/merchant/v2/inquiry'
-            : 'https://passport.duitku.com/webapi/api/merchant/v2/inquiry';
+        try {
+            if ($channel === 'VA') {
+                $result = $doku->buatVaLangsung(
+                    referenceId: $referenceId,
+                    amount: $amountCharged,
+                    judul: $tagihan->judul,
+                    customerName: $customerName,
+                    customerEmail: $customerEmail,
+                    dokuSubAccountId: $lembaga?->doku_sub_account_id,
+                );
 
-        $response = Http::post($endpoint, [
-            'merchantCode'    => $merchantCode,
-            'paymentAmount'   => $amount,
-            'paymentMethod'   => $request->payment_method,
-            'merchantOrderId' => $merchantOrderId,
-            'productDetails'  => $tagihan->judul,
+                $vaNumber = $result['virtual_account_info']['virtual_account_number'] ?? null;
+                $howToPayPage = $result['virtual_account_info']['how_to_pay_page'] ?? null;
 
-            // ✅ FIX: email dari wali/ayah/ibu kalau ada
-            'email' => $siswa->email
-                ?? $siswa->wa_wali . '@dummy.id',
+                if (!$vaNumber) {
+                    return back()->with('error', \App\Services\DokuService::pesanAman($result['message'] ?? $result['error']['message'] ?? null));
+                }
+            } elseif ($channel === 'QRIS') {
+                $result = $doku->buatQris(
+                    referenceId: $referenceId,
+                    amount: $amountCharged,
+                );
 
-            'phoneNumber' =>
-                $siswa->wa_wali
-                ?? $siswa->wa_ayah
-                ?? $siswa->wa_ibu
-                ?? '08123456789',
+                // TODO: field gambar/string QR PERLU dicocokkan dengan
+                // respons asli sandbox (belum bisa dipastikan 100% dari
+                // dokumentasi publik) -- lihat catatan lengkap di
+                // DokuService::buatQris().
+                $qrString = $result['qrContent'] ?? $result['qrUrl'] ?? null;
 
-            'customerVaName' => $siswa->nama_lengkap,
-            'callbackUrl' => route('duitku.callback'),
-            'returnUrl' => route('wali.keuangan'),
-            'signature' => $signature,
-        ]);
+                if (!$qrString) {
+                    return back()->with('error', \App\Services\DokuService::pesanAman($result['message'] ?? $result['responseMessage'] ?? null));
+                }
+            } elseif (in_array($channel, ['DANA', 'SHOPEEPAY'], true)) {
+                $result = $doku->buatEwalletSnap(
+                    channel: $channel === 'DANA' ? 'EMONEY_DANA_SNAP' : 'EMONEY_SHOPEE_PAY_SNAP',
+                    referenceId: $referenceId,
+                    amount: $amountCharged,
+                    returnUrl: route('wali.keuangan'),
+                );
 
-        $result = $response->json();
+                $redirectUrl = $result['webRedirectUrl'] ?? null;
 
-        if (!isset($result['paymentUrl'])) {
-            return back()->with(
-                'error',
-                $result['Message'] ?? 'Gagal membuat pembayaran'
-            );
+                if (!$redirectUrl) {
+                    return back()->with('error', \App\Services\DokuService::pesanAman($result['responseMessage'] ?? null));
+                }
+            } elseif (in_array($channel, ['ALFAMART', 'INDOMARET'], true)) {
+                $result = $doku->buatOtc(
+                    toko: $channel,
+                    referenceId: $referenceId,
+                    amount: $amountCharged,
+                    customerName: $customerName,
+                    customerEmail: $customerEmail,
+                );
+
+                $paymentCode = $result['online_to_offline_info']['payment_code'] ?? null;
+                $howToPayPage = $result['online_to_offline_info']['how_to_pay_page'] ?? null;
+
+                if (!$paymentCode) {
+                    return back()->with('error', \App\Services\DokuService::pesanAman($result['message'] ?? $result['error']['message'] ?? null));
+                }
+            } else { // OVO
+                $result = $doku->buatOvo(
+                    referenceId: $referenceId,
+                    amount: $amountCharged,
+                    ovoId: $request->ovo_phone,
+                );
+
+                Pembayaran::create([
+                    'tagihan_id' => $tagihan->id,
+                    'siswa_id'   => $siswa->id,
+                    'nominal'    => $amount,
+                    'fee_admin'  => $feeAdmin,
+                    'metode'     => 'gateway',
+                    'gateway'    => 'doku',
+                    'status'     => 'pending',
+                    'reference'  => $referenceId,
+                ]);
+
+                // OVO Push Payment BLOCKING -- respons langsung berisi
+                // hasil approve/tolak/timeout dari HP customer (bukan
+                // link/kode untuk ditunda). Webhook tetap dipasang
+                // sebagai jaring pengaman, tapi untuk OVO biasanya
+                // status sudah bisa langsung diketahui dari respons ini.
+                $statusOvo = $result['transaction']['status'] ?? null;
+
+                return redirect()->route('wali.pembayaran.show', $tagihan)
+                    ->with(
+                        $statusOvo === 'SUCCESS' ? 'success' : 'error',
+                        'Status OVO: ' . \App\Services\DokuService::pesanAman($result['message'] ?? null, 'Menunggu konfirmasi dari HP Anda')
+                    );
+            }
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Gagal membuat pembayaran: ' . $e->getMessage());
         }
 
         Pembayaran::create([
             'tagihan_id' => $tagihan->id,
             'siswa_id'   => $siswa->id,
             'nominal'    => $amount,
-            'metode'     => 'duitku',
+            'fee_admin'  => $feeAdmin,
+            'metode'     => 'gateway',
+            'gateway'    => 'doku',
             'status'     => 'pending',
-            'reference'  => $merchantOrderId,
+            'reference'  => $referenceId,
         ]);
 
-        return redirect($result['paymentUrl']);
+        // DANA/ShopeePay langsung redirect (app-to-app), tidak perlu
+        // halaman checkout custom.
+        if ($redirectUrl) {
+            return redirect()->away($redirectUrl);
+        }
+
+        return view('payment.checkout', [
+            'layout' => 'wali.layout.wali',
+            'namaLembaga' => $lembaga?->nama ?? $siswa->yayasan?->nama ?? 'Qinara',
+            'logo' => $lembaga?->logo ? \Storage::disk('r2-public')->url($lembaga->logo) : null,
+            'referenceId' => $referenceId,
+            'judul' => $tagihan->judul,
+            'amount' => $amount,
+            'feeAdmin' => $feeAdmin,
+            'amountCharged' => $amountCharged,
+            'channel' => $channel,
+            'bankDipilih' => $request->bank,
+            'vaNumber' => $vaNumber,
+            'qrString' => $qrString,
+            'paymentCode' => $paymentCode,
+            'howToPayPage' => $howToPayPage,
+            'countdownTo' => now()->addMinutes(in_array($channel, ['ALFAMART', 'INDOMARET'], true) ? 1440 : 60)->toIso8601String(),
+            'statusUrl' => route('wali.pembayaran.doku.status', $referenceId),
+            'successUrl' => route('wali.keuangan'),
+        ]);
     }
 
-    public function showDuitkuForm(Tagihan $tagihan)
+    /**
+     * Endpoint JSON dipanggil tombol "Cek Status Pembayaran" di halaman
+     * checkout custom -- polling manual (bukan realtime), cukup untuk
+     * kebutuhan sekarang karena webhook (DokuWebhookController) tetap
+     * jadi sumber kebenaran utama status pembayaran.
+     */
+    public function statusDoku(string $reference)
+    {
+        $pembayaran = Pembayaran::where('reference', $reference)->first();
+
+        abort_if(!$pembayaran, 404);
+
+        return response()->json([
+            'status' => $pembayaran->status,
+        ]);
+    }
+
+    public function showDokuForm(Tagihan $tagihan, Request $request)
     {
         $siswa = Siswa::findOrFail(session('siswa_id'));
 
         abort_if($tagihan->siswa_id !== $siswa->id, 403);
 
-        $paymentMethods = collect([
-        'BCA' => [
-            'code' => 'BCA',
-            'name' => 'BCA Virtual Account',
-            'category' => 'Virtual Account'
-        ],
+        // Tagihan cicilan -- nominal parsial dikirim lewat query string
+        // dari form nominal di halaman sebelumnya (wali/pembayaran.blade.php),
+        // divalidasi & disimpan di session supaya bisa dibaca lagi oleh
+        // doku() saat wali submit pilihan metode pembayaran.
+        if ($tagihan->jenisTagihan?->is_cicilan && $request->filled('nominal')) {
+            $sisaTagihan = (int) ($tagihan->nominal - $tagihan->nominal_terbayar);
+            $nominal = min((int) $request->nominal, $sisaTagihan);
 
-        'BNI' => [
-            'code' => 'BNI',
-            'name' => 'BNI Virtual Account',
-            'category' => 'Virtual Account'
-        ],
+            if ($nominal > 0) {
+                session(['cicilan_nominal_' . $tagihan->id => $nominal]);
+            }
+        }
 
-        'BRI' => [
-            'code' => 'BRI',
-            'name' => 'BRI Virtual Account',
-            'category' => 'Virtual Account'
-        ],
-
-        'BSI' => [
-        'code' => 'BSI',
-        'name' => 'BSI Virtual Account',
-        'category' => 'Virtual Account'
-        ],
-
-        'MANDIRI' => [
-            'code' => 'MANDIRI',
-            'name' => 'Mandiri Virtual Account',
-            'category' => 'Virtual Account'
-        ],
-
-        'OV' => [
-            'code' => 'OV',
-            'name' => 'OVO',
-            'category' => 'E-Wallet'
-        ],
-
-        'DA' => [
-            'code' => 'DA',
-            'name' => 'DANA',
-            'category' => 'E-Wallet'
-        ],
-
-        'SP' => [
-            'code' => 'SP',
-            'name' => 'ShopeePay',
-            'category' => 'E-Wallet'
-        ],
-
-        'QRIS' => [
-            'code' => 'QRIS',
-            'name' => 'QRIS',
-            'category' => 'QRIS'
-        ],
-
-        'ALFAMART' => [
-            'code' => 'ALFAMART',
-            'name' => 'Alfamart',
-            'category' => 'Retail'
-        ],
-
-        'INDOMARET' => [
-            'code' => 'INDOMARET',
-            'name' => 'Indomaret',
-            'category' => 'Retail'
-        ],
-    ]);
-
-        return view(
-            'wali.duitku',
-            compact(
-                'tagihan',
-                'paymentMethods'
-            )
-        );
+        return view('wali.doku', compact('tagihan'));
     }
 }

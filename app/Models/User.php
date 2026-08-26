@@ -84,6 +84,16 @@ class User extends Authenticatable implements FilamentUser, HasTenants
 
     /**
      * Allow user to access Filament panel.
+     *
+     * PERUBAHAN 24 Agustus 2026: sebelumnya method ini JUGA menolak
+     * login total kalau Yayasan::hasAccess() bernilai false (status
+     * suspended/cancelled/trial habis) -- itu bertentangan dengan
+     * keputusan desain terbaru: login harus TETAP berhasil dulu, baru
+     * middleware RedirectSuspendedYayasan yang mengarahkan user ke
+     * halaman Langganan (bukan diblokir mentah tanpa penjelasan di
+     * titik login). Pengecekan hasAccess() dipindah SEPENUHNYA ke
+     * middleware itu -- di sini cuma cek syarat paling dasar: platform
+     * admin, atau user biasa yang memang punya yayasan_id valid.
      */
     public function canAccessPanel(Panel $panel): bool
     {
@@ -94,14 +104,9 @@ class User extends Authenticatable implements FilamentUser, HasTenants
         }
 
         // User biasa WAJIB terhubung ke sebuah yayasan untuk bisa masuk.
-        if (empty($this->yayasan_id)) {
-            return false;
-        }
-
-        // Yayasan yang masa trial-nya habis / langganannya tidak aktif
-        // (belum bayar lewat masa tenggang) dikunci aksesnya — data
-        // TIDAK dihapus, cuma tidak bisa login sampai berlangganan lagi.
-        return (bool) $this->yayasan?->hasAccess();
+        // Status Yayasan (aktif/suspended/dst) TIDAK lagi dicek di sini
+        // -- lihat App\Http\Middleware\RedirectSuspendedYayasan.
+        return ! empty($this->yayasan_id);
     }
 
     /**

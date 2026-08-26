@@ -416,61 +416,7 @@
 
     </div>
 
-    {{-- TRANSFER --}}
-<div
-    class="bg-[#EFF6FF]
-           border border-[#DBEAFE]
-           rounded-3xl p-5 mt-4 shadow-sm">
-
-    <div class="flex items-center gap-4">
-
-        <div
-            class="w-12 h-12 rounded-2xl
-                   bg-blue-100
-                   flex items-center justify-center">
-
-            <x-heroicon-o-building-library
-                class="w-6 h-6 text-blue-600" />
-
-        </div>
-
-        <div class="flex-1">
-
-            <h3 class="font-semibold text-slate-900">
-                Transfer Bank
-            </h3>
-
-            <p class="text-xs text-slate-500 mt-1">
-                Lihat rekening tujuan dan upload bukti transfer
-            </p>
-
-        </div>
-
-    </div>
-
-    <a
-        href="{{ route('wali.pembayaran.transfer', $tagihan) }}"
-        class="
-            mt-5
-            flex
-            items-center
-            justify-center
-            w-full
-            h-10
-            rounded-2xl
-            bg-blue-600
-            hover:bg-blue-700
-            text-white
-            text-sm
-            font-semibold
-            transition
-        ">
-        Bayar Via Transfer
-    </a>
-
-</div>
-
-    {{-- DUITKU --}}
+    {{-- DOKU --}}
     <div
         class="bg-[#FEFCE8]
                border border-[#FEF08A]
@@ -502,25 +448,59 @@
 
         </div>
 
-        <a
-        href="{{ route('wali.pembayaran.duitku.form', $tagihan) }}"
-        class="
-            mt-5
-            flex
-            items-center
-            justify-center
-            w-full
-            h-10
-            rounded-2xl
-            bg-yellow-500
-            hover:bg-yellow-600
-            text-white
-            text-sm
-            font-semibold
-            transition
-        ">
-        Bayar Dengan Duitku
-    </a>
+        @if($isCicilan)
+
+            <form method="GET" action="{{ route('wali.pembayaran.doku.form', $tagihan) }}" class="mt-5">
+
+                <div class="mb-3">
+
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm font-medium text-slate-700">Nominal Pembayaran</span>
+                        <span class="text-xs text-slate-500">Sisa Rp {{ number_format($sisaTagihan,0,',','.') }}</span>
+                    </div>
+
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-medium">Rp</span>
+                        <input
+                            type="number"
+                            name="nominal"
+                            value="{{ $sisaTagihan }}"
+                            min="1000"
+                            max="{{ $sisaTagihan }}"
+                            required
+                            class="w-full pl-12 pr-4 py-3 rounded-2xl border border-slate-200 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full flex items-center justify-center h-10 rounded-2xl bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-semibold transition">
+                    Bayar Dengan DOKU
+                </button>
+
+            </form>
+
+        @else
+
+            <a
+            href="{{ route('wali.pembayaran.doku.form', $tagihan) }}"
+            class="
+                mt-5
+                flex
+                items-center
+                justify-center
+                w-full
+                h-10
+                rounded-2xl
+                bg-yellow-500
+                hover:bg-yellow-600
+                text-white
+                text-sm
+                font-semibold
+                transition
+            ">
+            Bayar Dengan DOKU
+        </a>
+
+        @endif
 
     </div>
 

@@ -1,5 +1,9 @@
 {
     "inter": {
         "normal": "inter_normal_41b9582d77f3c2a9a0fc8e836f03a2f2"
+    },
+    "plus jakarta sans": {
+        "normal": "\/var\/www\/qinaraapp-dev\/storage\/fonts\/plus_jakarta_sans_normal_c12298cc294fdf127e56e679a246df09",
+        "bold": "plus_jakarta_sans_bold_023e9e4ee2cc59d3f29f6de6a775f85e"
     }
 }

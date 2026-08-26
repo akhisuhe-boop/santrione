@@ -17,10 +17,9 @@ use App\Http\Controllers\AbsensiController;
 use App\Http\Controllers\WaliAuthController;
 use App\Http\Controllers\PrintRaportController;
 use App\Http\Controllers\WaliDashboardController;
-use App\Http\Controllers\DuitkuController;
 use App\Http\Controllers\PublicRegistrationController;
 use App\Http\Controllers\SubscriptionController;
-use App\Http\Controllers\MidtransWebhookController;
+use App\Http\Controllers\DokuWebhookController;
 use App\Http\Controllers\TopupController;
 use App\Http\Controllers\PerizinanController;
 use App\Http\Controllers\RoleLoginController;
@@ -63,20 +62,19 @@ Route::get('/login', function () {
 Route::get('/daftar', [PublicRegistrationController::class, 'create'])->name('public.daftar');
 Route::post('/daftar', [PublicRegistrationController::class, 'store'])->name('public.daftar.store');
 
-// Webhook Midtrans (dipanggil server Midtrans, bukan browser user —
+// Webhook DOKU & Xendit (dipanggil server gateway, bukan browser user —
 // tidak pakai auth/CSRF, verifikasi lewat signature key di dalam
 // controller-nya sendiri).
-Route::post('/webhooks/midtrans', [MidtransWebhookController::class, 'handle'])->name('webhooks.midtrans');
+Route::post('/webhooks/doku', [DokuWebhookController::class, 'handle'])->name('webhooks.doku');
 Route::post('/webhooks/xendit', [\App\Http\Controllers\XenditWebhookController::class, 'handle'])->name('webhooks.xendit');
 
 // Halaman langganan tenant (lihat status trial/aktif, upload bukti
-// transfer manual, atau bayar via Midtrans kalau sudah dikonfigurasi).
+// transfer manual, atau bayar otomatis via Xendit/DOKU kalau sudah dikonfigurasi).
 Route::middleware(['auth'])->group(function () {
     Route::get('/langganan', [SubscriptionController::class, 'show'])->name('subscription.show');
     Route::post('/langganan/{plan}/manual', [SubscriptionController::class, 'payManual'])->name('subscription.pay-manual');
     Route::post('/langganan/{plan}/xendit', [SubscriptionController::class, 'payXendit'])->name('subscription.pay-xendit');
-    Route::post('/langganan/{plan}/duitku', [SubscriptionController::class, 'payDuitku'])->name('subscription.pay-duitku');
-    Route::post('/langganan/{plan}/midtrans', [SubscriptionController::class, 'payMidtrans'])->name('subscription.pay-midtrans');
+    Route::post('/langganan/{plan}/doku', [SubscriptionController::class, 'payDoku'])->name('subscription.pay-doku');
 });
 
 Route::get('/y/{slug}', function (string $slug) {
@@ -247,7 +245,10 @@ Route::prefix('wali')->group(function () {
         Route::post('/izin-tidak-masuk', [WaliDashboardController::class, 'storeIzinTidakMasuk'])->name('wali.izin-tidak-masuk.store');
 
         Route::get('/topup', [TopupController::class, 'index'])->name('wali.topup');
+        Route::post('/topup/pilih-nominal', [TopupController::class, 'pilihNominal'])->name('wali.topup.pilih-nominal');
+        Route::get('/topup/metode', [TopupController::class, 'showMetode'])->name('wali.topup.metode');
         Route::post('/topup', [TopupController::class, 'store'])->name('wali.topup.store');
+        Route::get('/topup/status/{reference}', [TopupController::class, 'status'])->name('wali.topup.status');
 
         Route::get('/pelanggaran', [WaliDashboardController::class, 'pelanggaran'])->name('wali.pelanggaran');
         Route::get('/prestasi', [WaliDashboardController::class, 'prestasi'])->name('wali.prestasi');
@@ -266,39 +267,15 @@ Route::prefix('wali')->group(function () {
         Route::post('/pembayaran/{tagihan}/saldo', [WaliDashboardController::class, 'bayarSaldo'])
             ->name('wali.pembayaran.saldo');
 
-        Route::get('/pembayaran/{tagihan}/transfer', [WaliDashboardController::class, 'showTransferForm'])
-            ->name('wali.pembayaran.transfer');
+        Route::get('/pembayaran/{tagihan}/doku', [WaliDashboardController::class, 'showDokuForm'])
+            ->name('wali.pembayaran.doku.form');
 
-        Route::post('/pembayaran/{tagihan}/transfer', [WaliDashboardController::class, 'bayarTransfer'])
-            ->name('wali.pembayaran.transfer.store');
+        Route::post('/pembayaran/{tagihan}/doku', [WaliDashboardController::class, 'doku'])
+            ->name('wali.pembayaran.doku');
 
-        Route::get('/pembayaran/{tagihan}/duitku', [WaliDashboardController::class, 'showDuitkuForm'])
-            ->name('wali.pembayaran.duitku.form');
-
-        Route::post('/pembayaran/{tagihan}/duitku', [WaliDashboardController::class, 'duitku'])
-            ->name('wali.pembayaran.duitku');
-
-        Route::get('/duitku/demo/topup', function (\Illuminate\Http\Request $request) {
-            $trx = \App\Models\WalletTransaction::where('reference_id', $request->reference)->first();
-            if ($trx) {
-                $trx->update([
-                    'status' => 'success'
-                ]);
-                $wallet = $trx->wallet;
-                if ($wallet) {
-                    $wallet->increment('saldo', $trx->amount);
-                }
-            }
-            return redirect()
-                ->route('wali.topup')
-                ->with('success', 'Demo payment berhasil (Simulasi Duitku)');
-        })->name('duitku.demo.topup');
-        
+        Route::get('/pembayaran/doku/status/{reference}', [WaliDashboardController::class, 'statusDoku'])
+            ->name('wali.pembayaran.doku.status');
     });
-
-    // CALLBACK PAYMENT GATEWAY
-    Route::post('/duitku/callback', [DuitkuController::class,'callback'])
-        ->name('duitku.callback');
 });
 
 
@@ -427,17 +404,14 @@ Route::prefix('wali')->group(function () {
         Route::post('/pembayaran/saldo/{tagihan}', [PpdbPembayaranController::class, 'bayarSaldo'])
             ->name('ppdb.pembayaran.saldo');
         
-        Route::get('/pembayaran/transfer/{tagihan}', [PpdbPembayaranController::class, 'showTransferForm'])
-            ->name('ppdb.pembayaran.transfer');
+        Route::get('/pembayaran/doku/{tagihan}', [PpdbPembayaranController::class, 'showDokuForm'])
+            ->name('ppdb.pembayaran.doku.form');
         
-        Route::post('/pembayaran/transfer/{tagihan}', [PpdbPembayaranController::class, 'bayarTransfer'])
-            ->name('ppdb.pembayaran.transfer.store');
-        
-        Route::get('/pembayaran/duitku/{tagihan}', [PpdbPembayaranController::class, 'showDuitkuForm'])
-            ->name('ppdb.pembayaran.duitku.form');
-        
-        Route::post('/pembayaran/duitku/{tagihan}', [PpdbPembayaranController::class, 'duitku'])
-            ->name('ppdb.pembayaran.duitku');
+        Route::post('/pembayaran/doku/{tagihan}', [PpdbPembayaranController::class, 'doku'])
+            ->name('ppdb.pembayaran.doku');
+
+        Route::get('/pembayaran/doku/status/{reference}', [PpdbPembayaranController::class, 'statusDoku'])
+            ->name('ppdb.pembayaran.doku.status');
         
         // Formulir
         Route::get('/formulir', [PpdbFormulirController::class, 'index'])
