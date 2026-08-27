@@ -108,27 +108,91 @@ class TopupController extends Controller
             'description'  => 'Top Up Saldo via DOKU',
         ]);
 
+        $vaNumber = null;
+        $qrString = null;
+        $paymentCode = null;
+        $redirectUrl = null;
+
         try {
-            // DIGANTI -- pakai DOKU Checkout (Non-SNAP, 1 endpoint) untuk
-            // semua channel, sama seperti WaliDashboardController::doku()
-            // -- lihat catatan lengkap di sana soal alasan perubahan ini.
-            $result = $doku->buatPaymentRequest(
-                referenceId: $reference,
-                amount: $amountCharged,
-                customerName: $customerName,
-                customerEmail: $customerEmail,
-                judul: 'Top Up Saldo',
-                channel: $channel,
-                bank: $request->bank,
-                callbackUrl: route('wali.topup'),
-            );
+            if ($channel === 'VA') {
+                // Lihat catatan lengkap di WaliDashboardController::doku()
+                // -- VA Non-SNAP (buatVaLangsung) TERBUKTI SUKSES di
+                // sandbox, VA SNAP/DOKU Checkout Link TIDAK ANDAL untuk
+                // channel BCA di akun ini.
+                $result = $doku->buatVaLangsung(
+                    referenceId: $reference,
+                    amount: $amountCharged,
+                    judul: 'Top Up Saldo',
+                    customerName: $customerName,
+                    customerEmail: $customerEmail,
+                );
 
-            $paymentUrl = $result['response']['payment']['url'] ?? null;
+                $vaNumber = $result['virtual_account_info']['virtual_account_number'] ?? null;
 
-            if (!$paymentUrl) {
-                $trx->update(['status' => 'failed']);
+                if (!$vaNumber) {
+                    $trx->update(['status' => 'failed']);
 
-                return back()->with('error', DokuService::pesanAman($result['error_messages'] ?? $result['message'] ?? null));
+                    return back()->with('error', DokuService::pesanAman($result['message'] ?? $result['error']['message'] ?? null));
+                }
+            } elseif ($channel === 'QRIS') {
+                $result = $doku->buatQris(
+                    referenceId: $reference,
+                    amount: $amountCharged,
+                );
+
+                $qrString = $result['qrContent'] ?? $result['qrUrl'] ?? null;
+
+                if (!$qrString) {
+                    $trx->update(['status' => 'failed']);
+
+                    return back()->with('error', DokuService::pesanAman($result['message'] ?? $result['responseMessage'] ?? null));
+                }
+            } elseif (in_array($channel, ['DANA', 'SHOPEEPAY'], true)) {
+                $result = $doku->buatEwalletSnap(
+                    channel: $channel === 'DANA' ? 'EMONEY_DANA_SNAP' : 'EMONEY_SHOPEE_PAY_SNAP',
+                    referenceId: $reference,
+                    amount: $amountCharged,
+                    returnUrl: route('wali.topup'),
+                    judul: 'Top Up Saldo',
+                );
+
+                $redirectUrl = $result['webRedirectUrl'] ?? null;
+
+                if (!$redirectUrl) {
+                    $trx->update(['status' => 'failed']);
+
+                    return back()->with('error', DokuService::pesanAman($result['responseMessage'] ?? null));
+                }
+            } elseif (in_array($channel, ['ALFAMART', 'INDOMARET'], true)) {
+                $result = $doku->buatOtc(
+                    toko: $channel,
+                    referenceId: $reference,
+                    amount: $amountCharged,
+                    customerName: $customerName,
+                    customerEmail: $customerEmail,
+                );
+
+                $paymentCode = $result['online_to_offline_info']['payment_code'] ?? null;
+
+                if (!$paymentCode) {
+                    $trx->update(['status' => 'failed']);
+
+                    return back()->with('error', DokuService::pesanAman($result['message'] ?? $result['error']['message'] ?? null));
+                }
+            } else { // OVO
+                $result = $doku->buatOvo(
+                    referenceId: $reference,
+                    amount: $amountCharged,
+                    ovoId: $request->ovo_phone,
+                );
+
+                $statusOvo = $result['transaction']['status'] ?? null;
+
+                return redirect()->route('wali.topup')
+                    ->with(
+                        $statusOvo === 'SUCCESS' ? 'success' : 'error',
+                        'Status OVO: ' . DokuService::pesanAman($result['message'] ?? null, 'Menunggu konfirmasi dari HP Anda')
+                    );
             }
         } catch (\Throwable $e) {
             $trx->update(['status' => 'failed']);
@@ -136,7 +200,28 @@ class TopupController extends Controller
             return back()->with('error', 'Gagal membuat pembayaran: ' . $e->getMessage());
         }
 
-        return redirect()->away($paymentUrl);
+        if ($redirectUrl) {
+            return redirect()->away($redirectUrl);
+        }
+
+        return view('payment.checkout', [
+            'layout' => 'wali.layout.wali',
+            'namaLembaga' => $siswa->lembaga?->nama ?? $siswa->yayasan?->nama ?? 'Qinara',
+            'logo' => $siswa->lembaga?->logo ? \Storage::disk('r2-public')->url($siswa->lembaga->logo) : null,
+            'referenceId' => $reference,
+            'judul' => 'Top Up Saldo',
+            'amount' => $amount,
+            'feeAdmin' => $feeAdmin,
+            'amountCharged' => $amountCharged,
+            'channel' => $channel,
+            'bankDipilih' => $request->bank,
+            'vaNumber' => $vaNumber,
+            'qrString' => $qrString,
+            'paymentCode' => $paymentCode,
+            'countdownTo' => now()->addMinutes(in_array($channel, ['ALFAMART', 'INDOMARET'], true) ? 1440 : 60)->toIso8601String(),
+            'statusUrl' => route('wali.topup.status', $reference),
+            'successUrl' => route('wali.topup'),
+        ]);
     }
 
     public function status(string $reference)

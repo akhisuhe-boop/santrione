@@ -114,7 +114,15 @@
                                         });
 
                                     $totalTagihan = $tagihans->sum('nominal');
-                                    $totalBayar = $tagihans->flatMap->pembayarans->sum('nominal');
+                                    // DIPERBAIKI -- sebelumnya menjumlahkan SEMUA
+                                    // pembayarans tanpa filter status (termasuk yang
+                                    // masih 'pending' dari gateway DOKU), jadi bulan
+                                    // dengan pembayaran pending tampil LUNAS padahal
+                                    // belum benar-benar dibayar. Sekarang cuma hitung
+                                    // yang statusnya 'sukses'.
+                                    $totalBayar = $tagihans->flatMap->pembayarans
+                                        ->where('status', 'sukses')
+                                        ->sum('nominal');
                                     $lunas = $totalBayar >= $totalTagihan && $totalTagihan > 0;
                                 @endphp
 
@@ -198,7 +206,10 @@
                     @forelse ($umum as $tagihan)
 
                         @php
-                            $dibayar = optional($tagihan->pembayarans)->sum('nominal') ?? 0;
+                            // DIPERBAIKI -- sama seperti tabel SPP bulanan di atas,
+                            // sebelumnya menjumlahkan semua pembayarans tanpa filter
+                            // status.
+                            $dibayar = optional($tagihan->pembayarans)->where('status', 'sukses')->sum('nominal') ?? 0;
                             $sisa = $tagihan->nominal - $dibayar;
                         @endphp
 
