@@ -574,7 +574,9 @@ class DokuService
         string $bankKode,
         string $referenceId,
         int $amount,
-        string $customerName
+        string $customerName,
+        string $customerEmail,
+        string $customerPhone
     ): array {
         $partnerServiceId = config('services.doku.va_snap_partner_service_id.' . strtoupper($bankKode));
 
@@ -587,10 +589,17 @@ class DokuService
         $token = $this->getAccessToken();
         $timestamp = $this->requestTimestamp();
         $externalId = (string) random_int(1000000000, 9999999999);
-        $path = '/virtual-accounts/bi-snap-va/v1.1/transfer-va/create-va';
+        // KONFIRMASI dari kode contoh resmi DOKU Demo Site
+        // (sandbox.doku.com/demo/direct-api): endpoint pakai versi v1,
+        // BUKAN v1.1 seperti dugaan awal saya -- ini kemungkinan besar
+        // penyebab error "BIN not configured properly" sebelumnya.
+        $path = '/virtual-accounts/bi-snap-va/v1/transfer-va/create-va';
 
         $partnerServiceIdPadded = str_pad($partnerServiceId, 8, ' ', STR_PAD_LEFT);
-        $customerNo = (string) random_int(10000000, 99999999); // 8 digit
+        // customerNo PERSIS "0" di contoh resmi DOKU (BUKAN random
+        // digit seperti dugaan awal saya) -- dikonfirmasi dari kode
+        // Java Demo Site.
+        $customerNo = '0';
 
         $body = [
             // partnerServiceId WAJIB persis 8 karakter menurut standar
@@ -600,23 +609,37 @@ class DokuService
             // tanpa padding (cuma 5 digit, "19008").
             'partnerServiceId' => $partnerServiceIdPadded,
             'customerNo' => $customerNo,
-            // virtualAccountNo WAJIB gabungan partnerServiceId +
-            // customerNo (bukan boleh sembarang) -- dikonfirmasi dari
-            // error sandbox: "Transaction Not Permitted [Combination
-            // of partnerServiceId, customerNo, and virtualAccountNo]"
-            // saat field ini tidak dikirim sama sekali sebelumnya.
+            // virtualAccountNo = partnerServiceId YANG SUDAH DI-PAD (8
+            // karakter) digabung customerNo MENTAH (tanpa padding
+            // sendiri) -- dikonfirmasi PERSIS dari contoh resmi DOKU
+            // Demo Site: partnerServiceId "   19008" + customerNo "0"
+            // = virtualAccountNo "   190080".
             'virtualAccountNo' => $partnerServiceIdPadded . $customerNo,
             'virtualAccountName' => $customerName,
+            'virtualAccountEmail' => $customerEmail,
+            'virtualAccountPhone' => $customerPhone,
             'trxId' => $referenceId,
             'totalAmount' => [
                 'value' => number_format($amount, 2, '.', ''),
+                'currency' => 'IDR',
+            ],
+            // feeAmount -- field WAJIB menurut contoh resmi DOKU (tidak
+            // ada di dokumentasi publik yang saya baca sebelumnya).
+            // Diisi 0 karena fee Qinara sudah kita hitung & masukkan
+            // sendiri ke $amount (lihat DokuService::hitungFeeTotal())
+            // -- field ini murni untuk fitur fee DOKU sendiri kalau
+            // mereka mau potong otomatis, yang TIDAK kita pakai.
+            'feeAmount' => [
+                'value' => '0.00',
                 'currency' => 'IDR',
             ],
             'virtualAccountTrxType' => 'C', // Closed Amount -- nominal tetap, tidak bisa diubah pembayar
             'expiredDate' => now()->addHour()->toIso8601String(),
             'additionalInfo' => [
                 'channel' => $this->vaSnapChannelName($bankKode),
-                'reference' => $referenceId,
+                'virtualAccountConfig' => [
+                    'reusableStatus' => false, // sesuai VA lain di aplikasi -- 1 VA cuma untuk 1 transaksi
+                ],
             ],
         ];
 
@@ -647,6 +670,12 @@ class DokuService
         }
 
         $result = $response->json() ?? [];
+
+        // virtualAccountNo yang kita KIRIM (bukan yang dibalas DOKU) --
+        // ini nilai PASTI, sudah kita tentukan sendiri di body, jadi
+        // tidak perlu tebak-tebak lagi field respons untuk nomor VA
+        // yang ditampilkan ke wali murid.
+        $result['_qinara_virtual_account_no'] = $body['virtualAccountNo'];
 
         Log::info('DokuService::buatVaSnap sukses', [
             'bank' => $bankKode,

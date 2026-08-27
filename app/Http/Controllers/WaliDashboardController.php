@@ -595,18 +595,14 @@ class WaliDashboardController extends Controller
                         referenceId: $referenceId,
                         amount: $amountCharged,
                         customerName: $customerName,
+                        customerEmail: $customerEmail,
+                        customerPhone: $siswa->wa_wali ?? $siswa->wa_ayah ?? $siswa->wa_ibu ?? '6281200001111',
                     );
 
-                    // TODO: field response SNAP VA belum 100%
-                    // dipastikan dari dokumentasi publik -- pola umum
-                    // standar BI-SNAP VA membungkus hasil di
-                    // 'virtualAccountData', dicoba beberapa
-                    // kemungkinan field. Log full_response sudah ada
-                    // di DokuService::buatVaSnap() -- cocokkan lagi
-                    // begitu ada respons asli sandbox.
-                    $vaNumber = $result['virtualAccountData']['virtualAccountNo']
-                        ?? $result['virtualAccountNo']
-                        ?? null;
+                    // Nomor VA yang kita kirim sendiri di body -- PASTI
+                    // ada, tidak tergantung struktur respons DOKU (lihat
+                    // catatan di DokuService::buatVaSnap()).
+                    $vaNumber = $result['_qinara_virtual_account_no'] ?? null;
                 } else {
                     // Fallback -- VA universal Non-SNAP (kalau entah
                     // kenapa tidak ada bank dipilih).
