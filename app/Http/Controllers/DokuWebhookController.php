@@ -235,6 +235,15 @@ class DokuWebhookController extends Controller
                     $wallet->increment('saldo', $trx->amount);
                 }
 
+                // DIPERBAIKI (lagi) -- fix yayasan_id sebelumnya TIDAK
+                // EFEKTIF untuk topup: Wallet model TIDAK PUNYA kolom
+                // lembaga_id sama sekali (cuma siswa_id & saldo -- lihat
+                // komentar "Scoping lewat siswa.lembaga (tidak ada
+                // lembaga_id langsung)" di Wallet.php), jadi
+                // $trx->wallet->lembaga_id dan $trx->wallet->lembaga
+                // SELALU null. Harus lewat wallet->siswa->lembaga.
+                $lembagaWallet = $wallet?->siswa?->lembaga;
+
                 Kas::create([
                     'tipe' => 'masuk',
                     'nominal' => $trx->amount,
@@ -243,13 +252,8 @@ class DokuWebhookController extends Controller
                     'keterangan' => 'Topup Wallet - ' . $trx->reference_id,
                     'rekening_id' => $trx->wallet->rekening_id ?? 1,
                     'kategori_id' => 1,
-                    'lembaga_id' => $trx->wallet->lembaga_id ?? 1,
-                    // DITAMBAHKAN -- bug sama seperti di Pembayaran::booted():
-                    // Kas::booted() cuma auto-isi yayasan_id dari
-                    // Filament::getTenant()/auth()->user(), keduanya null
-                    // di request webhook. Diisi eksplisit lewat lembaga
-                    // wallet, supaya baris ini tidak hilang dari laporan.
-                    'yayasan_id' => $trx->wallet->lembaga?->yayasan_id ?? null,
+                    'lembaga_id' => $lembagaWallet?->id ?? 1,
+                    'yayasan_id' => $lembagaWallet?->yayasan_id ?? null,
                 ]);
             } else {
                 // DIPERBAIKI -- dokumentasi resmi DOKU (Best Practice --
