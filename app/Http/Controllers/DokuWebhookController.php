@@ -164,8 +164,15 @@ class DokuWebhookController extends Controller
             // Token valid -- lewati verifikasi Non-SNAP di bawah,
             // langsung proses body notifikasi.
         } else {
+            // DIPERBAIKI -- $request->header('X') mengembalikan STRING
+            // (bukan array seperti $request->headers->all()['x']) --
+            // lihat catatan lengkap bug ini di
+            // DokuService::verifyNotificationSignature().
             $valid = $doku->verifyNotificationSignature(
-                $request->headers->all(),
+                $request->header('Client-Id'),
+                $request->header('Request-Id'),
+                $request->header('Request-Timestamp'),
+                $request->header('Signature'),
                 $rawBody,
                 $request->path() === '/' ? '/webhooks/doku' : '/' . ltrim($request->path(), '/')
             );

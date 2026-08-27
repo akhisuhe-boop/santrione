@@ -435,17 +435,30 @@ class DokuService
      * Verifikasi signature notifikasi (webhook) DOKU -- implementasi
      * PERSIS contoh resmi DOKU (Best Practice -- HTTP Notification),
      * termasuk perhitungan Digest dari raw notification body.
+     *
+     * DIPERBAIKI -- BUG BESAR ditemukan: parameter $headers sebelumnya
+     * diisi langsung dari `$request->headers->all()` di
+     * DokuWebhookController, yang di Laravel mengembalikan SETIAP nilai
+     * header sebagai ARRAY (mis. ['client-id' => ['BRN-0216-...']]),
+     * BUKAN string. Saat di-interpolasi ke string
+     * ("Client-Id:{$clientId}"), PHP diam-diam mengubah array itu jadi
+     * literal teks "Array" -- jadi signature yang kita hitung SELALU
+     * salah, verifikasi SELALU gagal, dan SETIAP notifikasi Non-SNAP
+     * dari DOKU (termasuk VA universal yang baru terbukti sukses)
+     * ditolak 403 sebelum sempat memproses pembayaran. Method ini
+     * sekarang menerima 4 string langsung (dipanggil dengan
+     * $request->header('Client-Id') dkk di controller, yang SUDAH
+     * mengembalikan string, bukan array) supaya tidak ada lagi celah
+     * seperti ini.
      */
     public function verifyNotificationSignature(
-        array $headers,
+        ?string $clientId,
+        ?string $requestId,
+        ?string $timestamp,
+        ?string $signature,
         string $rawBody,
         string $notificationPath
     ): bool {
-        $clientId = $headers['client-id'] ?? $headers['Client-Id'] ?? null;
-        $requestId = $headers['request-id'] ?? $headers['Request-Id'] ?? null;
-        $timestamp = $headers['request-timestamp'] ?? $headers['Request-Timestamp'] ?? null;
-        $signature = $headers['signature'] ?? $headers['Signature'] ?? null;
-
         if (! $clientId || ! $requestId || ! $timestamp || ! $signature) {
             return false;
         }
