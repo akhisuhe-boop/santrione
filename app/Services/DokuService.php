@@ -589,11 +589,17 @@ class DokuService
         $token = $this->getAccessToken();
         $timestamp = $this->requestTimestamp();
         $externalId = (string) random_int(1000000000, 9999999999);
-        // KONFIRMASI dari kode contoh resmi DOKU Demo Site
-        // (sandbox.doku.com/demo/direct-api): endpoint pakai versi v1,
-        // BUKAN v1.1 seperti dugaan awal saya -- ini kemungkinan besar
-        // penyebab error "BIN not configured properly" sebelumnya.
-        $path = '/virtual-accounts/bi-snap-va/v1/transfer-va/create-va';
+        // DIPERBAIKI -- dicek ulang langsung ke developers.doku.com:
+        // path v1 (tanpa ".1") adalah dokumentasi versi LAMA yang sudah
+        // dipindah ke bagian "archive" dan memakai skema
+        // virtualAccountTrxType NUMERIK ("1"=Closed / "2"=Open, BUKAN
+        // "C"/"O"). Body di bawah ini sudah ditulis mengikuti skema
+        // v1.1 yang aktif sekarang ("C"/"O"/"V" -- lihat
+        // virtualAccountTrxType di bawah), jadi path-nya WAJIB v1.1
+        // juga -- itu sumber error "Invalid Field Format
+        // {virtualAccountTrxType}" sebelumnya: body v1.1 dikirim ke
+        // endpoint v1.
+        $path = '/virtual-accounts/bi-snap-va/v1.1/transfer-va/create-va';
 
         $partnerServiceIdPadded = str_pad($partnerServiceId, 8, ' ', STR_PAD_LEFT);
         // customerNo PERSIS "0" di contoh resmi DOKU (BUKAN random
@@ -788,6 +794,20 @@ class DokuService
      */
     public function buatQris(string $referenceId, int $amount): array
     {
+        // DITAMBAHKAN -- dicek ulang ke developers.doku.com: merchantId
+        // & terminalId itu MANDATORY di body qr-mpm-generate (lihat
+        // contoh resmi mereka), sebelumnya tidak dikirim sama sekali di
+        // sini, jadi request pasti ditolak DOKU (mandatory field
+        // hilang) sebelum sempat urusan signature/access token.
+        $merchantId = config('services.doku.qris_merchant_id');
+        $terminalId = config('services.doku.qris_terminal_id');
+
+        if (blank($merchantId) || blank($terminalId)) {
+            throw new RuntimeException(
+                'DOKU_QRIS_MERCHANT_ID / DOKU_QRIS_TERMINAL_ID belum diisi di .env -- minta ke tim DOKU dulu (lihat catatan di DokuService::buatQris()).'
+            );
+        }
+
         $token = $this->getAccessToken();
         $timestamp = $this->requestTimestamp();
         $externalId = (string) random_int(1000000000, 9999999999);
@@ -799,6 +819,8 @@ class DokuService
                 'value' => number_format($amount, 2, '.', ''),
                 'currency' => 'IDR',
             ],
+            'merchantId' => $merchantId,
+            'terminalId' => $terminalId,
         ];
 
         $rawBody = json_encode($body, JSON_UNESCAPED_SLASHES);
