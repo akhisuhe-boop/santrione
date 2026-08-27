@@ -353,12 +353,20 @@ class DokuService
         string $channel = 'QRIS',
         ?string $bank = null,
         ?string $dokuSubAccountId = null,
-        ?string $notificationPath = null
+        ?string $callbackUrl = null
     ): array {
+        // DIPERBAIKI -- dicocokkan persis dengan skema resmi
+        // developers.doku.com/accept-payments/doku-checkout/integration-guide/backend-integration:
+        // order.currency & order.auto_redirect ditambahkan (auto_redirect
+        // ditandai Mandatory di dokumentasi resmi, sebelumnya tidak
+        // dikirim sama sekali).
         $order = [
-            'invoice_number' => $referenceId,
             'amount' => $amount,
-            'callback_url' => url('/wali/keuangan'),
+            'invoice_number' => $referenceId,
+            'currency' => 'IDR',
+            'callback_url' => $callbackUrl ?? url('/wali/keuangan'),
+            'callback_url_result' => $callbackUrl ?? url('/wali/keuangan'),
+            'auto_redirect' => true,
         ];
 
         $body = [
@@ -386,9 +394,6 @@ class DokuService
         Log::info('DokuService::buatPaymentRequest sukses', [
             'reference' => $referenceId,
             'channel' => $channel,
-            // Full response body sengaja di-log supaya bisa dicocokkan
-            // field URL/nomor VA yang benar (nama field masih tebakan
-            // sampai ada respons sandbox asli).
             'full_response' => $result,
         ]);
 
@@ -397,36 +402,32 @@ class DokuService
 
     /**
      * Terjemahkan pilihan bank/kanal dari UI Qinara ke daftar
-     * `payment_method_types` yang dikenali DOKU Checkout (persis nama
-     * enum yang terlihat di respons sandbox: VIRTUAL_ACCOUNT_BCA,
-     * VIRTUAL_ACCOUNT_BRI, VIRTUAL_ACCOUNT_BNI,
-     * VIRTUAL_ACCOUNT_BANK_SYARIAH_MANDIRI (BSI),
-     * VIRTUAL_ACCOUNT_BANK_MANDIRI, EMONEY_OVO, EMONEY_DANA,
-     * EMONEY_SHOPEE_PAY). Kalau kosong, DOKU otomatis tampilkan SEMUA
-     * kanal yang aktif untuk akun ini.
+     * `payment_method_types` yang dikenali DOKU Checkout -- DIPERBAIKI &
+     * DILENGKAPI, dicocokkan persis dengan daftar enum resmi di
+     * developers.doku.com/accept-payments/doku-checkout/integration-guide/backend-integration
+     * (contoh body "Full Request" mereka). Sebelumnya cuma menangani VA
+     * + sebagian e-wallet; ALFAMART/INDOMARET/OVO/QRIS belum dipetakan
+     * sama sekali (jatuh ke default kosong).
      */
     protected function paymentMethodTypes(string $channel, ?string $bank): array
     {
-        // CATATAN: nama field 'payment_method_types' di BODY REQUEST ini
-        // masih perlu dikonfirmasi -- yang PASTI terverifikasi dari
-        // sandbox adalah field ini muncul di RESPONS (daftar kanal yang
-        // tersedia), belum tentu persis field yang sama dipakai untuk
-        // MEMPERSEMPIT pilihan di request. Kalau field ini ternyata
-        // diabaikan DOKU, dampaknya cuma kosmetik -- Checkout tetap
-        // jalan, wali murid cuma lihat semua kanal alih-alih kanal yang
-        // dia klik duluan di Qinara. Tidak mempengaruhi keberhasilan
-        // pembayaran.
-        return match (true) {
-            strtoupper($channel) === 'VA' && $bank === 'BCA' => ['VIRTUAL_ACCOUNT_BCA'],
-            strtoupper($channel) === 'VA' && $bank === 'BNI' => ['VIRTUAL_ACCOUNT_BNI'],
-            strtoupper($channel) === 'VA' && $bank === 'BRI' => ['VIRTUAL_ACCOUNT_BRI'],
-            strtoupper($channel) === 'VA' && $bank === 'BSI' => ['VIRTUAL_ACCOUNT_BANK_SYARIAH_MANDIRI'],
-            strtoupper($channel) === 'VA' && $bank === 'MANDIRI' => ['VIRTUAL_ACCOUNT_BANK_MANDIRI'],
-            strtoupper($channel) === 'EWALLET' && $bank === 'OV' => ['EMONEY_OVO'],
-            strtoupper($channel) === 'EWALLET' && $bank === 'DA' => ['EMONEY_DANA'],
-            strtoupper($channel) === 'EWALLET' && $bank === 'SP' => ['EMONEY_SHOPEE_PAY'],
-            strtoupper($channel) === 'QRIS' => [], // biarkan DOKU tampilkan opsi QRIS + lainnya
-            default => [],
+        return match (strtoupper($channel)) {
+            'VA' => match (strtoupper((string) $bank)) {
+                'BCA' => ['VIRTUAL_ACCOUNT_BCA'],
+                'BNI' => ['VIRTUAL_ACCOUNT_BNI'],
+                'BRI' => ['VIRTUAL_ACCOUNT_BRI'],
+                'BSI' => ['VIRTUAL_ACCOUNT_BANK_SYARIAH_MANDIRI'],
+                'MANDIRI' => ['VIRTUAL_ACCOUNT_BANK_MANDIRI'],
+                'BJB' => ['VIRTUAL_ACCOUNT_BNC'], // BJB tidak ada di daftar resmi Checkout -- BNC dipakai sbg VA universal DOKU terdekat, WAJIB dicek ulang kalau bank BJB dipakai
+                default => ['VIRTUAL_ACCOUNT_DOKU'], // VA universal DOKU kalau bank tidak dipilih/dikenali
+            },
+            'QRIS' => ['QRIS'],
+            'DANA' => ['EMONEY_DANA'],
+            'SHOPEEPAY' => ['EMONEY_SHOPEEPAY'],
+            'OVO' => ['EMONEY_OVO'],
+            'ALFAMART' => ['ONLINE_TO_OFFLINE_ALFA'],
+            'INDOMARET' => ['ONLINE_TO_OFFLINE_INDOMARET'],
+            default => [], // kosong -- DOKU tampilkan semua kanal aktif
         };
     }
 

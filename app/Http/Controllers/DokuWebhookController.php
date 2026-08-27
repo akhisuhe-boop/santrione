@@ -239,7 +239,20 @@ class DokuWebhookController extends Controller
                     'lembaga_id' => $trx->wallet->lembaga_id ?? 1,
                 ]);
             } else {
-                $trx->update(['status' => 'failed']);
+                // DIPERBAIKI -- dokumentasi resmi DOKU (Best Practice --
+                // HTTP Notification): "if you are integrating with
+                // Checkout, you must ignore the transaction.status
+                // FAILED" -- karena di Checkout wali BISA ganti metode
+                // pembayaran kalau yang pertama gagal/batal, notifikasi
+                // FAILED bukan berarti transaksi ini final gagal.
+                // Sebelumnya langsung ditandai 'failed' di sini, yang
+                // bisa salah menutup transaksi yang wali masih bisa
+                // selesaikan lewat metode lain. Biarkan tetap 'pending'
+                // -- cuma catat di log untuk observability.
+                Log::info('DokuWebhookController: notifikasi topup non-sukses diabaikan (Checkout retry-friendly)', [
+                    'reference' => $referenceId,
+                    'payload' => $payload,
+                ]);
             }
 
             DB::commit();
@@ -287,7 +300,14 @@ class DokuWebhookController extends Controller
                     NotificationService::sendPembayaran($pembayaran->siswa, $pembayaran);
                 }
             } else {
-                $pembayaran->update(['status' => 'gagal']);
+                // DIPERBAIKI -- lihat catatan di handleTopup() di atas
+                // (dokumentasi resmi DOKU: abaikan transaction.status
+                // FAILED untuk integrasi Checkout, wali masih bisa retry
+                // metode lain).
+                Log::info('DokuWebhookController: notifikasi pembayaran non-sukses diabaikan (Checkout retry-friendly)', [
+                    'reference' => $referenceId,
+                    'payload' => $payload,
+                ]);
             }
 
             DB::commit();
@@ -348,7 +368,11 @@ class DokuWebhookController extends Controller
                     }
                 }
             } else {
-                $payment->update(['status' => 'gagal']);
+                // DIPERBAIKI -- lihat catatan di handleTopup() di atas.
+                Log::info('DokuWebhookController: notifikasi subscription non-sukses diabaikan (Checkout retry-friendly)', [
+                    'reference' => $referenceId,
+                    'payload' => $payload,
+                ]);
             }
 
             DB::commit();

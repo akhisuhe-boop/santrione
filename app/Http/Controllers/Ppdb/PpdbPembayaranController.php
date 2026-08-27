@@ -95,32 +95,24 @@ class PpdbPembayaranController extends Controller
         $lembaga = $ppdb->lembaga;
 
         try {
-            if ($channel === 'VA') {
-                $result = $doku->buatVaLangsung(
-                    referenceId: $referenceId,
-                    amount: $amount,
-                    judul: $tagihan->judul,
-                    customerName: $ppdb->nama_lengkap ?? $ppdb->nama ?? 'Pendaftar PPDB',
-                    customerEmail: \App\Services\DokuService::emailAman($ppdb->email ?? null, $ppdb->wa_wali ?? $ppdb->id),
-                    dokuSubAccountId: $lembaga?->doku_sub_account_id,
-                );
+            // DIGANTI -- pakai DOKU Checkout (Non-SNAP, 1 endpoint) untuk
+            // semua channel, sama seperti WaliDashboardController::doku()
+            // -- lihat catatan lengkap di sana soal alasan perubahan ini.
+            $result = $doku->buatPaymentRequest(
+                referenceId: $referenceId,
+                amount: $amount,
+                customerName: $ppdb->nama_lengkap ?? $ppdb->nama ?? 'Pendaftar PPDB',
+                customerEmail: \App\Services\DokuService::emailAman($ppdb->email ?? null, $ppdb->wa_wali ?? $ppdb->id),
+                judul: $tagihan->judul,
+                channel: $channel,
+                dokuSubAccountId: $lembaga?->doku_sub_account_id,
+                callbackUrl: route('ppdb.pembayaran'),
+            );
 
-                $vaNumber = $result['virtual_account_info']['virtual_account_number'] ?? null;
+            $paymentUrl = $result['response']['payment']['url'] ?? null;
 
-                if (!$vaNumber) {
-                    return back()->with('error', \App\Services\DokuService::pesanAman($result['message'] ?? $result['error']['message'] ?? null));
-                }
-            } else {
-                $result = $doku->buatQris(
-                    referenceId: $referenceId,
-                    amount: $amount,
-                );
-
-                $qrString = $result['qrContent'] ?? $result['qrUrl'] ?? null;
-
-                if (!$qrString) {
-                    return back()->with('error', \App\Services\DokuService::pesanAman($result['message'] ?? $result['responseMessage'] ?? null));
-                }
+            if (!$paymentUrl) {
+                return back()->with('error', \App\Services\DokuService::pesanAman($result['error_messages'] ?? $result['message'] ?? null));
             }
         } catch (\Throwable $e) {
             return back()->with('error', 'Gagal membuat pembayaran: ' . $e->getMessage());
@@ -136,20 +128,7 @@ class PpdbPembayaranController extends Controller
             'reference' => $referenceId,
         ]);
 
-        return view('payment.checkout', [
-            'layout' => 'ppdb.layout.ppdb',
-            'namaLembaga' => $lembaga?->nama ?? $ppdb->lembaga?->yayasan?->nama ?? 'Qinara',
-            'logo' => $lembaga?->logo ? \Storage::disk('r2-public')->url($lembaga->logo) : null,
-            'referenceId' => $referenceId,
-            'judul' => $tagihan->judul,
-            'amount' => $amount,
-            'channel' => $channel,
-            'vaNumber' => $vaNumber ?? null,
-            'qrString' => $qrString ?? null,
-            'countdownTo' => now()->addMinutes(60)->toIso8601String(),
-            'statusUrl' => route('ppdb.pembayaran.doku.status', $referenceId),
-            'successUrl' => route('ppdb.pembayaran'),
-        ]);
+        return redirect()->away($paymentUrl);
     }
 
     public function statusDoku(string $reference)

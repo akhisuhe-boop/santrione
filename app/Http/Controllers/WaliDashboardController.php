@@ -577,124 +577,41 @@ class WaliDashboardController extends Controller
         $customerName = $siswa->nama_lengkap;
         $customerEmail = \App\Services\DokuService::emailAman($siswa->email, $siswa->wa_wali ?? $siswa->id);
 
-        $vaNumber = null;
-        $qrString = null;
-        $paymentCode = null;
-        $redirectUrl = null;
-        $howToPayPage = null;
-
         try {
-            if ($channel === 'VA') {
-                if ($request->bank) {
-                    // VA SNAP per bank -- jalur baru yang baru saja
-                    // selesai disetup (Merchant Public Key, Token URL,
-                    // Notify URL per-bank, partnerServiceId semua sudah
-                    // terdaftar).
-                    $result = $doku->buatVaSnap(
-                        bankKode: $request->bank,
-                        referenceId: $referenceId,
-                        amount: $amountCharged,
-                        customerName: $customerName,
-                        customerEmail: $customerEmail,
-                        customerPhone: $siswa->wa_wali ?? $siswa->wa_ayah ?? $siswa->wa_ibu ?? '6281200001111',
-                    );
+            // DIGANTI -- sebelumnya method ini memanggil endpoint SNAP
+            // berbeda per channel (VA SNAP, QRIS SNAP, e-wallet SNAP,
+            // OVO push), yang TERNYATA masing-masing butuh
+            // aktivasi/konfigurasi terpisah di sisi DOKU (VA: BIN belum
+            // full aktif untuk fitur DGPC; QRIS: servicenya belum aktif
+            // sama sekali -- dikonfirmasi tim support DOKU). Sekarang
+            // pakai DOKU CHECKOUT (Non-SNAP, satu endpoint
+            // /checkout/v1/payment, dikonfirmasi resmi di
+            // developers.doku.com/accept-payments/doku-checkout) -- DOKU
+            // yang tampilkan halaman pembayarannya sendiri untuk channel
+            // yang diminta, TIDAK perlu izin/konfigurasi per-channel dari
+            // kita. Wali diarahkan ke halaman DOKU, lalu di-redirect
+            // balik ke Qinara lewat order.callback_url setelah selesai.
+            $result = $doku->buatPaymentRequest(
+                referenceId: $referenceId,
+                amount: $amountCharged,
+                customerName: $customerName,
+                customerEmail: $customerEmail,
+                judul: $tagihan->judul,
+                channel: $channel,
+                bank: $request->bank,
+                dokuSubAccountId: $lembaga?->doku_sub_account_id,
+                callbackUrl: route('wali.keuangan'),
+            );
 
-                    // Nomor VA yang kita kirim sendiri di body -- PASTI
-                    // ada, tidak tergantung struktur respons DOKU (lihat
-                    // catatan di DokuService::buatVaSnap()).
-                    $vaNumber = $result['_qinara_virtual_account_no'] ?? null;
-                } else {
-                    // Fallback -- VA universal Non-SNAP (kalau entah
-                    // kenapa tidak ada bank dipilih).
-                    $result = $doku->buatVaLangsung(
-                        referenceId: $referenceId,
-                        amount: $amountCharged,
-                        judul: $tagihan->judul,
-                        customerName: $customerName,
-                        customerEmail: $customerEmail,
-                        dokuSubAccountId: $lembaga?->doku_sub_account_id,
-                    );
+            // DIPERBAIKI -- path field URL yang BENAR menurut dokumentasi
+            // resmi adalah response.payment.url (bukan response.url atau
+            // payment.url di level atas seperti sebelumnya -- bug yang
+            // sama juga ada di SubscriptionController, sudah ikut
+            // diperbaiki).
+            $paymentUrl = $result['response']['payment']['url'] ?? null;
 
-                    $vaNumber = $result['virtual_account_info']['virtual_account_number'] ?? null;
-                    $howToPayPage = $result['virtual_account_info']['how_to_pay_page'] ?? null;
-                }
-
-                if (!$vaNumber) {
-                    return back()->with('error', \App\Services\DokuService::pesanAman($result['message'] ?? $result['responseMessage'] ?? $result['error']['message'] ?? null));
-                }
-            } elseif ($channel === 'QRIS') {
-                $result = $doku->buatQris(
-                    referenceId: $referenceId,
-                    amount: $amountCharged,
-                );
-
-                // TODO: field gambar/string QR PERLU dicocokkan dengan
-                // respons asli sandbox (belum bisa dipastikan 100% dari
-                // dokumentasi publik) -- lihat catatan lengkap di
-                // DokuService::buatQris().
-                $qrString = $result['qrContent'] ?? $result['qrUrl'] ?? null;
-
-                if (!$qrString) {
-                    return back()->with('error', \App\Services\DokuService::pesanAman($result['message'] ?? $result['responseMessage'] ?? null));
-                }
-            } elseif (in_array($channel, ['DANA', 'SHOPEEPAY'], true)) {
-                $result = $doku->buatEwalletSnap(
-                    channel: $channel === 'DANA' ? 'EMONEY_DANA_SNAP' : 'EMONEY_SHOPEE_PAY_SNAP',
-                    referenceId: $referenceId,
-                    amount: $amountCharged,
-                    returnUrl: route('wali.keuangan'),
-                );
-
-                $redirectUrl = $result['webRedirectUrl'] ?? null;
-
-                if (!$redirectUrl) {
-                    return back()->with('error', \App\Services\DokuService::pesanAman($result['responseMessage'] ?? null));
-                }
-            } elseif (in_array($channel, ['ALFAMART', 'INDOMARET'], true)) {
-                $result = $doku->buatOtc(
-                    toko: $channel,
-                    referenceId: $referenceId,
-                    amount: $amountCharged,
-                    customerName: $customerName,
-                    customerEmail: $customerEmail,
-                );
-
-                $paymentCode = $result['online_to_offline_info']['payment_code'] ?? null;
-                $howToPayPage = $result['online_to_offline_info']['how_to_pay_page'] ?? null;
-
-                if (!$paymentCode) {
-                    return back()->with('error', \App\Services\DokuService::pesanAman($result['message'] ?? $result['error']['message'] ?? null));
-                }
-            } else { // OVO
-                $result = $doku->buatOvo(
-                    referenceId: $referenceId,
-                    amount: $amountCharged,
-                    ovoId: $request->ovo_phone,
-                );
-
-                Pembayaran::create([
-                    'tagihan_id' => $tagihan->id,
-                    'siswa_id'   => $siswa->id,
-                    'nominal'    => $amount,
-                    'fee_admin'  => $feeAdmin,
-                    'metode'     => 'gateway',
-                    'gateway'    => 'doku',
-                    'status'     => 'pending',
-                    'reference'  => $referenceId,
-                ]);
-
-                // OVO Push Payment BLOCKING -- respons langsung berisi
-                // hasil approve/tolak/timeout dari HP customer (bukan
-                // link/kode untuk ditunda). Webhook tetap dipasang
-                // sebagai jaring pengaman, tapi untuk OVO biasanya
-                // status sudah bisa langsung diketahui dari respons ini.
-                $statusOvo = $result['transaction']['status'] ?? null;
-
-                return redirect()->route('wali.pembayaran.show', $tagihan)
-                    ->with(
-                        $statusOvo === 'SUCCESS' ? 'success' : 'error',
-                        'Status OVO: ' . \App\Services\DokuService::pesanAman($result['message'] ?? null, 'Menunggu konfirmasi dari HP Anda')
-                    );
+            if (!$paymentUrl) {
+                return back()->with('error', \App\Services\DokuService::pesanAman($result['error_messages'] ?? $result['message'] ?? null));
             }
         } catch (\Throwable $e) {
             return back()->with('error', 'Gagal membuat pembayaran: ' . $e->getMessage());
@@ -711,31 +628,9 @@ class WaliDashboardController extends Controller
             'reference'  => $referenceId,
         ]);
 
-        // DANA/ShopeePay langsung redirect (app-to-app), tidak perlu
-        // halaman checkout custom.
-        if ($redirectUrl) {
-            return redirect()->away($redirectUrl);
-        }
-
-        return view('payment.checkout', [
-            'layout' => 'wali.layout.wali',
-            'namaLembaga' => $lembaga?->nama ?? $siswa->yayasan?->nama ?? 'Qinara',
-            'logo' => $lembaga?->logo ? \Storage::disk('r2-public')->url($lembaga->logo) : null,
-            'referenceId' => $referenceId,
-            'judul' => $tagihan->judul,
-            'amount' => $amount,
-            'feeAdmin' => $feeAdmin,
-            'amountCharged' => $amountCharged,
-            'channel' => $channel,
-            'bankDipilih' => $request->bank,
-            'vaNumber' => $vaNumber,
-            'qrString' => $qrString,
-            'paymentCode' => $paymentCode,
-            'howToPayPage' => $howToPayPage,
-            'countdownTo' => now()->addMinutes(in_array($channel, ['ALFAMART', 'INDOMARET'], true) ? 1440 : 60)->toIso8601String(),
-            'statusUrl' => route('wali.pembayaran.doku.status', $referenceId),
-            'successUrl' => route('wali.keuangan'),
-        ]);
+        // Wali diarahkan ke halaman pembayaran resmi DOKU (VA/QRIS/
+        // e-wallet/dll ditampilkan DOKU sendiri di sana).
+        return redirect()->away($paymentUrl);
     }
 
     /**
