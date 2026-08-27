@@ -602,10 +602,16 @@ class DokuService
         $path = '/virtual-accounts/bi-snap-va/v1.1/transfer-va/create-va';
 
         $partnerServiceIdPadded = str_pad($partnerServiceId, 8, ' ', STR_PAD_LEFT);
-        // customerNo PERSIS "0" di contoh resmi DOKU (BUKAN random
-        // digit seperti dugaan awal saya) -- dikonfirmasi dari kode
-        // Java Demo Site.
-        $customerNo = '0';
+        // DIPERBAIKI -- dikonfirmasi LANGSUNG oleh tim support DOKU
+        // (setelah kirim contoh error sandbox kita): customerNo
+        // SEBELUMNYA di-hardcode '0' untuk SEMUA transaksi -- ini
+        // penyebab "Feature Not Allowed [Identifier for BIN = 'xxxxx'
+        // is not configured properly]", karena kombinasi
+        // partnerServiceId+customerNo yang SAMA dipakai berulang-ulang
+        // dianggap tidak valid. customerNo WAJIB unik per transaksi --
+        // dipakai angka detik+microdetik saat ini (numerik murni,
+        // pendek, hampir pasti tidak bentrok antar transaksi).
+        $customerNo = (string) ((int) (microtime(true) * 1000) % 1000000000);
 
         $body = [
             // partnerServiceId WAJIB persis 8 karakter menurut standar
@@ -617,9 +623,9 @@ class DokuService
             'customerNo' => $customerNo,
             // virtualAccountNo = partnerServiceId YANG SUDAH DI-PAD (8
             // karakter) digabung customerNo MENTAH (tanpa padding
-            // sendiri) -- dikonfirmasi PERSIS dari contoh resmi DOKU
-            // Demo Site: partnerServiceId "   19008" + customerNo "0"
-            // = virtualAccountNo "   190080".
+            // sendiri) -- formula ini dikonfirmasi tim support DOKU
+            // sendiri, cuma nilai customerNo-nya yang tadinya salah
+            // (lihat catatan di atas).
             'virtualAccountNo' => $partnerServiceIdPadded . $customerNo,
             'virtualAccountName' => $customerName,
             'virtualAccountEmail' => $customerEmail,
@@ -873,20 +879,37 @@ class DokuService
      * PERLU getAccessToken() berhasil dulu -- lihat catatan setup
      * keypair RSA di getAccessToken().
      */
-    public function buatEwalletSnap(string $channel, string $referenceId, int $amount, string $returnUrl): array
+    public function buatEwalletSnap(string $channel, string $referenceId, int $amount, string $returnUrl, string $judul = 'Pembayaran Qinara'): array
     {
         $token = $this->getAccessToken();
         $timestamp = $this->requestTimestamp();
         $externalId = (string) random_int(1000000000, 9999999999);
         $path = '/direct-debit/core/v1/debit/payment-host-to-host';
 
+        // DIPERBAIKI -- dicocokkan dengan contoh "format request yang
+        // benar" yang dikirim LANGSUNG oleh tim support DOKU (bukan
+        // cuma dokumentasi publik lagi):
+        // 1. `validUpTo` (batas waktu link bayar) sebelumnya HILANG
+        //    total dari body -- ditambahkan (1 jam dari sekarang).
+        // 2. `urlParam` sebelumnya dikirim sebagai OBJEK biasa --
+        //    contoh resmi dari support DOKU membungkusnya jadi ARRAY
+        //    berisi 1 objek. Diperbaiki mengikuti persis.
+        // 3. `additionalInfo.orderTitle` sebelumnya tidak dikirim sama
+        //    sekali, padahal WAJIB khusus untuk DANA (dikonfirmasi
+        //    support). Diisi judul tagihan/topup.
+        // 4. `supportDeepLinkCheckoutUrl` ditambahkan sesuai contoh
+        //    (khusus DANA -- aman dikirim juga untuk ShopeePay, DOKU
+        //    akan abaikan kalau tidak relevan).
         $body = [
             'partnerReferenceNo' => $referenceId,
+            'validUpTo' => now()->addHour()->toIso8601String(),
             'pointOfInitiation' => 'mweb', // mobile web (browser) -- bukan 'app' karena Qinara bukan native app
             'urlParam' => [
-                'url' => $returnUrl,
-                'type' => 'PAY_RETURN',
-                'isDeepLink' => 'Y',
+                [
+                    'url' => $returnUrl,
+                    'type' => 'PAY_RETURN',
+                    'isDeepLink' => 'Y',
+                ],
             ],
             'amount' => [
                 'value' => number_format($amount, 2, '.', ''),
@@ -894,6 +917,8 @@ class DokuService
             ],
             'additionalInfo' => [
                 'channel' => $channel,
+                'orderTitle' => $judul,
+                'supportDeepLinkCheckoutUrl' => 'true',
             ],
         ];
 
