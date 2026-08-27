@@ -19,9 +19,21 @@ class TopupController extends Controller
                 ->with('error', 'Silakan login terlebih dahulu');
         }
 
+        // DITAMBAHKAN -- halaman Riwayat Top Up sebelumnya belum pernah
+        // dibuat sama sekali, wali tidak punya cara melihat histori top
+        // up mereka.
+        $riwayat = $siswa->wallet
+            ? \App\Models\WalletTransaction::where('wallet_id', $siswa->wallet->id)
+                ->where('type', 'topup')
+                ->latest()
+                ->take(10)
+                ->get()
+            : collect();
+
         return view('wali.topup', [
             'siswa'  => $siswa,
-            'wallet' => $siswa->wallet
+            'wallet' => $siswa->wallet,
+            'riwayat' => $riwayat,
         ]);
     }
 

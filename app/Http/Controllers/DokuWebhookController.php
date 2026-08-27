@@ -255,6 +255,12 @@ class DokuWebhookController extends Controller
                     'lembaga_id' => $lembagaWallet?->id ?? 1,
                     'yayasan_id' => $lembagaWallet?->yayasan_id ?? null,
                 ]);
+
+                // DITAMBAHKAN -- top up sebelumnya tidak kirim notifikasi
+                // WA sama sekali ke wali (murni fitur yang belum dibuat).
+                if ($wallet?->siswa) {
+                    NotificationService::sendTopup($wallet->siswa, $trx);
+                }
             } else {
                 // DIPERBAIKI -- dokumentasi resmi DOKU (Best Practice --
                 // HTTP Notification): "if you are integrating with

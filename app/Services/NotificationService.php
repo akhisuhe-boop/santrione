@@ -1031,6 +1031,50 @@ class NotificationService
 
         self::wa($nomor, $pesan, $lembagaId);
     }
+
+    /**
+     * DITAMBAHKAN -- sebelumnya top up saldo tidak mengirim notifikasi
+     * apapun ke wali (beda dari sendPembayaran() untuk tagihan/SPP yang
+     * sudah lama ada) -- murni fitur yang belum dibuat, bukan bug.
+     * Pola & struktur PERSIS sama dengan sendPembayaran() di atas, pakai
+     * tipe notifikasi PEMBAYARAN yang sama (bukan bikin tipe baru,
+     * supaya toggle on/off di pengaturan Lembaga otomatis berlaku juga
+     * untuk top up tanpa kerja tambahan).
+     */
+    public static function sendTopup($siswa, $trx)
+    {
+        if (!$siswa) {
+            return;
+        }
+
+        $nomor = $siswa->wa_ayah ?? $siswa->wa_ibu;
+
+        if (!$nomor) {
+            return;
+        }
+
+        $lembagaId = $siswa->lembaga_id ?? null;
+
+        if ($lembagaId && ! \App\Models\NotificationTypeToggle::isEnabled($lembagaId, \App\Support\NotificationType::PEMBAYARAN)) {
+            return;
+        }
+
+        $nomor = self::formatPhone($nomor);
+        $tanggal = Carbon::now()->format('d M Y H:i');
+
+        $pesan =
+            "*TOP UP SALDO BERHASIL*\n\n" .
+
+            "Top up saldo telah diterima.\n\n" .
+
+            "Nama : *{$siswa->nama_lengkap}*\n" .
+            "Nominal Top Up : *Rp " . number_format($trx->amount, 0, ',', '.') . "*\n" .
+            "Tanggal : *{$tanggal}*\n\n" .
+
+            "Terima kasih.";
+
+        self::wa($nomor, $pesan, $lembagaId);
+    }
     
     /*
     |--------------------------------------------------------------------------
