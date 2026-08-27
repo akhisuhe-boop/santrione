@@ -244,6 +244,20 @@ class Pembayaran extends Model
                 'lembaga_id' => $tagihan->siswa->lembaga_id
                     ?? $tagihan->ppdb->lembaga_id
                     ?? null,
+                // DITAMBAHKAN -- BUG BESAR ditemukan: Kas pakai tenant
+                // scoping lewat kolom yayasan_id (lihat Kas::applyTenantScope()),
+                // dan Kas::booted() cuma auto-isi yayasan_id dari
+                // Filament::getTenant()/auth()->user() -- KEDUANYA null
+                // kalau baris ini dibuat dari webhook DOKU (request HTTP
+                // background, bukan sesi admin login). Akibatnya
+                // yayasan_id kosong, dan baris Kas itu TIDAK PERNAH
+                // muncul di laporan tenant manapun (WHERE yayasan_id =
+                // NULL tidak pernah cocok) -- padahal datanya sebenarnya
+                // ada di database. Diisi eksplisit di sini lewat lembaga
+                // milik siswa/ppdb, supaya tidak bergantung sesi admin.
+                'yayasan_id' => $tagihan->siswa?->lembaga?->yayasan_id
+                    ?? $tagihan->ppdb?->lembaga?->yayasan_id
+                    ?? null,
             ]);
         }
     });

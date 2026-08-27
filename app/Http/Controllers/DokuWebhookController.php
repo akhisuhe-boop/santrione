@@ -244,6 +244,12 @@ class DokuWebhookController extends Controller
                     'rekening_id' => $trx->wallet->rekening_id ?? 1,
                     'kategori_id' => 1,
                     'lembaga_id' => $trx->wallet->lembaga_id ?? 1,
+                    // DITAMBAHKAN -- bug sama seperti di Pembayaran::booted():
+                    // Kas::booted() cuma auto-isi yayasan_id dari
+                    // Filament::getTenant()/auth()->user(), keduanya null
+                    // di request webhook. Diisi eksplisit lewat lembaga
+                    // wallet, supaya baris ini tidak hilang dari laporan.
+                    'yayasan_id' => $trx->wallet->lembaga?->yayasan_id ?? null,
                 ]);
             } else {
                 // DIPERBAIKI -- dokumentasi resmi DOKU (Best Practice --
