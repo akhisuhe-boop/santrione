@@ -555,9 +555,7 @@
 
             {{-- TAHFIDZ --}}
             <a href="{{ route('wali.tahfidz') }}"
-               class="group relative p-4 rounded-2xl border border-slate-100 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
-
-                <div class="absolute -top-3 -right-3 w-16 h-16 rounded-full bg-cyan-400/20 blur-xl group-hover:bg-cyan-400/30 transition"></div>
+               class="group relative p-4 rounded-2xl border border-slate-100 bg-cyan-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
 
                 <div class="relative w-11 h-11 rounded-xl bg-cyan-500 shadow-md shadow-cyan-500/25 flex items-center justify-center mb-3">
                     <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -573,9 +571,7 @@
 
             {{-- ABSENSI --}}
             <a href="{{ route('wali.absensi') }}"
-               class="group relative p-4 rounded-2xl border border-slate-100 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
-
-                <div class="absolute -top-3 -right-3 w-16 h-16 rounded-full bg-blue-400/20 blur-xl group-hover:bg-blue-400/30 transition"></div>
+               class="group relative p-4 rounded-2xl border border-slate-100 bg-blue-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
 
                 <div class="relative w-11 h-11 rounded-xl bg-blue-500 shadow-md shadow-blue-500/25 flex items-center justify-center mb-3">
                     <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -593,9 +589,7 @@
 
             {{-- PELANGGARAN --}}
             <a href="{{ route('wali.pelanggaran') }}"
-               class="group relative p-4 rounded-2xl border border-slate-100 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
-
-                <div class="absolute -top-3 -right-3 w-16 h-16 rounded-full bg-orange-400/20 blur-xl group-hover:bg-orange-400/30 transition"></div>
+               class="group relative p-4 rounded-2xl border border-slate-100 bg-orange-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
 
                 <div class="relative w-11 h-11 rounded-xl bg-orange-500 shadow-md shadow-orange-500/25 flex items-center justify-center mb-3">
                     <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -613,9 +607,7 @@
 
             {{-- PRESTASI --}}
             <a href="{{ route('wali.prestasi') }}"
-               class="group relative p-4 rounded-2xl border border-slate-100 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
-
-                <div class="absolute -top-3 -right-3 w-16 h-16 rounded-full bg-yellow-400/20 blur-xl group-hover:bg-yellow-400/30 transition"></div>
+               class="group relative p-4 rounded-2xl border border-slate-100 bg-yellow-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
 
                 <div class="relative w-11 h-11 rounded-xl bg-yellow-500 shadow-md shadow-yellow-500/25 flex items-center justify-center mb-3">
                     <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -631,9 +623,7 @@
 
             {{-- PERIZINAN --}}
             <a href="{{ route('wali.perizinan') }}"
-               class="group relative p-4 rounded-2xl border border-slate-100 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
-
-                <div class="absolute -top-3 -right-3 w-16 h-16 rounded-full bg-violet-400/20 blur-xl group-hover:bg-violet-400/30 transition"></div>
+               class="group relative p-4 rounded-2xl border border-slate-100 bg-violet-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
 
                 <div class="relative w-11 h-11 rounded-xl bg-violet-500 shadow-md shadow-violet-500/25 flex items-center justify-center mb-3">
                     <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -649,9 +639,7 @@
 
             {{-- IZIN TIDAK MASUK --}}
             <a href="{{ route('wali.izin-tidak-masuk') }}"
-               class="group relative p-4 rounded-2xl border border-slate-100 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
-
-                <div class="absolute -top-3 -right-3 w-16 h-16 rounded-full bg-amber-400/20 blur-xl group-hover:bg-amber-400/30 transition"></div>
+               class="group relative p-4 rounded-2xl border border-slate-100 bg-amber-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
 
                 <div class="relative w-11 h-11 rounded-xl bg-amber-500 shadow-md shadow-amber-500/25 flex items-center justify-center mb-3">
                     <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -667,9 +655,7 @@
 
             {{-- RAPORT --}}
             <a href="{{ route('wali.raport') }}"
-               class="group relative p-4 rounded-2xl border border-slate-100 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
-
-                <div class="absolute -top-3 -right-3 w-16 h-16 rounded-full bg-emerald-400/20 blur-xl group-hover:bg-emerald-400/30 transition"></div>
+               class="group relative p-4 rounded-2xl border border-slate-100 bg-emerald-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
 
                 <div class="relative w-11 h-11 rounded-xl bg-emerald-500 shadow-md shadow-emerald-500/25 flex items-center justify-center mb-3">
                     <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -686,9 +672,7 @@
             {{-- KANTIN --}}
             @if (\App\Models\Yayasan::find(session('active_public_yayasan_id'))?->hasFeature(\App\Support\FeatureGate::E_KANTIN))
             <a href="{{ route('wali.kantin') }}"
-               class="group relative p-4 rounded-2xl border border-slate-100 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
-
-                <div class="absolute -top-3 -right-3 w-16 h-16 rounded-full bg-rose-400/20 blur-xl group-hover:bg-rose-400/30 transition"></div>
+               class="group relative p-4 rounded-2xl border border-slate-100 bg-rose-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
 
                 <div class="relative w-11 h-11 rounded-xl bg-rose-500 shadow-md shadow-rose-500/25 flex items-center justify-center mb-3">
                     <x-heroicon-o-shopping-bag class="w-5 h-5 text-white" />
