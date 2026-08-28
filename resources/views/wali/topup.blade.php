@@ -113,12 +113,13 @@
 
         </form>
 
-        {{-- DITAMBAHKAN -- Riwayat Top Up (sebelumnya belum ada sama sekali) --}}
-        <div class="mt-6 bg-white border border-slate-200 rounded-3xl shadow-sm p-5">
+        {{-- Riwayat Top Up -- tampil 5, sisanya bisa dibuka lewat "Lihat Semua" --}}
+        <div class="mt-6 bg-white border border-slate-200 rounded-3xl shadow-sm p-5" x-data="{ showAll: false }">
             <div class="text-sm font-semibold text-slate-900 mb-3">Riwayat Top Up</div>
 
             @forelse($riwayat ?? [] as $trx)
-                <div class="flex items-center justify-between py-2.5 {{ !$loop->last ? 'border-b border-slate-100' : '' }}">
+                <div class="flex items-center justify-between py-2.5 {{ !$loop->last ? 'border-b border-slate-100' : '' }}"
+                     @if($loop->index >= 5) x-show="showAll" x-cloak @endif>
                     <div>
                         <div class="text-sm text-slate-700">{{ $trx->created_at->translatedFormat('d M Y, H:i') }}</div>
                         <div class="text-xs text-slate-400 mt-0.5">
@@ -138,6 +139,14 @@
             @empty
                 <div class="text-sm text-slate-400 text-center py-4">Belum ada riwayat top up</div>
             @endforelse
+
+            @if(($riwayat ?? collect())->count() > 5)
+                <button type="button" @click="showAll = !showAll"
+                        class="w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-[#00A39D] pt-3 mt-1">
+                    <span x-text="showAll ? 'Sembunyikan' : 'Lihat Semua'"></span>
+                    <x-heroicon-o-chevron-down class="w-3.5 h-3.5 transition-transform" :class="{ 'rotate-180': showAll }" x-bind:class="{ 'rotate-180': showAll }" />
+                </button>
+            @endif
         </div>
     </div>
 </div>

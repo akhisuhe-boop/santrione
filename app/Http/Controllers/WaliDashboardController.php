@@ -427,7 +427,14 @@ class WaliDashboardController extends Controller
             return back()->with('error', 'Password lama tidak sesuai');
         }
 
-        $siswa->password = Hash::make($request->password);
+        // DIPERBAIKI -- model Siswa sudah pakai cast 'password' =>
+        // 'hashed' (otomatis hash setiap kali di-assign nilai baru).
+        // Manual Hash::make() di sini membuat password ter-hash DUA
+        // KALI (hash dari hash) -- akibatnya login dengan password baru
+        // TIDAK PERNAH cocok lagi (Hash::check() membandingkan password
+        // asli vs hasil double-hash, selalu gagal). Cukup assign string
+        // biasa, cast yang urus hashing-nya.
+        $siswa->password = $request->password;
         $siswa->save();
 
         return back()->with('success', 'Password berhasil diupdate');

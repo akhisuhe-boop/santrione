@@ -210,6 +210,27 @@
 
                     </span>
 
+                    <span
+                        class="
+                            px-3
+                            py-1
+
+                            rounded-full
+
+                            bg-white/15
+                            backdrop-blur-sm
+
+                            border
+                            border-white/20
+
+                            text-[11px]
+                            font-medium
+                        ">
+
+                        {{ $siswa->kelas?->nama ?? '-' }}
+
+                    </span>
+
                 </div>
 
             </div>
@@ -229,7 +250,7 @@
         <div
             class="
                 grid
-                grid-cols-3
+                grid-cols-2
                 gap-3
             ">
 
@@ -300,42 +321,6 @@
                     ">
 
                     {{ $siswa->nisn }}
-
-                </div>
-
-            </div>
-
-            <div
-                class="
-                    rounded-2xl
-
-                    bg-white/10
-                    backdrop-blur-sm
-
-                    border
-                    border-white/10
-
-                    p-3
-                ">
-
-                <div
-                    class="
-                        text-[11px]
-                        text-white/70
-                        mb-1
-                    ">
-
-                    Kelas
-
-                </div>
-
-                <div
-                    class="
-                        text-sm
-                        font-semibold
-                    ">
-
-                    {{ $siswa->kelas?->nama ?? '-' }}
 
                 </div>
 
@@ -570,7 +555,7 @@
 
             {{-- TAHFIDZ --}}
             <a href="{{ route('wali.tahfidz') }}"
-               class="group p-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-cyan-50 to-white hover:shadow-md transition">
+               class="group p-3 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 transition">
 
                 <div class="w-10 h-10 rounded-xl bg-cyan-100 flex items-center justify-center mb-2">
                     <svg class="w-5 h-5 text-cyan-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -586,7 +571,7 @@
 
             {{-- ABSENSI --}}
             <a href="{{ route('wali.absensi') }}"
-               class="group p-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-blue-50 to-white hover:shadow-md transition">
+               class="group p-3 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 transition">
 
                 <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center mb-2">
                     <svg class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -604,7 +589,7 @@
 
             {{-- PELANGGARAN --}}
             <a href="{{ route('wali.pelanggaran') }}"
-               class="group p-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-orange-50 to-white hover:shadow-md transition">
+               class="group p-3 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 transition">
 
                 <div class="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center mb-2">
                     <svg class="w-5 h-5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -622,7 +607,7 @@
 
             {{-- PRESTASI --}}
             <a href="{{ route('wali.prestasi') }}"
-               class="group p-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-yellow-50 to-white hover:shadow-md transition">
+               class="group p-3 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 transition">
 
                 <div class="w-10 h-10 rounded-xl bg-yellow-100 flex items-center justify-center mb-2">
                     <svg class="w-5 h-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -638,7 +623,7 @@
 
             {{-- PERIZINAN --}}
             <a href="{{ route('wali.perizinan') }}"
-               class="group p-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-violet-50 to-white hover:shadow-md transition">
+               class="group p-3 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 transition">
 
                 <div class="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center mb-2">
                     <svg class="w-5 h-5 text-violet-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -654,7 +639,7 @@
 
             {{-- IZIN TIDAK MASUK --}}
             <a href="{{ route('wali.izin-tidak-masuk') }}"
-               class="group p-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-amber-50 to-white hover:shadow-md transition">
+               class="group p-3 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 transition">
 
                 <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center mb-2">
                     <svg class="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -670,7 +655,7 @@
 
             {{-- RAPORT --}}
             <a href="{{ route('wali.raport') }}"
-               class="group p-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-emerald-50 to-white hover:shadow-md transition">
+               class="group p-3 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 transition">
 
                 <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center mb-2">
                     <svg class="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -687,7 +672,7 @@
             {{-- KANTIN --}}
             @if (\App\Models\Yayasan::find(session('active_public_yayasan_id'))?->hasFeature(\App\Support\FeatureGate::E_KANTIN))
             <a href="{{ route('wali.kantin') }}"
-               class="group p-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-rose-50 to-white hover:shadow-md transition">
+               class="group p-3 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 transition">
 
                 <div class="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center mb-2">
                     <x-heroicon-o-shopping-bag class="w-5 h-5 text-rose-600" />
