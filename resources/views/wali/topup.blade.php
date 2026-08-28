@@ -144,7 +144,9 @@
                 <button type="button" @click="showAll = !showAll"
                         class="w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-[#00A39D] pt-3 mt-1">
                     <span x-text="showAll ? 'Sembunyikan' : 'Lihat Semua'"></span>
-                    <x-heroicon-o-chevron-down class="w-3.5 h-3.5 transition-transform" :class="{ 'rotate-180': showAll }" x-bind:class="{ 'rotate-180': showAll }" />
+                    <span class="transition-transform" x-bind:class="{ 'rotate-180': showAll }">
+                        <x-heroicon-o-chevron-down class="w-3.5 h-3.5" />
+                    </span>
                 </button>
             @endif
         </div>
