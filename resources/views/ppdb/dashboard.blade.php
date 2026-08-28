@@ -599,7 +599,63 @@ switch ($ppdb->status) {
         
                     {{-- Tombol --}}
                     {{-- Status Pembayaran --}}
-                    @if($latestStatus == 'pending')
+                    @if($tagihanStatus == 'lunas')
+                    {{-- DIPERBAIKI -- prioritas tertinggi: kalau
+                         TAGIHAN sudah lunas (sumber kebenaran yang sama
+                         dipakai badge di atas), tombol "Bayar Sekarang"
+                         WAJIB disembunyikan -- sebelumnya syaratnya
+                         ganda ($latestStatus=='sukses' JUGA harus
+                         cocok), jadi kalau record Pembayaran terakhir
+                         null/tidak ketemu, tombol tetap muncul padahal
+                         badge sudah bilang LUNAS. --}}
+
+                        <div
+                            class="mt-3
+                                   rounded-xl
+                                   border
+                                   border-[#00A39D]/20
+                                   bg-[#00A39D]/5
+                                   p-3">
+
+                            <div class="flex items-center gap-3">
+
+                                <div
+                                    class="w-10 h-10
+                                           rounded-xl
+                                           bg-[#00A39D]/10
+                                           flex items-center justify-center">
+
+                                    <x-heroicon-o-check-badge
+                                        class="w-5 h-5 text-[#00A39D]"/>
+
+                                </div>
+
+                                <div>
+
+                                    <div
+                                        class="text-sm
+                                               font-semibold
+                                               text-[#00A39D]">
+
+                                        Pembayaran Berhasil
+
+                                    </div>
+
+                                    <div
+                                        class="text-xs
+                                               text-slate-500">
+
+                                        Silakan lanjut ke tahap berikutnya.
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    @elseif($latestStatus == 'pending')
                     
                         <div
                             class="mt-3
@@ -638,54 +694,6 @@ switch ($ppdb->status) {
                     
                         </div>
                     
-                    @elseif($latestStatus == 'sukses' && $tagihanStatus == 'lunas')
-                    
-                        <div
-                            class="mt-3
-                                   rounded-xl
-                                   border
-                                   border-[#00A39D]/20
-                                   bg-[#00A39D]/5
-                                   p-3">
-                    
-                            <div class="flex items-center gap-3">
-                    
-                                <div
-                                    class="w-10 h-10
-                                           rounded-xl
-                                           bg-[#00A39D]/10
-                                           flex items-center justify-center">
-                    
-                                    <x-heroicon-o-check-badge
-                                        class="w-5 h-5 text-[#00A39D]"/>
-                    
-                                </div>
-                    
-                                <div>
-                    
-                                    <div
-                                        class="text-sm
-                                               font-semibold
-                                               text-[#00A39D]">
-                    
-                                        Pembayaran Berhasil
-                    
-                                    </div>
-                    
-                                    <div
-                                        class="text-xs
-                                               text-slate-500">
-                    
-                                        Silakan lanjut ke tahap berikutnya.
-                    
-                                    </div>
-                    
-                                </div>
-                    
-                            </div>
-                    
-                        </div>
-
                     @elseif($latestStatus == 'sukses' && $tagihanStatus == 'sebagian')
 
                         <div

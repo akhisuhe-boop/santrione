@@ -98,6 +98,12 @@ class PpdbPembayaranController extends Controller
         $amount = (int) ($tagihan->nominal - $tagihan->nominal_terbayar);
         $referenceId = 'PPDB-' . $tagihan->id . '-' . time();
         $channel = $request->payment_method;
+        // DITAMBAHKAN -- disamakan dengan WaliDashboardController::doku()
+        // & TopupController::store(): biaya admin (fee Qinara + estimasi
+        // fee DOKU per channel) sebelumnya TIDAK dikenakan sama sekali
+        // untuk PPDB, sekarang disamakan.
+        $feeAdmin = \App\Services\DokuService::hitungFeeTotal($amount, $channel);
+        $amountCharged = $amount + $feeAdmin;
 
         $lembaga = $ppdb->lembaga;
         $customerName = $ppdb->nama_lengkap ?? $ppdb->nama ?? 'Pendaftar PPDB';
@@ -116,7 +122,7 @@ class PpdbPembayaranController extends Controller
                 // sandbox, VA SNAP/DOKU Checkout Link TIDAK ANDAL.
                 $result = $doku->buatVaLangsung(
                     referenceId: $referenceId,
-                    amount: $amount,
+                    amount: $amountCharged,
                     judul: $tagihan->judul,
                     customerName: $customerName,
                     customerEmail: $customerEmail,
@@ -135,7 +141,7 @@ class PpdbPembayaranController extends Controller
                 // aktivasi selesai, bukan bug kode.
                 $result = $doku->buatQris(
                     referenceId: $referenceId,
-                    amount: $amount,
+                    amount: $amountCharged,
                 );
 
                 $qrString = $result['qrContent'] ?? $result['qrUrl'] ?? null;
@@ -147,7 +153,7 @@ class PpdbPembayaranController extends Controller
                 $result = $doku->buatEwalletSnap(
                     channel: $channel === 'DANA' ? 'EMONEY_DANA_SNAP' : 'EMONEY_SHOPEE_PAY_SNAP',
                     referenceId: $referenceId,
-                    amount: $amount,
+                    amount: $amountCharged,
                     returnUrl: route('ppdb.pembayaran'),
                     judul: $tagihan->judul,
                 );
@@ -161,7 +167,7 @@ class PpdbPembayaranController extends Controller
                 $result = $doku->buatOtc(
                     toko: $channel,
                     referenceId: $referenceId,
-                    amount: $amount,
+                    amount: $amountCharged,
                     customerName: $customerName,
                     customerEmail: $customerEmail,
                 );
@@ -175,7 +181,7 @@ class PpdbPembayaranController extends Controller
             } else { // OVO
                 $result = $doku->buatOvo(
                     referenceId: $referenceId,
-                    amount: $amount,
+                    amount: $amountCharged,
                     ovoId: $request->ovo_phone,
                 );
 
@@ -183,6 +189,7 @@ class PpdbPembayaranController extends Controller
                     'tagihan_id' => $tagihan->id,
                     'siswa_id' => $tagihan->siswa_id,
                     'nominal' => $amount,
+                    'fee_admin' => $feeAdmin,
                     'metode' => 'gateway',
                     'gateway' => 'doku',
                     'status' => 'pending',
@@ -205,6 +212,7 @@ class PpdbPembayaranController extends Controller
             'tagihan_id' => $tagihan->id,
             'siswa_id' => $tagihan->siswa_id,
             'nominal' => $amount,
+            'fee_admin' => $feeAdmin,
             'metode' => 'gateway',
             'gateway' => 'doku',
             'status' => 'pending',
@@ -222,6 +230,8 @@ class PpdbPembayaranController extends Controller
             'referenceId' => $referenceId,
             'judul' => $tagihan->judul,
             'amount' => $amount,
+            'feeAdmin' => $feeAdmin,
+            'amountCharged' => $amountCharged,
             'channel' => $channel,
             'bankDipilih' => $request->bank,
             'vaNumber' => $vaNumber,

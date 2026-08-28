@@ -322,6 +322,24 @@ class DokuWebhookController extends Controller
                 if ($pembayaran->siswa) {
                     NotificationService::sendPembayaran($pembayaran->siswa, $pembayaran);
                 }
+
+                // DITAMBAHKAN -- BUG ditemukan: afterPaid() (yang antara
+                // lain memajukan status PPDB dari 'menunggu_pembayaran'
+                // ke 'formulir', dan transisi tipe_sistem lain seperti
+                // daftar_ulang_ppdb) sebelumnya CUMA dipanggil dari
+                // action manual admin di PembayaranResource -- TIDAK
+                // PERNAH dari webhook pembayaran gateway otomatis ini.
+                // Akibatnya PPDB/wali yang bayar via DOKU tidak pernah
+                // otomatis lanjut ke tahap berikutnya, harus nunggu
+                // admin buka manual. Dipanggil di sini juga, PERSIS
+                // syarat yang sama seperti flow admin: hanya kalau
+                // tagihan benar-benar LUNAS (bukan pembayaran
+                // sebagian/cicilan).
+                $tagihan = $pembayaran->tagihan()->first();
+
+                if ($tagihan && $tagihan->status === 'lunas') {
+                    \App\Services\TagihanService::afterPaid($tagihan);
+                }
             } else {
                 // DIPERBAIKI -- lihat catatan di handleTopup() di atas
                 // (dokumentasi resmi DOKU: abaikan transaction.status
