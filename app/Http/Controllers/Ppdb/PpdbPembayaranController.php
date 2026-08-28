@@ -84,8 +84,15 @@ class PpdbPembayaranController extends Controller
 
         abort_if($tagihan->ppdb_id != $ppdb->id, 403);
 
+        // DIPERLUAS -- sebelumnya cuma VA & QRIS, sekarang channelnya
+        // disamakan dengan WaliDashboardController::doku() /
+        // TopupController::store() (DANA, ShopeePay, OVO, Alfamart,
+        // Indomaret ikut ditambahkan) supaya UI "Metode Pembayaran"
+        // PPDB konsisten dengan pembayaran tagihan/top up.
         $request->validate([
-            'payment_method' => 'required|in:VA,QRIS',
+            'payment_method' => 'required|in:VA,QRIS,DANA,SHOPEEPAY,ALFAMART,INDOMARET,OVO',
+            'bank' => 'nullable|in:BCA,BNI,BRI,BSI,MANDIRI,BJB',
+            'ovo_phone' => 'required_if:payment_method,OVO|nullable|string|min:9|max:15',
         ]);
 
         $amount = (int) ($tagihan->nominal - $tagihan->nominal_terbayar);
@@ -93,8 +100,14 @@ class PpdbPembayaranController extends Controller
         $channel = $request->payment_method;
 
         $lembaga = $ppdb->lembaga;
+        $customerName = $ppdb->nama_lengkap ?? $ppdb->nama ?? 'Pendaftar PPDB';
+        $customerEmail = \App\Services\DokuService::emailAman($ppdb->email ?? null, $ppdb->wa_wali ?? $ppdb->id);
+
         $vaNumber = null;
         $qrString = null;
+        $paymentCode = null;
+        $redirectUrl = null;
+        $howToPayPage = null;
 
         try {
             if ($channel === 'VA') {
@@ -105,17 +118,18 @@ class PpdbPembayaranController extends Controller
                     referenceId: $referenceId,
                     amount: $amount,
                     judul: $tagihan->judul,
-                    customerName: $ppdb->nama_lengkap ?? $ppdb->nama ?? 'Pendaftar PPDB',
-                    customerEmail: \App\Services\DokuService::emailAman($ppdb->email ?? null, $ppdb->wa_wali ?? $ppdb->id),
+                    customerName: $customerName,
+                    customerEmail: $customerEmail,
                     dokuSubAccountId: $lembaga?->doku_sub_account_id,
                 );
 
                 $vaNumber = $result['virtual_account_info']['virtual_account_number'] ?? null;
+                $howToPayPage = $result['virtual_account_info']['how_to_pay_page'] ?? null;
 
                 if (!$vaNumber) {
                     return back()->with('error', \App\Services\DokuService::pesanAman($result['message'] ?? $result['error']['message'] ?? null));
                 }
-            } else {
+            } elseif ($channel === 'QRIS') {
                 // CATATAN: QRIS belum aktif di akun DOKU ini (proses
                 // aktivasi oleh support DOKU) -- akan gagal sampai
                 // aktivasi selesai, bukan bug kode.
@@ -129,6 +143,59 @@ class PpdbPembayaranController extends Controller
                 if (!$qrString) {
                     return back()->with('error', \App\Services\DokuService::pesanAman($result['message'] ?? $result['responseMessage'] ?? null));
                 }
+            } elseif (in_array($channel, ['DANA', 'SHOPEEPAY'], true)) {
+                $result = $doku->buatEwalletSnap(
+                    channel: $channel === 'DANA' ? 'EMONEY_DANA_SNAP' : 'EMONEY_SHOPEE_PAY_SNAP',
+                    referenceId: $referenceId,
+                    amount: $amount,
+                    returnUrl: route('ppdb.pembayaran'),
+                    judul: $tagihan->judul,
+                );
+
+                $redirectUrl = $result['webRedirectUrl'] ?? null;
+
+                if (!$redirectUrl) {
+                    return back()->with('error', \App\Services\DokuService::pesanAman($result['responseMessage'] ?? null));
+                }
+            } elseif (in_array($channel, ['ALFAMART', 'INDOMARET'], true)) {
+                $result = $doku->buatOtc(
+                    toko: $channel,
+                    referenceId: $referenceId,
+                    amount: $amount,
+                    customerName: $customerName,
+                    customerEmail: $customerEmail,
+                );
+
+                $paymentCode = $result['online_to_offline_info']['payment_code'] ?? null;
+                $howToPayPage = $result['online_to_offline_info']['how_to_pay_page'] ?? null;
+
+                if (!$paymentCode) {
+                    return back()->with('error', \App\Services\DokuService::pesanAman($result['message'] ?? $result['error']['message'] ?? null));
+                }
+            } else { // OVO
+                $result = $doku->buatOvo(
+                    referenceId: $referenceId,
+                    amount: $amount,
+                    ovoId: $request->ovo_phone,
+                );
+
+                Pembayaran::create([
+                    'tagihan_id' => $tagihan->id,
+                    'siswa_id' => $tagihan->siswa_id,
+                    'nominal' => $amount,
+                    'metode' => 'gateway',
+                    'gateway' => 'doku',
+                    'status' => 'pending',
+                    'reference' => $referenceId,
+                ]);
+
+                $statusOvo = $result['transaction']['status'] ?? null;
+
+                return redirect()->route('ppdb.pembayaran')
+                    ->with(
+                        $statusOvo === 'SUCCESS' ? 'success' : 'error',
+                        'Status OVO: ' . \App\Services\DokuService::pesanAman($result['message'] ?? null, 'Menunggu konfirmasi dari HP Anda')
+                    );
             }
         } catch (\Throwable $e) {
             return back()->with('error', 'Gagal membuat pembayaran: ' . $e->getMessage());
@@ -144,6 +211,10 @@ class PpdbPembayaranController extends Controller
             'reference' => $referenceId,
         ]);
 
+        if ($redirectUrl) {
+            return redirect()->away($redirectUrl);
+        }
+
         return view('payment.checkout', [
             'layout' => 'ppdb.layout.ppdb',
             'namaLembaga' => $lembaga?->nama ?? $ppdb->lembaga?->yayasan?->nama ?? 'Qinara',
@@ -152,9 +223,12 @@ class PpdbPembayaranController extends Controller
             'judul' => $tagihan->judul,
             'amount' => $amount,
             'channel' => $channel,
+            'bankDipilih' => $request->bank,
             'vaNumber' => $vaNumber,
             'qrString' => $qrString,
-            'countdownTo' => now()->addMinutes(60)->toIso8601String(),
+            'paymentCode' => $paymentCode,
+            'howToPayPage' => $howToPayPage,
+            'countdownTo' => now()->addMinutes(in_array($channel, ['ALFAMART', 'INDOMARET'], true) ? 1440 : 60)->toIso8601String(),
             'statusUrl' => route('ppdb.pembayaran.doku.status', $referenceId),
             'successUrl' => route('ppdb.pembayaran'),
         ]);
