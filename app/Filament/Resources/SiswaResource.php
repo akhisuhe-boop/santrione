@@ -446,6 +446,104 @@ class SiswaResource extends BaseResource
                         ->success()
                         ->send();
                 }),
+
+                // 🔥 PERUBAHAN 29 Agt 2026: upload banyak foto siswa
+                // SEKALIGUS (drag & drop), tidak perlu lagi lewat
+                // SFTP/SSH manual. Nama FILE ASLI yang di-upload harus
+                // persis NIS (mis. 26271001.jpg) -- dipakai SEKALI
+                // buat cocokkan ke siswa, sebelum diproses.
+                //
+                // Disimpan ke R2 (bukan disk lokal), dikonversi ke
+                // WebP, PERSIS mengikuti pola yang SUDAH dipakai upload
+                // foto satu-satu di atas (lihat FileUpload::make('foto')
+                // -- disk('r2-public'), folder 'siswa-photos', cover
+                // (800,1000), quality 80) -- supaya semua foto siswa
+                // (satu-satu maupun massal) konsisten format & lokasinya.
+                // Pola yang sama juga baru dibuat untuk Pegawai, lihat
+                // PegawaiResource.php.
+                //
+                // CATATAN: ini terpisah dari fitur "foto otomatis" di
+                // SiswaImport.php (yang masih cari file di folder lokal
+                // storage/app/public/foto-siswa/ SAAT Import Excel
+                // dijalankan) -- tombol ini adalah cara BARU yang
+                // menggantikannya (tidak perlu upload file ke server
+                // dulu secara manual), tapi kode lama itu belum dihapus,
+                // masih ikut jalan berbarengan kalau memang folder
+                // lokalnya diisi manual.
+                Tables\Actions\Action::make('uploadFotoMassal')
+                    ->label('Upload Foto Massal')
+                    ->modalSubmitActionLabel('Upload & Pasangkan')
+                    ->color('info')
+                    ->icon('heroicon-o-photo')
+                    ->form([
+
+                        Placeholder::make('petunjuk_foto_massal_siswa')
+                            ->label('Petunjuk')
+                            ->content(new \Illuminate\Support\HtmlString(
+                                'Nama tiap file foto <b>HARUS PERSIS SAMA</b> dengan NIS siswa yang bersangkutan.<br>' .
+                                'Contoh: siswa dengan NIS <code>26271001</code> → nama file harus <code>26271001.jpg</code> (atau .png).<br>' .
+                                'Bisa pilih/drag banyak file foto sekaligus di bawah ini — sistem otomatis mencocokkan ke siswa yang NIS-nya sesuai, dan foto disimpan ke R2 (format WebP), sama seperti upload foto satu-satu.'
+                            )),
+
+                        FileUpload::make('foto_massal_siswa')
+                            ->label('Pilih Foto Siswa (bisa banyak sekaligus)')
+                            ->multiple()
+                            ->image()
+                            ->maxSize(2048)
+                            ->saveUploadedFileUsing(function ($file) {
+                                $namaAsli = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+
+                                $webp = Image::decode(file_get_contents($file->getRealPath()))
+                                    ->cover(800, 1000)
+                                    ->encodeUsingFileExtension('webp', quality: 80);
+
+                                $filename = 'siswa-photos/' . uniqid() . '.webp';
+
+                                \Illuminate\Support\Facades\Storage::disk('r2-public')->put($filename, (string) $webp);
+
+                                \Illuminate\Support\Facades\Cache::put(
+                                    'foto-massal-siswa-nis:' . $filename,
+                                    $namaAsli,
+                                    now()->addMinutes(10)
+                                );
+
+                                return $filename;
+                            })
+                            ->required(),
+
+                    ])
+                    ->action(function (array $data) {
+
+                        $files = $data['foto_massal_siswa'] ?? [];
+                        $cocok = 0;
+                        $tidakCocok = [];
+
+                        foreach ($files as $filePath) {
+                            $nis = \Illuminate\Support\Facades\Cache::pull('foto-massal-siswa-nis:' . $filePath);
+
+                            if (! $nis) {
+                                $tidakCocok[] = basename($filePath) . ' (info NIS hilang, coba upload ulang)';
+                                continue;
+                            }
+
+                            $siswa = \App\Models\Siswa::where('nis', $nis)->first();
+
+                            if ($siswa) {
+                                $siswa->update(['foto' => $filePath]);
+                                $cocok++;
+                            } else {
+                                $tidakCocok[] = "NIS {$nis} tidak ditemukan di data siswa manapun";
+                            }
+                        }
+
+                        \Filament\Notifications\Notification::make()
+                            ->title("Upload selesai — {$cocok} foto berhasil dipasangkan ke siswa")
+                            ->body(count($tidakCocok) > 0
+                                ? 'Nama file berikut TIDAK cocok dengan NIS siswa manapun (cek lagi penamaannya): ' . implode(', ', $tidakCocok)
+                                : null)
+                            ->color(count($tidakCocok) > 0 ? 'warning' : 'success')
+                            ->send();
+                    }),
                 
                 Action::make('export')
                 ->label('Export Excel')
