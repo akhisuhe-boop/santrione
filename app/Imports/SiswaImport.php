@@ -13,6 +13,8 @@ use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
+use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
+use Carbon\Carbon;
 
 class SiswaImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFailure, ShouldQueue, WithChunkReading
 {
@@ -55,6 +57,39 @@ class SiswaImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFai
         return 100;
     }
 
+    /**
+     * PERUBAHAN 29 Agt 2026: kalau kolom tanggal lahir di Excel
+     * diformat sebagai TANGGAL beneran (bukan teks), PhpSpreadsheet
+     * membaca isinya sebagai angka SERIAL internal Excel (mis. 43745),
+     * bukan string "2019-10-07" -- MySQL menolak angka mentah itu
+     * disimpan ke kolom date ("Incorrect date value"). Method ini
+     * mendeteksi & mengonversi kedua kemungkinan bentuk (angka serial
+     * ATAU teks tanggal biasa) jadi format Y-m-d yang valid. Kalau
+     * tidak bisa di-parse sama sekali, kembalikan null (skip kolom itu
+     * saja untuk baris ini) -- BUKAN melempar error yang mematikan
+     * seluruh proses import.
+     */
+    protected function parseTanggalLahir($value): ?string
+    {
+        if (empty($value)) {
+            return null;
+        }
+
+        if (is_numeric($value)) {
+            try {
+                return ExcelDate::excelToDateTimeObject($value)->format('Y-m-d');
+            } catch (\Throwable $e) {
+                return null;
+            }
+        }
+
+        try {
+            return Carbon::parse($value)->format('Y-m-d');
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
     public function model(array $row)
     {
         // Restore tenant context: job ini jalan di queue worker (tanpa
@@ -88,51 +123,66 @@ class SiswaImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFai
             [
                 'lembaga_id' => $row['lembaga_id'],
                 'kelas_id' => $row['kelas_id'],
-                'rfid' => $row['rfid'],
-                'nisn' => $row['nisn'],
-                'nik' => $row['nik'],
                 'nama_lengkap' => $row['nama_lengkap'],
                 'jenis_kelamin' => $row['jenis_kelamin'],
-                'tempat_lahir' => $row['tempat_lahir'],
-                'tanggal_lahir' => $row['tanggal_lahir'],
 
-                'tinggi_badan' => $row['tinggi_badan'],
-                'berat_badan' => $row['berat_badan'],
-                'golongan_darah' => $row['golongan_darah'],
+                // PERUBAHAN 27 Agt 2026: semua kolom OPSIONAL di bawah
+                // ini (tidak ada di rules() -- lihat method rules())
+                // sekarang pakai `?? null`, bukan akses langsung
+                // $row['xxx']. Sebelumnya, kalau 1 SAJA kolom ini hilang
+                // atau nama headernya beda di file Excel yang di-upload,
+                // PHP melempar "Undefined array key" dan MEMATIKAN
+                // SELURUH job import (bukan cuma skip baris/kolom itu) --
+                // ini yang bikin import "sedang diproses" tidak
+                // pernah selesai/data tidak pernah masuk. Kolom WAJIB
+                // (nis, lembaga_id, kelas_id, nama_lengkap,
+                // jenis_kelamin) TIDAK diubah -- itu sudah dijamin ada
+                // lewat rules() + SkipsOnFailure sebelum sampai ke sini.
+                'rfid' => $row['rfid'] ?? null,
+                'nisn' => $row['nisn'] ?? null,
+                'nik' => $row['nik'] ?? null,
+                'tempat_lahir' => $row['tempat_lahir'] ?? null,
+                // PERUBAHAN 29 Agt 2026: pakai parseTanggalLahir(),
+                // bukan akses langsung -- lihat komentar method itu.
+                'tanggal_lahir' => $this->parseTanggalLahir($row['tanggal_lahir'] ?? null),
 
-                'alamat_jalan' => $row['alamat_jalan'],
-                'provinsi' => $row['provinsi'],
-                'kabupaten' => $row['kabupaten'],
-                'kecamatan' => $row['kecamatan'],
-                'desa' => $row['desa'],
-                'kode_pos' => $row['kode_pos'],
+                'tinggi_badan' => $row['tinggi_badan'] ?? null,
+                'berat_badan' => $row['berat_badan'] ?? null,
+                'golongan_darah' => $row['golongan_darah'] ?? null,
 
-                'no_kartu_keluarga' => $row['no_kartu_keluarga'],
+                'alamat_jalan' => $row['alamat_jalan'] ?? null,
+                'provinsi' => $row['provinsi'] ?? null,
+                'kabupaten' => $row['kabupaten'] ?? null,
+                'kecamatan' => $row['kecamatan'] ?? null,
+                'desa' => $row['desa'] ?? null,
+                'kode_pos' => $row['kode_pos'] ?? null,
 
-                'nik_ayah' => $row['nik_ayah'],
-                'nama_ayah' => $row['nama_ayah'],
-                'status_ayah' => $row['status_ayah'],
-                'pekerjaan_ayah' => $row['pekerjaan_ayah'],
-                'pendidikan_ayah' => $row['pendidikan_ayah'],
-                'penghasilan_ayah' => $row['penghasilan_ayah'],
-                'wa_ayah' => $row['wa_ayah'],
+                'no_kartu_keluarga' => $row['no_kartu_keluarga'] ?? null,
 
-                'nik_ibu' => $row['nik_ibu'],
-                'nama_ibu' => $row['nama_ibu'],
-                'status_ibu' => $row['status_ibu'],
-                'pekerjaan_ibu' => $row['pekerjaan_ibu'],
-                'pendidikan_ibu' => $row['pendidikan_ibu'],
-                'penghasilan_ibu' => $row['penghasilan_ibu'],
-                'wa_ibu' => $row['wa_ibu'],
+                'nik_ayah' => $row['nik_ayah'] ?? null,
+                'nama_ayah' => $row['nama_ayah'] ?? null,
+                'status_ayah' => $row['status_ayah'] ?? null,
+                'pekerjaan_ayah' => $row['pekerjaan_ayah'] ?? null,
+                'pendidikan_ayah' => $row['pendidikan_ayah'] ?? null,
+                'penghasilan_ayah' => $row['penghasilan_ayah'] ?? null,
+                'wa_ayah' => $row['wa_ayah'] ?? null,
 
-                'nik_wali' => $row['nik_wali'],
-                'nama_wali' => $row['nama_wali'],
-                'hubungan_wali' => $row['hubungan_wali'],
-                'status_wali' => $row['status_wali'],
-                'pekerjaan_wali' => $row['pekerjaan_wali'],
-                'pendidikan_wali' => $row['pendidikan_wali'],
-                'penghasilan_wali' => $row['penghasilan_wali'],
-                'wa_wali' => $row['wa_wali'],
+                'nik_ibu' => $row['nik_ibu'] ?? null,
+                'nama_ibu' => $row['nama_ibu'] ?? null,
+                'status_ibu' => $row['status_ibu'] ?? null,
+                'pekerjaan_ibu' => $row['pekerjaan_ibu'] ?? null,
+                'pendidikan_ibu' => $row['pendidikan_ibu'] ?? null,
+                'penghasilan_ibu' => $row['penghasilan_ibu'] ?? null,
+                'wa_ibu' => $row['wa_ibu'] ?? null,
+
+                'nik_wali' => $row['nik_wali'] ?? null,
+                'nama_wali' => $row['nama_wali'] ?? null,
+                'hubungan_wali' => $row['hubungan_wali'] ?? null,
+                'status_wali' => $row['status_wali'] ?? null,
+                'pekerjaan_wali' => $row['pekerjaan_wali'] ?? null,
+                'pendidikan_wali' => $row['pendidikan_wali'] ?? null,
+                'penghasilan_wali' => $row['penghasilan_wali'] ?? null,
+                'wa_wali' => $row['wa_wali'] ?? null,
 
                 'status_siswa' => $row['status_siswa'] ?? 'Aktif',
 
