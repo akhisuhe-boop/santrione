@@ -353,12 +353,20 @@ class DokuService
         string $channel = 'QRIS',
         ?string $bank = null,
         ?string $dokuSubAccountId = null,
-        ?string $notificationPath = null
+        ?string $callbackUrl = null
     ): array {
+        // DIPERBAIKI -- dicocokkan persis dengan skema resmi
+        // developers.doku.com/accept-payments/doku-checkout/integration-guide/backend-integration:
+        // order.currency & order.auto_redirect ditambahkan (auto_redirect
+        // ditandai Mandatory di dokumentasi resmi, sebelumnya tidak
+        // dikirim sama sekali).
         $order = [
-            'invoice_number' => $referenceId,
             'amount' => $amount,
-            'callback_url' => url('/wali/keuangan'),
+            'invoice_number' => $referenceId,
+            'currency' => 'IDR',
+            'callback_url' => $callbackUrl ?? url('/wali/keuangan'),
+            'callback_url_result' => $callbackUrl ?? url('/wali/keuangan'),
+            'auto_redirect' => true,
         ];
 
         $body = [
@@ -386,9 +394,6 @@ class DokuService
         Log::info('DokuService::buatPaymentRequest sukses', [
             'reference' => $referenceId,
             'channel' => $channel,
-            // Full response body sengaja di-log supaya bisa dicocokkan
-            // field URL/nomor VA yang benar (nama field masih tebakan
-            // sampai ada respons sandbox asli).
             'full_response' => $result,
         ]);
 
@@ -397,36 +402,32 @@ class DokuService
 
     /**
      * Terjemahkan pilihan bank/kanal dari UI Qinara ke daftar
-     * `payment_method_types` yang dikenali DOKU Checkout (persis nama
-     * enum yang terlihat di respons sandbox: VIRTUAL_ACCOUNT_BCA,
-     * VIRTUAL_ACCOUNT_BRI, VIRTUAL_ACCOUNT_BNI,
-     * VIRTUAL_ACCOUNT_BANK_SYARIAH_MANDIRI (BSI),
-     * VIRTUAL_ACCOUNT_BANK_MANDIRI, EMONEY_OVO, EMONEY_DANA,
-     * EMONEY_SHOPEE_PAY). Kalau kosong, DOKU otomatis tampilkan SEMUA
-     * kanal yang aktif untuk akun ini.
+     * `payment_method_types` yang dikenali DOKU Checkout -- DIPERBAIKI &
+     * DILENGKAPI, dicocokkan persis dengan daftar enum resmi di
+     * developers.doku.com/accept-payments/doku-checkout/integration-guide/backend-integration
+     * (contoh body "Full Request" mereka). Sebelumnya cuma menangani VA
+     * + sebagian e-wallet; ALFAMART/INDOMARET/OVO/QRIS belum dipetakan
+     * sama sekali (jatuh ke default kosong).
      */
     protected function paymentMethodTypes(string $channel, ?string $bank): array
     {
-        // CATATAN: nama field 'payment_method_types' di BODY REQUEST ini
-        // masih perlu dikonfirmasi -- yang PASTI terverifikasi dari
-        // sandbox adalah field ini muncul di RESPONS (daftar kanal yang
-        // tersedia), belum tentu persis field yang sama dipakai untuk
-        // MEMPERSEMPIT pilihan di request. Kalau field ini ternyata
-        // diabaikan DOKU, dampaknya cuma kosmetik -- Checkout tetap
-        // jalan, wali murid cuma lihat semua kanal alih-alih kanal yang
-        // dia klik duluan di Qinara. Tidak mempengaruhi keberhasilan
-        // pembayaran.
-        return match (true) {
-            strtoupper($channel) === 'VA' && $bank === 'BCA' => ['VIRTUAL_ACCOUNT_BCA'],
-            strtoupper($channel) === 'VA' && $bank === 'BNI' => ['VIRTUAL_ACCOUNT_BNI'],
-            strtoupper($channel) === 'VA' && $bank === 'BRI' => ['VIRTUAL_ACCOUNT_BRI'],
-            strtoupper($channel) === 'VA' && $bank === 'BSI' => ['VIRTUAL_ACCOUNT_BANK_SYARIAH_MANDIRI'],
-            strtoupper($channel) === 'VA' && $bank === 'MANDIRI' => ['VIRTUAL_ACCOUNT_BANK_MANDIRI'],
-            strtoupper($channel) === 'EWALLET' && $bank === 'OV' => ['EMONEY_OVO'],
-            strtoupper($channel) === 'EWALLET' && $bank === 'DA' => ['EMONEY_DANA'],
-            strtoupper($channel) === 'EWALLET' && $bank === 'SP' => ['EMONEY_SHOPEE_PAY'],
-            strtoupper($channel) === 'QRIS' => [], // biarkan DOKU tampilkan opsi QRIS + lainnya
-            default => [],
+        return match (strtoupper($channel)) {
+            'VA' => match (strtoupper((string) $bank)) {
+                'BCA' => ['VIRTUAL_ACCOUNT_BCA'],
+                'BNI' => ['VIRTUAL_ACCOUNT_BNI'],
+                'BRI' => ['VIRTUAL_ACCOUNT_BRI'],
+                'BSI' => ['VIRTUAL_ACCOUNT_BANK_SYARIAH_MANDIRI'],
+                'MANDIRI' => ['VIRTUAL_ACCOUNT_BANK_MANDIRI'],
+                'BJB' => ['VIRTUAL_ACCOUNT_BNC'], // BJB tidak ada di daftar resmi Checkout -- BNC dipakai sbg VA universal DOKU terdekat, WAJIB dicek ulang kalau bank BJB dipakai
+                default => ['VIRTUAL_ACCOUNT_DOKU'], // VA universal DOKU kalau bank tidak dipilih/dikenali
+            },
+            'QRIS' => ['QRIS'],
+            'DANA' => ['EMONEY_DANA'],
+            'SHOPEEPAY' => ['EMONEY_SHOPEEPAY'],
+            'OVO' => ['EMONEY_OVO'],
+            'ALFAMART' => ['ONLINE_TO_OFFLINE_ALFA'],
+            'INDOMARET' => ['ONLINE_TO_OFFLINE_INDOMARET'],
+            default => [], // kosong -- DOKU tampilkan semua kanal aktif
         };
     }
 
@@ -434,17 +435,30 @@ class DokuService
      * Verifikasi signature notifikasi (webhook) DOKU -- implementasi
      * PERSIS contoh resmi DOKU (Best Practice -- HTTP Notification),
      * termasuk perhitungan Digest dari raw notification body.
+     *
+     * DIPERBAIKI -- BUG BESAR ditemukan: parameter $headers sebelumnya
+     * diisi langsung dari `$request->headers->all()` di
+     * DokuWebhookController, yang di Laravel mengembalikan SETIAP nilai
+     * header sebagai ARRAY (mis. ['client-id' => ['BRN-0216-...']]),
+     * BUKAN string. Saat di-interpolasi ke string
+     * ("Client-Id:{$clientId}"), PHP diam-diam mengubah array itu jadi
+     * literal teks "Array" -- jadi signature yang kita hitung SELALU
+     * salah, verifikasi SELALU gagal, dan SETIAP notifikasi Non-SNAP
+     * dari DOKU (termasuk VA universal yang baru terbukti sukses)
+     * ditolak 403 sebelum sempat memproses pembayaran. Method ini
+     * sekarang menerima 4 string langsung (dipanggil dengan
+     * $request->header('Client-Id') dkk di controller, yang SUDAH
+     * mengembalikan string, bukan array) supaya tidak ada lagi celah
+     * seperti ini.
      */
     public function verifyNotificationSignature(
-        array $headers,
+        ?string $clientId,
+        ?string $requestId,
+        ?string $timestamp,
+        ?string $signature,
         string $rawBody,
         string $notificationPath
     ): bool {
-        $clientId = $headers['client-id'] ?? $headers['Client-Id'] ?? null;
-        $requestId = $headers['request-id'] ?? $headers['Request-Id'] ?? null;
-        $timestamp = $headers['request-timestamp'] ?? $headers['Request-Timestamp'] ?? null;
-        $signature = $headers['signature'] ?? $headers['Signature'] ?? null;
-
         if (! $clientId || ! $requestId || ! $timestamp || ! $signature) {
             return false;
         }
@@ -544,11 +558,39 @@ class DokuService
      * sama seperti channel lain sebelumnya: log full response dulu,
      * baru pastikan field yang dipakai).
      */
+    /**
+     * Peta kode bank internal Qinara -> nama channel resmi DOKU yang
+     * dipakai di field `additionalInfo.channel` -- KONFIRMASI dari
+     * respons error sandbox: field ini WAJIB diisi
+     * ("Invalid Mandatory Field {additionalInfo.channel}"). Nama
+     * channel per bank diambil dari daftar `payment_method_types` yang
+     * SUDAH TERKONFIRMASI muncul di respons DOKU Checkout sebelumnya
+     * (VIRTUAL_ACCOUNT_BCA, VIRTUAL_ACCOUNT_BANK_MANDIRI, dst) --
+     * KECUALI BJB yang belum pernah terlihat eksplisit di respons
+     * manapun, jadi nama channel-nya masih TEBAKAN mengikuti pola
+     * penamaan bank lain (VIRTUAL_ACCOUNT_BANK_{NAMA}), WAJIB
+     * dicocokkan kalau BJB dites dan gagal lagi.
+     */
+    protected function vaSnapChannelName(string $bankKode): string
+    {
+        return match (strtoupper($bankKode)) {
+            'BCA' => 'VIRTUAL_ACCOUNT_BCA',
+            'BNI' => 'VIRTUAL_ACCOUNT_BNI',
+            'BRI' => 'VIRTUAL_ACCOUNT_BRI',
+            'MANDIRI' => 'VIRTUAL_ACCOUNT_BANK_MANDIRI',
+            'BSI' => 'VIRTUAL_ACCOUNT_BANK_SYARIAH_MANDIRI',
+            'BJB' => 'VIRTUAL_ACCOUNT_BANK_BJB', // TEBAKAN -- belum terkonfirmasi, cek kalau gagal
+            default => 'VIRTUAL_ACCOUNT_DOKU',
+        };
+    }
+
     public function buatVaSnap(
         string $bankKode,
         string $referenceId,
         int $amount,
-        string $customerName
+        string $customerName,
+        string $customerEmail,
+        string $customerPhone
     ): array {
         $partnerServiceId = config('services.doku.va_snap_partner_service_id.' . strtoupper($bankKode));
 
@@ -561,21 +603,69 @@ class DokuService
         $token = $this->getAccessToken();
         $timestamp = $this->requestTimestamp();
         $externalId = (string) random_int(1000000000, 9999999999);
+        // DIPERBAIKI -- dicek ulang langsung ke developers.doku.com:
+        // path v1 (tanpa ".1") adalah dokumentasi versi LAMA yang sudah
+        // dipindah ke bagian "archive" dan memakai skema
+        // virtualAccountTrxType NUMERIK ("1"=Closed / "2"=Open, BUKAN
+        // "C"/"O"). Body di bawah ini sudah ditulis mengikuti skema
+        // v1.1 yang aktif sekarang ("C"/"O"/"V" -- lihat
+        // virtualAccountTrxType di bawah), jadi path-nya WAJIB v1.1
+        // juga -- itu sumber error "Invalid Field Format
+        // {virtualAccountTrxType}" sebelumnya: body v1.1 dikirim ke
+        // endpoint v1.
         $path = '/virtual-accounts/bi-snap-va/v1.1/transfer-va/create-va';
 
+        $partnerServiceIdPadded = str_pad($partnerServiceId, 8, ' ', STR_PAD_LEFT);
+        // DIPERBAIKI -- dikonfirmasi LANGSUNG oleh tim support DOKU
+        // (setelah kirim contoh error sandbox kita): customerNo
+        // SEBELUMNYA di-hardcode '0' untuk SEMUA transaksi -- ini
+        // penyebab "Feature Not Allowed [Identifier for BIN = 'xxxxx'
+        // is not configured properly]", karena kombinasi
+        // partnerServiceId+customerNo yang SAMA dipakai berulang-ulang
+        // dianggap tidak valid. customerNo WAJIB unik per transaksi --
+        // dipakai angka detik+microdetik saat ini (numerik murni,
+        // pendek, hampir pasti tidak bentrok antar transaksi).
+        $customerNo = (string) ((int) (microtime(true) * 1000) % 1000000000);
+
         $body = [
-            'partnerServiceId' => $partnerServiceId,
-            'customerNo' => (string) random_int(100000, 999999),
+            // partnerServiceId WAJIB persis 8 karakter menurut standar
+            // BI-SNAP -- kalau kurang dari 8 digit, DIBERI SPASI DI
+            // KIRI (padding). Dikonfirmasi dari respons error sandbox:
+            // "Invalid Field Format {partnerServiceId}" saat dikirim
+            // tanpa padding (cuma 5 digit, "19008").
+            'partnerServiceId' => $partnerServiceIdPadded,
+            'customerNo' => $customerNo,
+            // virtualAccountNo = partnerServiceId YANG SUDAH DI-PAD (8
+            // karakter) digabung customerNo MENTAH (tanpa padding
+            // sendiri) -- formula ini dikonfirmasi tim support DOKU
+            // sendiri, cuma nilai customerNo-nya yang tadinya salah
+            // (lihat catatan di atas).
+            'virtualAccountNo' => $partnerServiceIdPadded . $customerNo,
             'virtualAccountName' => $customerName,
+            'virtualAccountEmail' => $customerEmail,
+            'virtualAccountPhone' => $customerPhone,
             'trxId' => $referenceId,
             'totalAmount' => [
                 'value' => number_format($amount, 2, '.', ''),
                 'currency' => 'IDR',
             ],
+            // feeAmount -- field WAJIB menurut contoh resmi DOKU (tidak
+            // ada di dokumentasi publik yang saya baca sebelumnya).
+            // Diisi 0 karena fee Qinara sudah kita hitung & masukkan
+            // sendiri ke $amount (lihat DokuService::hitungFeeTotal())
+            // -- field ini murni untuk fitur fee DOKU sendiri kalau
+            // mereka mau potong otomatis, yang TIDAK kita pakai.
+            'feeAmount' => [
+                'value' => '0.00',
+                'currency' => 'IDR',
+            ],
             'virtualAccountTrxType' => 'C', // Closed Amount -- nominal tetap, tidak bisa diubah pembayar
             'expiredDate' => now()->addHour()->toIso8601String(),
             'additionalInfo' => [
-                'reference' => $referenceId,
+                'channel' => $this->vaSnapChannelName($bankKode),
+                'virtualAccountConfig' => [
+                    'reusableStatus' => false, // sesuai VA lain di aplikasi -- 1 VA cuma untuk 1 transaksi
+                ],
             ],
         ];
 
@@ -606,6 +696,12 @@ class DokuService
         }
 
         $result = $response->json() ?? [];
+
+        // virtualAccountNo yang kita KIRIM (bukan yang dibalas DOKU) --
+        // ini nilai PASTI, sudah kita tentukan sendiri di body, jadi
+        // tidak perlu tebak-tebak lagi field respons untuk nomor VA
+        // yang ditampilkan ke wali murid.
+        $result['_qinara_virtual_account_no'] = $body['virtualAccountNo'];
 
         Log::info('DokuService::buatVaSnap sukses', [
             'bank' => $bankKode,
@@ -718,6 +814,20 @@ class DokuService
      */
     public function buatQris(string $referenceId, int $amount): array
     {
+        // DITAMBAHKAN -- dicek ulang ke developers.doku.com: merchantId
+        // & terminalId itu MANDATORY di body qr-mpm-generate (lihat
+        // contoh resmi mereka), sebelumnya tidak dikirim sama sekali di
+        // sini, jadi request pasti ditolak DOKU (mandatory field
+        // hilang) sebelum sempat urusan signature/access token.
+        $merchantId = config('services.doku.qris_merchant_id');
+        $terminalId = config('services.doku.qris_terminal_id');
+
+        if (blank($merchantId) || blank($terminalId)) {
+            throw new RuntimeException(
+                'DOKU_QRIS_MERCHANT_ID / DOKU_QRIS_TERMINAL_ID belum diisi di .env -- minta ke tim DOKU dulu (lihat catatan di DokuService::buatQris()).'
+            );
+        }
+
         $token = $this->getAccessToken();
         $timestamp = $this->requestTimestamp();
         $externalId = (string) random_int(1000000000, 9999999999);
@@ -729,6 +839,8 @@ class DokuService
                 'value' => number_format($amount, 2, '.', ''),
                 'currency' => 'IDR',
             ],
+            'merchantId' => $merchantId,
+            'terminalId' => $terminalId,
         ];
 
         $rawBody = json_encode($body, JSON_UNESCAPED_SLASHES);
@@ -781,20 +893,37 @@ class DokuService
      * PERLU getAccessToken() berhasil dulu -- lihat catatan setup
      * keypair RSA di getAccessToken().
      */
-    public function buatEwalletSnap(string $channel, string $referenceId, int $amount, string $returnUrl): array
+    public function buatEwalletSnap(string $channel, string $referenceId, int $amount, string $returnUrl, string $judul = 'Pembayaran Qinara'): array
     {
         $token = $this->getAccessToken();
         $timestamp = $this->requestTimestamp();
         $externalId = (string) random_int(1000000000, 9999999999);
         $path = '/direct-debit/core/v1/debit/payment-host-to-host';
 
+        // DIPERBAIKI -- dicocokkan dengan contoh "format request yang
+        // benar" yang dikirim LANGSUNG oleh tim support DOKU (bukan
+        // cuma dokumentasi publik lagi):
+        // 1. `validUpTo` (batas waktu link bayar) sebelumnya HILANG
+        //    total dari body -- ditambahkan (1 jam dari sekarang).
+        // 2. `urlParam` sebelumnya dikirim sebagai OBJEK biasa --
+        //    contoh resmi dari support DOKU membungkusnya jadi ARRAY
+        //    berisi 1 objek. Diperbaiki mengikuti persis.
+        // 3. `additionalInfo.orderTitle` sebelumnya tidak dikirim sama
+        //    sekali, padahal WAJIB khusus untuk DANA (dikonfirmasi
+        //    support). Diisi judul tagihan/topup.
+        // 4. `supportDeepLinkCheckoutUrl` ditambahkan sesuai contoh
+        //    (khusus DANA -- aman dikirim juga untuk ShopeePay, DOKU
+        //    akan abaikan kalau tidak relevan).
         $body = [
             'partnerReferenceNo' => $referenceId,
+            'validUpTo' => now()->addHour()->toIso8601String(),
             'pointOfInitiation' => 'mweb', // mobile web (browser) -- bukan 'app' karena Qinara bukan native app
             'urlParam' => [
-                'url' => $returnUrl,
-                'type' => 'PAY_RETURN',
-                'isDeepLink' => 'Y',
+                [
+                    'url' => $returnUrl,
+                    'type' => 'PAY_RETURN',
+                    'isDeepLink' => 'Y',
+                ],
             ],
             'amount' => [
                 'value' => number_format($amount, 2, '.', ''),
@@ -802,6 +931,8 @@ class DokuService
             ],
             'additionalInfo' => [
                 'channel' => $channel,
+                'orderTitle' => $judul,
+                'supportDeepLinkCheckoutUrl' => 'true',
             ],
         ];
 

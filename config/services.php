@@ -59,6 +59,13 @@ return [
     // DOKU (bukan bisa dikarang sendiri), lihat catatan lengkap di
     // DokuService::buatVaSnap(). Isi setelah dapat dari DOKU, format:
     // 'BCA' => env('DOKU_VA_SNAP_BCA', ''),
+    // Public key milik DOKU (dari Settings > API Keys > "DOKU Public
+    // Key") -- dipakai untuk VERIFIKASI signature saat DOKU memanggil
+    // "Token URL" kita (arah kebalikan dari getAccessToken() -- lihat
+    // DokuWebhookController::tokenB2B()). Isi di .env sebagai
+    // DOKU_PUBLIC_KEY, format sama seperti DOKU_PRIVATE_KEY (newline
+    // literal \n).
+    'doku_public_key' => str_replace('\n', "\n", (string) env('DOKU_PUBLIC_KEY', '')),
     'va_snap_partner_service_id' => [
         'BCA' => env('DOKU_VA_SNAP_BCA', ''),
         'BNI' => env('DOKU_VA_SNAP_BNI', ''),
@@ -91,6 +98,15 @@ return [
     // "\n" (bukan newline asli), contoh:
     // DOKU_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMII...\n-----END PRIVATE KEY-----"
     'private_key'    => str_replace('\n', "\n", (string) env('DOKU_PRIVATE_KEY', '')),
+    // merchantId & terminalId untuk QRIS SNAP (qr-mpm-generate) --
+    // DITAMBAHKAN setelah dicek ulang ke developers.doku.com: kedua
+    // field ini MANDATORY di request body resmi DOKU, tapi sebelumnya
+    // tidak dikirim sama sekali oleh DokuService::buatQris() -- WAJIB
+    // penyebab QRIS selalu gagal. Nilainya diterbitkan DOKU per akun
+    // (bukan bisa dikarang), minta ke tim onboarding: "mohon merchantId
+    // & terminalId untuk QRIS MPM akun sandbox kami (Client-Id: ...)".
+    'qris_merchant_id' => env('DOKU_QRIS_MERCHANT_ID', ''),
+    'qris_terminal_id' => env('DOKU_QRIS_TERMINAL_ID', ''),
     ],
 
     'xendit' => [

@@ -19,9 +19,21 @@ class TopupController extends Controller
                 ->with('error', 'Silakan login terlebih dahulu');
         }
 
+        // DITAMBAHKAN -- halaman Riwayat Top Up sebelumnya belum pernah
+        // dibuat sama sekali, wali tidak punya cara melihat histori top
+        // up mereka.
+        $riwayat = $siswa->wallet
+            ? \App\Models\WalletTransaction::where('wallet_id', $siswa->wallet->id)
+                ->where('type', 'topup')
+                ->latest()
+                ->take(10)
+                ->get()
+            : collect();
+
         return view('wali.topup', [
             'siswa'  => $siswa,
-            'wallet' => $siswa->wallet
+            'wallet' => $siswa->wallet,
+            'riwayat' => $riwayat,
         ]);
     }
 
@@ -115,6 +127,10 @@ class TopupController extends Controller
 
         try {
             if ($channel === 'VA') {
+                // Lihat catatan lengkap di WaliDashboardController::doku()
+                // -- VA Non-SNAP (buatVaLangsung) TERBUKTI SUKSES di
+                // sandbox, VA SNAP/DOKU Checkout Link TIDAK ANDAL untuk
+                // channel BCA di akun ini.
                 $result = $doku->buatVaLangsung(
                     referenceId: $reference,
                     amount: $amountCharged,
@@ -149,6 +165,7 @@ class TopupController extends Controller
                     referenceId: $reference,
                     amount: $amountCharged,
                     returnUrl: route('wali.topup'),
+                    judul: 'Top Up Saldo',
                 );
 
                 $redirectUrl = $result['webRedirectUrl'] ?? null;

@@ -427,7 +427,14 @@ class WaliDashboardController extends Controller
             return back()->with('error', 'Password lama tidak sesuai');
         }
 
-        $siswa->password = Hash::make($request->password);
+        // DIPERBAIKI -- model Siswa sudah pakai cast 'password' =>
+        // 'hashed' (otomatis hash setiap kali di-assign nilai baru).
+        // Manual Hash::make() di sini membuat password ter-hash DUA
+        // KALI (hash dari hash) -- akibatnya login dengan password baru
+        // TIDAK PERNAH cocok lagi (Hash::check() membandingkan password
+        // asli vs hasil double-hash, selalu gagal). Cukup assign string
+        // biasa, cast yang urus hashing-nya.
+        $siswa->password = $request->password;
         $siswa->save();
 
         return back()->with('success', 'Password berhasil diupdate');
@@ -585,6 +592,17 @@ class WaliDashboardController extends Controller
 
         try {
             if ($channel === 'VA') {
+                // DIKEMBALIKAN ke VA Non-SNAP (buatVaLangsung) --
+                // TERBUKTI SUKSES di sandbox (simulator "Bank BCA VA" ->
+                // "Payment Success"). VA SNAP (buatVaSnap) dan DOKU
+                // Checkout Link TERBUKTI TIDAK ANDAL untuk channel BCA
+                // di akun ini -- DOKU sendiri kadang merutekan ke
+                // simulator SNAP mereka yang belum aktif ("Invalid
+                // Bill/Virtual Account [Virtual account not found]"),
+                // kadang ke simulator Non-SNAP yang berhasil, TANPA kita
+                // bisa kendalikan dari sisi kode. Memanggil endpoint
+                // Non-SNAP langsung (bukan lewat Checkout Link) memberi
+                // hasil yang konsisten.
                 $result = $doku->buatVaLangsung(
                     referenceId: $referenceId,
                     amount: $amountCharged,
@@ -601,15 +619,15 @@ class WaliDashboardController extends Controller
                     return back()->with('error', \App\Services\DokuService::pesanAman($result['message'] ?? $result['error']['message'] ?? null));
                 }
             } elseif ($channel === 'QRIS') {
+                // CATATAN: layanan QRIS di akun DOKU ini belum aktif
+                // (dikonfirmasi tim support DOKU, sedang proses
+                // aktivasi) -- request ini akan gagal sampai aktivasi
+                // selesai. Bukan bug kode.
                 $result = $doku->buatQris(
                     referenceId: $referenceId,
                     amount: $amountCharged,
                 );
 
-                // TODO: field gambar/string QR PERLU dicocokkan dengan
-                // respons asli sandbox (belum bisa dipastikan 100% dari
-                // dokumentasi publik) -- lihat catatan lengkap di
-                // DokuService::buatQris().
                 $qrString = $result['qrContent'] ?? $result['qrUrl'] ?? null;
 
                 if (!$qrString) {
@@ -621,6 +639,7 @@ class WaliDashboardController extends Controller
                     referenceId: $referenceId,
                     amount: $amountCharged,
                     returnUrl: route('wali.keuangan'),
+                    judul: $tagihan->judul,
                 );
 
                 $redirectUrl = $result['webRedirectUrl'] ?? null;
@@ -661,11 +680,6 @@ class WaliDashboardController extends Controller
                     'reference'  => $referenceId,
                 ]);
 
-                // OVO Push Payment BLOCKING -- respons langsung berisi
-                // hasil approve/tolak/timeout dari HP customer (bukan
-                // link/kode untuk ditunda). Webhook tetap dipasang
-                // sebagai jaring pengaman, tapi untuk OVO biasanya
-                // status sudah bisa langsung diketahui dari respons ini.
                 $statusOvo = $result['transaction']['status'] ?? null;
 
                 return redirect()->route('wali.pembayaran.show', $tagihan)

@@ -24,11 +24,18 @@ return Application::configure(basePath: dirname(__DIR__))
             'akses.slip.gaji' => \App\Http\Middleware\AksesSlipGaji::class,
         ]);
 
-        // Webhook Midtrans & Xendit dipanggil server-to-server (bukan
-        // browser dengan session/CSRF token), jadi wajib dikecualikan.
+        // Webhook Midtrans, Xendit & DOKU dipanggil server-to-server
+        // (bukan browser dengan session/CSRF token), jadi wajib
+        // dikecualikan. /webhooks/doku sempat KELEWATAN di sini --
+        // kemungkinan besar inilah sebab notifikasi DOKU tidak pernah
+        // sampai ke DokuWebhookController::handle() sama sekali
+        // (ditolak Laravel duluan dengan 419, sebelum kode kita
+        // sempat jalan sama sekali).
         $middleware->validateCsrfTokens(except: [
             'webhooks/midtrans',
             'webhooks/xendit',
+            'webhooks/doku',
+            'webhooks/doku/token',
         ]);
 
     })

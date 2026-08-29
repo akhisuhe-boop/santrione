@@ -132,7 +132,11 @@ class SubscriptionController extends Controller
             return back()->with('error', 'Gagal membuat transaksi pembayaran: ' . $e->getMessage());
         }
 
-        $paymentUrl = $result['response']['url'] ?? $result['payment']['url'] ?? $result['url'] ?? null;
+        // DIPERBAIKI -- path field URL yang BENAR menurut dokumentasi
+        // resmi DOKU Checkout adalah response.payment.url (bukan
+        // response.url atau payment.url di level atas seperti
+        // sebelumnya).
+        $paymentUrl = $result['response']['payment']['url'] ?? null;
 
         if (! $paymentUrl) {
             return back()->with('error', 'Gagal membuat transaksi pembayaran (URL tidak ditemukan di respons DOKU)');

@@ -306,8 +306,6 @@
 </div>
 
     
-    </div>
-
         {{-- DOKU --}}
         <div
             class="bg-[#FEFCE8]
