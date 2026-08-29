@@ -378,17 +378,24 @@ class PegawaiResource extends BaseResource
 
                 // 🔥 PERUBAHAN 29 Agt 2026: upload banyak foto pegawai
                 // SEKALIGUS (drag & drop), tidak perlu lagi lewat
-                // SFTP/SSH manual ke folder storage/app/public/foto-
-                // pegawai/ satu-satu. Nama file HARUS persis NIY
-                // (mis. 2007030004.jpg) -- sama seperti aturan yang
-                // sudah dipakai PegawaiImport (lihat komentar "FOTO
-                // OTOMATIS" di file itu), supaya konsisten dan
-                // fungsi Import Excel yang sudah ada tetap ikut
-                // berfungsi normal kalau dipakai belakangan juga.
-                // ->preserveFilenames() WAJIB ada -- tanpa itu,
-                // Filament otomatis ganti nama file jadi random
-                // string, dan pencocokan ke NIY jadi tidak bisa
-                // jalan sama sekali.
+                // SFTP/SSH manual. Nama FILE ASLI yang di-upload harus
+                // persis NIY (mis. 2007030004.jpg) -- dipakai SEKALI
+                // buat cocokkan ke pegawai, sebelum diproses.
+                //
+                // Disimpan ke R2 (bukan disk lokal), dikonversi ke
+                // WebP, PERSIS mengikuti pola yang SUDAH dipakai upload
+                // foto satu-satu di atas (lihat FileUpload::make('foto')
+                // -- disk('r2-public'), cover(800,1000), quality 80) --
+                // supaya semua foto pegawai (baik yang diupload satu-
+                // satu maupun massal) konsisten format & lokasinya.
+                //
+                // saveUploadedFileUsing() di sini BUKAN cuma nyimpen --
+                // juga baca getClientOriginalName() (nama file ASLI
+                // sebelum diubah jadi nama acak .webp) buat tahu NIY-
+                // nya, lalu "titip" hasilnya lewat Cache (10 menit)
+                // supaya bisa dipakai lagi di ->action() nanti --
+                // karena Filament cuma ngembaliin PATH FINAL ke situ,
+                // nama aslinya sudah hilang dari konteks itu.
                 Tables\Actions\Action::make('UploadFotoMassal')
                     ->label('Upload Foto Massal')
                     ->modalSubmitActionLabel('Upload & Pasangkan')
@@ -401,16 +408,33 @@ class PegawaiResource extends BaseResource
                             ->content(new \Illuminate\Support\HtmlString(
                                 'Nama tiap file foto <b>HARUS PERSIS SAMA</b> dengan NIY pegawai yang bersangkutan.<br>' .
                                 'Contoh: pegawai dengan NIY <code>2007030004</code> → nama file harus <code>2007030004.jpg</code> (atau .png).<br>' .
-                                'Bisa pilih/drag banyak file foto sekaligus di bawah ini — sistem otomatis mencocokkan ke pegawai yang NIY-nya sesuai.'
+                                'Bisa pilih/drag banyak file foto sekaligus di bawah ini — sistem otomatis mencocokkan ke pegawai yang NIY-nya sesuai, dan foto disimpan ke R2 (format WebP), sama seperti upload foto satu-satu.'
                             )),
 
                         Forms\Components\FileUpload::make('foto_massal')
                             ->label('Pilih Foto Pegawai (bisa banyak sekaligus)')
                             ->multiple()
                             ->image()
-                            ->preserveFilenames()
-                            ->disk('public')
-                            ->directory('foto-pegawai')
+                            ->maxSize(2048)
+                            ->saveUploadedFileUsing(function ($file) {
+                                $namaAsli = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+
+                                $webp = Image::decode(file_get_contents($file->getRealPath()))
+                                    ->cover(800, 1000)
+                                    ->encodeUsingFileExtension('webp', quality: 80);
+
+                                $filename = 'pegawai-photos/' . uniqid() . '.webp';
+
+                                \Storage::disk('r2-public')->put($filename, (string) $webp);
+
+                                \Illuminate\Support\Facades\Cache::put(
+                                    'foto-massal-niy:' . $filename,
+                                    $namaAsli,
+                                    now()->addMinutes(10)
+                                );
+
+                                return $filename;
+                            })
                             ->required(),
 
                     ])
@@ -421,8 +445,12 @@ class PegawaiResource extends BaseResource
                         $tidakCocok = [];
 
                         foreach ($files as $filePath) {
-                            // $filePath contoh: "foto-pegawai/2007030004.jpg"
-                            $niy = pathinfo($filePath, PATHINFO_FILENAME);
+                            $niy = \Illuminate\Support\Facades\Cache::pull('foto-massal-niy:' . $filePath);
+
+                            if (! $niy) {
+                                $tidakCocok[] = basename($filePath) . ' (info NIY hilang, coba upload ulang)';
+                                continue;
+                            }
 
                             $pegawai = \App\Models\Pegawai::where('niy', $niy)->first();
 
@@ -430,7 +458,7 @@ class PegawaiResource extends BaseResource
                                 $pegawai->update(['foto' => $filePath]);
                                 $cocok++;
                             } else {
-                                $tidakCocok[] = basename($filePath);
+                                $tidakCocok[] = "NIY {$niy} tidak ditemukan di data pegawai manapun";
                             }
                         }
 
