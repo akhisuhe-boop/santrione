@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $setting->brand_name }} - Aplikasi Manajemen & Digitalisasi Lembaga Pendidikan Islam</title>
+    <link rel="icon" type="image/png" href="{{ asset('favicon-qinaraapps.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('favicon-qinaraapps.png') }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -66,6 +68,18 @@
             100% { transform: scale(1); }
         }
         .animate-promo-flash { animation: promo-flash 0.35s ease-out; }
+
+        /* Efek "klap-klip" (berkedip halus) di tombol WA floating --
+           kombinasi cincin cahaya membesar-menghilang (mirip
+           animate-promo-glow di atas, tapi warna hijau WA) + sedikit
+           denyut skala, supaya tombol lebih menarik perhatian tanpa
+           terlalu mengganggu. */
+        @keyframes wa-kedip {
+            0%, 100% { box-shadow: 0 10px 25px rgba(0,0,0,.25), 0 0 0 0 rgba(37, 211, 102, 0.6); transform: scale(1); }
+            50% { box-shadow: 0 10px 25px rgba(0,0,0,.25), 0 0 0 14px rgba(37, 211, 102, 0); transform: scale(1.06); }
+        }
+        .wa-float-btn { animation: wa-kedip 1.8s ease-in-out infinite; }
+        .wa-float-btn:hover { animation-play-state: paused; }
     </style>
 
     {{-- Meta (Facebook) Pixel --}}
@@ -115,10 +129,10 @@
     $logoUrl = $setting->logo ? \Illuminate\Support\Facades\Storage::disk('r2-public')->url($setting->logo) : null;
 @endphp
 
-<a href="javascript:void(0)" onclick="hubungiSales()"
+<a href="javascript:void(0)" onclick="hubungiSales()" class="wa-float-btn"
    style="position: fixed; right: 24px; bottom: 24px; width: 64px; height: 64px; border-radius: 9999px;
           background: #25D366; display: flex; align-items: center; justify-content: center; z-index: 999999;
-          box-shadow: 0 10px 25px rgba(0,0,0,.25); cursor: pointer;">
+          cursor: pointer;">
     <i class="fa-brands fa-whatsapp" style="font-size:34px;color:#fff;"></i>
 </a>
 
@@ -168,9 +182,9 @@
         </nav>
 
         <div class="hidden md:flex items-center gap-4">
-            <a href="{{ route('public.daftar') }}"
+            <a href="javascript:void(0)" onclick="jadwalkanDemo()"
                 class="rounded-full bg-primary-500 px-5 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-primary-600 hover:scale-[1.02] active:scale-[0.98] transition-all">
-                Coba Demo Gratis
+                Jadwalkan Demo Gratis
             </a>
         </div>
 
@@ -189,14 +203,14 @@
         <a href="#testimoni" class="block py-2 text-sm font-medium text-slate-700 hover:text-primary-500">Testimoni</a>
         <a href="#harga" class="block py-2 text-sm font-medium text-slate-700 hover:text-primary-500">Harga</a>
         <a href="#faq" class="block py-2 text-sm font-medium text-slate-700 hover:text-primary-500">FAQ</a>
-        <a href="{{ route('public.daftar') }}" class="block text-center w-full rounded-full bg-primary-500 py-3 text-sm font-semibold text-white shadow-md">
-            Coba Demo Gratis
+        <a href="javascript:void(0)" onclick="jadwalkanDemo()" class="block text-center w-full rounded-full bg-primary-500 py-3 text-sm font-semibold text-white shadow-md">
+            Jadwalkan Demo Gratis
         </a>
     </div>
 </header>
 
 <!-- HERO -->
-<section id="hero" class="relative pt-28 pb-24 md:pt-36 md:pb-32 overflow-hidden bg-gradient-to-b from-white via-white to-slate-50">
+<section id="hero" class="relative pt-20 pb-24 md:pt-24 md:pb-32 overflow-hidden bg-gradient-to-b from-white via-white to-slate-50">
     <div class="mx-auto max-w-7xl px-4 lg:px-8">
         <div class="grid grid-cols-1 lg:grid-cols-[50%_50%] gap-14 items-center">
 
@@ -234,9 +248,9 @@
                 </div>
 
                 <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                    <a href="{{ route('public.daftar') }}"
+                    <a href="javascript:void(0)" onclick="jadwalkanDemo()"
                         class="inline-flex items-center justify-center gap-2 rounded-full bg-primary-600 px-8 py-4 text-white font-bold shadow-lg hover:bg-primary-700 hover:scale-[1.02] transition">
-                        Coba Demo Gratis
+                        Jadwalkan Demo Gratis
                         <i data-lucide="arrow-right" class="w-5 h-5"></i>
                     </a>
                     <button onclick="hubungiSales()"
@@ -656,7 +670,7 @@
         <div class="mt-16 relative max-w-6xl mx-auto">
             <div id="testimoni-scroll" class="no-scrollbar flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth py-8 -my-8 px-1">
                 @foreach($testimonis as $t)
-                <div class="snap-center shrink-0 w-[88%] sm:w-[70%] md:w-[calc(50%-0.75rem)]">
+                <div class="snap-start shrink-0 w-full md:w-[calc(50%-0.75rem)]">
                     <div class="h-full bg-white rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col overflow-hidden">
                         <div class="p-8 flex-1 flex flex-col">
                             <div class="flex items-center justify-between mb-5">
@@ -948,9 +962,9 @@
                 </div>
 
                 <div class="mt-8">
-                    <a href="{{ route('public.daftar') }}"
+                    <a href="javascript:void(0)" onclick="jadwalkanDemo()"
                         class="group/btn flex items-center justify-center gap-2 w-full rounded-full py-3.5 px-6 text-sm font-bold transition-all duration-300 shadow-md hover:shadow-lg bg-primary-500 text-white hover:bg-primary-600">
-                        Coba Gratis 14 Hari
+                        Jadwalkan Demo Gratis
                         <i data-lucide="arrow-right" class="w-4 h-4 group-hover/btn:translate-x-0.5 transition-transform"></i>
                     </a>
                 </div>
@@ -1001,8 +1015,8 @@
                 </div>
 
                 <div class="mt-6 text-center">
-                    <a href="{{ route('public.daftar') }}" class="inline-flex items-center justify-center gap-2 rounded-full bg-primary-500 text-white hover:bg-primary-600 transition-all duration-300 text-sm font-bold py-3 px-8 shadow-md hover:shadow-lg">
-                        Coba Gratis 14 Hari
+                    <a href="javascript:void(0)" onclick="jadwalkanDemo()" class="inline-flex items-center justify-center gap-2 rounded-full bg-primary-500 text-white hover:bg-primary-600 transition-all duration-300 text-sm font-bold py-3 px-8 shadow-md hover:shadow-lg">
+                        Jadwalkan Demo Gratis
                         <i data-lucide="arrow-right" class="w-4 h-4"></i>
                     </a>
                 </div>
@@ -1070,8 +1084,8 @@
             </span>
         </div>
         <div class="flex flex-col sm:flex-row justify-center items-center gap-4 pt-4">
-            <a href="{{ route('public.daftar') }}" class="w-full sm:w-auto flex items-center justify-center gap-2 rounded-full bg-primary-500 px-8 py-4 text-base font-bold text-white shadow-premium hover:bg-primary-600 hover:scale-105 active:scale-95 transition-all">
-                Coba Demo Gratis Sekarang
+            <a href="javascript:void(0)" onclick="jadwalkanDemo()" class="w-full sm:w-auto flex items-center justify-center gap-2 rounded-full bg-primary-500 px-8 py-4 text-base font-bold text-white shadow-premium hover:bg-primary-600 hover:scale-105 active:scale-95 transition-all">
+                Jadwalkan Demo Gratis
                 <i data-lucide="sparkles" class="w-5 h-5"></i>
             </a>
             <button onclick="hubungiSales()" class="w-full sm:w-auto flex items-center justify-center gap-2 rounded-full bg-slate-800 border border-slate-700 px-8 py-4 text-base font-semibold text-white hover:bg-slate-700 transition-colors">
@@ -1147,28 +1161,46 @@
 
             <div class="space-y-3">
                 <h4 class="text-sm font-bold uppercase tracking-wider text-slate-200">Kontak Resmi</h4>
-                @if($setting->footer_legalitas || $setting->nomor_nib || $setting->nomor_akta)
-                <div class="text-sm text-slate-400 space-y-0.5">
+                <div class="space-y-2.5 text-sm">
                     @if($setting->footer_legalitas)
                     <p class="font-semibold text-slate-200">{{ $setting->footer_legalitas }}</p>
                     @endif
+
                     @if($setting->nomor_nib)
-                    <p>NIB: {{ $setting->nomor_nib }}</p>
+                    <div class="flex items-start gap-2.5 text-slate-400">
+                        <i data-lucide="badge-check" class="w-4 h-4 mt-0.5 text-primary-400 shrink-0"></i>
+                        <span>NIB: {{ $setting->nomor_nib }}</span>
+                    </div>
                     @endif
+
                     @if($setting->nomor_akta)
-                    <p>No. Akta: {{ $setting->nomor_akta }}</p>
+                    <div class="flex items-start gap-2.5 text-slate-400">
+                        <i data-lucide="file-text" class="w-4 h-4 mt-0.5 text-primary-400 shrink-0"></i>
+                        <span>No. Akta: {{ $setting->nomor_akta }}</span>
+                    </div>
+                    @endif
+
+                    @if($setting->alamat)
+                    <div class="flex items-start gap-2.5 text-slate-500">
+                        <i data-lucide="map-pin" class="w-4 h-4 mt-0.5 text-primary-400 shrink-0"></i>
+                        <span class="leading-relaxed">{{ $setting->alamat }}</span>
+                    </div>
+                    @endif
+
+                    @if($setting->email_kontak)
+                    <div class="flex items-start gap-2.5 text-slate-500">
+                        <i data-lucide="mail" class="w-4 h-4 mt-0.5 text-primary-400 shrink-0"></i>
+                        <a href="mailto:{{ $setting->email_kontak }}" class="hover:text-white transition-colors">{{ $setting->email_kontak }}</a>
+                    </div>
+                    @endif
+
+                    @if($setting->whatsapp_number)
+                    <div class="flex items-start gap-2.5 text-slate-500">
+                        <i data-lucide="phone" class="w-4 h-4 mt-0.5 text-primary-400 shrink-0"></i>
+                        <a href="https://wa.me/{{ $setting->whatsapp_number }}" class="hover:text-white transition-colors">{{ $setting->whatsapp_number }}</a>
+                    </div>
                     @endif
                 </div>
-                @endif
-                <p class="text-sm text-slate-500 leading-relaxed">
-                    {{ $setting->alamat }} <br>
-                    @if($setting->email_kontak)
-                    Email: <a href="mailto:{{ $setting->email_kontak }}" class="hover:text-white transition-colors">{{ $setting->email_kontak }}</a> <br>
-                    @endif
-                    @if($setting->whatsapp_number)
-                    Telp/WA: <a href="https://wa.me/{{ $setting->whatsapp_number }}" class="hover:text-white transition-colors">{{ $setting->whatsapp_number }}</a>
-                    @endif
-                </p>
             </div>
         </div>
 
@@ -1193,6 +1225,16 @@
         window.open(url, "_blank");
     }
 
+    // Tombol "Jadwalkan Demo Gratis" -- pesan WA khusus, beda dari
+    // hubungiSales() (yang dipakai tombol "Konsultasi via WhatsApp"),
+    // supaya admin langsung tahu maksud calon klien dari pesan
+    // pembukanya, tanpa perlu tanya ulang.
+    function jadwalkanDemo() {
+        const pesan = "Halo, saya ingin menjadwalkan demo gratis " + "{{ $setting->brand_name }}" + ". Mohon info jadwal yang tersedia 🙏";
+        const url = "https://wa.me/" + waNumber + "?text=" + encodeURIComponent(pesan);
+        window.open(url, "_blank");
+    }
+
     // Slider testimoni (scroll-snap native, responsif otomatis)
     (function () {
         const scroller = document.getElementById('testimoni-scroll');
@@ -1204,11 +1246,20 @@
         const nextBtn = document.getElementById('testimoni-next');
         let autoTimer;
 
+        function cardsPerView() {
+            // Samakan dengan breakpoint 'md' Tailwind (768px) yang
+            // dipakai class w-full md:w-[calc(50%-0.75rem)] di atas --
+            // supaya geseran slider selalu pas 1 "halaman" penuh
+            // (bukan setengah kartu), baik di mobile (1 kartu) maupun
+            // desktop (2 kartu).
+            return window.matchMedia('(min-width: 768px)').matches ? 2 : 1;
+        }
+
         function step() {
             const card = cards[0];
             const style = getComputedStyle(scroller);
             const gap = parseFloat(style.columnGap || style.gap || 0);
-            return card.getBoundingClientRect().width + gap;
+            return (card.getBoundingClientRect().width + gap) * cardsPerView();
         }
 
         function next() {
