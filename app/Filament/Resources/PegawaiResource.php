@@ -374,7 +374,74 @@ class PegawaiResource extends BaseResource
                             new \App\Imports\PegawaiImport,
                             $path
                         );
-                    })
+                    }),
+
+                // 🔥 PERUBAHAN 29 Agt 2026: upload banyak foto pegawai
+                // SEKALIGUS (drag & drop), tidak perlu lagi lewat
+                // SFTP/SSH manual ke folder storage/app/public/foto-
+                // pegawai/ satu-satu. Nama file HARUS persis NIY
+                // (mis. 2007030004.jpg) -- sama seperti aturan yang
+                // sudah dipakai PegawaiImport (lihat komentar "FOTO
+                // OTOMATIS" di file itu), supaya konsisten dan
+                // fungsi Import Excel yang sudah ada tetap ikut
+                // berfungsi normal kalau dipakai belakangan juga.
+                // ->preserveFilenames() WAJIB ada -- tanpa itu,
+                // Filament otomatis ganti nama file jadi random
+                // string, dan pencocokan ke NIY jadi tidak bisa
+                // jalan sama sekali.
+                Tables\Actions\Action::make('UploadFotoMassal')
+                    ->label('Upload Foto Massal')
+                    ->modalSubmitActionLabel('Upload & Pasangkan')
+                    ->color('info')
+                    ->icon('heroicon-o-photo')
+                    ->form([
+
+                        Forms\Components\Placeholder::make('petunjuk_foto_massal')
+                            ->label('Petunjuk')
+                            ->content(new \Illuminate\Support\HtmlString(
+                                'Nama tiap file foto <b>HARUS PERSIS SAMA</b> dengan NIY pegawai yang bersangkutan.<br>' .
+                                'Contoh: pegawai dengan NIY <code>2007030004</code> → nama file harus <code>2007030004.jpg</code> (atau .png).<br>' .
+                                'Bisa pilih/drag banyak file foto sekaligus di bawah ini — sistem otomatis mencocokkan ke pegawai yang NIY-nya sesuai.'
+                            )),
+
+                        Forms\Components\FileUpload::make('foto_massal')
+                            ->label('Pilih Foto Pegawai (bisa banyak sekaligus)')
+                            ->multiple()
+                            ->image()
+                            ->preserveFilenames()
+                            ->disk('public')
+                            ->directory('foto-pegawai')
+                            ->required(),
+
+                    ])
+                    ->action(function (array $data) {
+
+                        $files = $data['foto_massal'] ?? [];
+                        $cocok = 0;
+                        $tidakCocok = [];
+
+                        foreach ($files as $filePath) {
+                            // $filePath contoh: "foto-pegawai/2007030004.jpg"
+                            $niy = pathinfo($filePath, PATHINFO_FILENAME);
+
+                            $pegawai = \App\Models\Pegawai::where('niy', $niy)->first();
+
+                            if ($pegawai) {
+                                $pegawai->update(['foto' => $filePath]);
+                                $cocok++;
+                            } else {
+                                $tidakCocok[] = basename($filePath);
+                            }
+                        }
+
+                        \Filament\Notifications\Notification::make()
+                            ->title("Upload selesai — {$cocok} foto berhasil dipasangkan ke pegawai")
+                            ->body(count($tidakCocok) > 0
+                                ? 'Nama file berikut TIDAK cocok dengan NIY pegawai manapun (cek lagi penamaannya): ' . implode(', ', $tidakCocok)
+                                : null)
+                            ->color(count($tidakCocok) > 0 ? 'warning' : 'success')
+                            ->send();
+                    }),
             ]);
             
             
