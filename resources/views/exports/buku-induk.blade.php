@@ -49,7 +49,7 @@
             height: 130px;
             object-fit: cover;
         }
-        .info-ringkas { padding-left: 14px; }
+        .info-ringkas { }
         .info-ringkas .nama-besar { font-size: 15px; font-weight: bold; color: #00524F; margin-bottom: 2px; }
         .info-ringkas .no-induk { font-size: 10px; color: #666; margin-bottom: 8px; }
         .info-ringkas table { width: 100%; border-collapse: collapse; }
@@ -136,6 +136,7 @@
                     Belum ada foto
                 @endif
             </td>
+            <td style="width: 20px;">&nbsp;</td>
             <td class="info-ringkas">
                 <div class="nama-besar">{{ $siswa->nama_lengkap }}</div>
                 <div class="no-induk">No. Urut Induk: {{ $i + 1 }}</div>
