@@ -207,4 +207,66 @@ class SiswaImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFai
             'foto' => 'nullable|string',
         ];
     }
+
+    /**
+     * PERUBAHAN 29 Agt 2026 -- fitur pengaman baru, ditambahkan
+     * setelah insiden: 1 file Excel sempat berisi NIS yang KEBETULAN
+     * sama dengan siswa LAIN (orang berbeda, di Lembaga yang sama),
+     * dan updateOrCreate(['nis' => ...]) MENIMPA DIAM-DIAM data siswa
+     * lama itu dengan data siswa baru yang salah -- tanpa peringatan
+     * apa pun, ketahuan belakangan lewat jumlah siswa yang aneh di
+     * Dashboard.
+     *
+     * Method ini (fitur bawaan Laravel Excel, dipanggil otomatis
+     * sebelum tiap baris divalidasi) menambahkan 1 pengecekan lagi:
+     * kalau NIS di baris ini SUDAH dipakai siswa lain DI LEMBAGA YANG
+     * SAMA, dan namanya beda (bukan cuma beda kapitalisasi/spasi),
+     * baris itu otomatis DI-SKIP (gagal validasi) -- BUKAN
+     * ditimpa. Baris yang di-skip tercatat di $this->failures()
+     * (lewat SkipsOnFailure + SkipsFailures yang sudah dipakai),
+     * sama seperti validasi lembaga_id/kelas_id yang sudah ada --
+     * jadi admin yang upload akan lihat baris mana yang gagal &
+     * kenapa, bukan diam-diam ketiban masalah kayak insiden kemarin.
+     *
+     * SENGAJA discope per lembaga_id (bukan cek ke SEMUA sekolah
+     * sekaligus) -- NIS itu wajar kalau kebetulan sama antar sekolah
+     * BERBEDA (masing-masing punya penomoran sendiri), itu bukan
+     * kesalahan. Yang berbahaya cuma kalau bentrok di lembaga yang
+     * SAMA.
+     */
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $data = $validator->getData();
+
+            if (empty($data['nis']) || empty($data['nama_lengkap']) || empty($data['lembaga_id'])) {
+                return;
+            }
+
+            $existing = Siswa::withoutGlobalScopes()
+                ->where('nis', $data['nis'])
+                ->where('lembaga_id', $data['lembaga_id'])
+                ->first();
+
+            if ($existing && ! $this->namaMiripSama($existing->nama_lengkap, $data['nama_lengkap'])) {
+                $validator->errors()->add(
+                    'nis',
+                    "NIS {$data['nis']} sudah dipakai siswa lain di lembaga ini (\"{$existing->nama_lengkap}\") -- baris ini di-skip, TIDAK menimpa data yang sudah ada. Cek dulu manual apakah ini orang yang sama atau NIS yang salah ketik."
+                );
+            }
+        });
+    }
+
+    /**
+     * Normalisasi sederhana (huruf kecil semua + rapikan spasi ganda)
+     * supaya beda kapitalisasi atau spasi tipis TIDAK dianggap "orang
+     * berbeda" (mis. "budi santoso" vs "Budi Santoso" tetap dianggap
+     * sama, tidak perlu di-skip).
+     */
+    protected function namaMiripSama(string $a, string $b): bool
+    {
+        $normalisasi = fn (string $s) => preg_replace('/\s+/', ' ', mb_strtolower(trim($s)));
+
+        return $normalisasi($a) === $normalisasi($b);
+    }
 }
