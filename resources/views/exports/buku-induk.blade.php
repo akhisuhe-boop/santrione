@@ -67,7 +67,7 @@
         .info-ringkas table { width: 100%; border-collapse: collapse; }
         .info-ringkas table td { padding: 2.5px 0; font-size: 11.5px; vertical-align: top; }
         .info-ringkas table td.label { width: 78px; color: #555; }
-        .info-ringkas table td.label-kanan { width: 92px; color: #555; padding-left: 14px; }
+        .info-ringkas table td.label-kanan { width: 92px; color: #555; padding-left: 32px; }
         .info-ringkas table td.titik { width: 8px; color: #555; }
         .info-ringkas table td.nilai { width: 90px; }
 
@@ -162,7 +162,7 @@
                 @if($siswa->foto_base64)
                     <img src="{{ $siswa->foto_base64 }}" alt="Foto" width="100" height="130">
                 @else
-                    <div style="width: 98px; height: 128px; border: 1px solid #999; text-align: center; padding-top: 55px;">Belum<br>ada foto</div>
+                    <table style="width: 98px; height: 128px; border: 1px solid #999; border-collapse: collapse;"><tr><td style="text-align: center; vertical-align: middle; font-size: 9px; color: #999;">Belum<br>ada foto</td></tr></table>
                 @endif
             </td>
             <td style="width: 20px;">&nbsp;</td>
