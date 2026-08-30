@@ -45,14 +45,15 @@
             height: 130px;
             border: 1px solid #999;
             text-align: center;
-            vertical-align: middle;
+            vertical-align: top;
             font-size: 9px;
             color: #999;
+            overflow: hidden;
         }
         .kotak-foto img {
             width: 100px;
             height: 130px;
-            object-fit: cover;
+            display: block;
         }
         .info-ringkas { }
         .info-ringkas .nama-besar { font-size: 15px; font-weight: bold; color: #00524F; margin-bottom: 2px; }
@@ -148,7 +149,7 @@
         <tr>
             <td class="kotak-foto">
                 @if($siswa->foto_base64)
-                    <img src="{{ $siswa->foto_base64 }}" alt="Foto">
+                    <img src="{{ $siswa->foto_base64 }}" alt="Foto" width="100" height="130">
                 @else
                     Belum ada foto
                 @endif
