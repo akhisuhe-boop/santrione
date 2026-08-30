@@ -6,7 +6,7 @@
     <style>
         /* DomPDF -- CSS terbatas, sengaja pakai layout berbasis
            <table> (bukan flexbox/grid) supaya kompatibel & stabil. */
-        body { font-family: sans-serif; font-size: 11px; color: #1a1a1a; }
+        body { font-family: sans-serif; font-size: 12.5px; color: #1a1a1a; }
 
         .halaman-siswa {
             page-break-after: always;
@@ -22,10 +22,18 @@
             margin-bottom: 14px;
         }
         .header-dokumen h1 {
-            font-size: 22px;
+            font-size: 24px;
             margin: 0 0 2px 0;
             letter-spacing: 1px;
             color: #00524F;
+        }
+        .nama-yayasan {
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #444;
+            margin: 0 0 2px 0;
         }
         table.tabel-header-logo { width: 100%; border-collapse: collapse; }
         table.tabel-header-logo td { vertical-align: middle; padding: 0; }
@@ -34,7 +42,7 @@
         .kolom-judul { text-align: center; }
         .header-dokumen p {
             margin: 0;
-            font-size: 11px;
+            font-size: 12px;
             color: #444;
         }
 
@@ -49,27 +57,29 @@
             font-size: 9px;
             color: #999;
             overflow: hidden;
+            line-height: 0;
         }
         .kotak-foto img {
             width: 100px;
             height: 130px;
             display: block;
+            vertical-align: bottom;
         }
         .info-ringkas { }
-        .info-ringkas .nama-besar { font-size: 15px; font-weight: bold; color: #00524F; margin-bottom: 2px; }
-        .info-ringkas .no-induk { font-size: 10px; color: #666; margin-bottom: 8px; }
+        .info-ringkas .nama-besar { font-size: 17px; font-weight: bold; color: #00524F; margin-bottom: 2px; }
+        .info-ringkas .no-induk { font-size: 11px; color: #666; margin-bottom: 10px; }
         .info-ringkas table { width: 100%; border-collapse: collapse; }
-        .info-ringkas table td { padding: 1.5px 0; font-size: 10.5px; }
-        .info-ringkas table td.label { width: 90px; color: #555; }
+        .info-ringkas table td { padding: 2.5px 0; font-size: 12px; }
+        .info-ringkas table td.label { width: 100px; color: #555; }
         .info-ringkas table td.titik { width: 10px; color: #555; }
 
         .judul-bagian {
             background: #00A39D;
             color: #fff;
-            font-size: 10.5px;
+            font-size: 12px;
             font-weight: bold;
-            padding: 4px 8px;
-            margin-top: 10px;
+            padding: 5px 8px;
+            margin-top: 12px;
             margin-bottom: 0;
             letter-spacing: 0.5px;
         }
@@ -81,8 +91,8 @@
             margin-bottom: 4px;
         }
         table.tabel-data td {
-            padding: 4px 8px;
-            font-size: 10.5px;
+            padding: 5.5px 8px;
+            font-size: 12px;
             border-bottom: 1px solid #eee;
             vertical-align: top;
         }
@@ -99,11 +109,11 @@
         table.tabel-data tr:last-child td { border-bottom: none; }
 
         .sub-judul-ortu {
-            font-size: 10px;
+            font-size: 11.5px;
             font-weight: bold;
             color: #00524F;
             background: #E6F6F5;
-            padding: 3px 8px;
+            padding: 4px 8px;
             border-left: 1px solid #ccc;
             border-right: 1px solid #ccc;
         }
@@ -130,6 +140,9 @@
                     @endif
                 </td>
                 <td class="kolom-judul">
+                    <p class="nama-yayasan">
+                        {{ $lembaga->yayasan->nama ?? $siswa->lembaga?->yayasan?->nama }}
+                    </p>
                     <h1>BUKU INDUK SISWA</h1>
                     <p>
                         @if($lembaga)
@@ -151,7 +164,7 @@
                 @if($siswa->foto_base64)
                     <img src="{{ $siswa->foto_base64 }}" alt="Foto" width="100" height="130">
                 @else
-                    Belum ada foto
+                    <span style="line-height: normal; display: inline-block;">Belum ada foto</span>
                 @endif
             </td>
             <td style="width: 20px;">&nbsp;</td>
