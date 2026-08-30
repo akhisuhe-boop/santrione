@@ -6,7 +6,7 @@
     <style>
         /* DomPDF -- CSS terbatas, sengaja pakai layout berbasis
            <table> (bukan flexbox/grid) supaya kompatibel & stabil. */
-        body { font-family: sans-serif; font-size: 12.5px; color: #1a1a1a; }
+        body { font-family: sans-serif; font-size: 11.5px; color: #1a1a1a; }
 
         .halaman-siswa {
             page-break-after: always;
@@ -46,40 +46,38 @@
             color: #444;
         }
 
-        table.tabel-atas { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        table.tabel-atas { width: 100%; border-collapse: collapse; margin-bottom: 6px; }
         table.tabel-atas td { vertical-align: top; padding: 0; }
         .kotak-foto {
             width: 100px;
-            height: 130px;
-            border: 1px solid #999;
-            text-align: center;
+            text-align: left;
             vertical-align: top;
             font-size: 9px;
             color: #999;
-            overflow: hidden;
-            line-height: 0;
         }
         .kotak-foto img {
             width: 100px;
             height: 130px;
             display: block;
-            vertical-align: bottom;
+            border: 1px solid #999;
         }
         .info-ringkas { }
-        .info-ringkas .nama-besar { font-size: 17px; font-weight: bold; color: #00524F; margin-bottom: 2px; }
-        .info-ringkas .no-induk { font-size: 11px; color: #666; margin-bottom: 10px; }
+        .info-ringkas .nama-besar { font-size: 16px; font-weight: bold; color: #00524F; margin-bottom: 2px; }
+        .info-ringkas .no-induk { font-size: 10.5px; color: #666; margin-bottom: 5px; }
         .info-ringkas table { width: 100%; border-collapse: collapse; }
-        .info-ringkas table td { padding: 2.5px 0; font-size: 12px; }
-        .info-ringkas table td.label { width: 100px; color: #555; }
-        .info-ringkas table td.titik { width: 10px; color: #555; }
+        .info-ringkas table td { padding: 2.5px 0; font-size: 11.5px; vertical-align: top; }
+        .info-ringkas table td.label { width: 78px; color: #555; }
+        .info-ringkas table td.label-kanan { width: 92px; color: #555; padding-left: 14px; }
+        .info-ringkas table td.titik { width: 8px; color: #555; }
+        .info-ringkas table td.nilai { width: 90px; }
 
         .judul-bagian {
             background: #00A39D;
             color: #fff;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
-            padding: 5px 8px;
-            margin-top: 12px;
+            padding: 3.5px 8px;
+            margin-top: 8px;
             margin-bottom: 0;
             letter-spacing: 0.5px;
         }
@@ -88,11 +86,11 @@
             border-collapse: collapse;
             border: 1px solid #ccc;
             border-top: none;
-            margin-bottom: 4px;
+            margin-bottom: 3px;
         }
         table.tabel-data td {
-            padding: 5.5px 8px;
-            font-size: 12px;
+            padding: 3.5px 8px;
+            font-size: 11px;
             border-bottom: 1px solid #eee;
             vertical-align: top;
         }
@@ -109,11 +107,11 @@
         table.tabel-data tr:last-child td { border-bottom: none; }
 
         .sub-judul-ortu {
-            font-size: 11.5px;
+            font-size: 10.5px;
             font-weight: bold;
             color: #00524F;
             background: #E6F6F5;
-            padding: 4px 8px;
+            padding: 3px 8px;
             border-left: 1px solid #ccc;
             border-right: 1px solid #ccc;
         }
@@ -164,7 +162,7 @@
                 @if($siswa->foto_base64)
                     <img src="{{ $siswa->foto_base64 }}" alt="Foto" width="100" height="130">
                 @else
-                    <span style="line-height: normal; display: inline-block;">Belum ada foto</span>
+                    <div style="width: 98px; height: 128px; border: 1px solid #999; text-align: center; padding-top: 55px;">Belum<br>ada foto</div>
                 @endif
             </td>
             <td style="width: 20px;">&nbsp;</td>
@@ -172,12 +170,18 @@
                 <div class="nama-besar">{{ $siswa->nama_lengkap }}</div>
                 <div class="no-induk">No. Urut Induk: {{ $i + 1 }}</div>
                 <table>
-                    <tr><td class="label">NIS</td><td class="titik">:</td><td>{{ $siswa->nis ?: '-' }}</td></tr>
-                    <tr><td class="label">NISN</td><td class="titik">:</td><td>{{ $siswa->nisn ?: '-' }}</td></tr>
-                    <tr><td class="label">Jenis Kelamin</td><td class="titik">:</td><td>{{ $siswa->jenis_kelamin === 'L' ? 'Laki-laki' : ($siswa->jenis_kelamin === 'P' ? 'Perempuan' : '-') }}</td></tr>
-                    <tr><td class="label">Tempat, Tgl Lahir</td><td class="titik">:</td><td>{{ $siswa->tempat_lahir ?: '-' }}, {{ $siswa->tanggal_lahir ? \Carbon\Carbon::parse($siswa->tanggal_lahir)->translatedFormat('d F Y') : '-' }}</td></tr>
-                    <tr><td class="label">Kelas</td><td class="titik">:</td><td>{{ optional($siswa->kelas)->nama ?: '-' }}</td></tr>
-                    <tr><td class="label">Status</td><td class="titik">:</td><td>{{ $siswa->status_siswa ?: '-' }}</td></tr>
+                    <tr>
+                        <td class="label">NIS</td><td class="titik">:</td><td class="nilai">{{ $siswa->nis ?: '-' }}</td>
+                        <td class="label label-kanan">Tempat, Tgl Lahir</td><td class="titik">:</td><td>{{ $siswa->tempat_lahir ?: '-' }}, {{ $siswa->tanggal_lahir ? \Carbon\Carbon::parse($siswa->tanggal_lahir)->translatedFormat('d F Y') : '-' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">NISN</td><td class="titik">:</td><td class="nilai">{{ $siswa->nisn ?: '-' }}</td>
+                        <td class="label label-kanan">Kelas</td><td class="titik">:</td><td>{{ optional($siswa->kelas)->nama ?: '-' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Jenis Kelamin</td><td class="titik">:</td><td class="nilai">{{ $siswa->jenis_kelamin === 'L' ? 'Laki-laki' : ($siswa->jenis_kelamin === 'P' ? 'Perempuan' : '-') }}</td>
+                        <td class="label label-kanan">Status</td><td class="titik">:</td><td>{{ $siswa->status_siswa ?: '-' }}</td>
+                    </tr>
                 </table>
             </td>
         </tr>
