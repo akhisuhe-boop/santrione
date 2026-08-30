@@ -22,11 +22,16 @@
             margin-bottom: 14px;
         }
         .header-dokumen h1 {
-            font-size: 16px;
+            font-size: 22px;
             margin: 0 0 2px 0;
             letter-spacing: 1px;
             color: #00524F;
         }
+        table.tabel-header-logo { width: 100%; border-collapse: collapse; }
+        table.tabel-header-logo td { vertical-align: middle; padding: 0; }
+        .kolom-logo { width: 60px; text-align: left; }
+        .kolom-logo img { height: 50px; width: auto; max-width: 55px; }
+        .kolom-judul { text-align: center; }
         .header-dokumen p {
             margin: 0;
             font-size: 11px;
@@ -116,15 +121,27 @@
 <div class="halaman-siswa">
 
     <div class="header-dokumen">
-        <h1>BUKU INDUK SISWA</h1>
-        <p>
-            @if($lembaga)
-                {{ $lembaga->nama }}
-            @elseif($siswa->lembaga)
-                {{ $siswa->lembaga->nama }}
-            @endif
-            @if($kelas) &middot; Kelas {{ $kelas->nama }} @endif
-        </p>
+        <table class="tabel-header-logo">
+            <tr>
+                <td class="kolom-logo">
+                    @if($siswa->logo_base64)
+                        <img src="{{ $siswa->logo_base64 }}" alt="Logo">
+                    @endif
+                </td>
+                <td class="kolom-judul">
+                    <h1>BUKU INDUK SISWA</h1>
+                    <p>
+                        @if($lembaga)
+                            {{ $lembaga->nama }}
+                        @elseif($siswa->lembaga)
+                            {{ $siswa->lembaga->nama }}
+                        @endif
+                        @if($kelas) &middot; Kelas {{ $kelas->nama }} @endif
+                    </p>
+                </td>
+                <td class="kolom-logo"></td>
+            </tr>
+        </table>
     </div>
 
     <table class="tabel-atas">
