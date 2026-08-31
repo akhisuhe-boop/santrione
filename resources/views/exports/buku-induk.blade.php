@@ -63,11 +63,11 @@
         }
         .info-ringkas { }
         .info-ringkas .nama-besar { font-size: 16px; font-weight: bold; color: #00524F; margin-bottom: 2px; }
-        .info-ringkas .no-induk { font-size: 10.5px; color: #666; margin-bottom: 5px; }
+        .info-ringkas .no-induk { font-size: 10.5px; color: #666; margin-bottom: 12px; }
         .info-ringkas table { width: 100%; border-collapse: collapse; }
         .info-ringkas table td { padding: 2.5px 0; font-size: 11.5px; vertical-align: top; }
         .info-ringkas table td.label { width: 78px; color: #555; }
-        .info-ringkas table td.label-kanan { width: 92px; color: #555; padding-left: 32px; }
+        .info-ringkas table td.label-kanan { width: 92px; color: #555; padding-left: 48px; }
         .info-ringkas table td.titik { width: 8px; color: #555; }
         .info-ringkas table td.nilai { width: 90px; }
 
@@ -162,7 +162,7 @@
                 @if($siswa->foto_base64)
                     <img src="{{ $siswa->foto_base64 }}" alt="Foto" width="100" height="130">
                 @else
-                    <table style="width: 98px; height: 128px; border: 1px solid #999; border-collapse: collapse;"><tr><td style="text-align: center; vertical-align: middle; font-size: 9px; color: #999;">Belum<br>ada foto</td></tr></table>
+                    <table style="width: 100px; border-collapse: collapse;"><tr><td style="height: 130px; width: 100px; border: 1px solid #999; text-align: center; vertical-align: middle; font-size: 9px; color: #999;">Belum<br>ada foto</td></tr></table>
                 @endif
             </td>
             <td style="width: 20px;">&nbsp;</td>
