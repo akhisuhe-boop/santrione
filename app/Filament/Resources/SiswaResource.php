@@ -584,13 +584,13 @@ class SiswaResource extends BaseResource
         );
     }),
 
-                Action::make('export_pdf')
-                ->label('Export PDF')
-                ->icon('heroicon-o-document-arrow-down')
+                Action::make('export_buku_induk')
+                ->label('Export Buku Induk')
+                ->icon('heroicon-o-book-open')
                 ->color('danger')
                 ->action(function (array $data) {
                     return redirect()->to(
-                        route('export.siswa.pdf', [
+                        route('export.siswa.buku-induk', [
                             'lembaga_id' => $data['lembaga_id'] ?? null,
                             'kelas_id'   => $data['kelas_id'] ?? null,
                         ])

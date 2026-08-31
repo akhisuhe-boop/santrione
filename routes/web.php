@@ -5,6 +5,7 @@ use Maatwebsite\Excel\Facades\Excel;
 
 use App\Exports\SiswaTemplateExport;
 use App\Exports\SiswaPdfExport;
+use App\Exports\BukuIndukPdfExport;
 use App\Exports\PegawaiTemplateExport;
 
 use App\Http\Controllers\KwitansiController;
@@ -66,7 +67,6 @@ Route::post('/daftar', [PublicRegistrationController::class, 'store'])->name('pu
 // tidak pakai auth/CSRF, verifikasi lewat signature key di dalam
 // controller-nya sendiri).
 Route::post('/webhooks/doku', [DokuWebhookController::class, 'handle'])->name('webhooks.doku');
-Route::post('/webhooks/doku/token', [DokuWebhookController::class, 'tokenB2B'])->name('webhooks.doku.token');
 Route::post('/webhooks/xendit', [\App\Http\Controllers\XenditWebhookController::class, 'handle'])->name('webhooks.xendit');
 
 // Halaman langganan tenant (lihat status trial/aktif, upload bukti
@@ -124,6 +124,19 @@ Route::get('/export-siswa-pdf', function () {
     return (new SiswaPdfExport($lembagaId, $kelasId))->download();
 
 })->name('export.siswa.pdf');
+
+// PERUBAHAN 29 Agt 2026: export "Buku Induk Siswa" -- format lengkap
+// 1 profil per siswa (foto + biodata + data ortu/wali), beda dari
+// export-siswa-pdf di atas yang cuma tabel ringkas. Lihat
+// App\Exports\BukuIndukPdfExport.
+Route::get('/export-buku-induk-siswa', function () {
+
+    $lembagaId = request('lembaga_id');
+    $kelasId   = request('kelas_id');
+
+    return (new BukuIndukPdfExport($lembagaId, $kelasId))->download();
+
+})->name('export.siswa.buku-induk');
 
 
 // ==========================
