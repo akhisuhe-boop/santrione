@@ -37,6 +37,9 @@ class KasirKantin extends Page
     // Data siswa yang lagi discan (null = belum ada siswa dipilih)
     public ?array $siswaTerpilih = null;
 
+    // True = transaksi tunai tanpa kartu siswa (guru, pengunjung, dll)
+    public bool $modeTunai = false;
+
     // Preview produk terakhir yang berhasil discan (buat feedback visual)
     public ?array $previewProduk = null;
 
@@ -120,7 +123,21 @@ class KasirKantin extends Page
     public function gantiSiswa(): void
     {
         $this->siswaTerpilih = null;
+        $this->modeTunai = false;
         $this->cart = [];
+        $this->previewProduk = null;
+    }
+
+    /**
+     * Mulai transaksi tunai tanpa kartu siswa — dipakai untuk guru,
+     * pengunjung, atau siapa pun yang tidak punya kartu/wallet siswa.
+     */
+    public function mulaiTransaksiTunai(): void
+    {
+        $this->siswaTerpilih = null;
+        $this->modeTunai = true;
+        $this->cart = [];
+        $this->previewProduk = null;
     }
 
     protected function scanProduk(KantinProduk $produk): void
@@ -187,8 +204,8 @@ class KasirKantin extends Page
 
     public function checkout(): void
     {
-        if (! $this->siswaTerpilih) {
-            Notification::make()->title('Scan kartu siswa dulu sebelum bayar.')->warning()->send();
+        if (! $this->siswaTerpilih && ! $this->modeTunai) {
+            Notification::make()->title('Scan kartu siswa dulu, atau pilih transaksi tunai tanpa kartu.')->warning()->send();
             return;
         }
 
@@ -204,23 +221,30 @@ class KasirKantin extends Page
                 ->values()
                 ->all();
 
+            // Ada siswa terpilih -> bayar pakai wallet siswa.
+            // Tidak ada siswa (guru/tamu) -> selalu tunai.
+            $metode = $this->siswaTerpilih ? 'wallet' : 'tunai';
+
             $trx = app(KantinService::class)->checkout(
                 $this->lembaga_id,
-                $this->siswaTerpilih['id'],
-                'wallet',
+                $this->siswaTerpilih['id'] ?? null,
+                $metode,
                 $items,
                 null
             );
 
             Notification::make()
                 ->title('Transaksi berhasil — ' . $trx->kode)
-                ->body('Sisa saldo: Rp ' . number_format($this->siswaTerpilih['saldo'] - $this->total, 0, ',', '.'))
+                ->body($metode === 'wallet'
+                    ? 'Sisa saldo: Rp ' . number_format($this->siswaTerpilih['saldo'] - $this->total, 0, ',', '.')
+                    : 'Total tunai diterima: Rp ' . number_format($this->total, 0, ',', '.'))
                 ->success()
                 ->send();
 
             $this->cart = [];
             $this->previewProduk = null;
-            $this->siswaTerpilih = null; // siap buat siswa berikutnya
+            $this->siswaTerpilih = null; // siap buat siswa/transaksi berikutnya
+            $this->modeTunai = false;
 
         } catch (\Illuminate\Validation\ValidationException $e) {
 

@@ -53,9 +53,9 @@
 
         <div style="display:grid; gap:16px;">
 
-            @if (! $siswaTerpilih)
+            @if (! $siswaTerpilih && ! $modeTunai)
 
-                {{-- BELUM ADA SISWA --}}
+                {{-- BELUM ADA SISWA / TRANSAKSI --}}
                 <x-filament::section>
                     <x-slot name="heading">
                         <div class="kk-row kk-gap-2">
@@ -85,10 +85,48 @@
 
                         <p class="kk-hint">Kursor sudah otomatis aktif di kolom ini — tinggal scan pakai barcode scanner, atau ketik NIS manual lalu tekan Enter.</p>
 
+                        <div class="kk-gap-md" style="border-top:1px solid #f3f4f6; padding-top:14px; text-align:center;">
+                            <p class="kk-hint" style="margin-top:0; margin-bottom:8px;">Pembeli tidak punya kartu siswa? (guru, staf, atau pengunjung)</p>
+                            <x-filament::button color="gray" outlined wire:click="mulaiTransaksiTunai" icon="heroicon-o-banknotes">
+                                Transaksi Tanpa Kartu (Tunai)
+                            </x-filament::button>
+                        </div>
+
                     </div>
                 </x-filament::section>
 
             @else
+
+                @if ($modeTunai)
+
+                    {{-- MODE TUNAI TANPA KARTU (guru / pengunjung) --}}
+                    <x-filament::section>
+                        <div class="kk-section-body">
+                            <div class="kk-row-between">
+
+                                <div class="kk-row kk-gap-3">
+
+                                    <div class="kk-avatar" style="width:88px;height:88px;background:#fffbeb;display:flex;align-items:center;justify-content:center;color:#d97706;">
+                                        <x-heroicon-o-banknotes style="width:36px;height:36px;" />
+                                    </div>
+
+                                    <div>
+                                        <div class="kk-name">Transaksi Tunai</div>
+                                        <div class="kk-meta">Tanpa kartu siswa — guru / staf / pengunjung</div>
+                                        <div class="kk-meta">Dibayar langsung tunai di kasir</div>
+                                    </div>
+
+                                </div>
+
+                                <x-filament::button color="gray" outlined wire:click="gantiSiswa" icon="heroicon-o-arrow-path">
+                                    Batal
+                                </x-filament::button>
+
+                            </div>
+                        </div>
+                    </x-filament::section>
+
+                @else
 
                 {{-- SISWA SUDAH DIPILIH --}}
                 <x-filament::section>
@@ -156,6 +194,8 @@
                         @endif
                     </div>
                 </x-filament::section>
+
+                @endif
 
                 {{-- SCAN PRODUK --}}
                 <x-filament::section>
@@ -260,7 +300,7 @@
                         @empty
 
                             <div style="text-align:center; padding:24px 0; color:#9ca3af; font-size:12px;">
-                                {{ $siswaTerpilih ? 'Scan produk untuk menambahkan.' : 'Scan kartu siswa dulu.' }}
+                                {{ ($siswaTerpilih || $modeTunai) ? 'Scan produk untuk menambahkan.' : 'Scan kartu siswa atau pilih transaksi tunai dulu.' }}
                             </div>
 
                         @endforelse
@@ -284,9 +324,9 @@
                             icon="heroicon-o-check-circle"
                             color="primary"
                             size="lg"
-                            :disabled="! $siswaTerpilih || empty($cart)"
+                            :disabled="(! $siswaTerpilih && ! $modeTunai) || empty($cart)"
                             style="width:100%; justify-content:center;">
-                            Bayar (Wallet)
+                            {{ $modeTunai ? 'Bayar (Tunai)' : 'Bayar (Wallet)' }}
                         </x-filament::button>
                     </div>
 
