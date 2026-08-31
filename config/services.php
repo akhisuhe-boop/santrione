@@ -66,6 +66,19 @@ return [
     // DOKU_PUBLIC_KEY, format sama seperti DOKU_PRIVATE_KEY (newline
     // literal \n).
     'doku_public_key' => str_replace('\n', "\n", (string) env('DOKU_PUBLIC_KEY', '')),
+    // accountNo (BUKAN profileId) milik Qinara sendiri di DOKU Sub
+    // Account -- WAJIB ada supaya Split Rule (lihat DokuService::
+    // buatSplitRule()) punya tujuan valid untuk porsi fee Qinara.
+    // Dikonfirmasi dari OpenAPI spec resmi Split Rule Items: "accountNumber
+    // ... Must be an existing sub-account under your merchant" -- jadi
+    // Qinara juga WAJIB register diri sendiri sebagai 1 sub-account
+    // (lewat DokuService::registerSubAccount() dengan data Qinara
+    // sendiri, BUKAN data Lembaga) sebelum split rule bisa dibuat, lalu
+    // isi accountNo hasilnya di sini. Belum bisa dipastikan APAKAH
+    // accountNo dari akun MERCHANT UTAMA (non-sub-account) juga valid
+    // dipakai langsung di sini tanpa registrasi sub-account terpisah --
+    // WAJIB ditanyakan ke tim onboarding DOKU.
+    'platform_account_no' => env('DOKU_PLATFORM_ACCOUNT_NO', ''),
     'va_snap_partner_service_id' => [
         'BCA' => env('DOKU_VA_SNAP_BCA', ''),
         'BNI' => env('DOKU_VA_SNAP_BNI', ''),

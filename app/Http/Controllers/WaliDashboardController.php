@@ -610,6 +610,7 @@ class WaliDashboardController extends Controller
                     customerName: $customerName,
                     customerEmail: $customerEmail,
                     dokuSubAccountId: $lembaga?->doku_sub_account_id,
+                    splitRuleId: $lembaga?->doku_split_rule_id,
                 );
 
                 $vaNumber = $result['virtual_account_info']['virtual_account_number'] ?? null;

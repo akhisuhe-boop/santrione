@@ -272,31 +272,172 @@ class DokuService
     }
 
     /**
-     * Daftarkan Lembaga sebagai Sub-Account DOKU (Standard type -- Lembaga
-     * bisa login DOKU Dashboard sendiri untuk lihat saldo/riwayat, sesuai
-     * rekomendasi DOKU untuk merchant yang ingin transparansi ke pihak
-     * ketiga -- cocok untuk kebutuhan trust yayasan/pesantren).
+     * POST helper untuk endpoint Sub-Account V2 -- SEMUA endpoint di
+     * bawah `/sub-account/v2.0/*` memakai skema SNAP (X-PARTNER-ID,
+     * X-TIMESTAMP, X-SIGNATURE, X-EXTERNAL-ID, Authorization: Bearer
+     * <token B2B>), BUKAN skema Non-SNAP (Client-Id/Request-Id/Signature)
+     * yang dipakai method post() di atas -- ini DIKONFIRMASI dari OpenAPI
+     * spec resmi di developers.doku.com/wallet-as-a-service/sub-account/
+     * sub-account-v2/integration-guide (bukan tebakan lagi).
      *
-     * PERLU DIVERIFIKASI (lihat catatan class di atas): endpoint & skema
-     * auth Sub-Account V2 register kemungkinan SNAP, bukan Non-SNAP
-     * seperti method post() di atas -- method ini masih pakai pola yang
-     * sama untuk konsistensi, SESUAIKAN begitu tim DOKU konfirmasi skema
-     * yang berlaku untuk akun Qinara.
+     * Signature-nya HMAC-SHA512 (BUKAN SHA256 seperti Non-SNAP), formula
+     * "Symmetric Signature" SNAP yang SAMA PERSIS dengan yang sudah
+     * dipakai & terbukti di buatVaSnap()/buatQris() di bawah:
+     * stringToSign = POST:{path}:{accessToken}:{lowercase(hex(sha256(body)))}:{timestamp}
+     * signature = base64(HMAC-SHA512(stringToSign, secretKey))
+     *
+     * BUG lama yang DIHINDARI di sini: registerSubAccount() sebelumnya
+     * memanggil helper post() (skema Non-SNAP) padahal path-nya sudah
+     * v2.0 (SNAP) -- kombinasi ini PASTI ditolak DOKU (signature dihitung
+     * dengan formula yang salah untuk endpoint ini).
+     */
+    protected function postSnap(string $path, array $body): array
+    {
+        $token = $this->getAccessToken();
+        $timestamp = $this->requestTimestamp();
+        $externalId = (string) random_int(1000000000, 9999999999);
+
+        $rawBody = json_encode($body, JSON_UNESCAPED_SLASHES);
+        $bodyHash = strtolower(hash('sha256', $rawBody));
+        $stringToSign = "POST:{$path}:{$token}:{$bodyHash}:{$timestamp}";
+        $signature = base64_encode(hash_hmac('sha512', $stringToSign, $this->secretKey(), true));
+
+        $response = Http::timeout(25)->withHeaders([
+            'X-PARTNER-ID' => $this->clientId(),
+            'X-EXTERNAL-ID' => $externalId,
+            'X-TIMESTAMP' => $timestamp,
+            'X-SIGNATURE' => $signature,
+            'Authorization' => 'Bearer ' . $token,
+            'Content-Type' => 'application/json',
+        ])->withBody($rawBody, 'application/json')
+            ->post($this->baseUrl() . $path);
+
+        if ($response->failed()) {
+            Log::error('DokuService::postSnap gagal', [
+                'path' => $path,
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            throw new RuntimeException('Gagal memanggil DOKU Sub-Account API (' . $path . '): ' . $response->body());
+        }
+
+        return $response->json() ?? [];
+    }
+
+    /**
+     * Daftarkan Lembaga sebagai Sub-Account V2 DOKU (type DEFAULT --
+     * sub-account "hampir tidak terlihat" oleh pemegang akun, DOKU yang
+     * urus KYC/KYB & UX sepenuhnya lewat Qinara, cocok untuk kebutuhan
+     * kita karena wali murid/Lembaga tidak perlu login dashboard DOKU
+     * sendiri). Body & auth DIPERBAIKI TOTAL -- dicocokkan persis dengan
+     * OpenAPI spec resmi "Register Sub Account" (lihat catatan di
+     * postSnap() di atas):
+     * - Auth: SNAP (bukan Non-SNAP seperti kode lama)
+     * - Body: field FLAT (partnerReferenceNo/type/email/name/phoneNo/
+     *   countryCode), BUKAN dibungkus objek "account" seperti kode lama
+     *   (itu format API Sub-Account V1/Non-SNAP yang sudah deprecated,
+     *   ketuker dengan V2 karena strukturnya kebetulan mirip).
+     * - Response: `profileId` (dipakai di additionalInfo.account.id saat
+     *   accept payment) TERPISAH dari `accounts[].accountNo` (dipakai di
+     *   Split Rule/Balance Inquiry/Transfer) -- kode lama cuma nyimpen 1
+     *   field campur aduk, sekarang disimpan ke 2 kolom terpisah (lihat
+     *   migration add_doku_split_rule_columns).
      */
     public function registerSubAccount(\App\Models\Lembaga $lembaga): array
     {
-        $result = $this->post('/sub-account/v2.0/register', [
-            'account' => [
-                'email' => $lembaga->yayasan?->email ?? "lembaga{$lembaga->id}@qinaraindonesia.id",
-                'type' => 'STANDARD',
-                'name' => $lembaga->nama,
+        $email = self::emailAman($lembaga->yayasan?->email, 'lembaga' . $lembaga->id);
+
+        $result = $this->postSnap('/sub-account/v2.0/register', [
+            'partnerReferenceNo' => 'LBG-' . $lembaga->id . '-' . now()->format('YmdHis'),
+            'type' => 'DEFAULT',
+            'email' => $email,
+            'name' => Str::limit($lembaga->nama, 128, ''),
+            'phoneNo' => $lembaga->yayasan?->no_wa ?? null,
+            'countryCode' => 'ID',
+        ]);
+
+        $accountIdr = collect($result['accounts'] ?? [])
+            ->firstWhere('type', 'DOKU_MERCHANT_IDR');
+
+        $lembaga->update([
+            'doku_sub_account_id' => $result['profileId'] ?? null,
+            'doku_account_no' => $accountIdr['accountNo'] ?? null,
+            'doku_status' => 'menunggu_verifikasi',
+            'payment_gateway' => 'doku',
+        ]);
+
+        return $result;
+    }
+
+    /**
+     * Buat Split Rule untuk Lembaga -- SEBELUMNYA TIDAK PERNAH ADA sama
+     * sekali (lihat catatan panjang yang sudah dihapus di
+     * buatPaymentRequest(): asumsi lama SALAH mengira split HARUS 2
+     * langkah lewat Debit API belakangan, padahal dokumentasi resmi
+     * (docs.doku.com/wallet-as-a-service/sub-account/collect-and-route)
+     * justru menyediakan Split Rule yang otomatis jalan DI TITIK
+     * PEMBAYARAN, sama seperti Xendit).
+     *
+     * Aturan: (100 - fee_persen)% ke accountNo Lembaga sendiri, fee_persen%
+     * ke accountNo Qinara (config('services.doku.platform_account_no')) --
+     * WAJIB diisi lebih dulu, lihat catatan di config/services.php.
+     * Dipanggil SEKALI setelah registerSubAccount() sukses (splitRuleId
+     * hasilnya disimpan & dipakai berulang di setiap payment request
+     * Lembaga ini, TIDAK perlu dibuat ulang tiap transaksi).
+     *
+     * !! KETIDAKCOCOKAN ARSITEKTUR YANG PERLU KEPUTUSAN BISNIS !!
+     * hitungFeeTotal() menghitung fee PERSENTASE TAPI DIBATASI CAP
+     * (mis. 0.75% dibatasi maks Rp10.000/transaksi) -- sedangkan Split
+     * Rule DOKU itu STATIS (dibuat sekali, berlaku sama ke SEMUA
+     * transaksi Lembaga ini seterusnya) dan cuma bisa PERCENTAGE murni
+     * (tanpa cap) atau FLAT (nominal tetap, tanpa persentase). Split
+     * Rule TIDAK BISA meniru "persentase dengan cap" secara native.
+     * Method ini memakai PERCENTAGE MURNI (tanpa cap) supaya kompatibel
+     * dengan Split Rule -- konsekuensinya: untuk transaksi besar (mis.
+     * PPDB/uang pangkal jutaan rupiah), Qinara akan menerima jauh lebih
+     * besar dari Rp10.000 lewat split ini (beda dari nominal fee yang
+     * DITAMPILKAN ke wali via hitungFeeTotal(), yang MASIH pakai cap).
+     * WAJIB diputuskan oleh tim Qinara: (a) hapus cap di hitungFeeTotal()
+     * supaya fee yang ditampilkan ke wali = fee yang benar-benar di-split
+     * DOKU, atau (b) lepas Split Rule DOKU untuk kasus ber-cap dan balik
+     * ke pola "masuk penuh ke Lembaga, Qinara tarik manual/berkala lewat
+     * Transfer API (SAC->SAC) dari saldo Lembaga" -- BUKAN ditulis
+     * sepihak di sini karena ini keputusan model bisnis, bukan bug kode.
+     */
+    public function buatSplitRule(\App\Models\Lembaga $lembaga, ?float $feePersen = null): array
+    {
+        if (blank($lembaga->doku_account_no)) {
+            throw new RuntimeException('Lembaga belum punya doku_account_no -- panggil registerSubAccount() dulu.');
+        }
+
+        $platformAccountNo = config('services.doku.platform_account_no');
+
+        if (blank($platformAccountNo)) {
+            throw new RuntimeException('DOKU_PLATFORM_ACCOUNT_NO belum diisi di .env -- Qinara wajib punya sub-account/accountNo sendiri di DOKU dulu sebelum Split Rule bisa dibuat (lihat catatan di config/services.php).');
+        }
+
+        $persen = $feePersen ?? (float) config('services.doku.fee_persen', 0.75);
+        $persenLembaga = round(100 - $persen, 4);
+
+        $result = $this->postSnap('/sub-account/v2.0/split-rules', [
+            'transactionType' => 'PAYMENT',
+            'rules' => [
+                [
+                    'type' => 'PERCENTAGE',
+                    'value' => $persenLembaga,
+                    'accountNumber' => $lembaga->doku_account_no,
+                ],
+                [
+                    'type' => 'PERCENTAGE',
+                    'value' => $persen,
+                    'accountNumber' => $platformAccountNo,
+                ],
             ],
         ]);
 
         $lembaga->update([
-            'doku_sub_account_id' => $result['account']['id'] ?? $result['id'] ?? null,
-            'doku_status' => 'menunggu_verifikasi',
-            'payment_gateway' => 'doku',
+            'doku_split_rule_id' => $result['splitRuleId'] ?? null,
         ]);
 
         return $result;
@@ -353,7 +494,8 @@ class DokuService
         string $channel = 'QRIS',
         ?string $bank = null,
         ?string $dokuSubAccountId = null,
-        ?string $callbackUrl = null
+        ?string $callbackUrl = null,
+        ?string $splitRuleId = null
     ): array {
         // DIPERBAIKI -- dicocokkan persis dengan skema resmi
         // developers.doku.com/accept-payments/doku-checkout/integration-guide/backend-integration:
@@ -381,11 +523,19 @@ class DokuService
             ],
         ];
 
-        // Routing ke Sub-Account Lembaga -- lihat catatan method di atas
-        // soal split fee.
+        // Routing ke Sub-Account Lembaga + Split Rule -- DITAMBAHKAN
+        // split_rule_id (sebelumnya cuma account.id, TIDAK PERNAH ada
+        // split_rule_id sama sekali di kode manapun, jadi split fee
+        // Qinara TIDAK PERNAH benar-benar terjadi). Field & lokasi
+        // dikonfirmasi resmi dari docs.doku.com/wallet-as-a-service/
+        // sub-account/collect-and-route ("additionalInfo.account.
+        // split_rule_id").
         if ($dokuSubAccountId) {
             $body['additional_info'] = [
-                'account' => ['id' => $dokuSubAccountId],
+                'account' => array_filter([
+                    'id' => $dokuSubAccountId,
+                    'split_rule_id' => $splitRuleId,
+                ]),
             ];
         }
 
@@ -499,7 +649,8 @@ class DokuService
         string $judul,
         string $customerName,
         string $customerEmail,
-        ?string $dokuSubAccountId = null
+        ?string $dokuSubAccountId = null,
+        ?string $splitRuleId = null
     ): array {
         $body = [
             'order' => [
@@ -520,9 +671,17 @@ class DokuService
             ],
         ];
 
+        // DITAMBAHKAN split_rule_id -- lihat catatan sama di
+        // buatPaymentRequest() di atas. Ini jalur yang SEBENARNYA dipakai
+        // untuk tagihan SPP & PPDB (WaliDashboardController,
+        // PpdbPembayaranController) -- jadi ini titik paling penting
+        // supaya split fee Qinara benar-benar aktif.
         if ($dokuSubAccountId) {
             $body['additional_info'] = [
-                'account' => ['id' => $dokuSubAccountId],
+                'account' => array_filter([
+                    'id' => $dokuSubAccountId,
+                    'split_rule_id' => $splitRuleId,
+                ]),
             ];
         }
 

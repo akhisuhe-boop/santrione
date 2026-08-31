@@ -67,6 +67,15 @@ Route::post('/daftar', [PublicRegistrationController::class, 'store'])->name('pu
 // tidak pakai auth/CSRF, verifikasi lewat signature key di dalam
 // controller-nya sendiri).
 Route::post('/webhooks/doku', [DokuWebhookController::class, 'handle'])->name('webhooks.doku');
+// DITAMBAHKAN -- route ini SEBELUMNYA TIDAK PERNAH didaftarkan sama
+// sekali, padahal method DokuWebhookController::tokenB2B() sudah ada dan
+// komentarnya secara eksplisit menyebut URL ini
+// ("https://.../webhooks/doku/token") harus didaftarkan ke DOKU Dashboard
+// (Settings > API Keys > Pengaturan SNAP > "Edit Token URL"). Tanpa route
+// ini, DOKU tidak akan pernah bisa memanggil balik untuk minta token
+// sebelum kirim notifikasi SNAP -- SEMUA notifikasi SNAP (VA SNAP, QRIS,
+// DANA/ShopeePay) akan gagal terkirim ke sistem kita.
+Route::post('/webhooks/doku/token', [DokuWebhookController::class, 'tokenB2B'])->name('webhooks.doku.token');
 Route::post('/webhooks/xendit', [\App\Http\Controllers\XenditWebhookController::class, 'handle'])->name('webhooks.xendit');
 
 // Halaman langganan tenant (lihat status trial/aktif, upload bukti
