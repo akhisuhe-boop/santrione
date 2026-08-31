@@ -45,8 +45,15 @@ return [
     'client_id'      => env('DOKU_CLIENT_ID'),
     'secret_key'     => env('DOKU_SECRET_KEY'),
     'is_production'  => env('DOKU_IS_PRODUCTION', false),
-    'fee_persen'     => env('DOKU_FEE_PERSEN', 0.75), // persentase fee admin QINARA dari nominal tagihan
-    'fee_cap'        => env('DOKU_FEE_CAP', 10000), // batas maksimum fee admin Qinara per transaksi (Rupiah)
+    // DIPERBARUI -- keputusan bisnis: 0.75%/cap Rp10.000 dinaikkan ke
+    // 0.85%/cap Rp8.500. Titik potong (crossover) turun dari Rp1.333.333
+    // ke Rp1.000.000 -- SPP bulanan (nominal kecil, di bawah titik
+    // potong) kena persentase murni, PPDB/uang pangkal (di atas titik
+    // potong) kena cap flat. Sekarang BENAR-BENAR di-enforce di sisi
+    // DOKU lewat 2 Split Rule per Lembaga (lihat DokuService::
+    // buatSplitRule()/pilihSplitRuleId()), bukan cuma angka tampilan.
+    'fee_persen'     => env('DOKU_FEE_PERSEN', 0.85), // persentase fee admin QINARA dari nominal tagihan
+    'fee_cap'        => env('DOKU_FEE_CAP', 8500), // batas maksimum fee admin Qinara per transaksi (Rupiah)
     // Estimasi fee DOKU sendiri per channel -- DOKU MEMOTONG fee ini dari
     // settlement (bukan nambah otomatis ke customer, dikonfirmasi resmi
     // oleh tim DOKU). Supaya Qinara tidak "makan" fee ini dari margin

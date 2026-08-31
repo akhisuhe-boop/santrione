@@ -42,13 +42,13 @@ class EditLembaga extends EditRecord
                 }),
 
             Actions\Action::make('daftarkanDoku')
-                ->label(fn () => $this->record->doku_split_rule_id ? 'Terdaftar di DOKU (Sub-Account + Split)' : 'Daftarkan ke DOKU')
+                ->label(fn () => ($this->record->doku_split_rule_id && $this->record->doku_split_rule_id_flat) ? 'Terdaftar di DOKU (Sub-Account + Split)' : 'Daftarkan ke DOKU')
                 ->icon('heroicon-o-building-library')
-                ->color(fn () => $this->record->doku_split_rule_id ? 'success' : 'primary')
-                ->disabled(fn () => (bool) $this->record->doku_split_rule_id)
+                ->color(fn () => ($this->record->doku_split_rule_id && $this->record->doku_split_rule_id_flat) ? 'success' : 'primary')
+                ->disabled(fn () => (bool) ($this->record->doku_split_rule_id && $this->record->doku_split_rule_id_flat))
                 ->visible(fn () => (bool) auth()->user()?->is_platform_admin)
                 ->requiresConfirmation()
-                ->modalDescription('Lembaga ini akan didaftarkan sebagai Sub-Account V2 DOKU, lalu dibuatkan Split Rule (porsi fee Qinara otomatis dipisah di setiap pembayaran). Pastikan DOKU_PLATFORM_ACCOUNT_NO sudah diisi di .env.')
+                ->modalDescription('Lembaga ini akan didaftarkan sebagai Sub-Account V2 DOKU, lalu dibuatkan 2 Split Rule (persentase & flat-cap, dipilih otomatis per transaksi sesuai nominal). Pastikan DOKU_PLATFORM_ACCOUNT_NO sudah diisi di .env.')
                 ->action(function () {
                     try {
                         $doku = app(\App\Services\DokuService::class);

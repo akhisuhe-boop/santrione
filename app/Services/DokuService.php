@@ -435,41 +435,20 @@ class DokuService
     }
 
     /**
-     * Buat Split Rule untuk Lembaga -- SEBELUMNYA TIDAK PERNAH ADA sama
-     * sekali (lihat catatan panjang yang sudah dihapus di
-     * buatPaymentRequest(): asumsi lama SALAH mengira split HARUS 2
-     * langkah lewat Debit API belakangan, padahal dokumentasi resmi
-     * (docs.doku.com/wallet-as-a-service/sub-account/collect-and-route)
-     * justru menyediakan Split Rule yang otomatis jalan DI TITIK
-     * PEMBAYARAN, sama seperti Xendit).
+     * Buat DUA Split Rule untuk Lembaga (PERCENTAGE + FLAT) -- keputusan
+     * final: skema fee tetap "persentase dengan cap" (0.85%, maks
+     * Rp8.500/transaksi), BUKAN persentase murni atau flat murni.
      *
-     * Aturan: (100 - fee_persen)% ke accountNo Lembaga sendiri, fee_persen%
-     * ke accountNo Qinara (config('services.doku.platform_account_no')) --
-     * WAJIB diisi lebih dulu, lihat catatan di config/services.php.
-     * Dipanggil SEKALI setelah registerSubAccount() sukses (splitRuleId
-     * hasilnya disimpan & dipakai berulang di setiap payment request
-     * Lembaga ini, TIDAK perlu dibuat ulang tiap transaksi).
-     *
-     * !! KETIDAKCOCOKAN ARSITEKTUR YANG PERLU KEPUTUSAN BISNIS !!
-     * hitungFeeTotal() menghitung fee PERSENTASE TAPI DIBATASI CAP
-     * (mis. 0.75% dibatasi maks Rp10.000/transaksi) -- sedangkan Split
-     * Rule DOKU itu STATIS (dibuat sekali, berlaku sama ke SEMUA
-     * transaksi Lembaga ini seterusnya) dan cuma bisa PERCENTAGE murni
-     * (tanpa cap) atau FLAT (nominal tetap, tanpa persentase). Split
-     * Rule TIDAK BISA meniru "persentase dengan cap" secara native.
-     * Method ini memakai PERCENTAGE MURNI (tanpa cap) supaya kompatibel
-     * dengan Split Rule -- konsekuensinya: untuk transaksi besar (mis.
-     * PPDB/uang pangkal jutaan rupiah), Qinara akan menerima jauh lebih
-     * besar dari Rp10.000 lewat split ini (beda dari nominal fee yang
-     * DITAMPILKAN ke wali via hitungFeeTotal(), yang MASIH pakai cap).
-     * WAJIB diputuskan oleh tim Qinara: (a) hapus cap di hitungFeeTotal()
-     * supaya fee yang ditampilkan ke wali = fee yang benar-benar di-split
-     * DOKU, atau (b) lepas Split Rule DOKU untuk kasus ber-cap dan balik
-     * ke pola "masuk penuh ke Lembaga, Qinara tarik manual/berkala lewat
-     * Transfer API (SAC->SAC) dari saldo Lembaga" -- BUKAN ditulis
-     * sepihak di sini karena ini keputusan model bisnis, bukan bug kode.
+     * DOKU Split Rule tidak bisa menyatakan "persentase dengan cap"
+     * dalam SATU rule (cuma PERCENTAGE murni atau FLAT murni per rule).
+     * Solusinya: buat KEDUA rule sekaligus di sini (sekali per Lembaga,
+     * saat registrasi), simpan KEDUA splitRuleId-nya -- lalu
+     * pilihSplitRuleId() di bawah yang menentukan, PER TRANSAKSI, rule
+     * mana yang dipakai berdasarkan nominal (persis meniru cara
+     * hitungFeeTotal() menghitung fee yang ditampilkan ke wali, supaya
+     * fee yang ditampilkan = fee yang benar-benar di-split DOKU).
      */
-    public function buatSplitRule(\App\Models\Lembaga $lembaga, ?float $feePersen = null): array
+    public function buatSplitRule(\App\Models\Lembaga $lembaga, ?float $feePersen = null, ?int $feeCap = null): array
     {
         if (blank($lembaga->doku_account_no)) {
             throw new RuntimeException('Lembaga belum punya doku_account_no -- panggil registerSubAccount() dulu.');
@@ -481,30 +460,64 @@ class DokuService
             throw new RuntimeException('DOKU_PLATFORM_ACCOUNT_NO belum diisi di .env -- Qinara wajib punya sub-account/accountNo sendiri di DOKU dulu sebelum Split Rule bisa dibuat (lihat catatan di config/services.php).');
         }
 
-        $persen = $feePersen ?? (float) config('services.doku.fee_persen', 0.75);
+        $persen = $feePersen ?? (float) config('services.doku.fee_persen', 0.85);
+        $cap = $feeCap ?? (int) config('services.doku.fee_cap', 8500);
         $persenLembaga = round(100 - $persen, 4);
 
-        $result = $this->postSnap('/sub-account/v2.0/split-rules', [
+        // Rule 1 -- PERCENTAGE murni, dipakai untuk nominal di bawah
+        // titik potong (0.85% x nominal <= cap).
+        $resultPersen = $this->postSnap('/sub-account/v2.0/split-rules', [
             'transactionType' => 'PAYMENT',
             'rules' => [
-                [
-                    'type' => 'PERCENTAGE',
-                    'value' => $persenLembaga,
-                    'accountNumber' => $lembaga->doku_account_no,
-                ],
-                [
-                    'type' => 'PERCENTAGE',
-                    'value' => $persen,
-                    'accountNumber' => $platformAccountNo,
-                ],
+                ['type' => 'PERCENTAGE', 'value' => $persenLembaga, 'accountNumber' => $lembaga->doku_account_no],
+                ['type' => 'PERCENTAGE', 'value' => $persen, 'accountNumber' => $platformAccountNo],
+            ],
+        ]);
+
+        // Rule 2 -- FLAT senilai cap ke Qinara, sisanya (yang tidak
+        // dideklarasikan eksplisit) otomatis tetap di sub-account
+        // Lembaga -- dipakai untuk nominal di atas titik potong.
+        $resultFlat = $this->postSnap('/sub-account/v2.0/split-rules', [
+            'transactionType' => 'PAYMENT',
+            'rules' => [
+                ['type' => 'FLAT', 'value' => $cap, 'currency' => 'IDR', 'accountNumber' => $platformAccountNo],
             ],
         ]);
 
         $lembaga->update([
-            'doku_split_rule_id' => $result['splitRuleId'] ?? null,
+            'doku_split_rule_id' => $resultPersen['splitRuleId'] ?? null,
+            'doku_split_rule_id_flat' => $resultFlat['splitRuleId'] ?? null,
         ]);
 
-        return $result;
+        return ['percentage' => $resultPersen, 'flat' => $resultFlat];
+    }
+
+    /**
+     * Pilih split_rule_id yang benar untuk 1 transaksi, berdasarkan
+     * nominal yang BENAR-BENAR di-charge ke wali ($amountDicharge --
+     * hasil hitungFeeTotal(), BUKAN nominal tagihan asli). Logikanya
+     * PERSIS meniru hitungFee()/hitungFeeTotal(): kalau 0.85% dari
+     * nominal masih <= cap, pakai rule PERCENTAGE; begitu lewat cap,
+     * pindah ke rule FLAT -- supaya split yang benar-benar terjadi di
+     * DOKU selalu sama dengan fee yang ditampilkan ke wali.
+     *
+     * Return null kalau Lembaga belum lengkap setup split rule-nya
+     * (mis. belum panggil buatSplitRule()) -- pemanggil (buatVaLangsung/
+     * buatPaymentRequest) tetap jalan tanpa split kalau ini null (dana
+     * masuk penuh ke Lembaga, TIDAK ada fee ke Qinara -- lebih aman
+     * daripada payment gagal total karena split_rule_id kosong/invalid).
+     */
+    public function pilihSplitRuleId(\App\Models\Lembaga $lembaga, int $amountDicharge): ?string
+    {
+        $persen = (float) config('services.doku.fee_persen', 0.85);
+        $cap = (int) config('services.doku.fee_cap', 8500);
+        $feePersenMurni = (int) round($amountDicharge * $persen / 100);
+
+        if ($feePersenMurni <= $cap) {
+            return $lembaga->doku_split_rule_id;
+        }
+
+        return $lembaga->doku_split_rule_id_flat;
     }
 
     /**

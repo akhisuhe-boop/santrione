@@ -46,6 +46,7 @@ class Lembaga extends Model
     'doku_sub_account_id',
     'doku_account_no',
     'doku_split_rule_id',
+    'doku_split_rule_id_flat',
     'doku_status',
     ];
     
