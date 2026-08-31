@@ -493,6 +493,23 @@ class DokuService
     }
 
     /**
+     * Balance Inquiry -- DITAMBAHKAN untuk verifikasi split rule
+     * benar-benar memindahkan dana (bukan cuma diterima DOKU tanpa
+     * efek). $profileId: SAC-xxx milik Lembaga, atau BRN-xxx (root
+     * Qinara) untuk cek saldo platform_account_no.
+     */
+    public function cekSaldo(string $profileId, ?string $accountNo = null): array
+    {
+        $body = ['profileId' => $profileId];
+
+        if ($accountNo) {
+            $body['accounts'] = [$accountNo];
+        }
+
+        return $this->postSnap('/sub-account/v2.0/balance-inquiries', $body);
+    }
+
+    /**
      * Pilih split_rule_id yang benar untuk 1 transaksi, berdasarkan
      * nominal yang BENAR-BENAR di-charge ke wali ($amountDicharge --
      * hasil hitungFeeTotal(), BUKAN nominal tagihan asli). Logikanya
