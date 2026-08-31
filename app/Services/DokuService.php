@@ -346,7 +346,7 @@ class DokuService
      */
     public function registerSubAccount(\App\Models\Lembaga $lembaga): array
     {
-        $email = self::emailAman($lembaga->yayasan?->email, 'lembaga' . $lembaga->id);
+        $email = $this->emailUntukSubAccount($lembaga);
 
         $result = $this->postSnap('/sub-account/v2.0/register', [
             'partnerReferenceNo' => 'LBG-' . $lembaga->id . '-' . now()->format('YmdHis'),
@@ -368,6 +368,70 @@ class DokuService
         ]);
 
         return $result;
+    }
+
+    /**
+     * DITAMBAHKAN -- BUG ditemukan di sandbox: field `email` di Register
+     * Sub Account V2 DIBATASI MAKSIMAL 25 KARAKTER oleh DOKU (jauh lebih
+     * ketat dari format email pada umumnya, dan TIDAK disebutkan
+     * eksplisit di dokumentasi naratif -- cuma terlihat di OpenAPI spec
+     * `"maxLength":25`). Fallback lama emailAman() ('lembaga{id}@
+     * qinaraindonesia.id') sudah 27+ karakter -- ditolak DOKU dengan
+     * pesan generik "email should be a valid email" (BUKAN pesan soal
+     * panjang, jadi gampang salah duga sebagai masalah format).
+     *
+     * Prioritas: (1) email Yayasan asli KALAU valid & <=25 karakter,
+     * (2) fallback pendek "l{id}@qinaraindonesia.id" yang dijamin muat
+     * untuk id sampai 5 digit, (3) kalau tetap kepanjangan (id sangat
+     * besar), lempar error yang jelas daripada kirim email yang pasti
+     * ditolak DOKU lagi.
+     */
+    protected function emailUntukSubAccount(\App\Models\Lembaga $lembaga): string
+    {
+        $emailAsli = $lembaga->yayasan?->email;
+
+        if ($emailAsli && $this->emailValidUntukDoku($emailAsli)) {
+            return $emailAsli;
+        }
+
+        $fallback = 'l' . $lembaga->id . '@qinaraindonesia.id';
+
+        if (strlen($fallback) > 25) {
+            throw new RuntimeException(
+                "Email Yayasan untuk Lembaga #{$lembaga->id} tidak valid/terlalu panjang, dan fallback ('{$fallback}') tetap melebihi batas 25 karakter DOKU. Isi email Yayasan secara manual dengan email pendek (<=25 karakter) sebelum registrasi ulang."
+            );
+        }
+
+        return $fallback;
+    }
+
+    /**
+     * DITAMBAHKAN -- BUG ditemukan di sandbox (data testing): email
+     * seperti 'yayasan@testing-dev.local' LOLOS filter_var() PHP (syntax
+     * valid) DAN lolos cek panjang (persis 25 karakter), TAPI tetap
+     * ditolak DOKU karena domain '.local' bukan domain publik yang bisa
+     * di-resolve DNS -- filter_var() PHP TIDAK memeriksa validitas TLD
+     * sama sekali. Ditambahkan penolakan eksplisit untuk TLD reserved
+     * non-publik (RFC 2606 & konvensi umum: .local/.test/.example/
+     * .invalid/.localhost) supaya email semacam ini otomatis jatuh ke
+     * fallback, bukan dikirim mentah-mentah ke DOKU dan gagal lagi.
+     */
+    protected function emailValidUntukDoku(string $email): bool
+    {
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 25) {
+            return false;
+        }
+
+        $domain = strtolower(substr(strrchr($email, '@'), 1));
+        $tldReserved = ['.local', '.test', '.example', '.invalid', '.localhost'];
+
+        foreach ($tldReserved as $tld) {
+            if (str_ends_with($domain, $tld)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
