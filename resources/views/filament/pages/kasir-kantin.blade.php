@@ -57,14 +57,14 @@
 
         <div style="display:grid; gap:16px;">
 
-            @if (! $siswaTerpilih && ! $guruTerpilih && ! $modeTunai)
+            @if (! $siswaTerpilih && ! $modeTunai)
 
                 {{-- BELUM ADA PEMBELI --}}
                 <x-filament::section>
                     <x-slot name="heading">
                         <div class="kk-row kk-gap-2">
                             <x-heroicon-o-identification style="width:20px;height:20px;" />
-                            Input / Scan Kartu Siswa atau Guru
+                            Input / Scan Kartu Siswa
                         </div>
                     </x-slot>
 
@@ -82,27 +82,27 @@
                                     id="input-siswa"
                                     class="kk-input"
                                     autocomplete="off"
-                                    placeholder="Ketik / scan NIS siswa atau kode guru, lalu Enter...">
+                                    placeholder="Ketik / scan NIS siswa, lalu Enter...">
                             </div>
 
                         </div>
 
-                        <p class="kk-hint">Kursor sudah otomatis aktif di kolom ini — tinggal scan pakai barcode scanner (kartu siswa atau kartu guru/staf), atau ketik manual lalu tekan Enter.</p>
+                        <p class="kk-hint">Kursor sudah otomatis aktif di kolom ini — tinggal scan pakai barcode scanner, atau ketik NIS manual lalu tekan Enter.</p>
 
                         <div class="kk-gap-md" style="border-top:1px solid #f3f4f6; padding-top:14px; text-align:center;">
-                            <p class="kk-hint" style="margin-top:0; margin-bottom:8px;">Pembeli pengunjung, tidak punya kartu?</p>
+                            <p class="kk-hint" style="margin-top:0; margin-bottom:8px;">Pembeli bukan siswa (guru, staf, atau pengunjung)?</p>
 
                             @if (! is_null($limitTunaiHarian) && $tunaiTerpakaiHariIni >= $limitTunaiHarian)
 
                                 <x-filament::button color="gray" outlined disabled icon="heroicon-o-lock-closed">
                                     Limit Tunai Hari Ini Tercapai ({{ $tunaiTerpakaiHariIni }}/{{ $limitTunaiHarian }})
                                 </x-filament::button>
-                                <p class="kk-hint" style="color:#dc2626;">Siswa tetap bisa pakai wallet seperti biasa. Guru/staf & pengunjung sudah tidak bisa tunai lagi hari ini.</p>
+                                <p class="kk-hint" style="color:#dc2626;">Siswa tetap bisa transaksi seperti biasa (via wallet).</p>
 
                             @else
 
                                 <x-filament::button color="gray" outlined wire:click="mulaiTransaksiTunai" icon="heroicon-o-banknotes">
-                                    Transaksi Pengunjung (Tunai)
+                                    Transaksi Tanpa Kartu (Tunai)
                                 </x-filament::button>
 
                                 @if (! is_null($limitTunaiHarian))
@@ -119,7 +119,7 @@
 
                 @if ($modeTunai)
 
-                    {{-- MODE TUNAI TANPA KARTU (khusus pengunjung umum) --}}
+                    {{-- MODE TUNAI TANPA KARTU (guru / staf / pengunjung) --}}
                     <x-filament::section>
                         <div class="kk-section-body">
                             <div class="kk-row-between">
@@ -131,8 +131,8 @@
                                     </div>
 
                                     <div>
-                                        <div class="kk-name">Transaksi Pengunjung</div>
-                                        <div class="kk-meta">Tanpa kartu — bukan siswa/guru terdaftar</div>
+                                        <div class="kk-name">Transaksi Tunai</div>
+                                        <div class="kk-meta">Tanpa kartu — guru / staf / pengunjung</div>
                                         <div class="kk-meta">Dibayar langsung tunai di kasir</div>
                                         @if (! is_null($limitTunaiHarian))
                                             <div class="kk-meta">Kuota tunai hari ini: {{ $tunaiTerpakaiHariIni }}/{{ $limitTunaiHarian }}</div>
@@ -143,44 +143,6 @@
 
                                 <x-filament::button color="gray" outlined wire:click="gantiSiswa" icon="heroicon-o-arrow-path">
                                     Batal
-                                </x-filament::button>
-
-                            </div>
-                        </div>
-                    </x-filament::section>
-
-                @elseif ($guruTerpilih)
-
-                    {{-- GURU/STAF SUDAH DIPILIH --}}
-                    <x-filament::section>
-                        <div class="kk-section-body">
-                            <div class="kk-row-between">
-
-                                <div class="kk-row kk-gap-3">
-
-                                    @if ($guruTerpilih['foto'])
-                                        <img src="{{ Storage::disk('r2-public')->url($guruTerpilih['foto']) }}" class="kk-avatar" style="width:88px;height:88px;">
-                                    @else
-                                        <div class="kk-avatar" style="width:88px;height:88px;background:#fff7ed;display:flex;align-items:center;justify-content:center;color:#ea580c;">
-                                            <x-heroicon-o-user style="width:36px;height:36px;" />
-                                        </div>
-                                    @endif
-
-                                    <div>
-                                        <div class="kk-name">{{ $guruTerpilih['nama'] }}</div>
-                                        <span class="kk-badge" style="background:#ffedd5;color:#c2410c;">Guru / Staf</span>
-                                        <div class="kk-meta">NIY {{ $guruTerpilih['niy'] }}</div>
-                                        <div class="kk-meta">{{ $guruTerpilih['lembaga'] }}</div>
-                                        <div class="kk-meta" style="font-weight:600;color:#374151;">Dibayar tunai di kasir</div>
-                                        @if (! is_null($limitTunaiHarian))
-                                            <div class="kk-meta">Kuota tunai hari ini: {{ $tunaiTerpakaiHariIni }}/{{ $limitTunaiHarian }}</div>
-                                        @endif
-                                    </div>
-
-                                </div>
-
-                                <x-filament::button color="gray" outlined wire:click="gantiSiswa" icon="heroicon-o-arrow-path">
-                                    Ganti
                                 </x-filament::button>
 
                             </div>
@@ -362,7 +324,7 @@
                         @empty
 
                             <div style="text-align:center; padding:24px 0; color:#9ca3af; font-size:12px;">
-                                {{ ($siswaTerpilih || $guruTerpilih || $modeTunai) ? 'Scan produk untuk menambahkan.' : 'Scan kartu siswa/guru atau pilih transaksi pengunjung dulu.' }}
+                                {{ ($siswaTerpilih || $modeTunai) ? 'Scan produk untuk menambahkan.' : 'Scan kartu siswa atau pilih transaksi tunai dulu.' }}
                             </div>
 
                         @endforelse
@@ -374,13 +336,9 @@
                         <span style="font-size:18px; font-weight:700; color:#00A39D;">Rp {{ number_format($this->total, 0, ',', '.') }}</span>
                     </div>
 
-                    @php
-                        $saldoAktif = $siswaTerpilih['saldo'] ?? null;
-                    @endphp
-
-                    @if (! is_null($saldoAktif) && $this->total > $saldoAktif)
+                    @if ($siswaTerpilih && $this->total > $siswaTerpilih['saldo'])
                         <div class="kk-gap-md" style="border-radius:12px; background:#fef2f2; border:1px solid #fecaca; padding:10px 12px; font-size:12px; color:#dc2626;">
-                            Saldo tidak cukup — kurang Rp {{ number_format($this->total - $saldoAktif, 0, ',', '.') }}
+                            Saldo tidak cukup — kurang Rp {{ number_format($this->total - $siswaTerpilih['saldo'], 0, ',', '.') }}
                         </div>
                     @endif
 
@@ -390,7 +348,7 @@
                             icon="heroicon-o-check-circle"
                             color="primary"
                             size="lg"
-                            :disabled="(! $siswaTerpilih && ! $guruTerpilih && ! $modeTunai) || empty($cart)"
+                            :disabled="(! $siswaTerpilih && ! $modeTunai) || empty($cart)"
                             style="width:100%; justify-content:center;">
                             {{ $siswaTerpilih ? 'Bayar (Wallet)' : 'Bayar (Tunai)' }}
                         </x-filament::button>
@@ -430,8 +388,8 @@
             }
 
             // Auto-focus lagi tiap Livewire selesai re-render (mis.
-            // setelah siswa/guru/produk berhasil discan), supaya kasir
-            // bisa langsung lanjut scan berikutnya tanpa klik kolom lagi.
+            // setelah siswa/produk berhasil discan), supaya kasir bisa
+            // langsung lanjut scan berikutnya tanpa klik kolom lagi.
             Livewire.hook('morph.updated', () => setTimeout(boot, 100));
 
             boot();
