@@ -24,9 +24,11 @@ class KantinService
      *                           pegawai). Null untuk pengunjung umum
      *                           (tidak diatribusikan ke lembaga manapun).
      * @param  ?int  $siswaId  Diisi kalau pembeli siswa (bayar wallet).
-     * @param  ?int  $pegawaiId  Diisi kalau pembeli guru/staf (bayar wallet).
-     *                           Siswa dan pegawai tidak pernah diisi
-     *                           berbarengan.
+     * @param  ?int  $pegawaiId  Diisi kalau pembeli guru/staf -- SELALU
+     *                           bayar tunai (fitur wallet pegawai
+     *                           ditunda), cuma buat atribusi identitas &
+     *                           laporan. Siswa dan pegawai tidak pernah
+     *                           diisi berbarengan.
      * @param  array<int, array{produk_id: int, qty: int}>  $items
      */
     public function checkout(
@@ -86,37 +88,22 @@ class KantinService
 
             if ($metode === 'wallet') {
 
-                if (! $siswaId && ! $pegawaiId) {
-                    throw ValidationException::withMessages(['siswa' => 'Pembayaran wallet wajib pilih siswa atau guru/staf.']);
+                // Wallet HANYA untuk siswa. Guru/staf & pengunjung selalu
+                // tunai (lihat KasirKantin::checkout()) -- fitur wallet
+                // pegawai ditunda dulu, belum dipakai.
+                if (! $siswaId) {
+                    throw ValidationException::withMessages(['siswa' => 'Pembayaran wallet wajib pilih siswa.']);
                 }
 
-                if ($siswaId) {
+                $wallet = Wallet::where('siswa_id', $siswaId)
+                    ->lockForUpdate()
+                    ->first();
 
-                    $wallet = Wallet::where('siswa_id', $siswaId)
-                        ->lockForUpdate()
-                        ->first();
-
-                    if (! $wallet) {
-                        throw ValidationException::withMessages(['wallet' => 'Siswa ini belum punya wallet.']);
-                    }
-
-                    $this->assertDalamLimitHarian($siswaId, $total);
-
-                } else {
-
-                    // Wallet pegawai seharusnya sudah otomatis ada sejak
-                    // baris pegawai dibuat (lihat Pegawai::booted()) --
-                    // tapi tetap dijaga di sini untuk pegawai lama yang
-                    // dibuat sebelum fitur ini ada / lolos dari backfill.
-                    $wallet = Wallet::where('pegawai_id', $pegawaiId)
-                        ->lockForUpdate()
-                        ->first();
-
-                    if (! $wallet) {
-                        $wallet = Wallet::create(['pegawai_id' => $pegawaiId, 'saldo' => 0]);
-                        $wallet = Wallet::where('id', $wallet->id)->lockForUpdate()->first();
-                    }
+                if (! $wallet) {
+                    throw ValidationException::withMessages(['wallet' => 'Siswa ini belum punya wallet.']);
                 }
+
+                $this->assertDalamLimitHarian($siswaId, $total);
 
                 if ($wallet->saldo < $total) {
                     throw ValidationException::withMessages(['wallet' => 'Saldo wallet tidak cukup.']);

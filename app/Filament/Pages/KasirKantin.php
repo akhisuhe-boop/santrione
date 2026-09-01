@@ -107,6 +107,29 @@ class KasirKantin extends Page
     }
 
     /**
+     * Cek ulang limit tunai PERSIS sebelum checkout diproses (bukan cuma
+     * waktu guru/pengunjung dipilih), supaya tidak kebobolan kalau ada
+     * 2 sesi kasir jalan bersamaan di lembaga yang sama. Return true
+     * kalau boleh lanjut, false kalau harus dibatalkan (notifikasi sudah
+     * dikirim di dalam sini).
+     */
+    protected function pastikanBolehTunai(): bool
+    {
+        $this->muatLimitTunai();
+
+        if ($this->limitTunaiTercapai()) {
+            Notification::make()
+                ->title('Limit transaksi tunai hari ini sudah tercapai')
+                ->body('Transaksi ini tidak bisa diproses tunai.')
+                ->danger()
+                ->send();
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Dipanggil dari JS (html5-qrcode) tiap kali kamera berhasil baca
      * kode — dicoba dulu sebagai siswa, lalu sebagai guru/staf, kalau
      * tidak ketemu baru dicoba sebagai produk. Jadi kasir tinggal scan
@@ -140,8 +163,7 @@ class KasirKantin extends Page
             return;
         }
 
-        $guru = Pegawai::with('wallet')
-            ->where(function ($q) use ($code) {
+        $guru = Pegawai::where(function ($q) use ($code) {
                 $q->where('niy', $code)
                     ->orWhere('rfid', $code)
                     ->orWhere('qr_code', $code);
@@ -196,12 +218,19 @@ class KasirKantin extends Page
 
     protected function pilihGuru(Pegawai $guru): void
     {
+        $this->muatLimitTunai();
+
+        if ($this->limitTunaiTercapai()) {
+            Notification::make()
+                ->title('Limit transaksi tunai hari ini sudah tercapai')
+                ->body("Guru/staf juga bayar tunai (belum ada wallet), jadi ikut kena limit. Sudah {$this->tunaiTerpakaiHariIni} dari {$this->limitTunaiHarian} transaksi tunai hari ini.")
+                ->warning()
+                ->send();
+            return;
+        }
+
         $this->siswaTerpilih = null;
         $this->modeTunai = false;
-
-        // Wallet pegawai seharusnya sudah otomatis ada (lihat
-        // Pegawai::booted()) -- fallback ini cuma jaga-jaga.
-        $saldo = $guru->wallet?->saldo ?? 0;
 
         $lembagaUtama = $guru->lembagaUtama();
 
@@ -212,7 +241,6 @@ class KasirKantin extends Page
             'foto' => $guru->foto,
             'lembaga' => $lembagaUtama?->nama ?? '-',
             'lembaga_id' => $lembagaUtama?->id,
-            'saldo' => $saldo,
         ];
     }
 
@@ -227,8 +255,8 @@ class KasirKantin extends Page
 
     /**
      * Mulai transaksi tunai tanpa kartu — KHUSUS pengunjung umum (bukan
-     * siswa/guru; siswa dan guru selalu pakai kartu/kode mereka sendiri
-     * lewat handleScan, dibayar dari wallet masing-masing).
+     * siswa/guru; siswa pakai kartu sendiri dibayar wallet, guru/staf
+     * pakai kartu sendiri tapi dibayar tunai juga — lihat pilihGuru()).
      */
     public function mulaiTransaksiTunai(): void
     {
@@ -331,10 +359,11 @@ class KasirKantin extends Page
                 ->values()
                 ->all();
 
-            // Siswa/guru -> bayar wallet, diatribusikan ke lembaga
-            // MASING-MASING (bukan lembaga tempat kasir ini berada).
-            // Pengunjung (tidak ada siswa/guru terpilih) -> selalu
-            // tunai, tidak diatribusikan ke lembaga manapun.
+            // Siswa -> bayar wallet, diatribusikan ke lembaga siswa.
+            // Guru/staf -> SELALU tunai (belum ada wallet pegawai), tapi
+            // tetap tercatat identitasnya & diatribusikan ke lembaga guru,
+            // dan ikut kena limit tunai harian yang sama dengan pengunjung.
+            // Pengunjung -> tunai, tidak diatribusikan ke lembaga manapun.
             if ($this->siswaTerpilih) {
                 $metode = 'wallet';
                 $siswaId = $this->siswaTerpilih['id'];
@@ -342,11 +371,15 @@ class KasirKantin extends Page
                 $lembagaId = $this->siswaTerpilih['lembaga_id'];
                 $saldoSebelum = $this->siswaTerpilih['saldo'];
             } elseif ($this->guruTerpilih) {
-                $metode = 'wallet';
+                $metode = 'tunai';
                 $siswaId = null;
                 $pegawaiId = $this->guruTerpilih['id'];
                 $lembagaId = $this->guruTerpilih['lembaga_id'];
-                $saldoSebelum = $this->guruTerpilih['saldo'];
+                $saldoSebelum = null;
+
+                if (! $this->pastikanBolehTunai()) {
+                    return;
+                }
             } else {
                 $metode = 'tunai';
                 $siswaId = null;
@@ -354,18 +387,7 @@ class KasirKantin extends Page
                 $lembagaId = null;
                 $saldoSebelum = null;
 
-                // Jaring pengaman terakhir: cek ulang limit persis sebelum
-                // checkout diproses (bukan cuma waktu tombol "Transaksi
-                // Pengunjung" ditekan), supaya tidak kebobolan kalau ada
-                // 2 sesi kasir jalan bersamaan di lembaga yang sama.
-                $this->muatLimitTunai();
-
-                if ($this->limitTunaiTercapai()) {
-                    Notification::make()
-                        ->title('Limit transaksi tunai hari ini sudah tercapai')
-                        ->body('Transaksi ini tidak bisa diproses tunai. Pembeli selain pengunjung wajib pakai kartu/wallet.')
-                        ->danger()
-                        ->send();
+                if (! $this->pastikanBolehTunai()) {
                     return;
                 }
             }

@@ -97,7 +97,7 @@
                                 <x-filament::button color="gray" outlined disabled icon="heroicon-o-lock-closed">
                                     Limit Tunai Hari Ini Tercapai ({{ $tunaiTerpakaiHariIni }}/{{ $limitTunaiHarian }})
                                 </x-filament::button>
-                                <p class="kk-hint" style="color:#dc2626;">Siswa/guru wajib pakai kartu/wallet mulai sekarang.</p>
+                                <p class="kk-hint" style="color:#dc2626;">Siswa tetap bisa pakai wallet seperti biasa. Guru/staf & pengunjung sudah tidak bisa tunai lagi hari ini.</p>
 
                             @else
 
@@ -171,7 +171,10 @@
                                         <span class="kk-badge" style="background:#ffedd5;color:#c2410c;">Guru / Staf</span>
                                         <div class="kk-meta">NIY {{ $guruTerpilih['niy'] }}</div>
                                         <div class="kk-meta">{{ $guruTerpilih['lembaga'] }}</div>
-                                        <div class="kk-saldo">Saldo: Rp {{ number_format($guruTerpilih['saldo'], 0, ',', '.') }}</div>
+                                        <div class="kk-meta" style="font-weight:600;color:#374151;">Dibayar tunai di kasir</div>
+                                        @if (! is_null($limitTunaiHarian))
+                                            <div class="kk-meta">Kuota tunai hari ini: {{ $tunaiTerpakaiHariIni }}/{{ $limitTunaiHarian }}</div>
+                                        @endif
                                     </div>
 
                                 </div>
@@ -372,7 +375,7 @@
                     </div>
 
                     @php
-                        $saldoAktif = $siswaTerpilih['saldo'] ?? $guruTerpilih['saldo'] ?? null;
+                        $saldoAktif = $siswaTerpilih['saldo'] ?? null;
                     @endphp
 
                     @if (! is_null($saldoAktif) && $this->total > $saldoAktif)
@@ -389,7 +392,7 @@
                             size="lg"
                             :disabled="(! $siswaTerpilih && ! $guruTerpilih && ! $modeTunai) || empty($cart)"
                             style="width:100%; justify-content:center;">
-                            {{ $modeTunai ? 'Bayar (Tunai)' : 'Bayar (Wallet)' }}
+                            {{ $siswaTerpilih ? 'Bayar (Wallet)' : 'Bayar (Tunai)' }}
                         </x-filament::button>
                     </div>
 

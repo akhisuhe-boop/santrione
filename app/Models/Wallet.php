@@ -10,20 +10,14 @@ class Wallet extends Model
 {
     use BelongsToTenant;
 
-    // Wallet dimiliki SISWA atau PEGAWAI (guru/staf) -- tidak pernah dua-
-    // duanya. Scoping tenant harus cek dua jalur relasi sekaligus, karena
-    // siswa.lembaga dan pegawai.yayasan_id adalah dua jalur yang berbeda.
+    // Scoping lewat siswa.lembaga (tidak ada lembaga_id langsung)
     protected static function applyTenantScope(Builder $builder, int $yayasanId): void
     {
-        $builder->where(function ($q) use ($yayasanId) {
-            $q->whereHas('siswa.lembaga', fn ($q2) => $q2->where('yayasan_id', $yayasanId))
-                ->orWhereHas('pegawai', fn ($q2) => $q2->where('yayasan_id', $yayasanId));
-        });
+        $builder->whereHas('siswa.lembaga', fn ($q) => $q->where('yayasan_id', $yayasanId));
     }
 
     protected $fillable = [
         'siswa_id',
-        'pegawai_id',
         'saldo',
     ];
 
@@ -35,12 +29,6 @@ class Wallet extends Model
     public function siswa()
     {
         return $this->belongsTo(Siswa::class);
-    }
-
-    // 🔹 Relasi ke pegawai (guru/staf)
-    public function pegawai()
-    {
-        return $this->belongsTo(Pegawai::class);
     }
 
     public function kelas()
