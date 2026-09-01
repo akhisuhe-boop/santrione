@@ -18,6 +18,13 @@ class KantinTransaksiResource extends BaseResource
     protected static ?string $navigationIcon = 'heroicon-o-receipt-percent';
     protected static ?int $navigationSort = 2;
 
+    // Disembunyikan dari menu -- isinya sudah tercakup di "Laporan
+    // Kantin" (lebih lengkap: ada filter, ringkasan, export). Class ini
+    // dibiarkan ada (bukan dihapus) supaya route/URL-nya tetap valid
+    // kalau ada link lama yang mengarah ke sini, tapi tidak lagi
+    // muncul di sidebar.
+    protected static bool $shouldRegisterNavigation = false;
+
     // Riwayat saja — transaksi dibuat lewat halaman kasir (/kantin/kasir),
     // bukan lewat form Filament biasa.
     public static function canCreate(): bool

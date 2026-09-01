@@ -124,6 +124,7 @@ class KantinService
                 'metode' => $metode,
                 'total' => $total,
                 'kasir_id' => $kasirId,
+                'diinput_oleh' => auth()->user()->name ?? 'Sistem',
                 'tanggal' => now(),
             ]);
 

@@ -36,6 +36,7 @@ class LaporanKantinExport implements FromCollection, WithHeadings, WithStyles, S
             ->when($this->filters['sampai'] ?? null, fn ($q, $v) => $q->whereDate('tanggal', '<=', $v))
             ->when($this->filters['lembaga_id'] ?? null, fn ($q, $v) => $q->where('lembaga_id', $v))
             ->when($this->filters['metode'] ?? null, fn ($q, $v) => $q->where('metode', $v))
+            ->when($this->filters['diinput_oleh'] ?? null, fn ($q, $v) => $q->where('diinput_oleh', $v))
             ->orderByDesc('tanggal');
 
         $data = $query->get()->map(function ($trx) {
@@ -46,15 +47,20 @@ class LaporanKantinExport implements FromCollection, WithHeadings, WithStyles, S
 
             $tipe = $trx->siswa ? 'Siswa' : ($trx->pegawai ? 'Guru / Staf' : 'Pengunjung');
 
+            // Pengunjung tidak pernah punya lembaga, walau datanya
+            // kebetulan masih ada lembaga_id (baris lama).
+            $lembaga = ($trx->siswa || $trx->pegawai) ? ($trx->lembaga?->nama ?? '-') : '-';
+
             return [
                 'kode' => $trx->kode,
                 'tanggal' => $trx->tanggal ? Carbon::parse($trx->tanggal)->translatedFormat('d-m-Y H:i') : '-',
                 'pembeli' => $pembeli,
                 'tipe' => $tipe,
-                'lembaga' => $trx->lembaga?->nama ?? '-',
+                'lembaga' => $lembaga,
                 'metode' => ucfirst($trx->metode),
                 'item' => $trx->items->pluck('nama_produk')->implode(', '),
                 'total' => 'Rp ' . number_format($trx->total, 0, ',', '.'),
+                'kasir' => $trx->diinput_oleh ?? '-',
             ];
         });
 
@@ -66,7 +72,7 @@ class LaporanKantinExport implements FromCollection, WithHeadings, WithStyles, S
     public function headings(): array
     {
         return [
-            'Kode', 'Tanggal', 'Pembeli', 'Tipe', 'Lembaga', 'Metode', 'Item', 'Total',
+            'Kode', 'Tanggal', 'Pembeli', 'Tipe', 'Lembaga', 'Metode', 'Item', 'Total', 'Kasir',
         ];
     }
 

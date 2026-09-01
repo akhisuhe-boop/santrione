@@ -25,10 +25,10 @@
         <div style="background:#ecfdf5; border-radius:16px; border:1px solid #bbf7d0;" class="p-4 shadow-sm">
             <div style="color:#166534;" class="text-sm">Wallet</div>
             <div style="color:#15803d;" class="text-2xl font-bold">
-                {{ number_format($summary['wallet_count'], 0, ',', '.') }} transaksi
+                Rp {{ number_format($summary['wallet_total'], 0, ',', '.') }}
             </div>
             <div style="color:#16a34a;" class="text-xs mt-1">
-                Rp {{ number_format($summary['wallet_total'], 0, ',', '.') }}
+                {{ number_format($summary['wallet_count'], 0, ',', '.') }} transaksi
             </div>
         </div>
 
@@ -40,10 +40,10 @@
                 @endif
             </div>
             <div style="color:#c2410c;" class="text-2xl font-bold">
-                {{ number_format($summary['tunai_count'], 0, ',', '.') }} transaksi
+                Rp {{ number_format($summary['tunai_total'], 0, ',', '.') }}
             </div>
             <div style="color:#ea580c;" class="text-xs mt-1">
-                Rp {{ number_format($summary['tunai_total'], 0, ',', '.') }} &middot; {{ $summary['rasio_tunai_persen'] }}% dari total transaksi
+                {{ number_format($summary['tunai_count'], 0, ',', '.') }} transaksi &middot; {{ $summary['rasio_tunai_persen'] }}% dari total transaksi
             </div>
         </div>
 

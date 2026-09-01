@@ -49,6 +49,7 @@ class LaporanKantin extends Page implements HasForms, HasTable
     public $sampai;
     public $lembaga_id;
     public $metode;
+    public $diinput_oleh;
 
     public function mount(): void
     {
@@ -58,7 +59,7 @@ class LaporanKantin extends Page implements HasForms, HasTable
     protected function getFormSchema(): array
     {
         return [
-            Forms\Components\Grid::make(4)
+            Forms\Components\Grid::make(5)
                 ->schema([
 
                     Forms\Components\DatePicker::make('dari')
@@ -74,7 +75,7 @@ class LaporanKantin extends Page implements HasForms, HasTable
                         ->live(debounce: 400),
 
                     Forms\Components\Select::make('lembaga_id')
-                        ->label('Lembaga')
+                        ->label('Lembaga (Kantin)')
                         ->options(Lembaga::pluck('nama', 'id'))
                         ->searchable()
                         ->preload()
@@ -89,6 +90,18 @@ class LaporanKantin extends Page implements HasForms, HasTable
                             'wallet' => 'Wallet',
                             'tunai' => 'Tunai',
                         ])
+                        ->placeholder('Semua')
+                        ->selectablePlaceholder()
+                        ->native(false)
+                        ->live(debounce: 400),
+
+                    Forms\Components\Select::make('diinput_oleh')
+                        ->label('Kasir')
+                        ->options(fn () => KantinTransaksi::query()
+                            ->whereNotNull('diinput_oleh')
+                            ->distinct()
+                            ->pluck('diinput_oleh', 'diinput_oleh'))
+                        ->searchable()
                         ->placeholder('Semua')
                         ->selectablePlaceholder()
                         ->native(false)
@@ -115,7 +128,8 @@ class LaporanKantin extends Page implements HasForms, HasTable
             ->when($this->dari, fn ($q) => $q->whereDate('tanggal', '>=', $this->dari))
             ->when($this->sampai, fn ($q) => $q->whereDate('tanggal', '<=', $this->sampai))
             ->when($this->lembaga_id, fn ($q) => $q->where('lembaga_id', $this->lembaga_id))
-            ->when($this->metode, fn ($q) => $q->where('metode', $this->metode));
+            ->when($this->metode, fn ($q) => $q->where('metode', $this->metode))
+            ->when($this->diinput_oleh, fn ($q) => $q->where('diinput_oleh', $this->diinput_oleh));
     }
 
     /**
@@ -188,6 +202,7 @@ class LaporanKantin extends Page implements HasForms, HasTable
             'sampai' => $this->sampai,
             'lembaga_id' => $this->lembaga_id,
             'metode' => $this->metode,
+            'diinput_oleh' => $this->diinput_oleh,
         ];
     }
 
@@ -196,6 +211,21 @@ class LaporanKantin extends Page implements HasForms, HasTable
         return $record->siswa?->nama_lengkap
             ?? $record->pegawai?->nama
             ?? 'Umum (Pengunjung)';
+    }
+
+    /**
+     * Pengunjung umum (tanpa siswa/pegawai) TIDAK PERNAH ditampilkan
+     * dengan lembaga, walau datanya kebetulan masih ada lembaga_id
+     * (mis. baris lama dari sebelum aturan ini berlaku) -- supaya
+     * tampilannya selalu konsisten dengan aturan bisnisnya.
+     */
+    protected function lembagaLabel($record): string
+    {
+        if (! $record->siswa && ! $record->pegawai) {
+            return '-';
+        }
+
+        return $record->lembaga?->nama ?? '-';
     }
 
     public function table(Table $table): Table
@@ -220,9 +250,9 @@ class LaporanKantin extends Page implements HasForms, HasTable
                         ? 'Siswa'
                         : ($record->pegawai ? 'Guru / Staf' : null)),
 
-                Tables\Columns\TextColumn::make('lembaga.nama')
-                    ->label('Lembaga')
-                    ->default('—'),
+                Tables\Columns\TextColumn::make('lembaga')
+                    ->label('Lembaga (Kantin)')
+                    ->state(fn ($record) => $this->lembagaLabel($record)),
 
                 Tables\Columns\BadgeColumn::make('metode')
                     ->colors([
@@ -234,6 +264,11 @@ class LaporanKantin extends Page implements HasForms, HasTable
                     ->label('Total')
                     ->formatStateUsing(fn ($state) => 'Rp ' . number_format($state, 0, ',', '.'))
                     ->sortable(),
+
+                Tables\Columns\TextColumn::make('diinput_oleh')
+                    ->label('Kasir')
+                    ->default('-')
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('items')
                     ->label('Item')

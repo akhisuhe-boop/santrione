@@ -64,6 +64,7 @@
             <th>Metode</th>
             <th>Item</th>
             <th>Total</th>
+            <th>Kasir</th>
         </tr>
     </thead>
     <tbody>
@@ -77,6 +78,7 @@
             <td>{{ $row['metode'] }}</td>
             <td>{{ $row['item'] }}</td>
             <td class="text-right">Rp {{ number_format($row['total'], 0, ',', '.') }}</td>
+            <td>{{ $row['kasir'] }}</td>
         </tr>
         @endforeach
     </tbody>

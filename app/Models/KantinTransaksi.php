@@ -46,6 +46,7 @@ class KantinTransaksi extends Model
         'metode',
         'total',
         'kasir_id',
+        'diinput_oleh',
         'kas_id',
         'tanggal',
     ];
