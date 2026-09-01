@@ -186,7 +186,7 @@ class KantinService
                 'nominal' => $total,
                 'sumber' => 'kantin',
                 'tanggal' => now(),
-                'keterangan' => 'Penjualan Kantin - ' . $trx->kode,
+                'keterangan' => 'Penjualan Kantin - ' . $trx->kode . ' (' . $penanggungJawab . ')',
                 'penanggung_jawab' => $penanggungJawab,
                 // Pengunjung umum (tanpa siswa/pegawai) tidak diatribusikan
                 // ke lembaga manapun -- lembaga_id sengaja dibiarkan null.
