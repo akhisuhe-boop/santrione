@@ -12,10 +12,11 @@ class KantinProduk extends Model
 
     protected static function applyTenantScope(Builder $builder, int $yayasanId): void
     {
-        $builder->whereHas('lembaga', fn ($q) => $q->where('yayasan_id', $yayasanId));
+        $builder->whereHas('kantin', fn ($q) => $q->where('yayasan_id', $yayasanId));
     }
 
     protected $fillable = [
+        'kantin_id',
         'lembaga_id',
         'nama',
         'barcode',
@@ -33,6 +34,13 @@ class KantinProduk extends Model
         ];
     }
 
+    public function kantin()
+    {
+        return $this->belongsTo(Kantin::class);
+    }
+
+    // Dipertahankan untuk kompatibilitas data lama -- tidak lagi wajib
+    // diisi, dan tidak lagi dipakai untuk scoping tenant (lihat kantin()).
     public function lembaga()
     {
         return $this->belongsTo(Lembaga::class);

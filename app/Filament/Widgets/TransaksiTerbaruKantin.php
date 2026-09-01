@@ -17,17 +17,15 @@ class TransaksiTerbaruKantin extends BaseWidget
 
     public function table(Table $table): Table
     {
-        $tenant = Filament::getTenant();
-
-        $lembagaIds = $tenant
-            ? \App\Models\Lembaga::where('yayasan_id', $tenant->id)->pluck('id')
-            : collect();
+        $yayasanId = Filament::getTenant()?->id;
 
         return $table
             ->query(
+                // yayasan_id (bukan lembaga_id) supaya transaksi
+                // pengunjung/tunai (lembaga_id kosong) tetap ikut tampil.
                 KantinTransaksi::withoutGlobalScopes()
-                    ->whereIn('lembaga_id', $lembagaIds)
-                    ->with(['siswa', 'items'])
+                    ->where('yayasan_id', $yayasanId)
+                    ->with(['siswa', 'pegawai', 'items'])
             )
             ->columns([
 
@@ -35,9 +33,11 @@ class TransaksiTerbaruKantin extends BaseWidget
                     ->label('Waktu')
                     ->dateTime('d M, H:i'),
 
-                Tables\Columns\TextColumn::make('siswa.nama_lengkap')
-                    ->label('Siswa')
-                    ->default('Umum'),
+                Tables\Columns\TextColumn::make('pembeli')
+                    ->label('Pembeli')
+                    ->state(fn ($record) => $record->siswa?->nama_lengkap
+                        ?? $record->pegawai?->nama
+                        ?? 'Umum (Pengunjung)'),
 
                 Tables\Columns\TextColumn::make('items')
                     ->label('Item')

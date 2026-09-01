@@ -2,8 +2,8 @@
 
 namespace App\Filament\Platform\Resources;
 
-use App\Filament\Platform\Resources\LembagaKantinPengaturanResource\Pages;
-use App\Models\Lembaga;
+use App\Filament\Platform\Resources\KantinPengaturanResource\Pages;
+use App\Models\Kantin;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Tables;
@@ -12,7 +12,7 @@ use Filament\Tables\Table;
 /**
  * Batas jumlah transaksi TUNAI kantin per hari HANYA diatur oleh
  * PLATFORM (Qinara) lewat resource ini -- SENGAJA tidak ada di
- * LembagaResource versi tenant (panel Yayasan biasa).
+ * KantinResource versi tenant (panel Yayasan biasa).
  *
  * Alasannya bisnis, bukan teknis: Qinara menggratiskan fitur e-Kantin
  * dan mengambil pendapatan dari fee top-up wallet. Kalau tenant bisa
@@ -21,14 +21,19 @@ use Filament\Tables\Table;
  * terus-menerus dilayani tunai, wali tidak perlu top up sama sekali.
  * Jadi kontrolnya harus di tangan Qinara, independen dari keinginan
  * tenant.
+ *
+ * Limitnya sekarang per KANTIN (bukan per Lembaga lagi) -- 1 tenant
+ * bisa punya beberapa kantin yang tidak terikat lembaga manapun, jadi
+ * satuan yang masuk akal buat pembatasan operasional adalah kantin
+ * (per kasir/till), bukan lembaga (per akuntansi).
  */
-class LembagaKantinPengaturanResource extends \App\Filament\Resources\BaseResource
+class KantinPengaturanResource extends \App\Filament\Resources\BaseResource
 {
-    protected static ?string $model = Lembaga::class;
+    protected static ?string $model = Kantin::class;
     protected static ?string $navigationGroup = 'e-Kantin';
     protected static ?string $navigationLabel = 'Pengaturan Kantin';
-    protected static ?string $modelLabel = 'Pengaturan Kantin Lembaga';
-    protected static ?string $pluralModelLabel = 'Pengaturan Kantin Lembaga';
+    protected static ?string $modelLabel = 'Pengaturan Kantin';
+    protected static ?string $pluralModelLabel = 'Pengaturan Kantin';
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
     protected static ?int $navigationSort = 3;
 
@@ -56,7 +61,7 @@ class LembagaKantinPengaturanResource extends \App\Filament\Resources\BaseResour
                 ->numeric()
                 ->minValue(0)
                 ->suffix('transaksi')
-                ->helperText('Batas jumlah transaksi TUNAI pengunjung di kasir kantin lembaga ini per hari. Kosongkan = tidak dibatasi. Setelah kuota habis, kasir wajib pakai kartu/wallet untuk siswa & guru.'),
+                ->helperText('Batas jumlah transaksi TUNAI (siapapun yang bukan siswa) di kantin ini per hari. Kosongkan = tidak dibatasi. Setelah kuota habis, kasir wajib pakai kartu/wallet -- siswa tetap tidak terpengaruh (selalu bisa pakai wallet).'),
 
         ]);
     }
@@ -67,7 +72,7 @@ class LembagaKantinPengaturanResource extends \App\Filament\Resources\BaseResour
             // withoutGlobalScopes() -- lintas SEMUA Yayasan, sama seperti
             // pola di YayasanOverviewResource, karena ini resource level
             // platform, bukan level tenant.
-            ->query(Lembaga::withoutGlobalScopes()->with('yayasan'))
+            ->query(Kantin::withoutGlobalScopes()->with(['yayasan', 'lembaga']))
             ->columns([
 
                 Tables\Columns\TextColumn::make('yayasan.nama')
@@ -76,15 +81,23 @@ class LembagaKantinPengaturanResource extends \App\Filament\Resources\BaseResour
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('nama')
-                    ->label('Lembaga')
+                    ->label('Kantin')
                     ->searchable()
                     ->sortable(),
+
+                Tables\Columns\TextColumn::make('lembaga.nama')
+                    ->label('Lembaga (tag)')
+                    ->default('Lintas lembaga'),
 
                 Tables\Columns\TextColumn::make('limit_tunai_kantin_harian')
                     ->label('Limit Tunai / Hari')
                     ->badge()
                     ->formatStateUsing(fn ($state) => $state === null ? 'Tidak dibatasi' : $state . ' transaksi')
                     ->color(fn ($state) => $state === null ? 'gray' : 'warning'),
+
+                Tables\Columns\IconColumn::make('is_active')
+                    ->label('Aktif')
+                    ->boolean(),
 
             ])
             ->defaultSort('yayasan.nama')
@@ -96,8 +109,8 @@ class LembagaKantinPengaturanResource extends \App\Filament\Resources\BaseResour
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListLembagaKantinPengaturans::route('/'),
-            'edit' => Pages\EditLembagaKantinPengaturan::route('/{record}/edit'),
+            'index' => Pages\ListKantinPengaturans::route('/'),
+            'edit' => Pages\EditKantinPengaturan::route('/{record}/edit'),
         ];
     }
 }

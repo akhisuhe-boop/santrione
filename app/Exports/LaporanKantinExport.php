@@ -31,9 +31,10 @@ class LaporanKantinExport implements FromCollection, WithHeadings, WithStyles, S
     public function collection()
     {
         $query = KantinTransaksi::query()
-            ->with(['siswa', 'pegawai', 'lembaga', 'items'])
+            ->with(['siswa', 'pegawai', 'lembaga', 'kantin', 'items'])
             ->when($this->filters['dari'] ?? null, fn ($q, $v) => $q->whereDate('tanggal', '>=', $v))
             ->when($this->filters['sampai'] ?? null, fn ($q, $v) => $q->whereDate('tanggal', '<=', $v))
+            ->when($this->filters['kantin_id'] ?? null, fn ($q, $v) => $q->where('kantin_id', $v))
             ->when($this->filters['lembaga_id'] ?? null, fn ($q, $v) => $q->where('lembaga_id', $v))
             ->when($this->filters['metode'] ?? null, fn ($q, $v) => $q->where('metode', $v))
             ->when($this->filters['diinput_oleh'] ?? null, fn ($q, $v) => $q->where('diinput_oleh', $v))
@@ -54,6 +55,7 @@ class LaporanKantinExport implements FromCollection, WithHeadings, WithStyles, S
             return [
                 'kode' => $trx->kode,
                 'tanggal' => $trx->tanggal ? Carbon::parse($trx->tanggal)->translatedFormat('d-m-Y H:i') : '-',
+                'kantin' => $trx->kantin?->nama ?? '-',
                 'pembeli' => $pembeli,
                 'tipe' => $tipe,
                 'lembaga' => $lembaga,
@@ -72,7 +74,7 @@ class LaporanKantinExport implements FromCollection, WithHeadings, WithStyles, S
     public function headings(): array
     {
         return [
-            'Kode', 'Tanggal', 'Pembeli', 'Tipe', 'Lembaga', 'Metode', 'Item', 'Total', 'Kasir',
+            'Kode', 'Tanggal', 'Kantin', 'Pembeli', 'Tipe', 'Lembaga', 'Metode', 'Item', 'Total', 'Kasir',
         ];
     }
 

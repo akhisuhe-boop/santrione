@@ -18,20 +18,14 @@ class KantinOverview extends BaseWidget
         return 3;
     }
 
-    protected function lembagaIds()
-    {
-        $tenant = Filament::getTenant();
-
-        return $tenant
-            ? \App\Models\Lembaga::where('yayasan_id', $tenant->id)->pluck('id')
-            : collect();
-    }
-
     protected function getStats(): array
     {
-        $lembagaIds = $this->lembagaIds();
+        $yayasanId = Filament::getTenant()?->id;
 
-        $base = KantinTransaksi::withoutGlobalScopes()->whereIn('lembaga_id', $lembagaIds);
+        // yayasan_id dipakai (bukan lembaga_id) supaya transaksi
+        // pengunjung/tunai (lembaga_id-nya sengaja kosong) tetap ikut
+        // terhitung -- lihat KantinTransaksi::applyTenantScope().
+        $base = KantinTransaksi::withoutGlobalScopes()->where('yayasan_id', $yayasanId);
 
         $pemasukanHariIni = (clone $base)->whereDate('tanggal', today())->sum('total');
         $transaksiHariIni = (clone $base)->whereDate('tanggal', today())->count();
@@ -51,7 +45,7 @@ class KantinOverview extends BaseWidget
             : null;
 
         $produkTerlaris = KantinTransaksiItem::query()
-            ->whereHas('transaksi', fn ($q) => $q->withoutGlobalScopes()->whereIn('lembaga_id', $lembagaIds))
+            ->whereHas('transaksi', fn ($q) => $q->withoutGlobalScopes()->where('yayasan_id', $yayasanId))
             ->whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
             ->selectRaw('nama_produk, SUM(qty) as total_qty')
@@ -65,7 +59,7 @@ class KantinOverview extends BaseWidget
                 ->description($transaksiHariIni . ' transaksi hari ini')
                 ->descriptionIcon('heroicon-m-shopping-cart')
                 ->color('success')
-                ->chart($this->grafik7Hari($lembagaIds)),
+                ->chart($this->grafik7Hari($yayasanId)),
 
             Stat::make('Pemasukan Bulan Ini', 'Rp ' . number_format($pemasukanBulanIni, 0, ',', '.'))
                 ->description(
@@ -84,7 +78,7 @@ class KantinOverview extends BaseWidget
         ];
     }
 
-    protected function grafik7Hari($lembagaIds): array
+    protected function grafik7Hari($yayasanId): array
     {
         $data = [];
 
@@ -93,7 +87,7 @@ class KantinOverview extends BaseWidget
             $tanggal = now()->subDays($i);
 
             $data[] = KantinTransaksi::withoutGlobalScopes()
-                ->whereIn('lembaga_id', $lembagaIds)
+                ->where('yayasan_id', $yayasanId)
                 ->whereDate('tanggal', $tanggal)
                 ->sum('total');
         }

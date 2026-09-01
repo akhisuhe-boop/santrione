@@ -28,9 +28,9 @@ class KantinProdukResource extends BaseResource
                     ->icon('heroicon-o-shopping-bag')
                     ->schema([
 
-                        Forms\Components\Select::make('lembaga_id')
-                            ->label('Lembaga')
-                            ->relationship('lembaga', 'nama', fn ($query) => $query->where(
+                        Forms\Components\Select::make('kantin_id')
+                            ->label('Kantin')
+                            ->relationship('kantin', 'nama', fn ($query) => $query->where(
                                 'yayasan_id',
                                 \Filament\Facades\Filament::getTenant()?->id
                             ))
@@ -125,8 +125,8 @@ class KantinProdukResource extends BaseResource
                     ->badge()
                     ->color('gray'),
 
-                Tables\Columns\TextColumn::make('lembaga.nama')
-                    ->label('Lembaga'),
+                Tables\Columns\TextColumn::make('kantin.nama')
+                    ->label('Kantin'),
 
                 Tables\Columns\TextColumn::make('kategori')
                     ->label('Kategori'),
@@ -146,9 +146,9 @@ class KantinProdukResource extends BaseResource
 
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('lembaga_id')
-                    ->relationship('lembaga', 'nama')
-                    ->label('Lembaga'),
+                Tables\Filters\SelectFilter::make('kantin_id')
+                    ->relationship('kantin', 'nama')
+                    ->label('Kantin'),
                 Tables\Filters\TernaryFilter::make('is_active')->label('Status Aktif'),
             ])
             ->headerActions([

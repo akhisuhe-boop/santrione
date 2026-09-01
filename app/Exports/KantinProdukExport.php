@@ -22,7 +22,7 @@ class KantinProdukExport implements FromCollection, WithHeadings, ShouldAutoSize
         $data = [];
         $no = 1;
 
-        $produks = KantinProduk::with('lembaga')->get();
+        $produks = KantinProduk::with('kantin')->get();
 
         foreach ($produks as $p) {
             $data[] = [
@@ -32,7 +32,7 @@ class KantinProdukExport implements FromCollection, WithHeadings, ShouldAutoSize
                 $p->kategori,
                 $p->harga,
                 $p->stok,
-                $p->lembaga->nama ?? '-',
+                $p->kantin->nama ?? '-',
                 $p->is_active ? 'Aktif' : 'Nonaktif',
             ];
         }
@@ -49,7 +49,7 @@ class KantinProdukExport implements FromCollection, WithHeadings, ShouldAutoSize
             'Kategori',
             'Harga',
             'Stok',
-            'Lembaga',
+            'Kantin',
             'Status',
         ];
     }

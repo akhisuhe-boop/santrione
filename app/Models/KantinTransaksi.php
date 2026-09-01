@@ -39,6 +39,7 @@ class KantinTransaksi extends Model
     protected $fillable = [
         'lembaga_id',
         'yayasan_id',
+        'kantin_id',
         'kode',
         'siswa_id',
         'pegawai_id',
@@ -71,6 +72,11 @@ class KantinTransaksi extends Model
     public function pegawai()
     {
         return $this->belongsTo(Pegawai::class);
+    }
+
+    public function kantin()
+    {
+        return $this->belongsTo(Kantin::class);
     }
 
     public function wallet()

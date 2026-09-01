@@ -2,7 +2,9 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\Kantin;
 use App\Models\KantinProduk;
+use App\Models\KantinTransaksi;
 use App\Models\Siswa;
 use App\Services\KantinService;
 use Filament\Facades\Filament;
@@ -15,7 +17,7 @@ class KasirKantin extends Page
     protected static ?string $navigationLabel = 'Kasir';
     protected static ?string $title = 'Kasir Kantin';
     protected static ?string $navigationIcon = 'heroicon-o-calculator';
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 2;
 
     protected static string $view = 'filament.pages.kasir-kantin';
 
@@ -32,12 +34,15 @@ class KasirKantin extends Page
         return parent::canAccess();
     }
 
-    // Lembaga tempat kasir ini beroperasi -- dipakai untuk membatasi
-    // katalog PRODUK yang bisa dijual di kasir ini. Siswa yang scan
-    // kartu TIDAK dibatasi ke lembaga ini (lihat handleScan) -- bisa
-    // dari lembaga manapun dalam 1 yayasan yang sama, supaya 1 kasir/
-    // kantin bisa melayani kantin bersama lintas lembaga.
-    public ?int $lembaga_id = null;
+    // Semua kantin aktif di tenant ini -- kasir bisa beroperasi di
+    // beberapa kantin (mis. beberapa outlet di 1 sekolah, atau kantin
+    // bersama lintas lembaga). id => nama.
+    public array $daftarKantin = [];
+
+    // Kantin yang lagi dioperasikan kasir ini. Null = belum pilih (kalau
+    // cuma ada 1 kantin aktif, otomatis kepilih di mount() tanpa perlu
+    // tanya kasir).
+    public ?int $kantinTerpilih = null;
 
     // Data siswa yang lagi discan (null = belum ada siswa dipilih)
     public ?array $siswaTerpilih = null;
@@ -45,12 +50,12 @@ class KasirKantin extends Page
     // True = transaksi tunai tanpa kartu -- dipakai untuk SIAPAPUN
     // yang bukan siswa (guru, staf, pengunjung), tidak perlu identitas
     // khusus, semua diperlakukan sama & sama-sama kena limit tunai
-    // harian yang diatur platform admin.
+    // harian kantin ini (diatur platform admin per kantin).
     public bool $modeTunai = false;
 
-    // Batas & pemakaian transaksi TUNAI hari ini di kasir ini (null =
-    // tidak dibatasi) -- lihat kolom Lembaga->limit_tunai_kantin_harian,
-    // diatur platform admin lewat LembagaKantinPengaturanResource.
+    // Batas & pemakaian transaksi TUNAI hari ini DI KANTIN INI (null =
+    // tidak dibatasi) -- lihat Kantin->limit_tunai_kantin_harian, diatur
+    // platform admin lewat KantinPengaturanResource.
     public ?int $limitTunaiHarian = null;
     public int $tunaiTerpakaiHariIni = 0;
 
@@ -64,20 +69,65 @@ class KasirKantin extends Page
     {
         $tenant = Filament::getTenant();
 
-        $this->lembaga_id = \App\Models\Lembaga::where('yayasan_id', $tenant?->id)
-            ->value('id');
+        $kantins = Kantin::where('yayasan_id', $tenant?->id)
+            ->where('is_active', true)
+            ->orderBy('nama')
+            ->get();
+
+        $this->daftarKantin = $kantins->pluck('nama', 'id')->all();
+
+        // Cuma 1 kantin aktif -- langsung dipakai, tidak perlu tanya
+        // kasir dulu (supaya kasus paling umum, 1 sekolah 1 kantin,
+        // tetap secepat sebelumnya).
+        if ($kantins->count() === 1) {
+            $this->kantinTerpilih = $kantins->first()->id;
+        }
+
+        $this->muatLimitTunai();
+    }
+
+    public function pilihKantin(int $kantinId): void
+    {
+        if (! array_key_exists($kantinId, $this->daftarKantin)) {
+            return;
+        }
+
+        $this->kantinTerpilih = $kantinId;
+        $this->cart = [];
+        $this->siswaTerpilih = null;
+        $this->modeTunai = false;
+        $this->previewProduk = null;
 
         $this->muatLimitTunai();
     }
 
     /**
-     * Hitung ulang limit & pemakaian transaksi tunai hari ini -- dipanggil
-     * di mount() dan lagi setiap habis checkout, supaya angkanya selalu
-     * akurat tanpa perlu refresh halaman manual.
+     * Kembali ke layar pilih kantin -- dipakai kalau 1 device dipakai
+     * bergantian buat beberapa kantin/outlet berbeda.
+     */
+    public function gantiKantin(): void
+    {
+        $this->kantinTerpilih = null;
+        $this->cart = [];
+        $this->siswaTerpilih = null;
+        $this->modeTunai = false;
+        $this->previewProduk = null;
+    }
+
+    /**
+     * Hitung ulang limit & pemakaian transaksi tunai hari ini DI KANTIN
+     * INI -- dipanggil di mount()/pilihKantin() dan lagi setiap habis
+     * checkout, supaya angkanya selalu akurat tanpa refresh manual.
      */
     protected function muatLimitTunai(): void
     {
-        $this->limitTunaiHarian = \App\Models\Lembaga::whereKey($this->lembaga_id)
+        if (! $this->kantinTerpilih) {
+            $this->limitTunaiHarian = null;
+            $this->tunaiTerpakaiHariIni = 0;
+            return;
+        }
+
+        $this->limitTunaiHarian = Kantin::whereKey($this->kantinTerpilih)
             ->value('limit_tunai_kantin_harian');
 
         if ($this->limitTunaiHarian === null) {
@@ -85,14 +135,10 @@ class KasirKantin extends Page
             return;
         }
 
-        // Transaksi tunai tidak punya lembaga_id (sengaja dikosongkan,
-        // lihat KantinService) -- jadi dihitung lewat item yang dibeli,
-        // yang produknya pasti berasal dari katalog lembaga kasir ini
-        // (scan produk sudah dibatasi ke $this->lembaga_id).
-        $this->tunaiTerpakaiHariIni = \App\Models\KantinTransaksi::withoutGlobalScopes()
+        $this->tunaiTerpakaiHariIni = KantinTransaksi::withoutGlobalScopes()
+            ->where('kantin_id', $this->kantinTerpilih)
             ->where('metode', 'tunai')
             ->whereDate('tanggal', today())
-            ->whereHas('items.produk', fn ($q) => $q->where('lembaga_id', $this->lembaga_id))
             ->count();
     }
 
@@ -112,14 +158,15 @@ class KasirKantin extends Page
     {
         $code = trim($code);
 
-        if ($code === '') {
+        if ($code === '' || ! $this->kantinTerpilih) {
             return;
         }
 
         // Siswa dicari lintas lembaga (dalam 1 yayasan yang sama --
         // tenant scope global bawaan model yang menangani ini), BUKAN
-        // dibatasi ke lembaga tempat kasir ini berada. Lihat catatan
-        // di properti $lembaga_id.
+        // dibatasi ke kantin tempat kasir ini berada -- siswa dari
+        // lembaga manapun dalam yayasan yang sama boleh belanja di
+        // kantin manapun.
 
         $siswa = Siswa::with(['wallet', 'kelas', 'lembaga'])
             ->where(function ($q) use ($code) {
@@ -135,7 +182,7 @@ class KasirKantin extends Page
             return;
         }
 
-        $produk = KantinProduk::where('lembaga_id', $this->lembaga_id)
+        $produk = KantinProduk::where('kantin_id', $this->kantinTerpilih)
             ->where('barcode', $code)
             ->first();
 
@@ -155,7 +202,7 @@ class KasirKantin extends Page
     {
         $this->modeTunai = false;
 
-        $terpakaiHariIni = \App\Models\KantinTransaksi::withoutGlobalScopes()
+        $terpakaiHariIni = KantinTransaksi::withoutGlobalScopes()
             ->where('siswa_id', $siswa->id)
             ->where('metode', 'wallet')
             ->whereDate('tanggal', today())
@@ -186,7 +233,7 @@ class KasirKantin extends Page
     /**
      * Mulai transaksi tunai tanpa kartu — dipakai untuk siapapun yang
      * bukan siswa (guru, staf, pengunjung). Tidak perlu scan kartu sama
-     * sekali, langsung tunai, kena limit tunai harian platform.
+     * sekali, langsung tunai, kena limit tunai harian kantin ini.
      */
     public function mulaiTransaksiTunai(): void
     {
@@ -195,7 +242,7 @@ class KasirKantin extends Page
         if ($this->limitTunaiTercapai()) {
             Notification::make()
                 ->title('Limit transaksi tunai hari ini sudah tercapai')
-                ->body("Sudah {$this->tunaiTerpakaiHariIni} dari {$this->limitTunaiHarian} transaksi tunai hari ini. Siswa tetap bisa pakai wallet seperti biasa.")
+                ->body("Sudah {$this->tunaiTerpakaiHariIni} dari {$this->limitTunaiHarian} transaksi tunai hari ini di kantin ini. Siswa tetap bisa pakai wallet seperti biasa.")
                 ->warning()
                 ->send();
             return;
@@ -271,6 +318,11 @@ class KasirKantin extends Page
 
     public function checkout(): void
     {
+        if (! $this->kantinTerpilih) {
+            Notification::make()->title('Pilih kantin dulu.')->warning()->send();
+            return;
+        }
+
         if (! $this->siswaTerpilih && ! $this->modeTunai) {
             Notification::make()->title('Scan kartu siswa dulu, atau pilih transaksi tunai tanpa kartu.')->warning()->send();
             return;
@@ -291,7 +343,7 @@ class KasirKantin extends Page
             // Siswa -> bayar wallet, diatribusikan ke lembaga siswa.
             // Selain siswa (guru/staf/pengunjung) -> selalu tunai, tidak
             // diatribusikan ke lembaga manapun, dan kena limit tunai
-            // harian yang diatur platform admin.
+            // harian kantin ini.
             if ($this->siswaTerpilih) {
                 $metode = 'wallet';
                 $siswaId = $this->siswaTerpilih['id'];
@@ -308,7 +360,7 @@ class KasirKantin extends Page
                 // Jaring pengaman terakhir: cek ulang limit persis sebelum
                 // checkout diproses (bukan cuma waktu tombol ditekan),
                 // supaya tidak kebobolan kalau ada 2 sesi kasir jalan
-                // bersamaan di lembaga yang sama.
+                // bersamaan di kantin yang sama.
                 $this->muatLimitTunai();
 
                 if ($this->limitTunaiTercapai()) {
@@ -323,6 +375,7 @@ class KasirKantin extends Page
 
             $trx = app(KantinService::class)->checkout(
                 $lembagaId,
+                $this->kantinTerpilih,
                 $siswaId,
                 $pegawaiId,
                 $metode,

@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Exports\LaporanKantinExport;
+use App\Models\Kantin;
 use App\Models\KantinTransaksi;
 use App\Models\Lembaga;
 use App\Services\LaporanKantinPdf;
@@ -47,6 +48,7 @@ class LaporanKantin extends Page implements HasForms, HasTable
 
     public $dari;
     public $sampai;
+    public $kantin_id;
     public $lembaga_id;
     public $metode;
     public $diinput_oleh;
@@ -59,7 +61,7 @@ class LaporanKantin extends Page implements HasForms, HasTable
     protected function getFormSchema(): array
     {
         return [
-            Forms\Components\Grid::make(5)
+            Forms\Components\Grid::make(3)
                 ->schema([
 
                     Forms\Components\DatePicker::make('dari')
@@ -74,8 +76,18 @@ class LaporanKantin extends Page implements HasForms, HasTable
                         ->displayFormat('d/m/Y')
                         ->live(debounce: 400),
 
+                    Forms\Components\Select::make('kantin_id')
+                        ->label('Kantin')
+                        ->options(Kantin::pluck('nama', 'id'))
+                        ->searchable()
+                        ->preload()
+                        ->placeholder('Semua')
+                        ->selectablePlaceholder()
+                        ->native(false)
+                        ->live(debounce: 400),
+
                     Forms\Components\Select::make('lembaga_id')
-                        ->label('Lembaga (Kantin)')
+                        ->label('Lembaga (atribusi kas)')
                         ->options(Lembaga::pluck('nama', 'id'))
                         ->searchable()
                         ->preload()
@@ -124,9 +136,10 @@ class LaporanKantin extends Page implements HasForms, HasTable
     protected function baseQuery()
     {
         return KantinTransaksi::query()
-            ->with(['siswa', 'pegawai', 'lembaga', 'items'])
+            ->with(['siswa', 'pegawai', 'lembaga', 'kantin', 'items'])
             ->when($this->dari, fn ($q) => $q->whereDate('tanggal', '>=', $this->dari))
             ->when($this->sampai, fn ($q) => $q->whereDate('tanggal', '<=', $this->sampai))
+            ->when($this->kantin_id, fn ($q) => $q->where('kantin_id', $this->kantin_id))
             ->when($this->lembaga_id, fn ($q) => $q->where('lembaga_id', $this->lembaga_id))
             ->when($this->metode, fn ($q) => $q->where('metode', $this->metode))
             ->when($this->diinput_oleh, fn ($q) => $q->where('diinput_oleh', $this->diinput_oleh));
@@ -200,6 +213,7 @@ class LaporanKantin extends Page implements HasForms, HasTable
         return [
             'dari' => $this->dari,
             'sampai' => $this->sampai,
+            'kantin_id' => $this->kantin_id,
             'lembaga_id' => $this->lembaga_id,
             'metode' => $this->metode,
             'diinput_oleh' => $this->diinput_oleh,
@@ -250,8 +264,12 @@ class LaporanKantin extends Page implements HasForms, HasTable
                         ? 'Siswa'
                         : ($record->pegawai ? 'Guru / Staf' : null)),
 
+                Tables\Columns\TextColumn::make('kantin.nama')
+                    ->label('Kantin')
+                    ->default('-'),
+
                 Tables\Columns\TextColumn::make('lembaga')
-                    ->label('Lembaga (Kantin)')
+                    ->label('Lembaga')
                     ->state(fn ($record) => $this->lembagaLabel($record)),
 
                 Tables\Columns\BadgeColumn::make('metode')

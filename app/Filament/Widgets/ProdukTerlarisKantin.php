@@ -17,16 +17,15 @@ class ProdukTerlarisKantin extends BaseWidget
 
     public function table(Table $table): Table
     {
-        $tenant = Filament::getTenant();
-
-        $lembagaIds = $tenant
-            ? \App\Models\Lembaga::where('yayasan_id', $tenant->id)->pluck('id')
-            : collect();
+        $yayasanId = Filament::getTenant()?->id;
 
         return $table
             ->query(
+                // yayasan_id (bukan lembaga_id) supaya item dari
+                // transaksi pengunjung/tunai (lembaga_id kosong) tetap
+                // ikut terhitung.
                 KantinTransaksiItem::query()
-                    ->whereHas('transaksi', fn ($q) => $q->withoutGlobalScopes()->whereIn('lembaga_id', $lembagaIds))
+                    ->whereHas('transaksi', fn ($q) => $q->withoutGlobalScopes()->where('yayasan_id', $yayasanId))
                     ->whereMonth('created_at', now()->month)
                     ->whereYear('created_at', now()->year)
                     ->selectRaw('MIN(id) as id, nama_produk, SUM(qty) as total_qty, SUM(subtotal) as total_omzet')

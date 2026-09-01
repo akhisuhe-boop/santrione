@@ -53,6 +53,58 @@
         }
     </style>
 
+    @if (! $kantinTerpilih)
+
+        {{-- PILIH KANTIN --}}
+        <x-filament::section>
+            <x-slot name="heading">
+                <div class="kk-row kk-gap-2">
+                    <x-heroicon-o-building-storefront style="width:20px;height:20px;" />
+                    Pilih Kantin
+                </div>
+            </x-slot>
+
+            <div class="kk-section-body" style="padding-top:8px;">
+
+                @if (empty($daftarKantin))
+
+                    <p class="kk-hint" style="font-size:13px;">Belum ada kantin aktif di tenant ini. Buat dulu di menu <b>Kantin</b> (grup e-Kantin).</p>
+
+                @else
+
+                    <p class="kk-hint" style="margin-top:0; margin-bottom:12px;">Ada lebih dari satu kantin aktif — pilih dulu kantin yang mau Anda operasikan.</p>
+
+                    <div style="display:grid; gap:10px;">
+                        @foreach ($daftarKantin as $id => $nama)
+                            <button
+                                type="button"
+                                wire:click="pilihKantin({{ $id }})"
+                                style="text-align:left; padding:14px 16px; border:2px solid #e5e7eb; border-radius:12px; background:transparent; cursor:pointer; font-weight:600; font-size:14px; display:flex; align-items:center; gap:10px;">
+                                <x-heroicon-o-building-storefront style="width:18px;height:18px;color:#00A39D;" />
+                                {{ $nama }}
+                            </button>
+                        @endforeach
+                    </div>
+
+                @endif
+
+            </div>
+        </x-filament::section>
+
+    @else
+
+    <div class="kk-row-between" style="margin-bottom:12px;">
+        <span style="font-size:13px; color:#6b7280;">
+            Kantin: <b style="color:#111827;">{{ $daftarKantin[$kantinTerpilih] ?? '-' }}</b>
+        </span>
+
+        @if (count($daftarKantin) > 1)
+            <x-filament::button color="gray" outlined size="sm" wire:click="gantiKantin" icon="heroicon-o-arrow-path">
+                Ganti Kantin
+            </x-filament::button>
+        @endif
+    </div>
+
     <div class="kk-grid">
 
         <div style="display:grid; gap:16px;">
@@ -168,7 +220,6 @@
 
                                 <div>
                                     <div class="kk-name">{{ $siswaTerpilih['nama'] }}</div>
-                                    <span class="kk-badge" style="background:#ccfbf1;color:#0f766e;">Siswa</span>
                                     <div class="kk-meta">NIS {{ $siswaTerpilih['nis'] }}</div>
                                     <div class="kk-meta">{{ $siswaTerpilih['kelas'] }} &middot; {{ $siswaTerpilih['lembaga'] }}</div>
                                     <div class="kk-saldo">Saldo: Rp {{ number_format($siswaTerpilih['saldo'], 0, ',', '.') }}</div>
@@ -361,6 +412,8 @@
         </div>
 
     </div>
+
+    @endif
 
     <script>
         document.addEventListener('livewire:init', () => {

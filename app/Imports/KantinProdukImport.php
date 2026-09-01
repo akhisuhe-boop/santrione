@@ -3,7 +3,7 @@
 namespace App\Imports;
 
 use App\Models\KantinProduk;
-use App\Models\Lembaga;
+use App\Models\Kantin;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\ToCollection;
@@ -29,19 +29,19 @@ class KantinProdukImport implements ToCollection
             $kategori = isset($row[2]) ? trim((string) $row[2]) : null;
             $harga = isset($row[3]) ? (int) preg_replace('/[^0-9]/', '', (string) $row[3]) : 0;
             $stok = (isset($row[4]) && trim((string) $row[4]) !== '') ? (int) $row[4] : null;
-            $lembagaId = $row[5] ?? null;
+            $kantinId = $row[5] ?? null;
 
-            if (! $lembagaId) {
+            if (! $kantinId) {
                 continue;
             }
 
-            $lembaga = Lembaga::find($lembagaId);
+            $kantin = Kantin::find($kantinId);
 
-            if (! $lembaga) {
+            if (! $kantin) {
                 continue;
             }
 
-            $existing = KantinProduk::where('lembaga_id', $lembaga->id)
+            $existing = KantinProduk::where('kantin_id', $kantin->id)
                 ->where('nama', $nama)
                 ->first();
 
@@ -54,7 +54,7 @@ class KantinProdukImport implements ToCollection
 
             KantinProduk::updateOrCreate(
                 [
-                    'lembaga_id' => $lembaga->id,
+                    'kantin_id' => $kantin->id,
                     'nama' => $nama,
                 ],
                 [

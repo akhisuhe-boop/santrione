@@ -11,9 +11,10 @@ class LaporanKantinPdf
     public static function getData(array $filters): array
     {
         $query = KantinTransaksi::query()
-            ->with(['siswa', 'pegawai', 'lembaga', 'items'])
+            ->with(['siswa', 'pegawai', 'lembaga', 'kantin', 'items'])
             ->when($filters['dari'] ?? null, fn ($q, $v) => $q->whereDate('tanggal', '>=', $v))
             ->when($filters['sampai'] ?? null, fn ($q, $v) => $q->whereDate('tanggal', '<=', $v))
+            ->when($filters['kantin_id'] ?? null, fn ($q, $v) => $q->where('kantin_id', $v))
             ->when($filters['lembaga_id'] ?? null, fn ($q, $v) => $q->where('lembaga_id', $v))
             ->when($filters['metode'] ?? null, fn ($q, $v) => $q->where('metode', $v))
             ->when($filters['diinput_oleh'] ?? null, fn ($q, $v) => $q->where('diinput_oleh', $v))
@@ -30,6 +31,7 @@ class LaporanKantinPdf
             return [
                 'kode' => $trx->kode,
                 'tanggal' => $trx->tanggal ? Carbon::parse($trx->tanggal)->translatedFormat('d-m-Y H:i') : '-',
+                'kantin' => $trx->kantin?->nama ?? '-',
                 'pembeli' => $trx->siswa?->nama_lengkap ?? $trx->pegawai?->nama ?? 'Umum (Pengunjung)',
                 'tipe' => $trx->siswa ? 'Siswa' : ($trx->pegawai ? 'Guru/Staf' : 'Pengunjung'),
                 'lembaga' => ($trx->siswa || $trx->pegawai) ? ($trx->lembaga?->nama ?? '-') : '-',
@@ -42,6 +44,9 @@ class LaporanKantinPdf
 
         return [
             'items' => $items,
+            'kantinNama' => filled($filters['kantin_id'] ?? null)
+                ? Kantin::find($filters['kantin_id'])?->nama
+                : 'Semua Kantin',
             'lembagaNama' => filled($filters['lembaga_id'] ?? null)
                 ? Lembaga::find($filters['lembaga_id'])?->nama
                 : 'Semua Lembaga',

@@ -23,6 +23,10 @@ class KantinService
      *                           tapi lembaga milik SI PEMBELI (siswa atau
      *                           pegawai). Null untuk pengunjung umum
      *                           (tidak diatribusikan ke lembaga manapun).
+     * @param  int  $kantinId  Kantin (outlet/kasir fisik) tempat transaksi
+     *                         ini terjadi -- dipakai buat laporan per
+     *                         kantin & limit tunai harian per kantin.
+     *                         Terpisah dari $lembagaId (soal akuntansi).
      * @param  ?int  $siswaId  Diisi kalau pembeli siswa (bayar wallet).
      * @param  ?int  $pegawaiId  Diisi kalau pembeli guru/staf -- SELALU
      *                           bayar tunai (fitur wallet pegawai
@@ -33,6 +37,7 @@ class KantinService
      */
     public function checkout(
         ?int $lembagaId,
+        int $kantinId,
         ?int $siswaId,
         ?int $pegawaiId,
         string $metode, // 'wallet' | 'tunai'
@@ -40,7 +45,7 @@ class KantinService
         ?int $kasirId = null
     ): KantinTransaksi {
 
-        return DB::transaction(function () use ($lembagaId, $siswaId, $pegawaiId, $metode, $items, $kasirId) {
+        return DB::transaction(function () use ($lembagaId, $kantinId, $siswaId, $pegawaiId, $metode, $items, $kasirId) {
 
             $produkIds = collect($items)->pluck('produk_id');
 
@@ -118,6 +123,7 @@ class KantinService
 
             $trx = KantinTransaksi::create([
                 'lembaga_id' => $lembagaId,
+                'kantin_id' => $kantinId,
                 'siswa_id' => $siswaId,
                 'pegawai_id' => $pegawaiId,
                 'wallet_id' => $wallet?->id,
