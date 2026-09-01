@@ -25,6 +25,7 @@ class Lembaga extends Model
     'kepala_sekolah',
     'bendahara_id',
     'printer_kwitansi',
+    'limit_tunai_kantin_harian',
     'logo',
     'npsn',
     'nss',

@@ -102,7 +102,7 @@ class LembagaResource extends BaseResource
                             ->label('Menggunakan Tes Masuk?')
                             ->helperText('Jika aktif, calon siswa wajib mengikuti tes sebelum dinyatakan lulus.')
                             ->default(true),
-    
+
                     ])
                     ->columns(3),
     

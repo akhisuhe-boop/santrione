@@ -7,6 +7,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Concerns\BelongsToTenant;
+use App\Models\Wallet;
 
 class Pegawai extends Authenticatable
 {
@@ -35,6 +36,16 @@ class Pegawai extends Authenticatable
                     ?? auth()->user()?->yayasan_id;
             }
 
+        });
+
+        // Auto wallet e-kantin -- sama seperti Siswa::booted(), supaya
+        // guru/staf langsung bisa dipakai kartunya di kasir kantin tanpa
+        // perlu provisioning manual.
+        static::created(function (Pegawai $pegawai) {
+            Wallet::create([
+                'pegawai_id' => $pegawai->id,
+                'saldo' => 0,
+            ]);
         });
     }
     
@@ -69,6 +80,25 @@ class Pegawai extends Authenticatable
         return $this->belongsToMany(Lembaga::class, 'pegawai_lembaga')
             ->withPivot(['jabatan','status', 'metode_penggajian', 'nominal_tetap', 'tarif_per_jp'])
             ->withTimestamps();
+    }
+
+    // 🔹 Relasi ke wallet e-kantin
+    public function wallet()
+    {
+        return $this->hasOne(Wallet::class);
+    }
+
+    /**
+     * Lembaga "utama" pegawai -- dipakai untuk atribusi transaksi kantin/
+     * kas ke lembaga yang benar saat pegawai belanja pakai kartunya
+     * sendiri. Pegawai bisa terdaftar di lebih dari 1 lembaga (pivot
+     * many-to-many, tidak ada flag "utama" eksplisit), jadi diambil
+     * assignment PALING AWAL sebagai pendekatan paling wajar. Bisa null
+     * kalau pegawai level yayasan/pesantren (tidak terikat 1 lembaga).
+     */
+    public function lembagaUtama(): ?Lembaga
+    {
+        return $this->lembagas()->orderBy('pegawai_lembaga.id')->first();
     }
 
     // Relasi ke TahfidzSetoran
