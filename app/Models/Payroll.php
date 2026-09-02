@@ -21,6 +21,7 @@ class Payroll extends Model
         'pegawai_id',
         'bulan',
         'tahun',
+        'jenis',
 
         'subtotal',
         'bonus',

@@ -80,7 +80,12 @@
         <div class="mt-6 grid grid-cols-2 gap-4">
     </div>
 
-    <form method="POST" action="{{ route('guru.jurnal.store') }}">
+    <form method="POST" action="{{ route('guru.jurnal.store') }}"
+        x-data="{
+            statuses: {{ $absensis->pluck('status', 'id')->toJson() }},
+            get totalHadir() { return Object.values(this.statuses).filter(s => s === 'Hadir').length; },
+            get totalSiswa() { return Object.keys(this.statuses).length; }
+        }">
 
         @csrf
 
@@ -212,7 +217,7 @@
                             type="radio"
                             name="absensi[{{ $absen->id }}]"
                             value="{{ $status }}"
-                            {{ $absen->status==$status?'checked':'' }}>
+                            x-model="statuses[{{ $absen->id }}]">
 
                         <div
                             class="rounded-xl
@@ -320,8 +325,8 @@
                     Kehadiran
                 </span>
 
-                <span class="text-sm font-semibold text-slate-900">
-                    {{ $rekap['hadir'] ?? 0 }}/{{ $rekap['total'] ?? 0 }} Siswa Hadir
+                <span class="text-sm font-semibold text-slate-900" x-text="totalHadir + '/' + totalSiswa + ' Siswa Hadir'">
+                    {{ $absensis->where('status', 'Hadir')->count() }}/{{ $absensis->count() }} Siswa Hadir
                 </span>
 
             </div>
@@ -352,30 +357,54 @@
                 href="{{ route('guru.dashboard') }}"
                 class="flex-1 rounded-2xl border border-slate-200 bg-white py-4 text-center font-semibold text-slate-600 transition hover:border-slate-300">
 
-                Batal
+                @if ($jurnal->status === 'valid' || filled($jurnal->materi))
+                    Kembali
+                @else
+                    Batal
+                @endif
 
             </a>
 
-            <button
-                type="submit"
-                class="flex-1 rounded-2xl
-                       bg-gradient-to-r
-                       from-[#00A39D]
-                       via-[#00B4AC]
-                       to-[#14C8C0]
-                       py-4
-                       text-center
-                       font-semibold
-                       text-white
-                       shadow-lg
-                       transition
-                       hover:scale-[1.01]
-                       hover:shadow-xl
-                       active:scale-[0.99]">
+            @if ($jurnal->status === 'valid' || filled($jurnal->materi))
 
-                Simpan Jurnal Mengajar
+                <div
+                    class="flex-1 rounded-2xl
+                           bg-slate-100
+                           py-4
+                           text-center
+                           font-semibold
+                           text-slate-400
+                           flex items-center justify-center gap-2">
 
-            </button>
+                    <x-heroicon-o-lock-closed class="w-4 h-4"/>
+                    Jurnal Sudah Tersimpan
+
+                </div>
+
+            @else
+
+                <button
+                    type="submit"
+                    class="flex-1 rounded-2xl
+                           bg-gradient-to-r
+                           from-[#00A39D]
+                           via-[#00B4AC]
+                           to-[#14C8C0]
+                           py-4
+                           text-center
+                           font-semibold
+                           text-white
+                           shadow-lg
+                           transition
+                           hover:scale-[1.01]
+                           hover:shadow-xl
+                           active:scale-[0.99]">
+
+                    Simpan Jurnal Mengajar
+
+                </button>
+
+            @endif
 
         </div>
 

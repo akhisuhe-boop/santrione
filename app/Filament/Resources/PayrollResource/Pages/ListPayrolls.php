@@ -47,13 +47,23 @@ class ListPayrolls extends ListRecords
                         ->numeric()
                         ->default(date('Y'))
                         ->required(),
+
+                    Forms\Components\Select::make('jenis')
+                        ->label('Jenis Payroll')
+                        ->options([
+                            'struktural' => 'Struktural (jabatan tetap saja)',
+                            'fungsional' => 'Fungsional (honor per JP saja)',
+                        ])
+                        ->placeholder('Gabungan (semua jabatan jadi 1 payroll)')
+                        ->helperText('Pilih kalau mau generate & bayar terpisah, mis. struktural tanggal 5, fungsional tanggal 10. Kosongkan untuk perilaku lama (1 payroll gabungan per pegawai).'),
                 ])
 
                 ->action(function (array $data) {
                     app(PayrollService::class)
                         ->generate(
                             $data['bulan'],
-                            $data['tahun']
+                            $data['tahun'],
+                            $data['jenis'] ?? null
                         );
 
                     Notification::make()
