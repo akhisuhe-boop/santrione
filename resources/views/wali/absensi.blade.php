@@ -114,6 +114,13 @@
 </div>
 
 
+{{-- DIVIDER ANTAR KELOMPOK --}}
+<div class="flex items-center gap-3 my-2 px-1">
+    <div class="flex-1 h-px bg-slate-200"></div>
+    <span class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Absensi Harian</span>
+    <div class="flex-1 h-px bg-slate-200"></div>
+</div>
+
 {{-- RINGKASAN ABSENSI HARIAN --}}
 @include('wali.partials.ringkasan-absensi-card', [
     'judul' => 'Ringkasan Absensi Harian',
@@ -342,6 +349,13 @@ $absensiHarian = $siswa->absensiHarians;
 
 @endif
 
+</div>
+
+{{-- DIVIDER ANTAR KELOMPOK --}}
+<div class="flex items-center gap-3 my-2 px-1">
+    <div class="flex-1 h-px bg-slate-200"></div>
+    <span class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Absensi Mapel</span>
+    <div class="flex-1 h-px bg-slate-200"></div>
 </div>
 
 {{-- RINGKASAN ABSENSI MAPEL --}}
@@ -670,6 +684,13 @@ $absensiMapel = $siswa->absensiMapels
 
 @endif
 
+</div>
+
+{{-- DIVIDER ANTAR KELOMPOK --}}
+<div class="flex items-center gap-3 my-2 px-1">
+    <div class="flex-1 h-px bg-slate-200"></div>
+    <span class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Absensi Kegiatan</span>
+    <div class="flex-1 h-px bg-slate-200"></div>
 </div>
 
 {{-- RINGKASAN ABSENSI KEGIATAN --}}
