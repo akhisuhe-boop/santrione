@@ -8,8 +8,13 @@
 
     @php
     // ===============================
-    // 1. SATUKAN SEMUA ABSENSI
+    // 1. BREAKDOWN PER MAPEL/KEGIATAN (bulan yang dipilih)
     // ===============================
+    // Ini INSIGHT TAMBAHAN (detail per sesi), BUKAN lagi dipakai untuk
+    // menghitung "Tingkat Kehadiran" -- itu sekarang murni dari Absensi
+    // Sekolah (AbsensiHarian), 1 baris resmi per hari. Baris mapel yang
+    // tidak sempat diabsen guru TIDAK dianggap Alpha -- memang tidak
+    // ada datanya sama sekali, jadi tidak dihitung di sini.
     $allAbsensi = $siswa->absensis
         ->merge($siswa->absensiMapels)
         ->map(function ($item) {
@@ -18,28 +23,42 @@
             ];
         });
 
-    // ===============================
-    // 2. NORMALIZED COUNT
-    // ===============================
     $hadir = $allAbsensi->where('status', 'Hadir')->count();
     $izin  = $allAbsensi->where('status', 'Izin')->count();
     $sakit = $allAbsensi->where('status', 'Sakit')->count();
     $terlambat = $allAbsensi->where('status', 'Terlambat')->count();
-
-    // ===============================
-    // 3. FIX TYPO STATUS (FINAL STANDARD = ALPA)
-    // ===============================
     $alpha = $allAbsensi->where('status', 'Alpa')->count();
+    $totalSesi = $allAbsensi->count();
 
-    // ===============================
-    // 4. TOTAL & PERSENTASE
-    // ===============================
-    $total = $allAbsensi->count();
-
-    $persentase = $total > 0
-        ? round(($hadir / $total) * 100)
-        : 0;
+    $namaBulan = \Carbon\Carbon::create()->month($bulan)->translatedFormat('F');
     @endphp
+
+    {{-- PILIH PERIODE --}}
+    <div class="flex items-center justify-between mb-4">
+
+        <a
+            href="{{ route('wali.absensi', ['bulan' => $bulan == 1 ? 12 : $bulan - 1, 'tahun' => $bulan == 1 ? $tahun - 1 : $tahun]) }}"
+            class="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50">
+            <x-heroicon-o-chevron-left class="w-4 h-4"/>
+        </a>
+
+        <div class="font-semibold text-slate-900 text-sm">
+            {{ $namaBulan }} {{ $tahun }}
+        </div>
+
+        @php
+            $bulanDepan = $bulan == 12 ? 1 : $bulan + 1;
+            $tahunDepan = $bulan == 12 ? $tahun + 1 : $tahun;
+            $bukanBulanDepan = \Carbon\Carbon::create($tahunDepan, $bulanDepan, 1)->startOfMonth()->gt(now()->startOfMonth());
+        @endphp
+
+        <a
+            href="{{ $bukanBulanDepan ? '#' : route('wali.absensi', ['bulan' => $bulanDepan, 'tahun' => $tahunDepan]) }}"
+            class="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center {{ $bukanBulanDepan ? 'text-slate-200 pointer-events-none' : 'text-slate-500 hover:bg-slate-50' }}">
+            <x-heroicon-o-chevron-right class="w-4 h-4"/>
+        </a>
+
+    </div>
 
 {{-- HERO HEADER --}}
 <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#00A39D] via-[#00B4AC] to-[#14C8C0] p-6 text-white shadow-lg mb-5">
@@ -67,15 +86,19 @@
 
             <div class="flex justify-between text-sm mb-2">
                 <span class="text-white/80">Tingkat Kehadiran</span>
-                <span class="font-semibold">{{ $persentase }}%</span>
+                <span class="font-semibold">{{ $persentaseKehadiran }}%</span>
             </div>
 
             <div class="w-full h-2 bg-white/20 rounded-full overflow-hidden">
                 <div
                     class="h-full bg-white rounded-full transition-all duration-500"
-                    style="width: {{ $persentase }}%;">
+                    style="width: {{ $persentaseKehadiran }}%;">
                 </div>
             </div>
+
+            <p class="text-white/70 text-xs mt-2">
+                {{ $hariHadir }} dari {{ $totalHariTercatat }} hari tercatat masuk sekolah bulan {{ $namaBulan }}
+            </p>
 
         </div>
 
@@ -89,12 +112,13 @@
     {{-- HEADER (lebih compact) --}}
     <div class="px-5 py-3 border-b border-slate-100 bg-slate-50/30">
         <div class="text-sm font-semibold text-slate-900">
-            Ringkasan Absensi
+            Ringkasan per Sesi Mapel & Kegiatan
         </div>
         <div class="text-[11px] text-slate-500 mt-0.5">
-            Distribusi kehadiran santri
+            {{ $totalSesi }} sesi tercatat bulan {{ $namaBulan }} -- di luar Tingkat Kehadiran di atas
         </div>
     </div>
+
 
     {{-- LIST --}}
     <div class="divide-y divide-slate-100">

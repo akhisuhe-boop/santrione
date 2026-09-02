@@ -201,22 +201,48 @@ class WaliDashboardController extends Controller
         return back()->with('success', 'Limit belanja harian berhasil diperbarui.');
     }
 
-    public function absensi()
+    public function absensi(Request $request)
     {
+        // Periode -- default bulan berjalan. Sebelumnya TIDAK ada filter
+        // periode sama sekali (akumulasi dari awal data ada), yang bikin
+        // angka "Tingkat Kehadiran" tidak pernah benar-benar mewakili
+        // "bulan ini".
+        $bulan = (int) $request->query('bulan', now()->month);
+        $tahun = (int) $request->query('tahun', now()->year);
+
         $siswa = Siswa::with([
 
-            'absensis.jadwalKegiatan.template',
+            'absensis' => fn ($q) => $q
+                ->whereMonth('waktu', $bulan)
+                ->whereYear('waktu', $tahun)
+                ->with('jadwalKegiatan.template'),
 
-            'absensiMapels.jadwalPelajaran.mataPelajaran',
-            'absensiMapels.jadwalPelajaran.guru',
+            'absensiMapels' => fn ($q) => $q
+                ->whereMonth('tanggal', $bulan)
+                ->whereYear('tanggal', $tahun)
+                ->with(['jadwalPelajaran.mataPelajaran', 'jadwalPelajaran.guru']),
 
-            'absensiHarians',
+            'absensiHarians' => fn ($q) => $q
+                ->whereMonth('tanggal', $bulan)
+                ->whereYear('tanggal', $tahun),
 
         ])->findOrFail(session('siswa_id'));
 
+        // Tingkat Kehadiran resmi -- MURNI dari AbsensiHarian (1 baris per
+        // hari, sumber paling otoritatif buat "hadir di sekolah atau
+        // tidak"), BUKAN lagi dicampur dengan absensi per-mapel/kegiatan
+        // yang jumlah barisnya beda-beda tiap hari tergantung berapa
+        // mapel/kegiatan yang kebetulan diabsen guru.
+        $totalHariTercatat = $siswa->absensiHarians->count();
+        $hariHadir = $siswa->absensiHarians->whereIn('status_masuk', ['Hadir', 'Terlambat'])->count();
+
+        $persentaseKehadiran = $totalHariTercatat > 0
+            ? round(($hariHadir / $totalHariTercatat) * 100)
+            : 0;
+
         return view(
             'wali.absensi',
-            compact('siswa')
+            compact('siswa', 'bulan', 'tahun', 'persentaseKehadiran', 'totalHariTercatat', 'hariHadir')
         );
     }
 
