@@ -8,27 +8,35 @@
 
     @php
     // ===============================
-    // 1. BREAKDOWN PER MAPEL/KEGIATAN (bulan yang dipilih)
+    // RINGKASAN ABSENSI HARIAN (dari AbsensiHarian -- basis Tingkat
+    // Kehadiran di hero). Terpisah dari mapel & kegiatan di bawah.
     // ===============================
-    // Ini INSIGHT TAMBAHAN (detail per sesi), BUKAN lagi dipakai untuk
-    // menghitung "Tingkat Kehadiran" -- itu sekarang murni dari Absensi
-    // Sekolah (AbsensiHarian), 1 baris resmi per hari. Baris mapel yang
-    // tidak sempat diabsen guru TIDAK dianggap Alpha -- memang tidak
-    // ada datanya sama sekali, jadi tidak dihitung di sini.
-    $allAbsensi = $siswa->absensis
-        ->merge($siswa->absensiMapels)
-        ->map(function ($item) {
-            return (object)[
-                'status' => trim($item->status),
-            ];
-        });
+    $harianHadir = $siswa->absensiHarians->where('status_masuk', 'Hadir')->count();
+    $harianTerlambat = $siswa->absensiHarians->where('status_masuk', 'Terlambat')->count();
+    $harianIzin = $siswa->absensiHarians->where('status_masuk', 'Izin')->count();
+    $harianSakit = $siswa->absensiHarians->where('status_masuk', 'Sakit')->count();
+    $harianAlpa = $siswa->absensiHarians->whereIn('status_masuk', ['Alpa', 'Alpha'])->count();
 
-    $hadir = $allAbsensi->where('status', 'Hadir')->count();
-    $izin  = $allAbsensi->where('status', 'Izin')->count();
-    $sakit = $allAbsensi->where('status', 'Sakit')->count();
-    $terlambat = $allAbsensi->where('status', 'Terlambat')->count();
-    $alpha = $allAbsensi->where('status', 'Alpa')->count();
-    $totalSesi = $allAbsensi->count();
+    // ===============================
+    // RINGKASAN ABSENSI MAPEL (dari AbsensiMapel saja -- terpisah dari
+    // kegiatan, karena beda konteks: per sesi pelajaran, bukan kegiatan
+    // pesantren)
+    // ===============================
+    $mapelHadir = $siswa->absensiMapels->where('status', 'Hadir')->count();
+    $mapelIzin = $siswa->absensiMapels->where('status', 'Izin')->count();
+    $mapelSakit = $siswa->absensiMapels->where('status', 'Sakit')->count();
+    $mapelAlpha = $siswa->absensiMapels->whereIn('status', ['Alpa', 'Alpha'])->count();
+    $totalMapel = $siswa->absensiMapels->count();
+
+    // ===============================
+    // RINGKASAN ABSENSI KEGIATAN (dari Absensi saja -- sholat
+    // berjamaah, ekskul, kegiatan pesantren lainnya)
+    // ===============================
+    $kegiatanHadir = $siswa->absensis->where('status', 'Hadir')->count();
+    $kegiatanIzin = $siswa->absensis->where('status', 'Izin')->count();
+    $kegiatanSakit = $siswa->absensis->where('status', 'Sakit')->count();
+    $kegiatanAlpa = $siswa->absensis->whereIn('status', ['Alpa', 'Alpha'])->count();
+    $totalKegiatan = $siswa->absensis->count();
 
     $namaBulan = \Carbon\Carbon::create()->month($bulan)->translatedFormat('F');
     @endphp
@@ -78,7 +86,7 @@
         </h1>
 
         <p class="text-white/80 text-sm mt-1">
-            Rekapitulasi Absensi Kegiatan & Belajar Santri
+            Rekapitulasi absen masuk & pulang sekolah
         </p>
 
         {{-- PROGRESS --}}
@@ -106,125 +114,42 @@
 </div>
 
 
-{{-- SUMMARY (CARD LIST STYLE - COMPACT SAAS) --}}
-<div class="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm mb-5">
+{{-- RINGKASAN ABSENSI HARIAN --}}
+@include('wali.partials.ringkasan-absensi-card', [
+    'judul' => 'Ringkasan Absensi Harian',
+    'subjudul' => 'Basis Tingkat Kehadiran di atas -- ' . $totalHariTercatat . ' hari tercatat bulan ' . $namaBulan,
+    'rows' => [
+        ['label' => 'Hadir', 'keterangan' => 'Kehadiran aktif', 'color' => 'emerald', 'value' => $harianHadir],
+        ['label' => 'Terlambat', 'keterangan' => 'Keterlambatan hadir', 'color' => 'indigo', 'value' => $harianTerlambat],
+        ['label' => 'Izin', 'keterangan' => 'Izin resmi', 'color' => 'amber', 'value' => $harianIzin],
+        ['label' => 'Sakit', 'keterangan' => 'Tidak hadir karena sakit', 'color' => 'sky', 'value' => $harianSakit],
+        ['label' => 'Alpa', 'keterangan' => 'Tanpa keterangan', 'color' => 'rose', 'value' => $harianAlpa],
+    ],
+])
 
-    {{-- HEADER (lebih compact) --}}
-    <div class="px-5 py-3 border-b border-slate-100 bg-slate-50/30">
-        <div class="text-sm font-semibold text-slate-900">
-            Ringkasan per Sesi Mapel & Kegiatan
-        </div>
-        <div class="text-[11px] text-slate-500 mt-0.5">
-            {{ $totalSesi }} sesi tercatat bulan {{ $namaBulan }} -- di luar Tingkat Kehadiran di atas
-        </div>
-    </div>
+{{-- RINGKASAN ABSENSI MAPEL --}}
+@include('wali.partials.ringkasan-absensi-card', [
+    'judul' => 'Ringkasan Absensi Mapel',
+    'subjudul' => $totalMapel . ' sesi pelajaran tercatat bulan ' . $namaBulan . ' -- sesi yang tidak sempat diabsen guru tidak masuk hitungan ini',
+    'rows' => [
+        ['label' => 'Hadir', 'keterangan' => 'Hadir di kelas', 'color' => 'emerald', 'value' => $mapelHadir],
+        ['label' => 'Izin', 'keterangan' => 'Izin resmi', 'color' => 'amber', 'value' => $mapelIzin],
+        ['label' => 'Sakit', 'keterangan' => 'Tidak hadir karena sakit', 'color' => 'sky', 'value' => $mapelSakit],
+        ['label' => 'Alpha', 'keterangan' => 'Tanpa keterangan', 'color' => 'rose', 'value' => $mapelAlpha],
+    ],
+])
 
-
-    {{-- LIST --}}
-    <div class="divide-y divide-slate-100">
-
-        {{-- HADIR --}}
-        <div class="flex items-center justify-between px-5 py-3 hover:bg-slate-50/40 transition">
-            <div class="flex items-center gap-3">
-
-                <div class="w-9 h-9 rounded-2xl bg-emerald-50 flex items-center justify-center">
-                    <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
-                </div>
-
-                <div>
-                    <div class="text-sm font-medium text-slate-900 leading-tight">Hadir</div>
-                    <div class="text-[11px] text-slate-500">Kehadiran aktif</div>
-                </div>
-
-            </div>
-
-            <div class="text-base font-semibold text-slate-900">
-                {{ $hadir }}
-            </div>
-        </div>
-
-        {{-- IZIN --}}
-        <div class="flex items-center justify-between px-5 py-3 hover:bg-slate-50/40 transition">
-            <div class="flex items-center gap-3">
-
-                <div class="w-9 h-9 rounded-2xl bg-amber-50 flex items-center justify-center">
-                    <div class="w-2 h-2 rounded-full bg-amber-500"></div>
-                </div>
-
-                <div>
-                    <div class="text-sm font-medium text-slate-900 leading-tight">Izin</div>
-                    <div class="text-[11px] text-slate-500">Izin resmi</div>
-                </div>
-
-            </div>
-
-            <div class="text-base font-semibold text-slate-900">
-                {{ $izin }}
-            </div>
-        </div>
-
-        {{-- SAKIT --}}
-        <div class="flex items-center justify-between px-5 py-3 hover:bg-slate-50/40 transition">
-            <div class="flex items-center gap-3">
-
-                <div class="w-9 h-9 rounded-2xl bg-sky-50 flex items-center justify-center">
-                    <div class="w-2 h-2 rounded-full bg-sky-500"></div>
-                </div>
-
-                <div>
-                    <div class="text-sm font-medium text-slate-900 leading-tight">Sakit</div>
-                    <div class="text-[11px] text-slate-500">Tidak hadir karena sakit</div>
-                </div>
-
-            </div>
-
-            <div class="text-base font-semibold text-slate-900">
-                {{ $sakit }}
-            </div>
-        </div>
-
-        {{-- TERLAMBAT --}}
-        <div class="flex items-center justify-between px-5 py-3 hover:bg-slate-50/40 transition">
-            <div class="flex items-center gap-3">
-
-                <div class="w-9 h-9 rounded-2xl bg-indigo-50 flex items-center justify-center">
-                    <div class="w-2 h-2 rounded-full bg-indigo-500"></div>
-                </div>
-
-                <div>
-                    <div class="text-sm font-medium text-slate-900 leading-tight">Terlambat</div>
-                    <div class="text-[11px] text-slate-500">Keterlambatan hadir</div>
-                </div>
-
-            </div>
-
-            <div class="text-base font-semibold text-slate-900">
-                {{ $terlambat }}
-            </div>
-        </div>
-
-        {{-- ALPHA --}}
-        <div class="flex items-center justify-between px-5 py-3 hover:bg-slate-50/40 transition">
-            <div class="flex items-center gap-3">
-
-                <div class="w-9 h-9 rounded-2xl bg-rose-50 flex items-center justify-center">
-                    <div class="w-2 h-2 rounded-full bg-rose-500"></div>
-                </div>
-
-                <div>
-                    <div class="text-sm font-medium text-slate-900 leading-tight">Alpha</div>
-                    <div class="text-[11px] text-slate-500">Tanpa keterangan</div>
-                </div>
-
-            </div>
-
-            <div class="text-base font-semibold text-slate-900">
-                {{ $alpha }}
-            </div>
-        </div>
-
-    </div>
-</div>
+{{-- RINGKASAN ABSENSI KEGIATAN --}}
+@include('wali.partials.ringkasan-absensi-card', [
+    'judul' => 'Ringkasan Absensi Kegiatan',
+    'subjudul' => $totalKegiatan . ' kegiatan tercatat bulan ' . $namaBulan . ' (sholat berjamaah, ekskul, dll)',
+    'rows' => [
+        ['label' => 'Hadir', 'keterangan' => 'Ikut kegiatan', 'color' => 'emerald', 'value' => $kegiatanHadir],
+        ['label' => 'Izin', 'keterangan' => 'Izin resmi', 'color' => 'amber', 'value' => $kegiatanIzin],
+        ['label' => 'Sakit', 'keterangan' => 'Tidak hadir karena sakit', 'color' => 'sky', 'value' => $kegiatanSakit],
+        ['label' => 'Alpa', 'keterangan' => 'Tanpa keterangan', 'color' => 'rose', 'value' => $kegiatanAlpa],
+    ],
+])
 
 {{-- ABSENSI SEKOLAH --}}
 
