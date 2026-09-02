@@ -214,7 +214,7 @@
     <div class="mx-auto max-w-7xl px-4 lg:px-8">
         <div class="grid grid-cols-1 lg:grid-cols-[50%_50%] gap-14 items-center">
 
-            <div class="text-center lg:text-left space-y-8">
+            <div class="order-2 lg:order-1 text-center lg:text-left space-y-8">
                 <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-50 border border-slate-200 text-xs font-medium text-slate-700 mx-auto lg:mx-0 shadow-sm hover:shadow-md transition-all duration-300">
                     <span class="relative flex h-2 w-2">
                         <span class="absolute inline-flex h-full w-full rounded-full opacity-60 animate-ping" style="background-color:#00A39D;"></span>
@@ -278,7 +278,7 @@
                 </div>
             </div>
 
-            <div>
+            <div class="order-1 lg:order-2">
                 @if($setting->hero_images && count($setting->hero_images) > 0)
                     <div id="hero-slideshow" class="relative w-full aspect-[16/11] overflow-hidden rounded-2xl">
                         @foreach($setting->hero_images as $i => $img)
