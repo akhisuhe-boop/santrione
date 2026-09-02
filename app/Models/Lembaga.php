@@ -25,6 +25,7 @@ class Lembaga extends Model
     'kepala_sekolah',
     'bendahara_id',
     'printer_kwitansi',
+    'limit_tunai_kantin_harian',
     'logo',
     'npsn',
     'nss',
@@ -44,6 +45,9 @@ class Lembaga extends Model
     'xendit_account_holder_id',
     'xendit_status',
     'doku_sub_account_id',
+    'doku_account_no',
+    'doku_split_rule_id',
+    'doku_split_rule_id_flat',
     'doku_status',
     ];
     

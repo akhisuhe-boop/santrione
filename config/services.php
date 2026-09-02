@@ -45,8 +45,15 @@ return [
     'client_id'      => env('DOKU_CLIENT_ID'),
     'secret_key'     => env('DOKU_SECRET_KEY'),
     'is_production'  => env('DOKU_IS_PRODUCTION', false),
-    'fee_persen'     => env('DOKU_FEE_PERSEN', 0.75), // persentase fee admin QINARA dari nominal tagihan
-    'fee_cap'        => env('DOKU_FEE_CAP', 10000), // batas maksimum fee admin Qinara per transaksi (Rupiah)
+    // DIPERBARUI -- keputusan bisnis: 0.75%/cap Rp10.000 dinaikkan ke
+    // 0.85%/cap Rp8.500. Titik potong (crossover) turun dari Rp1.333.333
+    // ke Rp1.000.000 -- SPP bulanan (nominal kecil, di bawah titik
+    // potong) kena persentase murni, PPDB/uang pangkal (di atas titik
+    // potong) kena cap flat. Sekarang BENAR-BENAR di-enforce di sisi
+    // DOKU lewat 2 Split Rule per Lembaga (lihat DokuService::
+    // buatSplitRule()/pilihSplitRuleId()), bukan cuma angka tampilan.
+    'fee_persen'     => env('DOKU_FEE_PERSEN', 0.85), // persentase fee admin QINARA dari nominal tagihan
+    'fee_cap'        => env('DOKU_FEE_CAP', 8500), // batas maksimum fee admin Qinara per transaksi (Rupiah)
     // Estimasi fee DOKU sendiri per channel -- DOKU MEMOTONG fee ini dari
     // settlement (bukan nambah otomatis ke customer, dikonfirmasi resmi
     // oleh tim DOKU). Supaya Qinara tidak "makan" fee ini dari margin
@@ -66,6 +73,19 @@ return [
     // DOKU_PUBLIC_KEY, format sama seperti DOKU_PRIVATE_KEY (newline
     // literal \n).
     'doku_public_key' => str_replace('\n', "\n", (string) env('DOKU_PUBLIC_KEY', '')),
+    // accountNo (BUKAN profileId) milik Qinara sendiri di DOKU Sub
+    // Account -- WAJIB ada supaya Split Rule (lihat DokuService::
+    // buatSplitRule()) punya tujuan valid untuk porsi fee Qinara.
+    // Dikonfirmasi dari OpenAPI spec resmi Split Rule Items: "accountNumber
+    // ... Must be an existing sub-account under your merchant" -- jadi
+    // Qinara juga WAJIB register diri sendiri sebagai 1 sub-account
+    // (lewat DokuService::registerSubAccount() dengan data Qinara
+    // sendiri, BUKAN data Lembaga) sebelum split rule bisa dibuat, lalu
+    // isi accountNo hasilnya di sini. Belum bisa dipastikan APAKAH
+    // accountNo dari akun MERCHANT UTAMA (non-sub-account) juga valid
+    // dipakai langsung di sini tanpa registrasi sub-account terpisah --
+    // WAJIB ditanyakan ke tim onboarding DOKU.
+    'platform_account_no' => env('DOKU_PLATFORM_ACCOUNT_NO', ''),
     'va_snap_partner_service_id' => [
         'BCA' => env('DOKU_VA_SNAP_BCA', ''),
         'BNI' => env('DOKU_VA_SNAP_BNI', ''),

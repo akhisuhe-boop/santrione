@@ -41,6 +41,36 @@ class EditLembaga extends EditRecord
                     }
                 }),
 
+            Actions\Action::make('daftarkanDoku')
+                ->label(fn () => ($this->record->doku_split_rule_id && $this->record->doku_split_rule_id_flat) ? 'Terdaftar di DOKU (Sub-Account + Split)' : 'Daftarkan ke DOKU')
+                ->icon('heroicon-o-building-library')
+                ->color(fn () => ($this->record->doku_split_rule_id && $this->record->doku_split_rule_id_flat) ? 'success' : 'primary')
+                ->disabled(fn () => (bool) ($this->record->doku_split_rule_id && $this->record->doku_split_rule_id_flat))
+                ->visible(fn () => (bool) auth()->user()?->is_platform_admin)
+                ->requiresConfirmation()
+                ->modalDescription('Lembaga ini akan didaftarkan sebagai Sub-Account V2 DOKU, lalu dibuatkan 2 Split Rule (persentase & flat-cap, dipilih otomatis per transaksi sesuai nominal). Pastikan DOKU_PLATFORM_ACCOUNT_NO sudah diisi di .env.')
+                ->action(function () {
+                    try {
+                        $doku = app(\App\Services\DokuService::class);
+                        $doku->registerSubAccount($this->record);
+                        $doku->buatSplitRule($this->record);
+
+                        \Filament\Notifications\Notification::make()
+                            ->title('Berhasil didaftarkan ke DOKU')
+                            ->body('Sub-Account + Split Rule aktif. Status: menunggu verifikasi DOKU.')
+                            ->success()
+                            ->send();
+
+                        $this->record->refresh();
+                    } catch (\Throwable $e) {
+                        \Filament\Notifications\Notification::make()
+                            ->title('Gagal mendaftarkan ke DOKU')
+                            ->body($e->getMessage())
+                            ->danger()
+                            ->send();
+                    }
+                }),
+
             Actions\DeleteAction::make(),
         ];
     }

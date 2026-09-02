@@ -71,6 +71,20 @@ class Pegawai extends Authenticatable
             ->withTimestamps();
     }
 
+    /**
+     * Lembaga "utama" pegawai -- dipakai untuk atribusi transaksi kantin/
+     * kas ke lembaga yang benar saat pegawai belanja pakai kartunya
+     * sendiri (dibayar tunai, lihat KasirKantin). Pegawai bisa terdaftar
+     * di lebih dari 1 lembaga (pivot many-to-many, tidak ada flag
+     * "utama" eksplisit), jadi diambil assignment PALING AWAL sebagai
+     * pendekatan paling wajar. Bisa null kalau pegawai level yayasan/
+     * pesantren (tidak terikat 1 lembaga).
+     */
+    public function lembagaUtama(): ?Lembaga
+    {
+        return $this->lembagas()->orderBy('pegawai_lembaga.id')->first();
+    }
+
     // Relasi ke TahfidzSetoran
     public function tahfidzSetoran()
     {

@@ -2,7 +2,7 @@
 
 namespace App\Exports;
 
-use App\Models\Lembaga;
+use App\Models\Kantin;
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\AfterSheet;
@@ -19,7 +19,7 @@ class KantinProdukTemplateExport implements FromArray, WithEvents
             'Kategori',
             'Harga',
             'Stok',
-            'Lembaga_ID',
+            'Kantin_ID',
         ];
 
         $data[] = [
@@ -33,14 +33,14 @@ class KantinProdukTemplateExport implements FromArray, WithEvents
 
         $data[] = [''];
 
-        $data[] = ['Catatan: Barcode boleh dikosongkan (dibuat otomatis). Kolom Stok boleh dikosongkan kalau tidak mau dilacak. Gunakan Lembaga_ID sesuai daftar di bawah'];
+        $data[] = ['Catatan: Barcode boleh dikosongkan (dibuat otomatis). Kolom Stok boleh dikosongkan kalau tidak mau dilacak. Gunakan Kantin_ID sesuai daftar di bawah'];
 
-        $data[] = ['Daftar Lembaga (ID - Nama)'];
+        $data[] = ['Daftar Kantin (ID - Nama)'];
 
-        $lembagas = Lembaga::orderBy('id')->get();
+        $kantins = Kantin::orderBy('id')->get();
 
-        foreach ($lembagas as $l) {
-            $data[] = [$l->id . ' - ' . $l->nama];
+        foreach ($kantins as $k) {
+            $data[] = [$k->id . ' - ' . $k->nama];
         }
 
         return $data;

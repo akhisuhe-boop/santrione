@@ -95,6 +95,9 @@ class PlatformPanelProvider extends PanelProvider
 
                 NavigationGroup::make('CRM')
                     ->icon('heroicon-o-user-group'),
+
+                NavigationGroup::make('e-Kantin')
+                    ->icon('heroicon-o-shopping-bag'),
             ])
             ->colors([
                 'primary' => Color::hex('#00A39D'),

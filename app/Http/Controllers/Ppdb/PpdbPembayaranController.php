@@ -127,6 +127,9 @@ class PpdbPembayaranController extends Controller
                     customerName: $customerName,
                     customerEmail: $customerEmail,
                     dokuSubAccountId: $lembaga?->doku_sub_account_id,
+                    // DIPERBAIKI -- lihat catatan sama di
+                    // WaliDashboardController::doku().
+                    splitRuleId: $lembaga ? $doku->pilihSplitRuleId($lembaga, $amountCharged) : null,
                 );
 
                 $vaNumber = $result['virtual_account_info']['virtual_account_number'] ?? null;

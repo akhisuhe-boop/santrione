@@ -30,6 +30,10 @@
         .dark .kk-name { color: #fff; }
         .kk-meta { font-size: 13px; color: #6b7280; margin-top: 3px; }
         .kk-saldo { font-size: 16px; font-weight: 800; color: #00A39D; margin-top: 6px; }
+        .kk-badge {
+            display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700;
+            padding: 3px 9px; border-radius: 999px; margin-top: 4px;
+        }
 
         .kk-cart-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 14px; padding: 8px 0; }
         .kk-qty-btn {
@@ -49,13 +53,65 @@
         }
     </style>
 
+    @if (! $kantinTerpilih)
+
+        {{-- PILIH KANTIN --}}
+        <x-filament::section>
+            <x-slot name="heading">
+                <div class="kk-row kk-gap-2">
+                    <x-heroicon-o-building-storefront style="width:20px;height:20px;" />
+                    Pilih Kantin
+                </div>
+            </x-slot>
+
+            <div class="kk-section-body" style="padding-top:8px;">
+
+                @if (empty($daftarKantin))
+
+                    <p class="kk-hint" style="font-size:13px;">Belum ada kantin aktif di tenant ini. Buat dulu di menu <b>Kantin</b> (grup e-Kantin).</p>
+
+                @else
+
+                    <p class="kk-hint" style="margin-top:0; margin-bottom:12px;">Ada lebih dari satu kantin aktif — pilih dulu kantin yang mau Anda operasikan.</p>
+
+                    <div style="display:grid; gap:10px;">
+                        @foreach ($daftarKantin as $id => $nama)
+                            <button
+                                type="button"
+                                wire:click="pilihKantin({{ $id }})"
+                                style="text-align:left; padding:14px 16px; border:2px solid #e5e7eb; border-radius:12px; background:transparent; cursor:pointer; font-weight:600; font-size:14px; display:flex; align-items:center; gap:10px;">
+                                <x-heroicon-o-building-storefront style="width:18px;height:18px;color:#00A39D;" />
+                                {{ $nama }}
+                            </button>
+                        @endforeach
+                    </div>
+
+                @endif
+
+            </div>
+        </x-filament::section>
+
+    @else
+
+    <div class="kk-row-between" style="margin-bottom:12px;">
+        <span style="font-size:13px; color:#6b7280;">
+            Kantin: <b style="color:#111827;">{{ $daftarKantin[$kantinTerpilih] ?? '-' }}</b>
+        </span>
+
+        @if (count($daftarKantin) > 1)
+            <x-filament::button color="gray" outlined size="sm" wire:click="gantiKantin" icon="heroicon-o-arrow-path">
+                Ganti Kantin
+            </x-filament::button>
+        @endif
+    </div>
+
     <div class="kk-grid">
 
         <div style="display:grid; gap:16px;">
 
-            @if (! $siswaTerpilih)
+            @if (! $siswaTerpilih && ! $modeTunai)
 
-                {{-- BELUM ADA SISWA --}}
+                {{-- BELUM ADA PEMBELI --}}
                 <x-filament::section>
                     <x-slot name="heading">
                         <div class="kk-row kk-gap-2">
@@ -85,10 +141,67 @@
 
                         <p class="kk-hint">Kursor sudah otomatis aktif di kolom ini — tinggal scan pakai barcode scanner, atau ketik NIS manual lalu tekan Enter.</p>
 
+                        <div class="kk-gap-md" style="border-top:1px solid #f3f4f6; padding-top:14px; text-align:center;">
+                            <p class="kk-hint" style="margin-top:0; margin-bottom:8px;">Pembeli bukan siswa (guru, staf, atau pengunjung)?</p>
+
+                            @if (! is_null($limitTunaiHarian) && $tunaiTerpakaiHariIni >= $limitTunaiHarian)
+
+                                <x-filament::button color="gray" outlined disabled icon="heroicon-o-lock-closed">
+                                    Limit Tunai Hari Ini Tercapai ({{ $tunaiTerpakaiHariIni }}/{{ $limitTunaiHarian }})
+                                </x-filament::button>
+                                <p class="kk-hint" style="color:#dc2626;">Siswa tetap bisa transaksi seperti biasa (via wallet).</p>
+
+                            @else
+
+                                <x-filament::button color="gray" outlined wire:click="mulaiTransaksiTunai" icon="heroicon-o-banknotes">
+                                    Transaksi Tanpa Kartu (Tunai)
+                                </x-filament::button>
+
+                                @if (! is_null($limitTunaiHarian))
+                                    <p class="kk-hint">Sisa kuota tunai hari ini: {{ max(0, $limitTunaiHarian - $tunaiTerpakaiHariIni) }} dari {{ $limitTunaiHarian }} transaksi.</p>
+                                @endif
+
+                            @endif
+                        </div>
+
                     </div>
                 </x-filament::section>
 
             @else
+
+                @if ($modeTunai)
+
+                    {{-- MODE TUNAI TANPA KARTU (guru / staf / pengunjung) --}}
+                    <x-filament::section>
+                        <div class="kk-section-body">
+                            <div class="kk-row-between">
+
+                                <div class="kk-row kk-gap-3">
+
+                                    <div class="kk-avatar" style="width:88px;height:88px;background:#fffbeb;display:flex;align-items:center;justify-content:center;color:#d97706;">
+                                        <x-heroicon-o-banknotes style="width:36px;height:36px;" />
+                                    </div>
+
+                                    <div>
+                                        <div class="kk-name">Transaksi Tunai</div>
+                                        <div class="kk-meta">Tanpa kartu — guru / staf / pengunjung</div>
+                                        <div class="kk-meta">Dibayar langsung tunai di kasir</div>
+                                        @if (! is_null($limitTunaiHarian))
+                                            <div class="kk-meta">Kuota tunai hari ini: {{ $tunaiTerpakaiHariIni }}/{{ $limitTunaiHarian }}</div>
+                                        @endif
+                                    </div>
+
+                                </div>
+
+                                <x-filament::button color="gray" outlined wire:click="gantiSiswa" icon="heroicon-o-arrow-path">
+                                    Batal
+                                </x-filament::button>
+
+                            </div>
+                        </div>
+                    </x-filament::section>
+
+                @else
 
                 {{-- SISWA SUDAH DIPILIH --}}
                 <x-filament::section>
@@ -156,6 +269,8 @@
                         @endif
                     </div>
                 </x-filament::section>
+
+                @endif
 
                 {{-- SCAN PRODUK --}}
                 <x-filament::section>
@@ -260,7 +375,7 @@
                         @empty
 
                             <div style="text-align:center; padding:24px 0; color:#9ca3af; font-size:12px;">
-                                {{ $siswaTerpilih ? 'Scan produk untuk menambahkan.' : 'Scan kartu siswa dulu.' }}
+                                {{ ($siswaTerpilih || $modeTunai) ? 'Scan produk untuk menambahkan.' : 'Scan kartu siswa atau pilih transaksi tunai dulu.' }}
                             </div>
 
                         @endforelse
@@ -284,9 +399,9 @@
                             icon="heroicon-o-check-circle"
                             color="primary"
                             size="lg"
-                            :disabled="! $siswaTerpilih || empty($cart)"
+                            :disabled="(! $siswaTerpilih && ! $modeTunai) || empty($cart)"
                             style="width:100%; justify-content:center;">
-                            Bayar (Wallet)
+                            {{ $siswaTerpilih ? 'Bayar (Wallet)' : 'Bayar (Tunai)' }}
                         </x-filament::button>
                     </div>
 
@@ -297,6 +412,8 @@
         </div>
 
     </div>
+
+    @endif
 
     <script>
         document.addEventListener('livewire:init', () => {

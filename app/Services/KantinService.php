@@ -17,17 +17,35 @@ use Illuminate\Validation\ValidationException;
 class KantinService
 {
     /**
+     * @param  ?int  $lembagaId  Lembaga yang jadi pemilik transaksi ini
+     *                           untuk keperluan pelaporan kas -- BUKAN
+     *                           lembaga tempat kasir/produknya berada,
+     *                           tapi lembaga milik SI PEMBELI (siswa atau
+     *                           pegawai). Null untuk pengunjung umum
+     *                           (tidak diatribusikan ke lembaga manapun).
+     * @param  int  $kantinId  Kantin (outlet/kasir fisik) tempat transaksi
+     *                         ini terjadi -- dipakai buat laporan per
+     *                         kantin & limit tunai harian per kantin.
+     *                         Terpisah dari $lembagaId (soal akuntansi).
+     * @param  ?int  $siswaId  Diisi kalau pembeli siswa (bayar wallet).
+     * @param  ?int  $pegawaiId  Diisi kalau pembeli guru/staf -- SELALU
+     *                           bayar tunai (fitur wallet pegawai
+     *                           ditunda), cuma buat atribusi identitas &
+     *                           laporan. Siswa dan pegawai tidak pernah
+     *                           diisi berbarengan.
      * @param  array<int, array{produk_id: int, qty: int}>  $items
      */
     public function checkout(
-        int $lembagaId,
+        ?int $lembagaId,
+        int $kantinId,
         ?int $siswaId,
+        ?int $pegawaiId,
         string $metode, // 'wallet' | 'tunai'
         array $items,
         ?int $kasirId = null
     ): KantinTransaksi {
 
-        return DB::transaction(function () use ($lembagaId, $siswaId, $metode, $items, $kasirId) {
+        return DB::transaction(function () use ($lembagaId, $kantinId, $siswaId, $pegawaiId, $metode, $items, $kasirId) {
 
             $produkIds = collect($items)->pluck('produk_id');
 
@@ -75,6 +93,9 @@ class KantinService
 
             if ($metode === 'wallet') {
 
+                // Wallet HANYA untuk siswa. Guru/staf & pengunjung selalu
+                // tunai (lihat KasirKantin::checkout()) -- fitur wallet
+                // pegawai ditunda dulu, belum dipakai.
                 if (! $siswaId) {
                     throw ValidationException::withMessages(['siswa' => 'Pembayaran wallet wajib pilih siswa.']);
                 }
@@ -87,11 +108,11 @@ class KantinService
                     throw ValidationException::withMessages(['wallet' => 'Siswa ini belum punya wallet.']);
                 }
 
+                $this->assertDalamLimitHarian($siswaId, $total);
+
                 if ($wallet->saldo < $total) {
                     throw ValidationException::withMessages(['wallet' => 'Saldo wallet tidak cukup.']);
                 }
-
-                $this->assertDalamLimitHarian($siswaId, $total);
             }
 
             /*
@@ -102,11 +123,14 @@ class KantinService
 
             $trx = KantinTransaksi::create([
                 'lembaga_id' => $lembagaId,
+                'kantin_id' => $kantinId,
                 'siswa_id' => $siswaId,
+                'pegawai_id' => $pegawaiId,
                 'wallet_id' => $wallet?->id,
                 'metode' => $metode,
                 'total' => $total,
                 'kasir_id' => $kasirId,
+                'diinput_oleh' => auth()->user()->name ?? 'Sistem',
                 'tanggal' => now(),
             ]);
 
@@ -151,6 +175,10 @@ class KantinService
             |--------------------------------------------------------------------------
             */
 
+            $penanggungJawab = $trx->siswa?->nama_lengkap
+                ?? $trx->pegawai?->nama
+                ?? 'Umum (Pengunjung)';
+
             $kas = Kas::create([
                 'tipe' => 'masuk',
                 'kategori_id' => $this->getKategoriKantin(),
@@ -158,8 +186,10 @@ class KantinService
                 'nominal' => $total,
                 'sumber' => 'kantin',
                 'tanggal' => now(),
-                'keterangan' => 'Penjualan Kantin - ' . $trx->kode,
-                'penanggung_jawab' => $trx->siswa?->nama_lengkap ?? 'Umum',
+                'keterangan' => 'Penjualan Kantin - ' . $trx->kode . ' (' . $penanggungJawab . ')',
+                'penanggung_jawab' => $penanggungJawab,
+                // Pengunjung umum (tanpa siswa/pegawai) tidak diatribusikan
+                // ke lembaga manapun -- lembaga_id sengaja dibiarkan null.
                 'lembaga_id' => $lembagaId,
                 'diinput_oleh' => auth()->user()->name ?? 'Sistem',
             ]);
@@ -220,18 +250,29 @@ class KantinService
 
     protected function getRekeningKantin(?int $lembagaId): int
     {
-        $query = Rekening::where('tipe', 'ewallet')
-            ->where('is_active', true);
+        $rekening = null;
 
+        // Coba dulu rekening e-wallet spesifik lembaga si pembeli.
         if ($lembagaId) {
-            $query->where('lembaga_id', $lembagaId);
+            $rekening = Rekening::where('tipe', 'ewallet')
+                ->where('is_active', true)
+                ->where('lembaga_id', $lembagaId)
+                ->first();
         }
 
-        $rekening = $query->first();
+        // Fallback: tidak ada rekening spesifik lembaga (atau transaksi
+        // pengunjung umum yang memang tidak punya lembaga) -- uangnya
+        // tetap harus masuk ke rekening e-wallet yang aktif, jadi pakai
+        // rekening e-wallet aktif manapun yang ada di yayasan ini.
+        if (! $rekening) {
+            $rekening = Rekening::where('tipe', 'ewallet')
+                ->where('is_active', true)
+                ->first();
+        }
 
         if (! $rekening) {
             throw ValidationException::withMessages([
-                'rekening' => 'Rekening E-Wallet belum tersedia untuk lembaga ini. Buat dulu di menu Keuangan > Rekening.',
+                'rekening' => 'Rekening E-Wallet belum tersedia. Buat dulu di menu Keuangan > Rekening.',
             ]);
         }
 

@@ -10,9 +10,16 @@ class KantinTransaksi extends Model
 {
     use BelongsToTenant;
 
+    /**
+     * Scoping tenant LANGSUNG lewat kolom yayasan_id (bukan lagi
+     * whereHas('lembaga', ...)) -- supaya transaksi pengunjung umum
+     * (lembaga_id kosong, tidak diatribusikan ke lembaga manapun) tetap
+     * kelihatan oleh yayasan yang punya kasirnya. Pola yang sama dengan
+     * Kas::applyTenantScope().
+     */
     protected static function applyTenantScope(Builder $builder, int $yayasanId): void
     {
-        $builder->whereHas('lembaga', fn ($q) => $q->where('yayasan_id', $yayasanId));
+        $builder->where('yayasan_id', $yayasanId);
     }
 
     protected static function booted(): void
@@ -21,17 +28,26 @@ class KantinTransaksi extends Model
             if (empty($trx->kode)) {
                 $trx->kode = 'KTN-' . now()->format('Ymd') . '-' . strtoupper(\Illuminate\Support\Str::random(5));
             }
+
+            if (empty($trx->yayasan_id)) {
+                $trx->yayasan_id = \Filament\Facades\Filament::getTenant()?->id
+                    ?? auth()->user()?->yayasan_id;
+            }
         });
     }
 
     protected $fillable = [
         'lembaga_id',
+        'yayasan_id',
+        'kantin_id',
         'kode',
         'siswa_id',
+        'pegawai_id',
         'wallet_id',
         'metode',
         'total',
         'kasir_id',
+        'diinput_oleh',
         'kas_id',
         'tanggal',
     ];
@@ -51,6 +67,16 @@ class KantinTransaksi extends Model
     public function siswa()
     {
         return $this->belongsTo(Siswa::class);
+    }
+
+    public function pegawai()
+    {
+        return $this->belongsTo(Pegawai::class);
+    }
+
+    public function kantin()
+    {
+        return $this->belongsTo(Kantin::class);
     }
 
     public function wallet()

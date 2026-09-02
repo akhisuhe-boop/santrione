@@ -610,6 +610,13 @@ class WaliDashboardController extends Controller
                     customerName: $customerName,
                     customerEmail: $customerEmail,
                     dokuSubAccountId: $lembaga?->doku_sub_account_id,
+                    // DIPERBAIKI -- sebelumnya statis pakai
+                    // $lembaga->doku_split_rule_id (rule PERCENTAGE
+                    // murni saja, tanpa cap). Sekarang dipilih dinamis
+                    // per transaksi lewat pilihSplitRuleId() supaya
+                    // konsisten dengan cap di hitungFeeTotal() -- lihat
+                    // catatan lengkap di DokuService::pilihSplitRuleId().
+                    splitRuleId: $lembaga ? $doku->pilihSplitRuleId($lembaga, $amountCharged) : null,
                 );
 
                 $vaNumber = $result['virtual_account_info']['virtual_account_number'] ?? null;

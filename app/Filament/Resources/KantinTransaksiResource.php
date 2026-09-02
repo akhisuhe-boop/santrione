@@ -18,6 +18,13 @@ class KantinTransaksiResource extends BaseResource
     protected static ?string $navigationIcon = 'heroicon-o-receipt-percent';
     protected static ?int $navigationSort = 2;
 
+    // Disembunyikan dari menu -- isinya sudah tercakup di "Laporan
+    // Kantin" (lebih lengkap: ada filter, ringkasan, export). Class ini
+    // dibiarkan ada (bukan dihapus) supaya route/URL-nya tetap valid
+    // kalau ada link lama yang mengarah ke sini, tapi tidak lagi
+    // muncul di sidebar.
+    protected static bool $shouldRegisterNavigation = false;
+
     // Riwayat saja — transaksi dibuat lewat halaman kasir (/kantin/kasir),
     // bukan lewat form Filament biasa.
     public static function canCreate(): bool
@@ -38,7 +45,7 @@ class KantinTransaksiResource extends BaseResource
     public static function table(Table $table): Table
     {
         return $table
-            ->query(static::getModel()::query()->with(['siswa', 'lembaga', 'items']))
+            ->query(static::getModel()::query()->with(['siswa', 'pegawai', 'lembaga', 'items']))
             ->columns([
 
                 Tables\Columns\TextColumn::make('kode')
@@ -50,13 +57,23 @@ class KantinTransaksiResource extends BaseResource
                     ->dateTime('d M Y H:i')
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('siswa.nama_lengkap')
-                    ->label('Siswa')
-                    ->default('Umum')
-                    ->searchable(),
+                Tables\Columns\TextColumn::make('pembeli')
+                    ->label('Pembeli')
+                    ->state(fn ($record) => $record->siswa?->nama_lengkap
+                        ?? $record->pegawai?->nama
+                        ?? 'Umum (Pengunjung)')
+                    ->description(fn ($record) => $record->siswa
+                        ? 'Siswa'
+                        : ($record->pegawai ? 'Guru / Staf' : null))
+                    ->searchable(query: function ($query, string $search) {
+                        return $query
+                            ->whereHas('siswa', fn ($q) => $q->where('nama_lengkap', 'like', "%{$search}%"))
+                            ->orWhereHas('pegawai', fn ($q) => $q->where('nama', 'like', "%{$search}%"));
+                    }),
 
                 Tables\Columns\TextColumn::make('lembaga.nama')
-                    ->label('Lembaga'),
+                    ->label('Lembaga')
+                    ->default('—'),
 
                 Tables\Columns\BadgeColumn::make('metode')
                     ->colors([
@@ -95,7 +112,12 @@ class KantinTransaksiResource extends BaseResource
                 Tables\Actions\ViewAction::make()
                     ->infolist([
                         \Filament\Infolists\Components\TextEntry::make('kode')->label('Kode'),
-                        \Filament\Infolists\Components\TextEntry::make('siswa.nama_lengkap')->label('Siswa')->default('Umum'),
+                        \Filament\Infolists\Components\TextEntry::make('pembeli')
+                            ->label('Pembeli')
+                            ->state(fn ($record) => $record->siswa?->nama_lengkap
+                                ?? $record->pegawai?->nama
+                                ?? 'Umum (Pengunjung)'),
+                        \Filament\Infolists\Components\TextEntry::make('lembaga.nama')->label('Lembaga')->default('—'),
                         \Filament\Infolists\Components\TextEntry::make('metode')->label('Metode'),
                         \Filament\Infolists\Components\TextEntry::make('total')
                             ->label('Total')
