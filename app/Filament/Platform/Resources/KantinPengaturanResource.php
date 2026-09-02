@@ -100,7 +100,7 @@ class KantinPengaturanResource extends \App\Filament\Resources\BaseResource
                     ->boolean(),
 
             ])
-            ->defaultSort('yayasan.nama')
+            ->defaultSort('nama')
             ->actions([
                 Tables\Actions\EditAction::make(),
             ]);

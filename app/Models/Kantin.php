@@ -47,6 +47,11 @@ class Kantin extends Model
         return $this->belongsTo(Lembaga::class);
     }
 
+    public function yayasan()
+    {
+        return $this->belongsTo(Yayasan::class);
+    }
+
     public function produk()
     {
         return $this->hasMany(KantinProduk::class);
