@@ -55,7 +55,7 @@ class ListPayrolls extends ListRecords
                             'fungsional' => 'Fungsional (honor per JP saja)',
                         ])
                         ->placeholder('Gabungan (semua jabatan jadi 1 payroll)')
-                        ->helperText('Pilih kalau mau generate & bayar terpisah, mis. struktural tanggal 5, fungsional tanggal 10. Kosongkan untuk perilaku lama (1 payroll gabungan per pegawai).'),
+                        ->helperText('Pilih kalau mau generate & bayar terpisah di tanggal yang berbeda-beda. Kosongkan untuk perilaku lama (1 payroll gabungan per pegawai).'),
                 ])
 
                 ->action(function (array $data) {
