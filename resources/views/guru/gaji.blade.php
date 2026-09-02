@@ -633,7 +633,7 @@
                 </div>
 
                 <div class="text-[13px] text-slate-500 mt-1">
-                    Rincian per sesi mengajar & honornya bulan ini
+                    Per sesi bulan ini
                 </div>
 
             </div>
@@ -652,8 +652,21 @@
 
     </div>
 
-    <div class="px-5 py-3 bg-amber-50 border-b border-amber-100 text-xs text-amber-700">
-        Estimasi berdasarkan jurnal yang sudah divalidasi. Nominal resmi baru masuk ke "Pendapatan" & "Total Gaji" setelah payroll bulan ini diproses oleh admin.
+    {{-- TOTAL ESTIMASI --}}
+    <div class="px-5 py-4 bg-[#00A39D]/5 border-b border-slate-100 flex items-center justify-between">
+
+        <span class="text-sm font-medium text-slate-700">
+            Total Estimasi Honor
+        </span>
+
+        <span class="text-base font-bold text-[#00A39D]">
+            Rp {{ number_format($riwayatMengajar->sum('nominal'), 0, ',', '.') }}
+        </span>
+
+    </div>
+
+    <div class="px-5 py-2.5 bg-amber-50 border-b border-amber-100 text-xs text-amber-700">
+        Estimasi, resmi setelah payroll diproses admin.
     </div>
 
     {{-- LIST --}}
