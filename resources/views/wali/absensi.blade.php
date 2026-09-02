@@ -127,30 +127,6 @@
     ],
 ])
 
-{{-- RINGKASAN ABSENSI MAPEL --}}
-@include('wali.partials.ringkasan-absensi-card', [
-    'judul' => 'Ringkasan Absensi Mapel',
-    'subjudul' => $totalMapel . ' sesi pelajaran tercatat bulan ' . $namaBulan . ' -- sesi yang tidak sempat diabsen guru tidak masuk hitungan ini',
-    'rows' => [
-        ['label' => 'Hadir', 'keterangan' => 'Hadir di kelas', 'color' => 'emerald', 'value' => $mapelHadir],
-        ['label' => 'Izin', 'keterangan' => 'Izin resmi', 'color' => 'amber', 'value' => $mapelIzin],
-        ['label' => 'Sakit', 'keterangan' => 'Tidak hadir karena sakit', 'color' => 'sky', 'value' => $mapelSakit],
-        ['label' => 'Alpha', 'keterangan' => 'Tanpa keterangan', 'color' => 'rose', 'value' => $mapelAlpha],
-    ],
-])
-
-{{-- RINGKASAN ABSENSI KEGIATAN --}}
-@include('wali.partials.ringkasan-absensi-card', [
-    'judul' => 'Ringkasan Absensi Kegiatan',
-    'subjudul' => $totalKegiatan . ' kegiatan tercatat bulan ' . $namaBulan . ' (sholat berjamaah, ekskul, dll)',
-    'rows' => [
-        ['label' => 'Hadir', 'keterangan' => 'Ikut kegiatan', 'color' => 'emerald', 'value' => $kegiatanHadir],
-        ['label' => 'Izin', 'keterangan' => 'Izin resmi', 'color' => 'amber', 'value' => $kegiatanIzin],
-        ['label' => 'Sakit', 'keterangan' => 'Tidak hadir karena sakit', 'color' => 'sky', 'value' => $kegiatanSakit],
-        ['label' => 'Alpa', 'keterangan' => 'Tanpa keterangan', 'color' => 'rose', 'value' => $kegiatanAlpa],
-    ],
-])
-
 {{-- ABSENSI SEKOLAH --}}
 
 @php
@@ -366,6 +342,18 @@ $absensiHarian = $siswa->absensiHarians;
 @endif
 
 </div>
+
+{{-- RINGKASAN ABSENSI MAPEL --}}
+@include('wali.partials.ringkasan-absensi-card', [
+    'judul' => 'Ringkasan Absensi Mapel',
+    'subjudul' => $totalMapel . ' sesi pelajaran tercatat bulan ' . $namaBulan . ' -- sesi yang tidak sempat diabsen guru tidak masuk hitungan ini',
+    'rows' => [
+        ['label' => 'Hadir', 'keterangan' => 'Hadir di kelas', 'color' => 'emerald', 'value' => $mapelHadir],
+        ['label' => 'Izin', 'keterangan' => 'Izin resmi', 'color' => 'amber', 'value' => $mapelIzin],
+        ['label' => 'Sakit', 'keterangan' => 'Tidak hadir karena sakit', 'color' => 'sky', 'value' => $mapelSakit],
+        ['label' => 'Alpha', 'keterangan' => 'Tanpa keterangan', 'color' => 'rose', 'value' => $mapelAlpha],
+    ],
+])
 
 {{-- ABSENSI MAPEL --}}
 
@@ -682,6 +670,18 @@ $absensiMapel = $siswa->absensiMapels
 
 </div>
 
+{{-- RINGKASAN ABSENSI KEGIATAN --}}
+@include('wali.partials.ringkasan-absensi-card', [
+    'judul' => 'Ringkasan Absensi Kegiatan',
+    'subjudul' => $totalKegiatan . ' kegiatan tercatat bulan ' . $namaBulan . ' (sholat berjamaah, ekskul, dll)',
+    'rows' => [
+        ['label' => 'Hadir', 'keterangan' => 'Ikut kegiatan', 'color' => 'emerald', 'value' => $kegiatanHadir],
+        ['label' => 'Izin', 'keterangan' => 'Izin resmi', 'color' => 'amber', 'value' => $kegiatanIzin],
+        ['label' => 'Sakit', 'keterangan' => 'Tidak hadir karena sakit', 'color' => 'sky', 'value' => $kegiatanSakit],
+        ['label' => 'Alpa', 'keterangan' => 'Tanpa keterangan', 'color' => 'rose', 'value' => $kegiatanAlpa],
+    ],
+])
+
 {{-- ABSENSI KEGIATAN --}}
 
 @php
@@ -725,7 +725,7 @@ $absensiKegiatan = $siswa->absensis
                     mt-1
                 ">
 
-                Kehadiran kegiatan pondok
+                Kehadiran kegiatan sekolah
 
             </p>
 
