@@ -13,29 +13,41 @@ class GuruGajiController extends Controller
     {
         $pegawai = Pegawai::with('pegawaiLembagas')->findOrFail(session('guru_id'));
 
-        // Payroll bulan berjalan
-        $payroll = Payroll::with([
-            'items',
-            'adjustments',
-        ])
-        ->where('pegawai_id', $pegawai->id)
-        ->where('bulan', now()->month)
-        ->where('tahun', now()->year)
-        ->first();
+        $bulan = now()->month;
+        $tahun = now()->year;
 
-        // Riwayat Payroll
+        /*
+        |--------------------------------------------------------------------------
+        | PAYROLL BULAN BERJALAN -- BISA LEBIH DARI 1
+        |--------------------------------------------------------------------------
+        |
+        | Payroll bisa digenerate terpisah per jenis (struktural/
+        | fungsional) supaya bisa dibayar di tanggal berbeda dalam 1
+        | bulan yang sama. Payroll lama (sebelum fitur ini ada) tetap
+        | 1 baris gabungan (jenis null).
+        */
+        $payrollsBulanIni = Payroll::with(['items', 'adjustments'])
+            ->where('pegawai_id', $pegawai->id)
+            ->where('bulan', $bulan)
+            ->where('tahun', $tahun)
+            ->get();
+
+        $payrollStruktural = $payrollsBulanIni->firstWhere('jenis', 'struktural');
+        $payrollFungsional = $payrollsBulanIni->firstWhere('jenis', 'fungsional');
+        $payrollGabungan = $payrollsBulanIni->first(fn ($p) => is_null($p->jenis));
+
+        // Riwayat Payroll (semua periode, semua jenis dicampur -- tetap
+        // urut dari yang terbaru)
         $riwayatPayroll = Payroll::where('pegawai_id', $pegawai->id)
             ->orderByDesc('tahun')
             ->orderByDesc('bulan')
             ->get();
 
-        $bulan = $payroll->bulan ?? now()->month;
-        $tahun = $payroll->tahun ?? now()->year;
-
-        // Rincian mengajar per sesi (bukan cuma total agregat) -- buat
-        // jabatan yang digaji per JP, supaya guru bisa lihat tanggal,
-        // kelas/mapel, & nominal SETIAP sesi, bukan cuma satu baris
-        // "Honor Guru (40 JP)".
+        /*
+        |--------------------------------------------------------------------------
+        | RIWAYAT MENGAJAR PER SESI (khusus honor per JP)
+        |--------------------------------------------------------------------------
+        */
         $jabatanPerJpIds = $pegawai->pegawaiLembagas
             ->where('metode_penggajian', 'per_jp')
             ->pluck('id');
@@ -56,10 +68,6 @@ class GuruGajiController extends Controller
 
                     $durasiJp = $jurnal->jamPelajaran->durasi_jp ?? 0;
 
-                    // JP pengganti (menggantikan guru lain) pakai tarif
-                    // manual kalau di-set, fallback ke tarif normal
-                    // jabatan pegawai itu sendiri -- sama seperti logika
-                    // di PayrollService.
                     $tarif = $jurnal->pegawai_asli_id
                         ? ($jurnal->tarif_pengganti_per_jp ?? $jurnal->pegawaiLembaga->tarif_per_jp ?? 0)
                         : ($jurnal->pegawaiLembaga->tarif_per_jp ?? 0);
@@ -73,11 +81,51 @@ class GuruGajiController extends Controller
                 });
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | SUSUN SLIP YANG DITAMPILKAN
+        |--------------------------------------------------------------------------
+        |
+        | - Pegawai rangkap (struktural + fungsional digenerate
+        |   terpisah) -> 2 slip, Riwayat Mengajar cuma nempel di slip
+        |   Fungsional.
+        | - Pegawai cuma salah satu jenis -> 1 slip dengan label itu.
+        | - Tenant belum pakai fitur split (payroll lama, jenis null)
+        |   -> 1 slip gabungan tanpa label, Riwayat Mengajar tetap
+        |   nempel di situ kalau ada honor per JP.
+        | - Belum ada payroll bulan ini sama sekali -> slip kosong
+        |   (ditangani di view lewat @forelse/@empty).
+        */
+        $slipList = collect();
+
+        if ($payrollStruktural) {
+            $slipList->push([
+                'payroll' => $payrollStruktural,
+                'label' => 'Struktural',
+                'riwayatMengajar' => collect(),
+            ]);
+        }
+
+        if ($payrollFungsional) {
+            $slipList->push([
+                'payroll' => $payrollFungsional,
+                'label' => 'Fungsional',
+                'riwayatMengajar' => $riwayatMengajar,
+            ]);
+        }
+
+        if ($slipList->isEmpty() && $payrollGabungan) {
+            $slipList->push([
+                'payroll' => $payrollGabungan,
+                'label' => null,
+                'riwayatMengajar' => $riwayatMengajar,
+            ]);
+        }
+
         return view('guru.gaji', compact(
             'pegawai',
-            'payroll',
-            'riwayatPayroll',
-            'riwayatMengajar'
+            'slipList',
+            'riwayatPayroll'
         ));
     }
 }

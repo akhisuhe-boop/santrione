@@ -63,6 +63,7 @@ class PayrollResource extends BaseResource
                                 </div>
                                 <div class="text-lg font-semibold">
                                     ' . ($record?->bulan ?? '-') . ' / ' . ($record?->tahun ?? '-') . '
+                                    ' . ($record?->jenis ? '<span style="font-size:12px;color:#6b7280;">(' . ucfirst($record->jenis) . ')</span>' : '') . '
                                 </div>
                             </div>
                         ')),
@@ -168,6 +169,24 @@ class PayrollResource extends BaseResource
 
             /*
             |--------------------------------------------------------------------------
+            | JENIS
+            |--------------------------------------------------------------------------
+            */
+            Tables\Columns\BadgeColumn::make('jenis')
+                ->label('Jenis')
+                ->formatStateUsing(fn ($state) => match ($state) {
+                    'struktural' => 'Struktural',
+                    'fungsional' => 'Fungsional',
+                    default => 'Gabungan',
+                })
+                ->colors([
+                    'primary' => 'struktural',
+                    'success' => 'fungsional',
+                    'gray' => fn ($state) => blank($state),
+                ]),
+
+            /*
+            |--------------------------------------------------------------------------
             | SUBTOTAL
             |--------------------------------------------------------------------------
             */
@@ -256,6 +275,11 @@ class PayrollResource extends BaseResource
                     'disetujui' => 'Disetujui',
                     'dibayar' => 'Dibayar',
                     'cancelled' => 'Cancelled',
+                ]),
+            Tables\Filters\SelectFilter::make('jenis')
+                ->options([
+                    'struktural' => 'Struktural',
+                    'fungsional' => 'Fungsional',
                 ]),
         ])
 
@@ -427,7 +451,12 @@ class PayrollResource extends BaseResource
             'sumber' => 'payroll',
             'tanggal' => now(),
             'keterangan' => sprintf(
-                'Gaji Pegawai : %s periode %s',
+                'Gaji Pegawai (%s) : %s periode %s',
+                match ($record->jenis) {
+                    'struktural' => 'Struktural',
+                    'fungsional' => 'Fungsional',
+                    default => 'Gabungan',
+                },
                 $record->pegawai?->nama,
                 Carbon::create(
                     $record->tahun,
@@ -609,7 +638,12 @@ class PayrollResource extends BaseResource
                 'sumber' => 'payroll',
                 'tanggal' => now(),
                 'keterangan' => sprintf(
-                    'Gaji Pegawai : %s periode %s',
+                    'Gaji Pegawai (%s) : %s periode %s',
+                    match ($record->jenis) {
+                        'struktural' => 'Struktural',
+                        'fungsional' => 'Fungsional',
+                        default => 'Gabungan',
+                    },
                     $record->pegawai?->nama,
                     Carbon::create(
                         $record->tahun,
@@ -693,6 +727,15 @@ public static function infolist(\Filament\Infolists\Infolist $infolist): \Filame
 
                         \Filament\Infolists\Components\TextEntry::make('tahun')
                             ->label('Tahun'),
+
+                        \Filament\Infolists\Components\TextEntry::make('jenis')
+                            ->label('Jenis')
+                            ->formatStateUsing(fn ($state) => match ($state) {
+                                'struktural' => 'Struktural',
+                                'fungsional' => 'Fungsional',
+                                default => 'Gabungan',
+                            })
+                            ->badge(),
 
                     ]),
 

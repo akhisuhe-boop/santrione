@@ -17,7 +17,14 @@ class PayrollService
     |--------------------------------------------------------------------------
     */
 
-    public function generate($bulan, $tahun)
+    /**
+     * @param  ?string  $jenis  'struktural' (jabatan tetap), 'fungsional'
+     *                          (jabatan per_jp), atau null (gabungan --
+     *                          semua jabatan jadi 1 payroll, perilaku
+     *                          lama sebelum payroll bisa dipisah per
+     *                          jenis).
+     */
+    public function generate($bulan, $tahun, ?string $jenis = null)
     {
         /*
         |--------------------------------------------------------------------------
@@ -48,9 +55,34 @@ class PayrollService
                 ->where('pegawai_id', $pegawai->id)
                 ->where('bulan', $bulan)
                 ->where('tahun', $tahun)
+                ->where('jenis', $jenis)
                 ->exists();
             if ($exists) {
                 continue;
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | SKIP PEGAWAI YANG TIDAK PUNYA JABATAN COCOK BUAT BATCH INI
+            |--------------------------------------------------------------------------
+            |
+            | Kalau digenerate khusus "fungsional", pegawai yang cuma
+            | punya jabatan tetap (tidak mengajar sama sekali) tidak
+            | usah dibuatkan payroll fungsional kosong Rp 0. Berlaku
+            | sebaliknya juga untuk "struktural".
+            */
+
+            if ($jenis) {
+
+                $adaJabatanCocok = $pegawai->pegawaiLembagas->contains(function ($j) use ($jenis) {
+                    return $jenis === 'struktural'
+                        ? $j->metode_penggajian === 'tetap'
+                        : $j->metode_penggajian === 'per_jp';
+                });
+
+                if (! $adaJabatanCocok) {
+                    continue;
+                }
             }
 
             /*
@@ -63,6 +95,7 @@ class PayrollService
                 'pegawai_id' => $pegawai->id,
                 'bulan' => $bulan,
                 'tahun' => $tahun,
+                'jenis' => $jenis,
                 'subtotal' => 0,
                 'bonus' => 0,
                 'potongan' => 0,
@@ -159,6 +192,25 @@ class PayrollService
         */
 
         foreach ($pegawai->pegawaiLembagas as $jabatan) {
+
+            /*
+            |--------------------------------------------------------------------------
+            | FILTER JENIS PAYROLL (struktural/fungsional)
+            |--------------------------------------------------------------------------
+            |
+            | Payroll bertanda "struktural" cuma proses jabatan tetap;
+            | "fungsional" cuma proses jabatan per_jp. Payroll lama
+            | (jenis null / "gabungan") proses SEMUA jabatan seperti
+            | sebelumnya -- backward compatible, data lama tidak berubah.
+            */
+
+            if ($payroll->jenis === 'struktural' && $jabatan->metode_penggajian !== 'tetap') {
+                continue;
+            }
+
+            if ($payroll->jenis === 'fungsional' && $jabatan->metode_penggajian !== 'per_jp') {
+                continue;
+            }
 
             /*
             |--------------------------------------------------------------------------
@@ -298,29 +350,37 @@ class PayrollService
         | Tunjangan Pembina Eskul) — beda dari adjustment dinamis yang
         | diinput manual tiap bulan. firstOrCreate supaya aman dipanggil
         | ulang (mis. saat regenerate) tanpa bikin baris duplikat.
+        |
+        | HANYA masuk ke payroll struktural (atau payroll lama/gabungan)
+        | -- TIDAK ke payroll fungsional, supaya tidak dobel-hitung kalau
+        | 1 pegawai punya 2 payroll (struktural + fungsional) di bulan
+        | yang sama.
         */
 
-        $templates = PayrollAdjustmentTemplate::query()
-            ->where('pegawai_id', $pegawai->id)
-            ->where('is_active', true)
-            ->get();
+        if ($payroll->jenis !== 'fungsional') {
 
-        foreach ($templates as $template) {
+            $templates = PayrollAdjustmentTemplate::query()
+                ->where('pegawai_id', $pegawai->id)
+                ->where('is_active', true)
+                ->get();
 
-            PayrollAdjustment::firstOrCreate(
-                [
-                    'payroll_id' => $payroll->id,
-                    'source_template_id' => $template->id,
-                ],
-                [
-                    'tipe' => $template->tipe,
-                    'nama_komponen' => $template->nama_komponen,
-                    'qty' => 1,
-                    'nominal' => $template->nominal,
-                    'subtotal' => $template->nominal,
-                    'catatan' => $template->catatan ?: 'Otomatis dari Tunjangan/Potongan Tetap',
-                ]
-            );
+            foreach ($templates as $template) {
+
+                PayrollAdjustment::firstOrCreate(
+                    [
+                        'payroll_id' => $payroll->id,
+                        'source_template_id' => $template->id,
+                    ],
+                    [
+                        'tipe' => $template->tipe,
+                        'nama_komponen' => $template->nama_komponen,
+                        'qty' => 1,
+                        'nominal' => $template->nominal,
+                        'subtotal' => $template->nominal,
+                        'catatan' => $template->catatan ?: 'Otomatis dari Tunjangan/Potongan Tetap',
+                    ]
+                );
+            }
         }
 
                 /*
