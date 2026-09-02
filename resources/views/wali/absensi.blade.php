@@ -141,6 +141,7 @@ $absensiHarian = $siswa->absensiHarians;
         border border-slate-200
         overflow-hidden
         shadow-sm
+        mb-6
     ">
 
 {{-- HEADER --}}
@@ -372,6 +373,7 @@ $absensiMapel = $siswa->absensiMapels
         overflow-hidden
         shadow-sm
         mt-6
+        mb-6
     ">
 
 {{-- HEADER --}}
