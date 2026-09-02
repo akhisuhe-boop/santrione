@@ -621,120 +621,95 @@
 
             {{-- JADWAL --}}
             <a href="{{ route('guru.jadwal') }}"
-               class="group p-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-blue-50 to-white hover:shadow-md transition">
+               class="group relative p-4 rounded-2xl border border-slate-100 bg-blue-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
 
-                <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center mb-2">
-                    <x-heroicon-o-calendar-days class="w-5 h-5 text-blue-600"/>
+                <div class="relative w-11 h-11 rounded-xl bg-blue-500 shadow-md shadow-blue-500/25 flex items-center justify-center mb-3">
+                    <x-heroicon-o-calendar-days class="w-5 h-5 text-white"/>
                 </div>
 
-                <div class="font-semibold text-sm text-slate-900">
-                    Jadwal
-                </div>
-
-                <div class="text-[11px] text-slate-500 mt-1">
-                    Jadwal mengajar
-                </div>
+                <div class="font-semibold text-sm text-slate-900">Jadwal</div>
+                <div class="text-[11px] text-slate-500 mt-1">Jadwal mengajar</div>
 
             </a>
 
             {{-- JURNAL --}}
             <a href="{{ route('guru.jurnal') }}"
-               class="group p-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-teal-50 to-white hover:shadow-md transition">
-                <div class="w-10 h-10 rounded-xl bg-teal-100 flex items-center justify-center mb-2">
-                    <x-heroicon-o-document-text class="w-5 h-5 text-teal-600"/>
+               class="group relative p-4 rounded-2xl border border-slate-100 bg-cyan-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
+
+                <div class="relative w-11 h-11 rounded-xl bg-cyan-500 shadow-md shadow-cyan-500/25 flex items-center justify-center mb-3">
+                    <x-heroicon-o-document-text class="w-5 h-5 text-white"/>
                 </div>
-                <div class="font-semibold text-sm text-slate-900">
-                    Jurnal
-                </div>
-                <div class="text-[11px] text-slate-500 mt-1">
-                    Jurnal mengajar
-                </div>
+
+                <div class="font-semibold text-sm text-slate-900">Jurnal</div>
+                <div class="text-[11px] text-slate-500 mt-1">Jurnal mengajar</div>
+
             </a>
+
             {{-- JURNAL PENGGANTI --}}
             @if (\App\Models\Yayasan::find(session('active_public_yayasan_id'))?->hasFeature(\App\Support\FeatureGate::AKADEMIK))
             <a href="{{ route('guru.jurnal.pengganti') }}"
-               class="group p-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-amber-50 to-white hover:shadow-md transition">
-                <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center mb-2">
-                    <x-heroicon-o-user-group class="w-5 h-5 text-amber-600"/>
+               class="group relative p-4 rounded-2xl border border-slate-100 bg-amber-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
+
+                <div class="relative w-11 h-11 rounded-xl bg-amber-500 shadow-md shadow-amber-500/25 flex items-center justify-center mb-3">
+                    <x-heroicon-o-user-group class="w-5 h-5 text-white"/>
                 </div>
-                <div class="font-semibold text-sm text-slate-900">
-                    Jurnal Pengganti
-                </div>
-                <div class="text-[11px] text-slate-500 mt-1">
-                    Gantikan guru lain
-                </div>
+
+                <div class="font-semibold text-sm text-slate-900">Jurnal Pengganti</div>
+                <div class="text-[11px] text-slate-500 mt-1">Gantikan guru lain</div>
+
             </a>
             @endif
+
             {{-- ABSENSI --}}
             <a href="{{ route('guru.absensi') }}"
-               class="group p-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-emerald-50 to-white hover:shadow-md transition">
+               class="group relative p-4 rounded-2xl border border-slate-100 bg-emerald-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
 
-                <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center mb-2">
-                    <x-heroicon-o-check-circle class="w-5 h-5 text-emerald-600"/>
+                <div class="relative w-11 h-11 rounded-xl bg-emerald-500 shadow-md shadow-emerald-500/25 flex items-center justify-center mb-3">
+                    <x-heroicon-o-check-circle class="w-5 h-5 text-white"/>
                 </div>
 
-                <div class="font-semibold text-sm text-slate-900">
-                    Absensi
-                </div>
-
-                <div class="text-[11px] text-slate-500 mt-1">
-                    Kehadiran siswa
-                </div>
+                <div class="font-semibold text-sm text-slate-900">Absensi</div>
+                <div class="text-[11px] text-slate-500 mt-1">Kehadiran siswa</div>
 
             </a>
 
             {{-- IZIN --}}
             <a href="{{ route('guru.izin') }}"
-               class="group p-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-amber-50 to-white hover:shadow-md transition">
+               class="group relative p-4 rounded-2xl border border-slate-100 bg-violet-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
 
-                <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center mb-2">
-                    <x-heroicon-o-document-text class="w-5 h-5 text-amber-600"/>
+                <div class="relative w-11 h-11 rounded-xl bg-violet-500 shadow-md shadow-violet-500/25 flex items-center justify-center mb-3">
+                    <x-heroicon-o-document-text class="w-5 h-5 text-white"/>
                 </div>
 
-                <div class="font-semibold text-sm text-slate-900">
-                    Izin Sekolah
-                </div>
-
-                <div class="text-[11px] text-slate-500 mt-1">
-                    Tidak masuk mengajar
-                </div>
+                <div class="font-semibold text-sm text-slate-900">Izin Sekolah</div>
+                <div class="text-[11px] text-slate-500 mt-1">Tidak masuk mengajar</div>
 
             </a>
 
             {{-- NILAI --}}
             <a href="{{ route('guru.nilai') }}"
-               class="group p-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-yellow-50 to-white hover:shadow-md transition">
+               class="group relative p-4 rounded-2xl border border-slate-100 bg-yellow-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
 
-                <div class="w-10 h-10 rounded-xl bg-yellow-100 flex items-center justify-center mb-2">
-                    <x-heroicon-o-academic-cap class="w-5 h-5 text-yellow-600"/>
+                <div class="relative w-11 h-11 rounded-xl bg-yellow-500 shadow-md shadow-yellow-500/25 flex items-center justify-center mb-3">
+                    <x-heroicon-o-academic-cap class="w-5 h-5 text-white"/>
                 </div>
 
-                <div class="font-semibold text-sm text-slate-900">
-                    Nilai
-                </div>
-
-                <div class="text-[11px] text-slate-500 mt-1">
-                    Input penilaian
-                </div>
+                <div class="font-semibold text-sm text-slate-900">Nilai</div>
+                <div class="text-[11px] text-slate-500 mt-1">Input penilaian</div>
 
             </a>
-            
+
             {{-- GAJI --}}
             <a href="{{ route('guru.gaji') }}"
-               class="group p-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-emerald-50 to-white hover:shadow-md transition">
-            
-                <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center mb-2">
-                    <x-heroicon-o-banknotes class="w-5 h-5 text-emerald-600"/>
+               class="group relative p-4 rounded-2xl border border-slate-100 bg-rose-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
+
+                <div class="relative w-11 h-11 rounded-xl bg-rose-500 shadow-md shadow-rose-500/25 flex items-center justify-center mb-3">
+                    <x-heroicon-o-banknotes class="w-5 h-5 text-white"/>
                 </div>
-            
-                <div class="font-semibold text-sm text-slate-900">
-                    Gaji
-                </div>
-            
-                <div class="text-[11px] text-slate-500 mt-1">
-                    Slip & riwayat gaji
-                </div>
-            
+
+                <div class="font-semibold text-sm text-slate-900">Gaji</div>
+                <div class="text-[11px] text-slate-500 mt-1">Slip & riwayat gaji</div>
+
             </a>
             
 

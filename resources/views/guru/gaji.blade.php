@@ -600,6 +600,191 @@
 
 </div>
 
+{{-- ================= RIWAYAT MENGAJAR (HONOR PER JP) ================= --}}
+@php
+    $riwayatMengajar = $riwayatMengajar ?? collect();
+@endphp
+
+@if ($riwayatMengajar->isNotEmpty())
+
+<div
+    x-data="{ showAllMengajar:false }"
+    class="bg-white
+           border
+           border-slate-200
+           rounded-3xl
+           overflow-hidden
+           shadow-sm
+           mb-6">
+
+    {{-- HEADER --}}
+    <div
+        class="px-5 py-3
+               border-b
+               border-slate-100
+               bg-slate-50">
+
+        <div class="flex items-center justify-between">
+
+            <div>
+
+                <div class="text-base font-semibold text-slate-900">
+                    Riwayat Mengajar
+                </div>
+
+                <div class="text-[13px] text-slate-500 mt-1">
+                    Rincian per sesi mengajar & honornya bulan ini
+                </div>
+
+            </div>
+
+            <div
+                class="px-3 py-1 rounded-xl
+                       bg-white
+                       border border-slate-200
+                       text-xs text-slate-600">
+
+                {{ $riwayatMengajar->count() }} Sesi
+
+            </div>
+
+        </div>
+
+    </div>
+
+    {{-- LIST --}}
+    @foreach ($riwayatMengajar as $index => $jurnal)
+
+        <div
+            x-show="showAllMengajar || {{ $index }} < 5"
+            x-transition.duration.200ms
+            class="
+                px-4 py-4
+                hover:bg-slate-50
+                transition
+                {{ !$loop->last ? 'border-b border-slate-100' : '' }}
+            ">
+
+            <div class="flex items-center justify-between">
+
+                <div class="flex items-center gap-3 flex-1">
+
+                    <div
+                        class="w-10 h-10
+                               rounded-xl
+                               bg-teal-50
+                               flex
+                               items-center
+                               justify-center
+                               shrink-0">
+
+                        <x-heroicon-o-book-open
+                            class="w-5 h-5 text-[#00A39D]"/>
+
+                    </div>
+
+                    <div>
+
+                        <div
+                            class="font-semibold
+                                   text-sm
+                                   text-slate-900">
+
+                            {{ $jurnal->mataPelajaran->nama ?? '-' }}
+                            @if ($jurnal->kelas)
+                                &middot; {{ $jurnal->kelas->nama }}
+                            @endif
+
+                        </div>
+
+                        <div
+                            class="text-sm
+                                   text-slate-500
+                                   mt-1">
+
+                            {{ \Carbon\Carbon::parse($jurnal->tanggal)->translatedFormat('d M Y') }}
+                            &middot;
+                            {{ $jurnal->durasi_jp }} JP ×
+                            Rp {{ number_format($jurnal->tarif_dipakai, 0, ',', '.') }}
+
+                        </div>
+
+                        @if ($jurnal->is_pengganti)
+
+                            <div
+                                class="text-xs
+                                       text-amber-600
+                                       mt-1">
+
+                                Mengajar sebagai guru pengganti
+
+                            </div>
+
+                        @endif
+
+                    </div>
+
+                </div>
+
+                <div
+                    class="text-right
+                           shrink-0">
+
+                    <div
+                        class="font-bold
+                               text-[#00A39D]">
+
+                        Rp {{ number_format($jurnal->nominal, 0, ',', '.') }}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    @endforeach
+
+    @if ($riwayatMengajar->count() > 5)
+
+        <div
+            class="p-4
+                   border-t
+                   border-slate-100
+                   bg-slate-50/50">
+
+            <button
+                x-on:click="showAllMengajar = !showAllMengajar"
+                class="
+                    w-full
+                    py-3
+                    rounded-2xl
+                    bg-[#00A39D]/10
+                    hover:bg-[#00A39D]/20
+                    text-[#00A39D]
+                    font-medium
+                    text-sm
+                    transition">
+
+                <span x-show="!showAllMengajar">
+                    Lihat Semua Sesi Mengajar
+                </span>
+
+                <span x-show="showAllMengajar">
+                    Tampilkan Lebih Sedikit
+                </span>
+
+            </button>
+
+        </div>
+
+    @endif
+
+</div>
+
+@endif
+
 {{-- ================= BONUS ================= --}}
 @php
     $bonus = collect($payroll?->adjustments ?? [])
