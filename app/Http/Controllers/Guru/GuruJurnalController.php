@@ -83,7 +83,7 @@ class GuruJurnalController extends Controller
 
     [
         'pegawai_id'          => $guru->id,
-        'pegawai_lembaga_id'  => optional($guru->pegawaiLembagas()->first())->id,
+        'pegawai_lembaga_id'  => $this->resolvePegawaiLembagaId($guru, $jadwal->kelas?->lembaga_id),
         'kelas_id'            => $jadwal->kelas_id,
         'mata_pelajaran_id'   => $jadwal->mata_pelajaran_id,
         'jam_pelajaran_id'    => $jadwal->jam_pelajaran_id,
@@ -144,6 +144,43 @@ class GuruJurnalController extends Controller
     ]);
     }
     
+    /**
+     * Tentukan pegawai_lembaga_id yang BENAR buat 1 jurnal mengajar --
+     * berdasarkan lembaga tempat kelas itu berada, BUKAN asal ambil
+     * jabatan pertama guru (bug lama: guru yang punya lebih dari 1
+     * jabatan/lembaga bisa salah tertandai, honor per JP-nya jadi
+     * tidak pernah kehitung).
+     *
+     * Prioritas: (1) jabatan per_jp di lembaga yang sama dengan kelas
+     * itu -- paling relevan buat honor mengajar, (2) jabatan apapun di
+     * lembaga yang sama, (3) fallback jabatan pertama guru (jaga-jaga
+     * kalau lembaga_id kelasnya kosong/tidak ketemu).
+     */
+    protected function resolvePegawaiLembagaId(Pegawai $guru, ?int $lembagaId): ?int
+    {
+        if ($lembagaId) {
+
+            $jabatanPerJp = $guru->pegawaiLembagas()
+                ->where('lembaga_id', $lembagaId)
+                ->where('metode_penggajian', 'per_jp')
+                ->first();
+
+            if ($jabatanPerJp) {
+                return $jabatanPerJp->id;
+            }
+
+            $jabatanLembaga = $guru->pegawaiLembagas()
+                ->where('lembaga_id', $lembagaId)
+                ->first();
+
+            if ($jabatanLembaga) {
+                return $jabatanLembaga->id;
+            }
+        }
+
+        return optional($guru->pegawaiLembagas()->first())->id;
+    }
+
     public function pengganti()
     {
         $yayasan = \App\Models\Yayasan::find(session('active_public_yayasan_id'));
@@ -206,7 +243,7 @@ class GuruJurnalController extends Controller
             [
                 'pegawai_id'          => $guru->id,
                 'pegawai_asli_id'     => $jadwal->pegawai_id,
-                'pegawai_lembaga_id'  => optional($guru->pegawaiLembagas()->first())->id,
+                'pegawai_lembaga_id'  => $this->resolvePegawaiLembagaId($guru, $jadwal->kelas?->lembaga_id),
                 'kelas_id'            => $jadwal->kelas_id,
                 'mata_pelajaran_id'   => $jadwal->mata_pelajaran_id,
                 'jam_pelajaran_id'    => $jadwal->jam_pelajaran_id,
