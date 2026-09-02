@@ -18,6 +18,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Actions;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Hidden;
@@ -344,6 +345,20 @@ class JurnalMengajarResource extends BaseResource
                     ->description(fn ($record) => $record->pegawaiAsli
                         ? 'Pengganti untuk ' . $record->pegawaiAsli->nama
                         : null),
+
+                // Peringatan visual kalau jurnal ini tidak tertandai ke
+                // jabatan manapun -- akibatnya honor per JP-nya TIDAK
+                // AKAN kehitung sama sekali ke payroll guru itu sampai
+                // ini diperbaiki (isi jabatan pegawai di menu Pegawai,
+                // lalu jalankan `php artisan jurnal:fix-pegawai-lembaga`).
+                TextColumn::make('pegawai_lembaga_id')
+                    ->label('Jabatan')
+                    ->badge()
+                    ->formatStateUsing(fn ($state) => $state ? 'Lengkap' : 'Belum Lengkap')
+                    ->color(fn ($state) => $state ? 'success' : 'danger')
+                    ->tooltip(fn ($state) => $state
+                        ? null
+                        : 'Jurnal ini belum tertandai ke jabatan pegawai manapun -- honor per JP-nya tidak akan kehitung ke payroll. Pastikan pegawai ini sudah punya jabatan di lembaga yang sesuai.'),
                 TextColumn::make('tanggal')
                 ->label('Tanggal')
                 ->formatStateUsing(fn ($state) => \Carbon\Carbon::parse($state)
@@ -398,6 +413,22 @@ class JurnalMengajarResource extends BaseResource
             ])
 
             ->filters([
+
+    /*
+    |--------------------------------------------------------------------------
+    | FILTER JABATAN BELUM LENGKAP
+    |--------------------------------------------------------------------------
+    */
+
+    TernaryFilter::make('jabatan_lengkap')
+        ->label('Kelengkapan Jabatan')
+        ->placeholder('Semua')
+        ->trueLabel('Lengkap saja')
+        ->falseLabel('Belum Lengkap saja')
+        ->queries(
+            true: fn ($query) => $query->whereNotNull('pegawai_lembaga_id'),
+            false: fn ($query) => $query->whereNull('pegawai_lembaga_id'),
+        ),
 
     /*
     |--------------------------------------------------------------------------
