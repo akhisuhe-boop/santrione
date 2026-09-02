@@ -8,17 +8,25 @@
 
 @php
 
+    // Ringkasan Absensi Kegiatan (rapat, sholat berjamaah, dll -- dari
+    // Absensi, BUKAN basis Tingkat Kehadiran lagi, cuma insight
+    // tambahan yang terpisah)
     $hadir = $absensis->where('status','Hadir')->count();
     $izin = $absensis->where('status','Izin')->count();
     $sakit = $absensis->where('status','Sakit')->count();
     $terlambat = $absensis->where('status','Terlambat')->count();
-    $alpa = $absensis->where('status','Alpa')->count();
+    $alpa = $absensis->whereIn('status', ['Alpa', 'Alpha'])->count();
+    $totalKegiatan = $absensis->count();
 
-    $total = $absensis->count();
+    // Ringkasan Absensi Harian (dari AbsensiHarian -- basis Tingkat
+    // Kehadiran di hero)
+    $harianHadir = $absensiHarians->where('status_masuk', 'Hadir')->count();
+    $harianTerlambat = $absensiHarians->where('status_masuk', 'Terlambat')->count();
+    $harianIzin = $absensiHarians->where('status_masuk', 'Izin')->count();
+    $harianSakit = $absensiHarians->where('status_masuk', 'Sakit')->count();
+    $harianAlpa = $absensiHarians->whereIn('status_masuk', ['Alpa', 'Alpha'])->count();
 
-    $persentase = $total > 0
-        ? round(($hadir / $total) * 100)
-        : 0;
+    $namaBulan = \Carbon\Carbon::create()->month($bulan)->translatedFormat('F');
 
 @endphp
 
@@ -48,7 +56,7 @@
         </h1>
 
         <p class="text-white/80 text-sm mt-1">
-            Monitoring kehadiran dan aktivitas mengajar
+            Rekapitulasi absen masuk & pulang sekolah
         </p>
 
         <div class="mt-6">
@@ -60,7 +68,7 @@
                 </span>
 
                 <span class="font-semibold">
-                    {{ $persentase }}%
+                    {{ $persentaseKehadiran }}%
                 </span>
 
             </div>
@@ -69,11 +77,15 @@
 
                 <div
                     class="h-full bg-white rounded-full transition-all duration-500"
-                    style="width:{{ $persentase }}%">
+                    style="width:{{ $persentaseKehadiran }}%">
 
                 </div>
 
             </div>
+
+            <p class="text-white/70 text-xs mt-2">
+                {{ $hariHadir }} dari {{ $totalHariTercatat }} hari tercatat masuk sekolah bulan {{ $namaBulan }}
+            </p>
 
         </div>
 
@@ -81,6 +93,208 @@
 
 </div>
 
+{{-- PILIH PERIODE --}}
+<div class="flex items-center justify-between mb-4">
+
+    <a
+        href="{{ route('guru.absensi', ['bulan' => $bulan == 1 ? 12 : $bulan - 1, 'tahun' => $bulan == 1 ? $tahun - 1 : $tahun]) }}"
+        class="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50">
+        <x-heroicon-o-chevron-left class="w-4 h-4"/>
+    </a>
+
+    <div class="font-semibold text-slate-900 text-sm">
+        {{ $namaBulan }} {{ $tahun }}
+    </div>
+
+    @php
+        $bulanDepan = $bulan == 12 ? 1 : $bulan + 1;
+        $tahunDepan = $bulan == 12 ? $tahun + 1 : $tahun;
+        $bukanBulanDepan = \Carbon\Carbon::create($tahunDepan, $bulanDepan, 1)->startOfMonth()->gt(now()->startOfMonth());
+    @endphp
+
+    <a
+        href="{{ $bukanBulanDepan ? '#' : route('guru.absensi', ['bulan' => $bulanDepan, 'tahun' => $tahunDepan]) }}"
+        class="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center {{ $bukanBulanDepan ? 'text-slate-200 pointer-events-none' : 'text-slate-500 hover:bg-slate-50' }}">
+        <x-heroicon-o-chevron-right class="w-4 h-4"/>
+    </a>
+
+</div>
+
+
+{{-- DIVIDER ANTAR KELOMPOK --}}
+<div class="flex items-center gap-3 my-2 px-1">
+    <div class="flex-1 h-px bg-slate-200"></div>
+    <span class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Absensi Harian</span>
+    <div class="flex-1 h-px bg-slate-200"></div>
+</div>
+
+{{-- RINGKASAN ABSENSI HARIAN --}}
+@include('wali.partials.ringkasan-absensi-card', [
+    'judul' => 'Ringkasan Absensi Harian',
+    'subjudul' => 'Basis Tingkat Kehadiran di atas -- ' . $totalHariTercatat . ' hari tercatat bulan ' . $namaBulan,
+    'rows' => [
+        ['label' => 'Hadir', 'keterangan' => 'Kehadiran tepat waktu', 'color' => 'emerald', 'value' => $harianHadir],
+        ['label' => 'Terlambat', 'keterangan' => 'Datang terlambat', 'color' => 'indigo', 'value' => $harianTerlambat],
+        ['label' => 'Izin', 'keterangan' => 'Izin resmi', 'color' => 'amber', 'value' => $harianIzin],
+        ['label' => 'Sakit', 'keterangan' => 'Tidak hadir karena sakit', 'color' => 'sky', 'value' => $harianSakit],
+        ['label' => 'Alpa', 'keterangan' => 'Tanpa keterangan', 'color' => 'rose', 'value' => $harianAlpa],
+    ],
+])
+
+{{-- ================= ABSENSI MASUK & PULANG ================= --}}
+@php
+    $riwayatHarian = $pegawai->absensiHarians;
+@endphp
+
+<div
+    x-data="{ showAllHarian:false }"
+    class="bg-white
+           border
+           border-slate-200
+           rounded-3xl
+           overflow-hidden
+           shadow-sm
+           mb-6">
+
+    <div class="px-4 py-3 border-b border-slate-100">
+
+        <div class="flex items-center justify-between">
+
+            <div>
+                <h3 class="font-bold text-slate-900">
+                    Absensi Masuk & Pulang
+                </h3>
+                <p class="text-xs text-slate-500 mt-1">
+                    Riwayat absen masuk & pulang sekolah
+                </p>
+            </div>
+
+            <div class="
+                    inline-flex
+                    items-center
+                    gap-2
+                    px-2.5 py-1.5
+                    rounded-2xl
+                    bg-slate-50
+                    text-slate-500
+                    text-xs
+                ">
+                <x-heroicon-o-finger-print class="w-4 h-4" />
+                {{ $riwayatHarian->count() }}
+                Hari
+            </div>
+
+        </div>
+
+    </div>
+
+    @forelse($riwayatHarian as $index => $item)
+
+        <div
+            x-show="showAllHarian || {{ $index }} < 5"
+            x-transition.duration.200ms
+            class="px-4 py-3 hover:bg-slate-50/80 transition
+                {{ !$loop->last ? 'border-b border-slate-100' : '' }}">
+
+            <div class="flex items-center justify-between">
+
+                <div class="flex items-center gap-3">
+
+                    <div class="w-10 h-10 rounded-xl bg-[#00A39D]/10 flex items-center justify-center shrink-0">
+                        <x-heroicon-o-finger-print class="w-5 h-5 text-[#00A39D]" />
+                    </div>
+
+                    <div>
+                        <div class="font-semibold text-sm text-slate-900">
+                            {{ \Carbon\Carbon::parse($item->tanggal)->locale('id')->translatedFormat('d F Y') }}
+                        </div>
+                        <div class="text-xs text-slate-500 mt-0.5">
+                            Masuk: {{ $item->jam_masuk ? \Carbon\Carbon::parse($item->jam_masuk)->format('H:i') : '-' }}
+                            &nbsp;•&nbsp;
+                            Pulang: {{ $item->jam_pulang ? \Carbon\Carbon::parse($item->jam_pulang)->format('H:i') : '-' }}
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="flex flex-col items-end gap-1">
+
+                    @php
+                        $warnaMasuk = match($item->status_masuk) {
+                            'Hadir' => 'bg-emerald-50 text-emerald-600',
+                            'Terlambat' => 'bg-indigo-50 text-indigo-600',
+                            'Izin' => 'bg-amber-50 text-amber-600',
+                            'Sakit' => 'bg-sky-50 text-sky-600',
+                            'Alpa' => 'bg-rose-50 text-rose-600',
+                            default => 'bg-slate-100 text-slate-500',
+                        };
+                    @endphp
+
+                    @if($item->status_masuk)
+                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full {{ $warnaMasuk }}">
+                            {{ $item->status_masuk }}
+                        </span>
+                    @endif
+
+                    @if($item->status_pulang)
+                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full
+                            {{ $item->status_pulang === 'Pulang Awal' ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600' }}">
+                            {{ $item->status_pulang }}
+                        </span>
+                    @endif
+
+                </div>
+
+            </div>
+
+        </div>
+
+    @empty
+
+        <div class="px-4 py-8 text-center text-sm text-slate-400">
+            Belum ada riwayat absensi masuk & pulang.
+        </div>
+
+    @endforelse
+
+    @if($riwayatHarian->count() > 5)
+
+        <div class="px-4 py-3 border-t border-slate-100">
+
+            <button
+                @click="showAllHarian = !showAllHarian"
+                class="w-full text-center py-2.5
+                    rounded-2xl
+                    bg-[#00A39D]/10
+                    hover:bg-[#00A39D]/20
+                    text-[#00A39D]
+                    font-medium
+                    text-sm
+                    transition">
+
+                <span x-show="!showAllHarian">
+                    Lihat Semua Absensi Masuk & Pulang
+                </span>
+
+                <span x-show="showAllHarian">
+                    Tampilkan Lebih Sedikit
+                </span>
+
+            </button>
+
+        </div>
+
+    @endif
+
+</div>
+
+
+{{-- DIVIDER ANTAR KELOMPOK --}}
+<div class="flex items-center gap-3 my-2 px-1">
+    <div class="flex-1 h-px bg-slate-200"></div>
+    <span class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Absensi Kegiatan</span>
+    <div class="flex-1 h-px bg-slate-200"></div>
+</div>
 
 {{-- ================= RINGKASAN ================= --}}
 <div
@@ -99,11 +313,11 @@
                bg-slate-50">
 
         <div class="text-base font-semibold text-slate-900">
-            Ringkasan Kehadiran
+            Ringkasan Absensi Kegiatan
         </div>
 
         <div class="text-[13px] text-slate-500 mt-1">
-            Statistik absensi guru
+            {{ $totalKegiatan }} kegiatan tercatat bulan {{ $namaBulan }} (rapat, sholat berjamaah, dll)
         </div>
 
     </div>
@@ -542,151 +756,12 @@
 
 </div>
 
-{{-- ================= ABSENSI MASUK & PULANG ================= --}}
-@php
-    $riwayatHarian = $pegawai->absensiHarians;
-@endphp
 
-<div
-    x-data="{ showAllHarian:false }"
-    class="bg-white
-           border
-           border-slate-200
-           rounded-3xl
-           overflow-hidden
-           shadow-sm
-           mb-6">
-
-    <div class="px-4 py-3 border-b border-slate-100">
-
-        <div class="flex items-center justify-between">
-
-            <div>
-                <h3 class="font-bold text-slate-900">
-                    Absensi Masuk & Pulang
-                </h3>
-                <p class="text-xs text-slate-500 mt-1">
-                    Riwayat absen masuk & pulang sekolah
-                </p>
-            </div>
-
-            <div class="
-                    inline-flex
-                    items-center
-                    gap-2
-                    px-2.5 py-1.5
-                    rounded-2xl
-                    bg-slate-50
-                    text-slate-500
-                    text-xs
-                ">
-                <x-heroicon-o-finger-print class="w-4 h-4" />
-                {{ $riwayatHarian->count() }}
-                Hari
-            </div>
-
-        </div>
-
-    </div>
-
-    @forelse($riwayatHarian as $index => $item)
-
-        <div
-            x-show="showAllHarian || {{ $index }} < 5"
-            x-transition.duration.200ms
-            class="px-4 py-3 hover:bg-slate-50/80 transition
-                {{ !$loop->last ? 'border-b border-slate-100' : '' }}">
-
-            <div class="flex items-center justify-between">
-
-                <div class="flex items-center gap-3">
-
-                    <div class="w-10 h-10 rounded-xl bg-[#00A39D]/10 flex items-center justify-center shrink-0">
-                        <x-heroicon-o-finger-print class="w-5 h-5 text-[#00A39D]" />
-                    </div>
-
-                    <div>
-                        <div class="font-semibold text-sm text-slate-900">
-                            {{ \Carbon\Carbon::parse($item->tanggal)->locale('id')->translatedFormat('d F Y') }}
-                        </div>
-                        <div class="text-xs text-slate-500 mt-0.5">
-                            Masuk: {{ $item->jam_masuk ? \Carbon\Carbon::parse($item->jam_masuk)->format('H:i') : '-' }}
-                            &nbsp;•&nbsp;
-                            Pulang: {{ $item->jam_pulang ? \Carbon\Carbon::parse($item->jam_pulang)->format('H:i') : '-' }}
-                        </div>
-                    </div>
-
-                </div>
-
-                <div class="flex flex-col items-end gap-1">
-
-                    @php
-                        $warnaMasuk = match($item->status_masuk) {
-                            'Hadir' => 'bg-emerald-50 text-emerald-600',
-                            'Terlambat' => 'bg-indigo-50 text-indigo-600',
-                            'Izin' => 'bg-amber-50 text-amber-600',
-                            'Sakit' => 'bg-sky-50 text-sky-600',
-                            'Alpa' => 'bg-rose-50 text-rose-600',
-                            default => 'bg-slate-100 text-slate-500',
-                        };
-                    @endphp
-
-                    @if($item->status_masuk)
-                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full {{ $warnaMasuk }}">
-                            {{ $item->status_masuk }}
-                        </span>
-                    @endif
-
-                    @if($item->status_pulang)
-                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full
-                            {{ $item->status_pulang === 'Pulang Awal' ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600' }}">
-                            {{ $item->status_pulang }}
-                        </span>
-                    @endif
-
-                </div>
-
-            </div>
-
-        </div>
-
-    @empty
-
-        <div class="px-4 py-8 text-center text-sm text-slate-400">
-            Belum ada riwayat absensi masuk & pulang.
-        </div>
-
-    @endforelse
-
-    @if($riwayatHarian->count() > 5)
-
-        <div class="px-4 py-3 border-t border-slate-100">
-
-            <button
-                @click="showAllHarian = !showAllHarian"
-                class="w-full text-center py-2.5
-                    rounded-2xl
-                    bg-[#00A39D]/10
-                    hover:bg-[#00A39D]/20
-                    text-[#00A39D]
-                    font-medium
-                    text-sm
-                    transition">
-
-                <span x-show="!showAllHarian">
-                    Lihat Semua Absensi Masuk & Pulang
-                </span>
-
-                <span x-show="showAllHarian">
-                    Tampilkan Lebih Sedikit
-                </span>
-
-            </button>
-
-        </div>
-
-    @endif
-
+{{-- DIVIDER ANTAR KELOMPOK --}}
+<div class="flex items-center gap-3 my-2 px-1">
+    <div class="flex-1 h-px bg-slate-200"></div>
+    <span class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Jurnal Mengajar</span>
+    <div class="flex-1 h-px bg-slate-200"></div>
 </div>
 
 {{-- ================= RIWAYAT JURNAL MENGAJAR ================= --}}
