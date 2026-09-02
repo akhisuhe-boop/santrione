@@ -652,6 +652,10 @@
 
     </div>
 
+    <div class="px-5 py-3 bg-amber-50 border-b border-amber-100 text-xs text-amber-700">
+        Estimasi berdasarkan jurnal yang sudah divalidasi. Nominal resmi baru masuk ke "Pendapatan" & "Total Gaji" setelah payroll bulan ini diproses oleh admin.
+    </div>
+
     {{-- LIST --}}
     @foreach ($riwayatMengajar as $index => $jurnal)
 

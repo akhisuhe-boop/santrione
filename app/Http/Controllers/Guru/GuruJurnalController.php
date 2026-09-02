@@ -256,6 +256,15 @@ class GuruJurnalController extends Controller
         ]);
     
         $jurnal = JurnalMengajar::findOrFail($request->jurnal_id);
+
+        // Jurnal yang sudah pernah disimpan (materi terisi) atau sudah
+        // divalidasi admin tidak boleh ditimpa lagi lewat form ini --
+        // cegah submit ganda yang bikin ambigu di sisi guru.
+        if ($jurnal->status === 'valid' || filled($jurnal->materi)) {
+            return redirect()
+                ->route('guru.dashboard')
+                ->with('warning', 'Jurnal ini sudah tersimpan dan tidak bisa diubah lagi.');
+        }
     
         // Guru cuma mengisi materi. Status jurnal tetap 'draft' sampai
         // divalidasi admin (lihat aksi "Validasi" di JurnalMengajarResource)
@@ -264,6 +273,20 @@ class GuruJurnalController extends Controller
         $jurnal->update([
             'materi' => $request->materi,
         ]);
+
+        // Simpan absensi siswa yang dipilih guru -- SEBELUM ini,
+        // pilihan absensi terkirim di form tapi tidak pernah dibaca
+        // sama sekali di sini, jadi tidak pernah tersimpan.
+        foreach ($request->input('absensi', []) as $absensiMapelId => $status) {
+
+            if (! in_array($status, ['Hadir', 'Sakit', 'Izin', 'Alpha'], true)) {
+                continue;
+            }
+
+            AbsensiMapel::where('id', $absensiMapelId)
+                ->where('jurnal_mengajar_id', $jurnal->id)
+                ->update(['status' => $status]);
+        }
     
         return redirect()
             ->route('guru.dashboard')
