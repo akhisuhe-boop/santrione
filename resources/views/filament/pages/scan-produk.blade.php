@@ -23,6 +23,17 @@
 
         .sp-label { font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; display:block; }
         .dark .sp-label { color: #d1d5db; }
+
+        .sp-form-2kolom {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 14px;
+        }
+        @media (min-width: 640px) {
+            .sp-form-2kolom {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
     </style>
 
     @if (! $kantinTerpilih)
@@ -180,7 +191,7 @@
                         Barcode <b>{{ $barcodeBaru }}</b> belum pernah terdaftar — isi detailnya untuk daftarkan sebagai produk baru.
                     </p>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2" style="gap:14px;">
+                    <div class="sp-form-2kolom">
 
                         <div>
                             <label class="sp-label">Nama Produk</label>
