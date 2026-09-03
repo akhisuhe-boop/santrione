@@ -47,6 +47,40 @@ class MonitoringMengajarResource extends BaseResource
         return $form
             ->schema([]);
     }
+
+    /**
+     * Tentukan rentang tanggal [mulai, selesai] dari state filter "periode"
+     * (dipakai bersama oleh kolom tabel & tombol Export Excel supaya
+     * hitungannya selalu konsisten dengan apa yang dipilih admin).
+     *
+     * @param  array  $state  isi filter: ['tipe' => 'minggu'|'bulan'|'custom', 'dari' => ..., 'sampai' => ...]
+     */
+    public static function resolvePeriode(?array $state): array
+    {
+        $tipe = $state['tipe'] ?? 'minggu';
+
+        if ($tipe === 'bulan') {
+            return [now()->startOfMonth()->toDateString(), now()->endOfMonth()->toDateString()];
+        }
+
+        if ($tipe === 'custom' && ! empty($state['dari']) && ! empty($state['sampai'])) {
+            return [$state['dari'], $state['sampai']];
+        }
+
+        // default: minggu ini
+        return [now()->startOfWeek()->toDateString(), now()->endOfWeek()->toDateString()];
+    }
+
+    protected static function realisasiJp(int $pegawaiId, array $periode): int
+    {
+        return (int) JurnalMengajar::query()
+            ->where('jurnal_mengajars.pegawai_id', $pegawaiId)
+            ->where('status', 'valid')
+            ->whereBetween('jurnal_mengajars.tanggal', $periode)
+            ->join('jadwal_pelajarans', 'jurnal_mengajars.jadwal_pelajaran_id', '=', 'jadwal_pelajarans.id')
+            ->sum('jadwal_pelajarans.durasi_jam');
+    }
+
     /*
     |--------------------------------------------------------------------------
     | TABLE
@@ -88,53 +122,36 @@ class MonitoringMengajarResource extends BaseResource
 
                 /*
                 |--------------------------------------------------------------------------
-                | REALISASI JP (MINGGU INI)
+                | REALISASI JP (SESUAI FILTER PERIODE)
                 |--------------------------------------------------------------------------
                 |
-                | Dibatasi ke minggu berjalan (Senin-Minggu) -- Kewajiban JP
-                | di Kurikulum sifatnya MINGGUAN, jadi realisasinya juga
-                | HARUS dibatasi per minggu supaya perbandingannya masuk
-                | akal. Sebelumnya ini menjumlahkan SEMUA jurnal valid
-                | sejak awal (tanpa batas waktu), yang lama-lama jadi
-                | menyesatkan karena terus bertambah padahal kewajibannya
-                | tetap tiap minggu.
+                | Dibatasi sesuai filter "Periode" (Minggu Ini / Bulan Ini /
+                | Custom Range) -- sebelumnya HARDCODE minggu ini, sekarang
+                | admin bisa pilih sendiri.
                 */
                 Tables\Columns\BadgeColumn::make('realisasi_jp')
-                ->label('Mengajar (Minggu Ini)')
-                ->getStateUsing(function ($record) {
-                    return \App\Models\JurnalMengajar::query()
-                        ->where('jurnal_mengajars.pegawai_id', $record->id)
-                        ->where('status', 'valid')
-                        ->whereBetween('jurnal_mengajars.tanggal', [
-                            now()->startOfWeek()->toDateString(),
-                            now()->endOfWeek()->toDateString(),
-                        ])
-                        ->join('jadwal_pelajarans', 'jurnal_mengajars.jadwal_pelajaran_id', '=', 'jadwal_pelajarans.id')
-                        ->sum('jadwal_pelajarans.durasi_jam') . ' JP';
+                ->label('Mengajar')
+                ->getStateUsing(function ($record, $livewire) {
+                    $periode = static::resolvePeriode($livewire->tableFilters['periode'] ?? null);
+                    return static::realisasiJp($record->id, $periode) . ' JP';
                 })
                 ->color('success'),
                 /*
                 |--------------------------------------------------------------------------
-                | TIDAK MENGAJAR (MINGGU INI)
+                | TIDAK MENGAJAR (SESUAI FILTER PERIODE)
                 |--------------------------------------------------------------------------
                 */
 
                 Tables\Columns\BadgeColumn::make('kurang_jp')
-                ->label('Tidak Mengajar (Minggu Ini)')
-                ->getStateUsing(function ($record) {
+                ->label('Tidak Mengajar')
+                ->getStateUsing(function ($record, $livewire) {
+                    $periode = static::resolvePeriode($livewire->tableFilters['periode'] ?? null);
+
                     $kewajiban = \App\Models\Kurikulum::query()
                         ->where('pegawai_id', $record->id)
                         ->sum('jumlah_jam_per_minggu');
 
-                    $realisasi = \App\Models\JurnalMengajar::query()
-                        ->where('jurnal_mengajars.pegawai_id', $record->id)
-                        ->where('status', 'valid')
-                        ->whereBetween('jurnal_mengajars.tanggal', [
-                            now()->startOfWeek()->toDateString(),
-                            now()->endOfWeek()->toDateString(),
-                        ])
-                        ->join('jadwal_pelajarans', 'jurnal_mengajars.jadwal_pelajaran_id', '=', 'jadwal_pelajarans.id')
-                        ->sum('jadwal_pelajarans.durasi_jam');
+                    $realisasi = static::realisasiJp($record->id, $periode);
 
                     return max($kewajiban - $realisasi, 0) . ' JP';
                 })
@@ -146,24 +163,20 @@ class MonitoringMengajarResource extends BaseResource
 
                 /*
                 |--------------------------------------------------------------------------
-                | PERSENTASE (MINGGU INI)
+                | PERSENTASE (SESUAI FILTER PERIODE)
                 |--------------------------------------------------------------------------
                 */
                 Tables\Columns\BadgeColumn::make('persentase')
-                    ->label('Persentase (Minggu Ini)')
-                    ->getStateUsing(function ($record) {
+                    ->label('Persentase')
+                    ->getStateUsing(function ($record, $livewire) {
+                        $periode = static::resolvePeriode($livewire->tableFilters['periode'] ?? null);
+
                         $kewajiban = \App\Models\Kurikulum::query()
                             ->where('pegawai_id', $record->id)
                             ->sum('jumlah_jam_per_minggu');
-                        $realisasi = \App\Models\JurnalMengajar::query()
-                            ->where('jurnal_mengajars.pegawai_id', $record->id)
-                            ->where('status', 'valid')
-                            ->whereBetween('jurnal_mengajars.tanggal', [
-                                now()->startOfWeek()->toDateString(),
-                                now()->endOfWeek()->toDateString(),
-                            ])
-                            ->join('jadwal_pelajarans', 'jurnal_mengajars.jadwal_pelajaran_id', '=', 'jadwal_pelajarans.id')
-                            ->sum('jadwal_pelajarans.durasi_jam');
+
+                        $realisasi = static::realisasiJp($record->id, $periode);
+
                         if ($kewajiban <= 0) {
                             return '0%';
                         }
@@ -187,6 +200,45 @@ class MonitoringMengajarResource extends BaseResource
             |--------------------------------------------------------------------------
             */
             ->filters([
+
+                /*
+                |--------------------------------------------------------------------------
+                | FILTER PERIODE
+                |--------------------------------------------------------------------------
+                */
+                Tables\Filters\Filter::make('periode')
+                    ->form([
+                        Forms\Components\Select::make('tipe')
+                            ->label('Periode')
+                            ->options([
+                                'minggu' => 'Minggu Ini',
+                                'bulan' => 'Bulan Ini',
+                                'custom' => 'Custom Range',
+                            ])
+                            ->default('minggu')
+                            ->native(false)
+                            ->live(),
+
+                        Forms\Components\DatePicker::make('dari')
+                            ->label('Dari Tanggal')
+                            ->native(false)
+                            ->visible(fn ($get) => $get('tipe') === 'custom'),
+
+                        Forms\Components\DatePicker::make('sampai')
+                            ->label('Sampai Tanggal')
+                            ->native(false)
+                            ->visible(fn ($get) => $get('tipe') === 'custom'),
+                    ])
+                    // Query-nya sengaja no-op (tidak menyaring baris Pegawai
+                    // yang mana) -- filter ini cuma dipakai buat NYIMPEN
+                    // periode yang dipilih, lalu dibaca ulang di tiap kolom
+                    // (getStateUsing) & tombol Export.
+                    ->query(fn ($query) => $query)
+                    ->indicateUsing(function (array $data): ?string {
+                        $periode = static::resolvePeriode($data);
+                        return 'Periode: ' . \Carbon\Carbon::parse($periode[0])->translatedFormat('d M Y') . ' - ' . \Carbon\Carbon::parse($periode[1])->translatedFormat('d M Y');
+                    }),
+
                 /*
                 |--------------------------------------------------------------------------
                 | FILTER GURU
@@ -255,4 +307,4 @@ class MonitoringMengajarResource extends BaseResource
             'detail' => Pages\DetailMonitoringMengajar::route('/{record}/detail'),
         ];
     }
-}  
+}

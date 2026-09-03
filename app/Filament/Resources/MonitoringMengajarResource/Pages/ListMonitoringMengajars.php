@@ -21,10 +21,16 @@ class ListMonitoringMengajars extends ListRecords
                 ->label('Export Excel')
                 ->icon('heroicon-o-arrow-down-tray')
                 ->color('success')
-                ->action(fn () => Excel::download(
-                    new RekapitulasiMengajarExport,
-                    'rekapitulasi-mengajar-' . now()->format('Y-m-d') . '.xlsx'
-                )),
+                ->action(function () {
+                    [$mulai, $selesai] = MonitoringMengajarResource::resolvePeriode(
+                        $this->tableFilters['periode'] ?? null
+                    );
+
+                    return Excel::download(
+                        new RekapitulasiMengajarExport($mulai, $selesai),
+                        'rekapitulasi-mengajar-' . $mulai . '-sd-' . $selesai . '.xlsx'
+                    );
+                }),
         ];
     }
 }

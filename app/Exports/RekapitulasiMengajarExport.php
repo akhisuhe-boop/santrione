@@ -15,10 +15,19 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class RekapitulasiMengajarExport implements FromCollection, WithHeadings, WithStyles, ShouldAutoSize, WithEvents
 {
+    protected string $mulai;
+    protected string $selesai;
+
+    public function __construct(string $mulai, string $selesai)
+    {
+        $this->mulai = $mulai;
+        $this->selesai = $selesai;
+    }
+
     public function collection()
     {
-        $mulai = now()->startOfWeek()->toDateString();
-        $selesai = now()->endOfWeek()->toDateString();
+        $mulai = $this->mulai;
+        $selesai = $this->selesai;
 
         return Pegawai::query()
             ->orderBy('nama')
@@ -51,7 +60,7 @@ class RekapitulasiMengajarExport implements FromCollection, WithHeadings, WithSt
 
     public function headings(): array
     {
-        return ['Guru', 'Kewajiban JP', 'Mengajar (Minggu Ini)', 'Tidak Mengajar (Minggu Ini)', 'Persentase'];
+        return ['Guru', 'Kewajiban JP', 'Mengajar', 'Tidak Mengajar', 'Persentase'];
     }
 
     public function styles(Worksheet $sheet)
@@ -67,7 +76,7 @@ class RekapitulasiMengajarExport implements FromCollection, WithHeadings, WithSt
                 $sheet->insertNewRowBefore(1, 2);
                 $sheet->setCellValue('A1', 'Rekapitulasi Mengajar');
                 $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
-                $sheet->setCellValue('A2', 'Periode: ' . now()->startOfWeek()->translatedFormat('d M Y') . ' - ' . now()->endOfWeek()->translatedFormat('d M Y'));
+                $sheet->setCellValue('A2', 'Periode: ' . \Carbon\Carbon::parse($this->mulai)->translatedFormat('d M Y') . ' - ' . \Carbon\Carbon::parse($this->selesai)->translatedFormat('d M Y'));
             },
         ];
     }
