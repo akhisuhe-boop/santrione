@@ -17,7 +17,7 @@ class KasirKantin extends Page
     protected static ?string $navigationLabel = 'Kasir';
     protected static ?string $title = 'Kasir Kantin';
     protected static ?string $navigationIcon = 'heroicon-o-calculator';
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 4;
 
     protected static string $view = 'filament.pages.kasir-kantin';
 

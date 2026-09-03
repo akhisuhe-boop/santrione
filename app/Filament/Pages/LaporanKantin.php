@@ -29,7 +29,7 @@ class LaporanKantin extends Page implements HasForms, HasTable
     protected static ?string $navigationLabel = 'Laporan Kantin';
     protected static ?string $navigationIcon = 'heroicon-o-chart-bar';
     protected static ?string $navigationGroup = 'e-Kantin';
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 5;
 
     protected static string $view = 'filament.pages.laporan-kantin';
 
