@@ -11,7 +11,7 @@ class GuruGajiController extends Controller
 {
     public function index()
     {
-        $pegawai = Pegawai::with('pegawaiLembagas')->findOrFail(session('guru_id'));
+        $pegawai = Pegawai::withoutGlobalScopes()->with('pegawaiLembagas')->findOrFail(session('guru_id'));
 
         $bulan = now()->month;
         $tahun = now()->year;
@@ -26,7 +26,8 @@ class GuruGajiController extends Controller
         | bulan yang sama. Payroll lama (sebelum fitur ini ada) tetap
         | 1 baris gabungan (jenis null).
         */
-        $payrollsBulanIni = Payroll::with(['items', 'adjustments'])
+        $payrollsBulanIni = Payroll::withoutGlobalScopes()
+            ->with(['items', 'adjustments'])
             ->where('pegawai_id', $pegawai->id)
             ->where('bulan', $bulan)
             ->where('tahun', $tahun)
@@ -38,7 +39,8 @@ class GuruGajiController extends Controller
 
         // Riwayat Payroll (semua periode, semua jenis dicampur -- tetap
         // urut dari yang terbaru)
-        $riwayatPayroll = Payroll::where('pegawai_id', $pegawai->id)
+        $riwayatPayroll = Payroll::withoutGlobalScopes()
+            ->where('pegawai_id', $pegawai->id)
             ->orderByDesc('tahun')
             ->orderByDesc('bulan')
             ->get();
@@ -56,7 +58,7 @@ class GuruGajiController extends Controller
 
         if ($jabatanPerJpIds->isNotEmpty()) {
 
-            $riwayatMengajar = JurnalMengajar::query()
+            $riwayatMengajar = JurnalMengajar::withoutGlobalScopes()
                 ->whereIn('pegawai_lembaga_id', $jabatanPerJpIds)
                 ->where('status', 'valid')
                 ->whereMonth('tanggal', $bulan)
@@ -125,7 +127,8 @@ class GuruGajiController extends Controller
         return view('guru.gaji', compact(
             'pegawai',
             'slipList',
-            'riwayatPayroll'
+            'riwayatPayroll',
+            'riwayatMengajar'
         ));
     }
 }

@@ -28,7 +28,7 @@
         'pegawai' => $pegawai,
         'payroll' => null,
         'labelJenis' => null,
-        'riwayatMengajar' => collect(),
+        'riwayatMengajar' => $riwayatMengajar ?? collect(),
     ])
 
 @endforelse
