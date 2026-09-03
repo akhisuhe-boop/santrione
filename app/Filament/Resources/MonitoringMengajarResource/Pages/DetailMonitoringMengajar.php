@@ -3,11 +3,14 @@
 namespace App\Filament\Resources\MonitoringMengajarResource\Pages;
 
 use App\Filament\Resources\MonitoringMengajarResource;
+use App\Exports\DetailMonitoringMengajarExport;
 use Filament\Resources\Pages\Page;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Actions\Action;
+use Maatwebsite\Excel\Facades\Excel;
 
 class DetailMonitoringMengajar extends Page implements HasForms
 {
@@ -40,6 +43,20 @@ class DetailMonitoringMengajar extends Page implements HasForms
 
         $this->tanggalSelesai =
             now()->endOfWeek()->toDateString();
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('exportExcel')
+                ->label('Export Excel')
+                ->icon('heroicon-o-arrow-down-tray')
+                ->color('success')
+                ->action(fn () => Excel::download(
+                    new DetailMonitoringMengajarExport($this->record, $this->tanggalMulai, $this->tanggalSelesai),
+                    'detail-mengajar-' . \Illuminate\Support\Str::slug($this->record->nama) . '-' . now()->format('Y-m-d') . '.xlsx'
+                )),
+        ];
     }
 
     public function form(Form $form): Form

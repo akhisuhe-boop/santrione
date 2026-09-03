@@ -88,27 +88,39 @@ class MonitoringMengajarResource extends BaseResource
 
                 /*
                 |--------------------------------------------------------------------------
-                | REALISASI JP
+                | REALISASI JP (MINGGU INI)
                 |--------------------------------------------------------------------------
+                |
+                | Dibatasi ke minggu berjalan (Senin-Minggu) -- Kewajiban JP
+                | di Kurikulum sifatnya MINGGUAN, jadi realisasinya juga
+                | HARUS dibatasi per minggu supaya perbandingannya masuk
+                | akal. Sebelumnya ini menjumlahkan SEMUA jurnal valid
+                | sejak awal (tanpa batas waktu), yang lama-lama jadi
+                | menyesatkan karena terus bertambah padahal kewajibannya
+                | tetap tiap minggu.
                 */
                 Tables\Columns\BadgeColumn::make('realisasi_jp')
-                ->label('Mengajar')
+                ->label('Mengajar (Minggu Ini)')
                 ->getStateUsing(function ($record) {
                     return \App\Models\JurnalMengajar::query()
                         ->where('jurnal_mengajars.pegawai_id', $record->id)
                         ->where('status', 'valid')
+                        ->whereBetween('jurnal_mengajars.tanggal', [
+                            now()->startOfWeek()->toDateString(),
+                            now()->endOfWeek()->toDateString(),
+                        ])
                         ->join('jadwal_pelajarans', 'jurnal_mengajars.jadwal_pelajaran_id', '=', 'jadwal_pelajarans.id')
                         ->sum('jadwal_pelajarans.durasi_jam') . ' JP';
                 })
                 ->color('success'),
                 /*
                 |--------------------------------------------------------------------------
-                | TIDAK MENGAJAR
+                | TIDAK MENGAJAR (MINGGU INI)
                 |--------------------------------------------------------------------------
                 */
 
                 Tables\Columns\BadgeColumn::make('kurang_jp')
-                ->label('Tidak Mengajar')
+                ->label('Tidak Mengajar (Minggu Ini)')
                 ->getStateUsing(function ($record) {
                     $kewajiban = \App\Models\Kurikulum::query()
                         ->where('pegawai_id', $record->id)
@@ -117,6 +129,10 @@ class MonitoringMengajarResource extends BaseResource
                     $realisasi = \App\Models\JurnalMengajar::query()
                         ->where('jurnal_mengajars.pegawai_id', $record->id)
                         ->where('status', 'valid')
+                        ->whereBetween('jurnal_mengajars.tanggal', [
+                            now()->startOfWeek()->toDateString(),
+                            now()->endOfWeek()->toDateString(),
+                        ])
                         ->join('jadwal_pelajarans', 'jurnal_mengajars.jadwal_pelajaran_id', '=', 'jadwal_pelajarans.id')
                         ->sum('jadwal_pelajarans.durasi_jam');
 
@@ -130,11 +146,11 @@ class MonitoringMengajarResource extends BaseResource
 
                 /*
                 |--------------------------------------------------------------------------
-                | PERSENTASE
+                | PERSENTASE (MINGGU INI)
                 |--------------------------------------------------------------------------
                 */
                 Tables\Columns\BadgeColumn::make('persentase')
-                    ->label('Persentase')
+                    ->label('Persentase (Minggu Ini)')
                     ->getStateUsing(function ($record) {
                         $kewajiban = \App\Models\Kurikulum::query()
                             ->where('pegawai_id', $record->id)
@@ -142,6 +158,10 @@ class MonitoringMengajarResource extends BaseResource
                         $realisasi = \App\Models\JurnalMengajar::query()
                             ->where('jurnal_mengajars.pegawai_id', $record->id)
                             ->where('status', 'valid')
+                            ->whereBetween('jurnal_mengajars.tanggal', [
+                                now()->startOfWeek()->toDateString(),
+                                now()->endOfWeek()->toDateString(),
+                            ])
                             ->join('jadwal_pelajarans', 'jurnal_mengajars.jadwal_pelajaran_id', '=', 'jadwal_pelajarans.id')
                             ->sum('jadwal_pelajarans.durasi_jam');
                         if ($kewajiban <= 0) {
