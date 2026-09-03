@@ -83,11 +83,16 @@ class MonitoringMengajarResource extends BaseResource
 
     /**
      * Kewajiban JP diskalakan proporsional sesuai panjang periode yang
-     * dipilih -- Kurikulum cuma nyimpen kewajiban PER MINGGU, jadi kalau
-     * periode-nya "Bulan Ini" (~4-5 minggu) atau custom range, kewajiban
-     * mingguan itu dikali jumlah minggu di rentang itu (hari / 7),
-     * supaya perbandingan ke realisasi tetap adil -- bukan lagi
-     * dibandingkan mentah-mentah ke angka mingguan tetap.
+     * dipilih -- Kurikulum cuma nyimpen kewajiban PER MINGGU (angka
+     * target dari admin, TIDAK berubah -- cuma cara SKALA-nya yang
+     * disesuaikan di sini).
+     *
+     * Skalanya dihitung dari HARI-HARI SEKOLAH AKTUAL guru itu sendiri
+     * (diambil dari jadwal_pelajarans miliknya) -- BUKAN asumsi tetap
+     * 5 atau 6 hari kerja. Jadi otomatis cocok baik buat sekolah biasa
+     * (mis. Senin-Sabtu) maupun sekolah full day 5 hari (Senin-Jumat),
+     * bahkan pola lain yang tidak standar -- tanpa perlu hardcode
+     * asumsi hari kerja per tenant.
      */
     public static function kewajibanJp(int $pegawaiId, array $periode): float
     {
@@ -95,10 +100,35 @@ class MonitoringMengajarResource extends BaseResource
             ->where('pegawai_id', $pegawaiId)
             ->sum('jumlah_jam_per_minggu');
 
-        $jumlahHari = \Carbon\Carbon::parse($periode[0])->diffInDays(\Carbon\Carbon::parse($periode[1])) + 1;
-        $jumlahMinggu = $jumlahHari / 7;
+        // Hari-hari (Senin..Sabtu) yang MEMANG dipakai guru ini,
+        // diambil dari jadwal_pelajarans miliknya sendiri -- bukan
+        // asumsi tetap.
+        $hariDipakai = \App\Models\JadwalPelajaran::query()
+            ->where('pegawai_id', $pegawaiId)
+            ->pluck('hari')
+            ->map(fn ($h) => strtolower($h))
+            ->unique()
+            ->values()
+            ->all();
 
-        return round($mingguanPerPegawai * $jumlahMinggu, 1);
+        // Guru belum punya jadwal sama sekali -- fallback 6 hari kerja
+        // (asumsi paling umum) supaya tidak divide-by-zero, sambil tetap
+        // hitung kewajiban walau realisasinya pasti 0.
+        $hariSekolahPerMinggu = count($hariDipakai) > 0 ? count($hariDipakai) : 6;
+
+        $periodeAwal = \Carbon\Carbon::parse($periode[0]);
+        $periodeAkhir = \Carbon\Carbon::parse($periode[1]);
+
+        $hariCocok = \Carbon\CarbonPeriod::create($periodeAwal, $periodeAkhir)
+            ->filter(function ($tanggal) use ($hariDipakai) {
+                $hariIni = strtolower($tanggal->locale('id')->dayName);
+                return empty($hariDipakai) || in_array($hariIni, $hariDipakai);
+            })
+            ->count();
+
+        $jumlahMingguSekolah = $hariCocok / $hariSekolahPerMinggu;
+
+        return round($mingguanPerPegawai * $jumlahMingguSekolah, 1);
     }
 
     public static function formatJp(float $jp): string
