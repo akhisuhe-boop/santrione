@@ -116,7 +116,7 @@
                                         ->where('pegawai_id', $this->record->id)
                                         ->where('kelas_id', $jadwal->kelas_id)
                                         ->where('mata_pelajaran_id', $jadwal->mata_pelajaran_id)
-                                        ->where('jam_ke', $jadwal->jam_ke)
+                                        ->where('jam_pelajaran_id', $jadwal->jam_pelajaran_id)
                                         ->whereDate('tanggal', $tanggal)
                                         ->where('status', 'valid')
                                         ->first();
