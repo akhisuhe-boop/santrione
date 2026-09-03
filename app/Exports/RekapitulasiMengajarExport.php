@@ -3,8 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Pegawai;
-use App\Models\Kurikulum;
-use App\Models\JurnalMengajar;
+use App\Filament\Resources\MonitoringMengajarResource;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithStyles;
@@ -26,33 +25,28 @@ class RekapitulasiMengajarExport implements FromCollection, WithHeadings, WithSt
 
     public function collection()
     {
-        $mulai = $this->mulai;
-        $selesai = $this->selesai;
+        $periode = [$this->mulai, $this->selesai];
 
+        // Pakai persis helper yang sama dengan tabel di layar (resolvePeriode/
+        // kewajibanJp/realisasiJp di MonitoringMengajarResource) supaya
+        // angkanya SELALU konsisten dengan yang tampil di admin panel --
+        // termasuk kewajiban yang sudah diskalakan sesuai panjang periode.
         return Pegawai::query()
             ->orderBy('nama')
             ->get()
-            ->map(function ($pegawai) use ($mulai, $selesai) {
+            ->map(function ($pegawai) use ($periode) {
 
-                $kewajiban = Kurikulum::query()
-                    ->where('pegawai_id', $pegawai->id)
-                    ->sum('jumlah_jam_per_minggu');
-
-                $realisasi = JurnalMengajar::query()
-                    ->where('jurnal_mengajars.pegawai_id', $pegawai->id)
-                    ->where('status', 'valid')
-                    ->whereBetween('jurnal_mengajars.tanggal', [$mulai, $selesai])
-                    ->join('jadwal_pelajarans', 'jurnal_mengajars.jadwal_pelajaran_id', '=', 'jadwal_pelajarans.id')
-                    ->sum('jadwal_pelajarans.durasi_jam');
+                $kewajiban = MonitoringMengajarResource::kewajibanJp($pegawai->id, $periode);
+                $realisasi = MonitoringMengajarResource::realisasiJp($pegawai->id, $periode);
 
                 $tidakMengajar = max($kewajiban - $realisasi, 0);
                 $persentase = $kewajiban > 0 ? round(($realisasi / $kewajiban) * 100) : 0;
 
                 return [
                     'guru' => $pegawai->nama,
-                    'kewajiban' => $kewajiban . ' JP',
-                    'mengajar' => $realisasi . ' JP',
-                    'tidak_mengajar' => $tidakMengajar . ' JP',
+                    'kewajiban' => MonitoringMengajarResource::formatJp($kewajiban),
+                    'mengajar' => MonitoringMengajarResource::formatJp($realisasi),
+                    'tidak_mengajar' => MonitoringMengajarResource::formatJp($tidakMengajar),
                     'persentase' => $persentase . '%',
                 ];
             });

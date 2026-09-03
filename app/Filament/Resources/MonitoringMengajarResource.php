@@ -71,7 +71,7 @@ class MonitoringMengajarResource extends BaseResource
         return [now()->startOfWeek()->toDateString(), now()->endOfWeek()->toDateString()];
     }
 
-    protected static function realisasiJp(int $pegawaiId, array $periode): int
+    public static function realisasiJp(int $pegawaiId, array $periode): int
     {
         return (int) JurnalMengajar::query()
             ->where('jurnal_mengajars.pegawai_id', $pegawaiId)
@@ -79,6 +79,35 @@ class MonitoringMengajarResource extends BaseResource
             ->whereBetween('jurnal_mengajars.tanggal', $periode)
             ->join('jadwal_pelajarans', 'jurnal_mengajars.jadwal_pelajaran_id', '=', 'jadwal_pelajarans.id')
             ->sum('jadwal_pelajarans.durasi_jam');
+    }
+
+    /**
+     * Kewajiban JP diskalakan proporsional sesuai panjang periode yang
+     * dipilih -- Kurikulum cuma nyimpen kewajiban PER MINGGU, jadi kalau
+     * periode-nya "Bulan Ini" (~4-5 minggu) atau custom range, kewajiban
+     * mingguan itu dikali jumlah minggu di rentang itu (hari / 7),
+     * supaya perbandingan ke realisasi tetap adil -- bukan lagi
+     * dibandingkan mentah-mentah ke angka mingguan tetap.
+     */
+    public static function kewajibanJp(int $pegawaiId, array $periode): float
+    {
+        $mingguanPerPegawai = \App\Models\Kurikulum::query()
+            ->where('pegawai_id', $pegawaiId)
+            ->sum('jumlah_jam_per_minggu');
+
+        $jumlahHari = \Carbon\Carbon::parse($periode[0])->diffInDays(\Carbon\Carbon::parse($periode[1])) + 1;
+        $jumlahMinggu = $jumlahHari / 7;
+
+        return round($mingguanPerPegawai * $jumlahMinggu, 1);
+    }
+
+    public static function formatJp(float $jp): string
+    {
+        // Tampilkan tanpa desimal kalau bulat (mis. "8 JP"), tampilkan
+        // 1 angka di belakang koma kalau pecahan (mis. "34.3 JP") --
+        // wajar terjadi karena skala minggu bisa pecahan (custom range
+        // yang tidak persis kelipatan 7 hari).
+        return (floor($jp) == $jp ? (int) $jp : $jp) . ' JP';
     }
 
     /*
@@ -113,10 +142,9 @@ class MonitoringMengajarResource extends BaseResource
                 */
                 Tables\Columns\BadgeColumn::make('kewajiban_jp')
                 ->label('Kewajiban JP')
-                ->getStateUsing(function ($record) {
-                    return \App\Models\Kurikulum::query()
-                        ->where('pegawai_id', $record->id)
-                        ->sum('jumlah_jam_per_minggu') . ' JP';
+                ->getStateUsing(function ($record, $livewire) {
+                    $periode = static::resolvePeriode($livewire->tableFilters['periode'] ?? null);
+                    return static::formatJp(static::kewajibanJp($record->id, $periode));
                 })
                 ->color('primary'),
 
@@ -147,16 +175,13 @@ class MonitoringMengajarResource extends BaseResource
                 ->getStateUsing(function ($record, $livewire) {
                     $periode = static::resolvePeriode($livewire->tableFilters['periode'] ?? null);
 
-                    $kewajiban = \App\Models\Kurikulum::query()
-                        ->where('pegawai_id', $record->id)
-                        ->sum('jumlah_jam_per_minggu');
-
+                    $kewajiban = static::kewajibanJp($record->id, $periode);
                     $realisasi = static::realisasiJp($record->id, $periode);
 
-                    return max($kewajiban - $realisasi, 0) . ' JP';
+                    return static::formatJp(max($kewajiban - $realisasi, 0));
                 })
                 ->color(fn ($state) =>
-                    (int) str_replace(' JP', '', $state) > 0
+                    (float) str_replace(' JP', '', $state) > 0
                         ? 'danger'
                         : 'success'
                 ),
@@ -171,10 +196,7 @@ class MonitoringMengajarResource extends BaseResource
                     ->getStateUsing(function ($record, $livewire) {
                         $periode = static::resolvePeriode($livewire->tableFilters['periode'] ?? null);
 
-                        $kewajiban = \App\Models\Kurikulum::query()
-                            ->where('pegawai_id', $record->id)
-                            ->sum('jumlah_jam_per_minggu');
-
+                        $kewajiban = static::kewajibanJp($record->id, $periode);
                         $realisasi = static::realisasiJp($record->id, $periode);
 
                         if ($kewajiban <= 0) {
