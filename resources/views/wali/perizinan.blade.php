@@ -169,7 +169,9 @@
     </div>
 
     {{-- ================= RIWAYAT (STYLE SAMA PELANGGARAN KAMU) ================= --}}
-    <div class="bg-white rounded-[28px] border border-slate-100 shadow-sm overflow-hidden">
+    <div
+        x-data="{ showAll: false }"
+        class="bg-white rounded-[28px] border border-slate-100 shadow-sm overflow-hidden">
 
         {{-- HEADER --}}
         <div class="px-5 py-4 border-b border-slate-100 bg-[#00A39D]/5">
@@ -381,8 +383,8 @@
         {{-- SHOW ALL --}}
         @if($perizinans->count() > 3)
             <button @click="showAll = !showAll"
-                class="w-full py-3 text-sm text-[#00A39D] font-medium">
-                {{ showAll ? 'Tampilkan Sedikit' : 'Tampilkan Semua' }}
+                class="w-full py-3 text-sm text-[#00A39D] font-medium"
+                x-text="showAll ? 'Tampilkan Sedikit' : 'Tampilkan Semua'">
             </button>
         @endif
 
