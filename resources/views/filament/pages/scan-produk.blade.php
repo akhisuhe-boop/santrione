@@ -180,7 +180,7 @@
                         Barcode <b>{{ $barcodeBaru }}</b> belum pernah terdaftar — isi detailnya untuk daftarkan sebagai produk baru.
                     </p>
 
-                    <div style="display:grid; gap:14px;">
+                    <div class="grid grid-cols-1 sm:grid-cols-2" style="gap:14px;">
 
                         <div>
                             <label class="sp-label">Nama Produk</label>
