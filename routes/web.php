@@ -186,6 +186,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/kartu-pegawai', [KartuController::class, 'cetakPegawai'])
         ->name('kartu.pegawai');
 
+    Route::get('/kantin-produk/cetak-barcode', [\App\Http\Controllers\KantinBarcodeController::class, 'index'])
+        ->name('kantin-produk.cetak-barcode');
+
     Route::get('/raport/pdf/{siswa}', [PrintRaportController::class, 'generate'])
         ->name('raport.pdf');
 });

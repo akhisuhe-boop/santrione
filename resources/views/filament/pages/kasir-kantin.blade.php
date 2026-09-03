@@ -53,7 +53,47 @@
         }
     </style>
 
-    @if (! $kantinTerpilih)
+    @if ($kantinMenungguPin)
+
+        {{-- INPUT PIN KANTIN --}}
+        <x-filament::section>
+            <x-slot name="heading">
+                <div class="kk-row kk-gap-2">
+                    <x-heroicon-o-lock-closed style="width:20px;height:20px;" />
+                    Masukkan PIN Kantin
+                </div>
+            </x-slot>
+
+            <div class="kk-section-body" style="padding-top:8px;">
+
+                <p class="kk-hint" style="margin-top:0; margin-bottom:14px;">
+                    Kantin <b>{{ $daftarKantin[$kantinMenungguPin] ?? '' }}</b> dilindungi PIN. Masukkan PIN-nya untuk mulai bertransaksi.
+                </p>
+
+                <input
+                    type="password"
+                    inputmode="numeric"
+                    wire:model="pinInput"
+                    wire:keydown.enter="verifikasiPin"
+                    class="kk-input"
+                    autocomplete="off"
+                    autofocus
+                    placeholder="Masukkan PIN...">
+
+                <div class="kk-row kk-gap-3" style="margin-top:16px;">
+                    <x-filament::button wire:click="verifikasiPin" icon="heroicon-o-check" style="flex:1; justify-content:center;">
+                        Konfirmasi
+                    </x-filament::button>
+
+                    <x-filament::button color="gray" outlined wire:click="batalPin" icon="heroicon-o-x-mark">
+                        Batal
+                    </x-filament::button>
+                </div>
+
+            </div>
+        </x-filament::section>
+
+    @elseif (! $kantinTerpilih)
 
         {{-- PILIH KANTIN --}}
         <x-filament::section>

@@ -21,6 +21,7 @@ class Kantin extends Model
         'nama',
         'is_active',
         'limit_tunai_kantin_harian',
+        'pin',
     ];
 
     protected function casts(): array
@@ -38,6 +39,23 @@ class Kantin extends Model
                     ?? auth()->user()?->yayasan_id;
             }
         });
+
+        // PIN disimpan hash, bukan plain text -- di-hash otomatis tiap
+        // kali diisi/diubah (baik saat create maupun update).
+        static::saving(function (self $kantin) {
+            if ($kantin->isDirty('pin') && filled($kantin->pin) && ! \Illuminate\Support\Facades\Hash::isHashed($kantin->pin)) {
+                $kantin->pin = \Illuminate\Support\Facades\Hash::make($kantin->pin);
+            }
+        });
+    }
+
+    public function cekPin(string $pin): bool
+    {
+        if (blank($this->pin)) {
+            return true; // kantin tanpa PIN -- bebas dipilih siapa saja
+        }
+
+        return \Illuminate\Support\Facades\Hash::check($pin, $this->pin);
     }
 
     // Tag opsional -- bukan scoping wajib. Kosong berarti kantin ini

@@ -16,7 +16,7 @@ class KantinProdukResource extends BaseResource
     protected static ?string $navigationGroup = 'e-Kantin';
     protected static ?string $navigationLabel = 'Produk';
     protected static ?string $navigationIcon = 'heroicon-o-shopping-bag';
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
     {
@@ -278,10 +278,30 @@ class KantinProdukResource extends BaseResource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
+
+                Tables\Actions\Action::make('cetakBarcode')
+                    ->label('Cetak Barcode')
+                    ->icon('heroicon-o-qr-code')
+                    ->color('gray')
+                    ->visible(fn ($record) => filled($record->barcode))
+                    ->url(fn ($record) => route('kantin-produk.cetak-barcode', ['ids' => $record->id]))
+                    ->openUrlInNewTab(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+
+                    Tables\Actions\BulkAction::make('cetakBarcodeMassal')
+                        ->label('Cetak Barcode')
+                        ->icon('heroicon-o-qr-code')
+                        ->color('gray')
+                        ->action(function ($records) {
+                            $ids = $records->pluck('id')->join(',');
+
+                            return redirect()->route('kantin-produk.cetak-barcode', [
+                                'ids' => $ids,
+                            ]);
+                        }),
                 ]),
             ]);
     }

@@ -17,7 +17,7 @@ class KasirKantin extends Page
     protected static ?string $navigationLabel = 'Kasir';
     protected static ?string $title = 'Kasir Kantin';
     protected static ?string $navigationIcon = 'heroicon-o-calculator';
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 3;
 
     protected static string $view = 'filament.pages.kasir-kantin';
 
@@ -40,9 +40,15 @@ class KasirKantin extends Page
     public array $daftarKantin = [];
 
     // Kantin yang lagi dioperasikan kasir ini. Null = belum pilih (kalau
-    // cuma ada 1 kantin aktif, otomatis kepilih di mount() tanpa perlu
-    // tanya kasir).
+    // cuma ada 1 kantin aktif TANPA PIN, otomatis kepilih di mount()
+    // tanpa perlu tanya kasir).
     public ?int $kantinTerpilih = null;
+
+    // Kantin yang lagi menunggu PIN dikonfirmasi (beda dari
+    // kantinTerpilih -- baru pindah ke kantinTerpilih setelah PIN-nya
+    // benar). Null = tidak ada yang lagi diverifikasi.
+    public ?int $kantinMenungguPin = null;
+    public string $pinInput = '';
 
     // Data siswa yang lagi discan (null = belum ada siswa dipilih)
     public ?array $siswaTerpilih = null;
@@ -76,11 +82,19 @@ class KasirKantin extends Page
 
         $this->daftarKantin = $kantins->pluck('nama', 'id')->all();
 
-        // Cuma 1 kantin aktif -- langsung dipakai, tidak perlu tanya
-        // kasir dulu (supaya kasus paling umum, 1 sekolah 1 kantin,
-        // tetap secepat sebelumnya).
+        // Cuma 1 kantin aktif -- langsung dipakai TANPA tanya kasir dulu,
+        // KECUALI kantin itu punya PIN (PIN tetap wajib diverifikasi
+        // walau cuma ada 1 pilihan -- PIN bukan cuma soal navigasi, tapi
+        // soal keamanan).
         if ($kantins->count() === 1) {
-            $this->kantinTerpilih = $kantins->first()->id;
+
+            $satuSatunya = $kantins->first();
+
+            if (blank($satuSatunya->pin)) {
+                $this->aktifkanKantin($satuSatunya->id);
+            } else {
+                $this->kantinMenungguPin = $satuSatunya->id;
+            }
         }
 
         $this->muatLimitTunai();
@@ -92,6 +106,65 @@ class KasirKantin extends Page
             return;
         }
 
+        $kantin = Kantin::find($kantinId);
+
+        if (! $kantin) {
+            return;
+        }
+
+        if (blank($kantin->pin)) {
+            $this->aktifkanKantin($kantinId);
+            return;
+        }
+
+        // Kantin ini punya PIN -- tampilkan layar input PIN dulu,
+        // belum benar-benar diaktifkan.
+        $this->kantinMenungguPin = $kantinId;
+        $this->pinInput = '';
+    }
+
+    public function verifikasiPin(): void
+    {
+        if (! $this->kantinMenungguPin) {
+            return;
+        }
+
+        $kantin = Kantin::find($this->kantinMenungguPin);
+
+        if (! $kantin || ! $kantin->cekPin($this->pinInput)) {
+            $this->pinInput = '';
+
+            Notification::make()
+                ->title('PIN salah')
+                ->body('Coba lagi, atau hubungi admin kalau lupa PIN kantin ini.')
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        $kantinId = $this->kantinMenungguPin;
+        $this->kantinMenungguPin = null;
+        $this->pinInput = '';
+
+        $this->aktifkanKantin($kantinId);
+    }
+
+    /**
+     * Batal verifikasi PIN, kembali ke layar pilih kantin.
+     */
+    public function batalPin(): void
+    {
+        $this->kantinMenungguPin = null;
+        $this->pinInput = '';
+    }
+
+    /**
+     * Benar-benar mengaktifkan 1 kantin sebagai yang dioperasikan kasir
+     * ini -- dipanggil setelah lolos (atau tidak perlu) verifikasi PIN.
+     */
+    protected function aktifkanKantin(int $kantinId): void
+    {
         $this->kantinTerpilih = $kantinId;
         $this->cart = [];
         $this->siswaTerpilih = null;
@@ -108,6 +181,8 @@ class KasirKantin extends Page
     public function gantiKantin(): void
     {
         $this->kantinTerpilih = null;
+        $this->kantinMenungguPin = null;
+        $this->pinInput = '';
         $this->cart = [];
         $this->siswaTerpilih = null;
         $this->modeTunai = false;

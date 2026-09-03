@@ -18,7 +18,7 @@ class KantinResource extends BaseResource
     protected static ?string $modelLabel = 'Kantin';
     protected static ?string $pluralModelLabel = 'Kantin';
     protected static ?string $navigationIcon = 'heroicon-o-building-storefront';
-    protected static ?int $navigationSort = -1;
+    protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
     {
@@ -51,6 +51,14 @@ class KantinResource extends BaseResource
                             ->default(true)
                             ->helperText('Kantin nonaktif tidak akan muncul buat dipilih di halaman Kasir.'),
 
+                        Forms\Components\TextInput::make('pin')
+                            ->label('PIN Kasir (opsional)')
+                            ->password()
+                            ->revealable()
+                            ->maxLength(20)
+                            ->dehydrated(fn ($state) => filled($state))
+                            ->helperText('Kalau diisi, kasir wajib masukkan PIN ini dulu sebelum bisa mengoperasikan kantin ini. Kosongkan untuk hapus PIN (kantin bisa langsung dipilih tanpa verifikasi). PIN lama tidak ditampilkan lagi di sini demi keamanan -- isi ulang kalau mau ganti.'),
+
                     ])
                     ->columns(2),
 
@@ -76,6 +84,11 @@ class KantinResource extends BaseResource
 
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Aktif')
+                    ->boolean(),
+
+                Tables\Columns\IconColumn::make('pin')
+                    ->label('Ada PIN')
+                    ->getStateUsing(fn ($record) => filled($record->pin))
                     ->boolean(),
 
             ]);
