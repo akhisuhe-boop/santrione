@@ -246,15 +246,32 @@ class WaliDashboardController extends Controller
         );
     }
 
-    public function perizinan()
+    public function perizinan(Request $request)
     {
         $siswa = Siswa::findOrFail(session('siswa_id'));
 
+        // Periode -- default bulan berjalan, sama seperti Absensi Santri.
+        $bulan = (int) $request->query('bulan', now()->month);
+        $tahun = (int) $request->query('tahun', now()->year);
+
         $perizinans = Perizinan::where('siswa_id', $siswa->id)
+            ->whereMonth('tanggal_mulai', $bulan)
+            ->whereYear('tanggal_mulai', $tahun)
             ->latest()
             ->get();
 
-        return view('wali.perizinan', compact('siswa', 'perizinans'));
+        // Total izin yang benar-benar DISETUJUI admin bulan ini --
+        // bukan lagi total semua pengajuan (termasuk yang masih pending
+        // atau ditolak).
+        $totalIzinDisetujui = $perizinans->where('status', 'approved')->count();
+
+        return view('wali.perizinan', compact(
+            'siswa',
+            'perizinans',
+            'bulan',
+            'tahun',
+            'totalIzinDisetujui'
+        ));
     }
 
     public function storePerizinan(Request $request)

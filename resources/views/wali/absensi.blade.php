@@ -41,33 +41,6 @@
     $namaBulan = \Carbon\Carbon::create()->month($bulan)->translatedFormat('F');
     @endphp
 
-    {{-- PILIH PERIODE --}}
-    <div class="flex items-center justify-between mb-4">
-
-        <a
-            href="{{ route('wali.absensi', ['bulan' => $bulan == 1 ? 12 : $bulan - 1, 'tahun' => $bulan == 1 ? $tahun - 1 : $tahun]) }}"
-            class="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50">
-            <x-heroicon-o-chevron-left class="w-4 h-4"/>
-        </a>
-
-        <div class="font-semibold text-slate-900 text-sm">
-            {{ $namaBulan }} {{ $tahun }}
-        </div>
-
-        @php
-            $bulanDepan = $bulan == 12 ? 1 : $bulan + 1;
-            $tahunDepan = $bulan == 12 ? $tahun + 1 : $tahun;
-            $bukanBulanDepan = \Carbon\Carbon::create($tahunDepan, $bulanDepan, 1)->startOfMonth()->gt(now()->startOfMonth());
-        @endphp
-
-        <a
-            href="{{ $bukanBulanDepan ? '#' : route('wali.absensi', ['bulan' => $bulanDepan, 'tahun' => $tahunDepan]) }}"
-            class="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center {{ $bukanBulanDepan ? 'text-slate-200 pointer-events-none' : 'text-slate-500 hover:bg-slate-50' }}">
-            <x-heroicon-o-chevron-right class="w-4 h-4"/>
-        </a>
-
-    </div>
-
 {{-- HERO HEADER --}}
 <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#00A39D] via-[#00B4AC] to-[#14C8C0] p-6 text-white shadow-lg mb-5">
 
@@ -111,6 +84,33 @@
         </div>
 
     </div>
+</div>
+
+{{-- PILIH PERIODE --}}
+<div class="flex items-center justify-between mb-4">
+
+    <a
+        href="{{ route('wali.absensi', ['bulan' => $bulan == 1 ? 12 : $bulan - 1, 'tahun' => $bulan == 1 ? $tahun - 1 : $tahun]) }}"
+        class="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50">
+        <x-heroicon-o-chevron-left class="w-4 h-4"/>
+    </a>
+
+    <div class="font-semibold text-slate-900 text-sm">
+        {{ $namaBulan }} {{ $tahun }}
+    </div>
+
+    @php
+        $bulanDepan = $bulan == 12 ? 1 : $bulan + 1;
+        $tahunDepan = $bulan == 12 ? $tahun + 1 : $tahun;
+        $bukanBulanDepan = \Carbon\Carbon::create($tahunDepan, $bulanDepan, 1)->startOfMonth()->gt(now()->startOfMonth());
+    @endphp
+
+    <a
+        href="{{ $bukanBulanDepan ? '#' : route('wali.absensi', ['bulan' => $bulanDepan, 'tahun' => $tahunDepan]) }}"
+        class="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center {{ $bukanBulanDepan ? 'text-slate-200 pointer-events-none' : 'text-slate-500 hover:bg-slate-50' }}">
+        <x-heroicon-o-chevron-right class="w-4 h-4"/>
+    </a>
+
 </div>
 
 

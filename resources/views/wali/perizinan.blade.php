@@ -28,9 +28,9 @@
             <div class="mt-4 grid grid-cols-2 gap-3">
 
                 <div class="rounded-2xl bg-white/10 border border-white/10 p-3">
-                    <div class="text-xs text-white/70">Total Pengajuan</div>
+                    <div class="text-xs text-white/70">Izin Disetujui</div>
                     <div class="text-2xl font-bold mt-1">
-                        {{ $perizinans->count() }}
+                        {{ $totalIzinDisetujui }}
                     </div>
                 </div>
 
@@ -43,6 +43,33 @@
 
             </div>
         </div>
+    </div>
+
+    {{-- PILIH PERIODE --}}
+    @php
+        $namaBulanIzin = \Carbon\Carbon::create()->month($bulan)->translatedFormat('F');
+        $bulanDepanIzin = $bulan == 12 ? 1 : $bulan + 1;
+        $tahunDepanIzin = $bulan == 12 ? $tahun + 1 : $tahun;
+        $bukanBulanDepanIzin = \Carbon\Carbon::create($tahunDepanIzin, $bulanDepanIzin, 1)->startOfMonth()->gt(now()->startOfMonth());
+    @endphp
+    <div class="flex items-center justify-between">
+
+        <a
+            href="{{ route('wali.perizinan', ['bulan' => $bulan == 1 ? 12 : $bulan - 1, 'tahun' => $bulan == 1 ? $tahun - 1 : $tahun]) }}"
+            class="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50">
+            <x-heroicon-o-chevron-left class="w-4 h-4"/>
+        </a>
+
+        <div class="font-semibold text-slate-900 text-sm">
+            {{ $namaBulanIzin }} {{ $tahun }}
+        </div>
+
+        <a
+            href="{{ $bukanBulanDepanIzin ? '#' : route('wali.perizinan', ['bulan' => $bulanDepanIzin, 'tahun' => $tahunDepanIzin]) }}"
+            class="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center {{ $bukanBulanDepanIzin ? 'text-slate-200 pointer-events-none' : 'text-slate-500 hover:bg-slate-50' }}">
+            <x-heroicon-o-chevron-right class="w-4 h-4"/>
+        </a>
+
     </div>
 
     {{-- FORM --}}
