@@ -91,9 +91,21 @@ class PublicRegistrationController extends Controller
                 'guard_name' => 'web',
             ]);
 
-            if ($role->wasRecentlyCreated) {
-                $role->syncPermissions(Permission::all());
-            }
+            // SEBELUMNYA cuma sync permission kalau role ini BARU
+            // dibuat (wasRecentlyCreated) -- artinya cuma yayasan
+            // PERTAMA yang pernah daftar di seluruh sistem yang dapat
+            // permission lengkap. Role "Admin Yayasan" ini SATU & sama
+            // dipakai SEMUA yayasan (tidak per-tenant), jadi begitu ada
+            // fitur baru ditambahkan ke sistem (Perizinan, Tahfidz,
+            // e-Kantin, dst), yayasan yang daftar BELAKANGAN dapat role
+            // yang permission-nya ketinggalan -- sampai akhirnya
+            // Dashboard & hampir semua halaman menolak akses sama
+            // sekali (404 waktu buka /admin/{slug} pertama kali,
+            // ditemukan 5 Sep 2026). Sekarang SELALU disinkronkan ulang
+            // ke permission TERKINI tiap kali ada yang daftar --
+            // otomatis juga menguntungkan yayasan LAMA yang pakai role
+            // yang sama ini (langsung dapat akses fitur baru juga).
+            $role->syncPermissions(Permission::all());
 
             $admin->assignRole($role);
 
