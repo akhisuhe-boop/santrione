@@ -5,72 +5,52 @@
 
         {{-- CARD --}}
         <div
-            style="
-                border-radius:16px;
-                background:white;
-                border:1px solid #e5e7eb;
-            "
-            class="p-6 shadow-sm"
+            class="p-6 shadow-sm rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700"
         >
-            <div class="text-sm text-gray-500 font-medium">
+            <div class="text-sm text-gray-500 dark:text-gray-400 font-medium">
                 Mata Pelajaran
             </div>
 
-            <div class="mt-1 text-xl font-bold text-gray-950">
+            <div class="mt-1 text-xl font-bold text-gray-950 dark:text-white">
                 {{ $this->mapel->nama }}
             </div>
         </div>
 
         {{-- CARD --}}
         <div
-            style="
-                border-radius:16px;
-                background:white;
-                border:1px solid #e5e7eb;
-            "
-            class="p-6 shadow-sm"
+            class="p-6 shadow-sm rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700"
         >
-            <div class="text-sm text-gray-500 font-medium">
+            <div class="text-sm text-gray-500 dark:text-gray-400 font-medium">
                 Kelas
             </div>
 
-            <div class="mt-1 text-xl font-bold text-gray-950">
+            <div class="mt-1 text-xl font-bold text-gray-950 dark:text-white">
                 {{ $this->kelas->nama }}
             </div>
         </div>
 
         {{-- CARD --}}
         <div
-            style="
-                border-radius:16px;
-                background:white;
-                border:1px solid #e5e7eb;
-            "
-            class="p-6 shadow-sm"
+            class="p-6 shadow-sm rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700"
         >
-            <div class="text-sm text-gray-500 font-medium">
+            <div class="text-sm text-gray-500 dark:text-gray-400 font-medium">
                 Guru Pengampu
             </div>
 
-            <div class="mt-1 text-xl font-bold leading-snug text-gray-950">
+            <div class="mt-1 text-xl font-bold leading-snug text-gray-950 dark:text-white">
                 {{ $this->guru }}
             </div>
         </div>
 
         {{-- CARD --}}
         <div
-            style="
-                border-radius:16px;
-                background:white;
-                border:1px solid #e5e7eb;
-            "
-            class="p-6 shadow-sm"
+            class="p-6 shadow-sm rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700"
         >
-            <div class="text-sm text-gray-500 font-medium">
+            <div class="text-sm text-gray-500 dark:text-gray-400 font-medium">
                 Tahun Ajaran
             </div>
 
-            <div class="mt-1 text-xl font-bold text-gray-950">
+            <div class="mt-1 text-xl font-bold text-gray-950 dark:text-white">
                 {{ $this->tahunAjaran->nama }}
                 -
                 {{ ucfirst($this->tahunAjaran->semester) }}
@@ -148,8 +128,8 @@
         class="
             mt-5
             border
-            border-gray-200
-            bg-white
+            border-gray-200 dark:border-gray-700
+            bg-white dark:bg-gray-900
             shadow-sm
         "
     >
@@ -171,7 +151,7 @@
             >
 
                 {{-- HEADER --}}
-                <thead class="bg-gray-50">
+                <thead class="bg-gray-50 dark:bg-gray-800">
 
                     <tr>
 
@@ -180,22 +160,22 @@
                             class="
                                 rounded-tl-[24px]
                                 border-b
-                                border-gray-200
+                                border-gray-200 dark:border-gray-700
                                 px-6
                                 py-3
                                 text-left
                                 text-sm
                                 font-bold
-                                text-gray-900
+                                text-gray-900 dark:text-gray-100
                             "
                         >
                             Nama Siswa
                         </th>
 
                         {{-- TUGAS --}}
-                        <th class="border-b border-gray-200 px-4 py-3 text-center">
+                        <th class="border-b border-gray-200 dark:border-gray-700 px-4 py-3 text-center">
 
-                            <div class="text-sm font-bold text-gray-900">
+                            <div class="text-sm font-bold text-gray-900 dark:text-gray-100">
                                 Tugas
                             </div>
 
@@ -214,9 +194,9 @@
                         </th>
 
                         {{-- HARIAN --}}
-                        <th class="border-b border-gray-200 px-4 py-3 text-center">
+                        <th class="border-b border-gray-200 dark:border-gray-700 px-4 py-3 text-center">
 
-                            <div class="text-sm font-bold text-gray-900">
+                            <div class="text-sm font-bold text-gray-900 dark:text-gray-100">
                                 Harian
                             </div>
 
@@ -235,9 +215,9 @@
                         </th>
 
                         {{-- UTS --}}
-                        <th class="border-b border-gray-200 px-4 py-3 text-center">
+                        <th class="border-b border-gray-200 dark:border-gray-700 px-4 py-3 text-center">
 
-                            <div class="text-sm font-bold text-gray-900">
+                            <div class="text-sm font-bold text-gray-900 dark:text-gray-100">
                                 UTS
                             </div>
 
@@ -256,9 +236,9 @@
                         </th>
 
                         {{-- UAS --}}
-                        <th class="border-b border-gray-200 px-4 py-3 text-center">
+                        <th class="border-b border-gray-200 dark:border-gray-700 px-4 py-3 text-center">
 
-                            <div class="text-sm font-bold text-gray-900">
+                            <div class="text-sm font-bold text-gray-900 dark:text-gray-100">
                                 UAS
                             </div>
 
@@ -280,7 +260,7 @@
                         <th
                             class="
                                 border-b
-                                border-gray-200
+                                border-gray-200 dark:border-gray-700
                                 px-4
                                 py-3
                                 text-center
@@ -295,7 +275,7 @@
                         <th
                             class="
                                 border-b
-                                border-gray-200
+                                border-gray-200 dark:border-gray-700
                                 px-4
                                 py-3
                                 text-center
@@ -311,7 +291,7 @@
                             class="
                                 rounded-tr-[24px]
                                 border-b
-                                border-gray-200
+                                border-gray-200 dark:border-gray-700
                                 px-4
                                 py-3
                                 text-center
@@ -327,7 +307,7 @@
                 </thead>
 
                 {{-- BODY --}}
-                <tbody class="bg-white divide-y divide-gray-100">
+                <tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-100 dark:divide-gray-700">
 
                     @foreach ($siswas as $siswa)
 
@@ -337,7 +317,7 @@
                                 {{
                                     $siswa['status'] == 'Belum Lengkap'
                                         ? 'bg-danger-50/30'
-                                        : 'hover:bg-gray-50'
+                                        : 'hover:bg-gray-50 dark:hover:bg-gray-800'
                                 }}
                             "
                         >
@@ -481,7 +461,7 @@
                 </tbody>
 
                 {{-- FOOTER --}}
-                <tfoot class="bg-gray-50">
+                <tfoot class="bg-gray-50 dark:bg-gray-800">
 
                     <tr>
 
@@ -489,8 +469,8 @@
                             colspan="8"
                             class="
                                 border-t
-                                border-gray-200
-                                bg-gray-100
+                                border-gray-200 dark:border-gray-700
+                                bg-gray-100 dark:bg-gray-800
                                 px-6
                                 py-2.5
                                 text-sm
@@ -502,7 +482,7 @@
 
                     </tr>
 
-                    <tr class="bg-white">
+                    <tr class="bg-white dark:bg-gray-900">
 
                         {{-- LABEL --}}
                         <td
@@ -519,7 +499,7 @@
 
                         {{-- TUGAS --}}
                         <td class="px-3 py-2.5 text-center">
-                            <div class="text-xs text-gray-500">
+                            <div class="text-xs text-gray-500 dark:text-gray-400">
                                 Tugas
                             </div>
 
@@ -530,7 +510,7 @@
 
                         {{-- HARIAN --}}
                         <td class="px-3 py-2.5 text-center">
-                            <div class="text-xs text-gray-500">
+                            <div class="text-xs text-gray-500 dark:text-gray-400">
                                 Harian
                             </div>
 
@@ -541,7 +521,7 @@
 
                         {{-- UTS --}}
                         <td class="px-3 py-2.5 text-center">
-                            <div class="text-xs text-gray-500">
+                            <div class="text-xs text-gray-500 dark:text-gray-400">
                                 UTS
                             </div>
 
@@ -552,7 +532,7 @@
 
                         {{-- UAS --}}
                         <td class="px-3 py-2.5 text-center">
-                            <div class="text-xs text-gray-500">
+                            <div class="text-xs text-gray-500 dark:text-gray-400">
                                 UAS
                             </div>
 
@@ -563,7 +543,7 @@
 
                         {{-- NILAI AKHIR --}}
                         <td class="px-3 py-2.5 text-center">
-                            <div class="text-xs text-gray-500">
+                            <div class="text-xs text-gray-500 dark:text-gray-400">
                                 Nilai Akhir
                             </div>
 

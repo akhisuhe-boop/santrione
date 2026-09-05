@@ -10,19 +10,14 @@
 
             {{-- HEADER --}}
             <div
-                style="
-                    border-radius:16px;
-                    background:white;
-                    border:1px solid #e5e7eb;
-                "
-                class="overflow-hidden shadow-sm"
+                                class="overflow-hidden shadow-sm rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700"
             >
 
                 {{-- TOP --}}
                 <div
                     class="
                         border-b
-                        border-gray-100
+                        border-gray-100 dark:border-gray-700
                         px-6
                         py-5
                     "
@@ -42,7 +37,7 @@
                                 class="
                                     text-2xl
                                     font-bold
-                                    text-gray-900
+                                    text-gray-900 dark:text-gray-100
                                 "
                             >
                                 Raport Siswa
@@ -52,7 +47,7 @@
                                 class="
                                     mt-1
                                     text-sm
-                                    text-gray-500
+                                    text-gray-500 dark:text-gray-400
                                 "
                             >
                                 Rekap nilai akademik dan non akademik siswa
@@ -94,7 +89,7 @@
                                     font-medium
                                     uppercase
                                     tracking-wide
-                                    text-gray-500
+                                    text-gray-500 dark:text-gray-400
                                 "
                             >
                                 Nama Siswa
@@ -106,7 +101,7 @@
                                     text-lg
                                     font-black
                                     tracking-tight
-                                    text-gray-900
+                                    text-gray-900 dark:text-gray-100
                                 "
                             >
                                 {{ $siswa->nama_lengkap }}
@@ -122,7 +117,7 @@
                                     font-medium
                                     uppercase
                                     tracking-wide
-                                    text-gray-500
+                                    text-gray-500 dark:text-gray-400
                                 "
                             >
                                 Kelas
@@ -134,7 +129,7 @@
                                     text-lg
                                     font-black
                                     tracking-tight
-                                    text-gray-900
+                                    text-gray-900 dark:text-gray-100
                                 "
                             >
                                 {{ $siswa->kelas->nama ?? '-' }}
@@ -150,7 +145,7 @@
                                     font-medium
                                     uppercase
                                     tracking-wide
-                                    text-gray-500
+                                    text-gray-500 dark:text-gray-400
                                 "
                             >
                                 Semester
@@ -162,7 +157,7 @@
                                     text-lg
                                     font-black
                                     tracking-tight
-                                    text-gray-900
+                                    text-gray-900 dark:text-gray-100
                                 "
                             >
                                 {{ ucfirst($tahunAjaran->semester ?? '-') }}
@@ -178,7 +173,7 @@
                                     font-medium
                                     uppercase
                                     tracking-wide
-                                    text-gray-500
+                                    text-gray-500 dark:text-gray-400
                                 "
                             >
                                 Tahun Ajaran
@@ -190,7 +185,7 @@
                                     text-lg
                                     font-black
                                     tracking-tight
-                                    text-gray-900
+                                    text-gray-900 dark:text-gray-100
                                 "
                             >
                                 {{ $tahunAjaran->nama ?? '-' }}
@@ -245,19 +240,14 @@
     @foreach ($cards as $card)
 
         <div
-            style="
-                border-radius:16px;
-                background:white;
-                border:1px solid #e5e7eb;
-            "
-            class="flex-1 p-6 shadow-sm"
+                        class="flex-1 p-6 shadow-sm rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700"
         >
 
             <div
                 class="
                     text-sm
                     font-medium
-                    text-gray-500
+                    text-gray-500 dark:text-gray-400
                 "
             >
                 {{ $card['title'] }}
@@ -286,18 +276,13 @@
 
             {{-- AKADEMIK --}}
             <div
-                style="
-                    border-radius:16px;
-                    background:white;
-                    border:1px solid #e5e7eb;
-                "
-                class="overflow-hidden shadow-sm"
+                                class="overflow-hidden shadow-sm rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700"
             >
 
                 <div
                     class="
                         border-b
-                        border-gray-100
+                        border-gray-100 dark:border-gray-700
                         px-6
                         py-5
                     "
@@ -307,7 +292,7 @@
                         class="
                             text-lg
                             font-bold
-                            text-gray-900
+                            text-gray-900 dark:text-gray-100
                         "
                     >
                         Nilai Akademik
@@ -319,27 +304,27 @@
 
                     <table class="w-full">
 
-                        <thead class="bg-gray-50">
+                        <thead class="bg-gray-50 dark:bg-gray-800">
 
                             <tr>
 
-                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
                                     No
                                 </th>
 
-                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
                                     Mata Pelajaran
                                 </th>
 
-                                <th class="px-6 py-4 text-center text-sm font-semibold text-gray-700">
+                                <th class="px-6 py-4 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">
                                     Nilai
                                 </th>
 
-                                <th class="px-6 py-4 text-center text-sm font-semibold text-gray-700">
+                                <th class="px-6 py-4 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">
                                     Grade
                                 </th>
 
-                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
                                     Deskripsi
                                 </th>
 
@@ -351,18 +336,18 @@
 
                             @forelse ($nilaiAkademik as $item)
 
-                                <tr class="hover:bg-gray-50">
+                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800">
 
-                                    <td class="px-4 py-3 text-sm text-gray-700">
+                                    <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
                                         {{ $loop->iteration }}
                                     </td>
 
-                                    <td class="px-4 py-3 text-sm font-bold text-gray-900">
+                                    <td class="px-4 py-3 text-sm font-bold text-gray-900 dark:text-gray-100">
                                         <div class="font-bold">
                                             {{ $item['mapel'] }}
                                         </div>
 
-                                        <div class="mt-1 text-xs text-gray-500">
+                                        <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                             Guru :
                                             {{ $item['guru'] }}
                                         </div>
@@ -380,7 +365,7 @@
                                         </span>
                                     </td>
 
-                                    <td class="px-4 py-3 text-sm leading-7 text-gray-700">
+                                    <td class="px-4 py-3 text-sm leading-7 text-gray-700 dark:text-gray-300">
                                         {{ $item['deskripsi'] }}
                                     </td>
 
@@ -397,7 +382,7 @@
                                             py-10
                                             text-center
                                             text-sm
-                                            text-gray-500
+                                            text-gray-500 dark:text-gray-400
                                         "
                                     >
                                         Belum ada nilai akademik.
@@ -427,17 +412,12 @@
 
                 {{-- KEPRIBADIAN --}}
                 <div
-                    style="
-                        border-radius:16px;
-                        background:white;
-                        border:1px solid #e5e7eb;
-                    "
-                    class="overflow-hidden shadow-sm"
+                                        class="overflow-hidden shadow-sm rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700"
                 >
 
-                    <div class="border-b border-gray-100 px-4 py-3">
+                    <div class="border-b border-gray-100 dark:border-gray-700 px-4 py-3">
 
-                        <h3 class="text-lg font-bold text-gray-900">
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">
                             Kepribadian
                         </h3>
 
@@ -447,19 +427,19 @@
 
                         <table class="w-full">
 
-                            <thead class="bg-gray-50">
+                            <thead class="bg-gray-50 dark:bg-gray-800">
 
                                 <tr>
 
-                                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
                                         Aspek
                                     </th>
 
-                                    <th class="px-6 py-4 text-center text-sm font-semibold text-gray-700">
+                                    <th class="px-6 py-4 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">
                                         Nilai
                                     </th>
 
-                                    <th class="px-6 py-4 text-center text-sm font-semibold text-gray-700">
+                                    <th class="px-6 py-4 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">
                                         Grade
                                     </th>
 
@@ -471,9 +451,9 @@
 
                                 @forelse ($nonAkademik?->kepribadians ?? [] as $item)
 
-                                    <tr class="hover:bg-gray-50">
+                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800">
 
-                                        <td class="px-6 py-4 text-sm text-gray-900">
+                                        <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
                                             {{ $item->aspek }}
                                         </td>
 
@@ -502,7 +482,7 @@
                                                 py-8
                                                 text-center
                                                 text-sm
-                                                text-gray-500
+                                                text-gray-500 dark:text-gray-400
                                             "
                                         >
                                             Belum ada data kepribadian.
@@ -522,17 +502,12 @@
 
                 {{-- EKSTRAKURIKULER --}}
                 <div
-                    style="
-                        border-radius:16px;
-                        background:white;
-                        border:1px solid #e5e7eb;
-                    "
-                    class="overflow-hidden shadow-sm"
+                                        class="overflow-hidden shadow-sm rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700"
                 >
 
-                    <div class="border-b border-gray-100 px-4 py-3">
+                    <div class="border-b border-gray-100 dark:border-gray-700 px-4 py-3">
 
-                        <h3 class="text-lg font-bold text-gray-900">
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">
                             Ekstrakurikuler
                         </h3>
 
@@ -542,19 +517,19 @@
 
                         <table class="w-full">
 
-                            <thead class="bg-gray-50">
+                            <thead class="bg-gray-50 dark:bg-gray-800">
 
                                 <tr>
 
-                                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
                                         Ekskul
                                     </th>
 
-                                    <th class="px-6 py-4 text-center text-sm font-semibold text-gray-700">
+                                    <th class="px-6 py-4 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">
                                         Nilai
                                     </th>
 
-                                    <th class="px-6 py-4 text-center text-sm font-semibold text-gray-700">
+                                    <th class="px-6 py-4 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">
                                         Grade
                                     </th>
 
@@ -566,9 +541,9 @@
 
                                 @forelse ($nonAkademik?->ekstrakurikulers ?? [] as $item)
 
-                                    <tr class="hover:bg-gray-50">
+                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800">
 
-                                        <td class="px-6 py-4 text-sm text-gray-900">
+                                        <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
                                             {{ $item->nama_ekskul }}
                                         </td>
 
@@ -597,7 +572,7 @@
                                                 py-8
                                                 text-center
                                                 text-sm
-                                                text-gray-500
+                                                text-gray-500 dark:text-gray-400
                                             "
                                         >
                                             Belum ada data ekstrakurikuler.
@@ -619,18 +594,13 @@
 
             {{-- CATATAN --}}
             <div
-                style="
-                    border-radius:16px;
-                    background:white;
-                    border:1px solid #e5e7eb;
-                "
-                class="overflow-hidden shadow-sm"
+                                class="overflow-hidden shadow-sm rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700"
             >
 
                 <div
                     class="
                         border-b
-                        border-gray-100
+                        border-gray-100 dark:border-gray-700
                         px-4
                         py-3
                     "
@@ -640,7 +610,7 @@
                         class="
                             text-lg
                             font-bold
-                            text-gray-900
+                            text-gray-900 dark:text-gray-100
                         "
                     >
                         Catatan Wali Kelas
@@ -657,7 +627,7 @@
                             p-5
                             text-sm
                             leading-7
-                            text-gray-700
+                            text-gray-700 dark:text-gray-300
                         "
                     >
                         {{ $nonAkademik?->catatan_wali_kelas ?: 'Belum ada catatan wali kelas.' }}

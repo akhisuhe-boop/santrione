@@ -11,7 +11,7 @@
     <div
         class="
             rounded-[40px]
-            bg-[#f3f3f3]
+            bg-[#f3f3f3] dark:bg-gray-800
             px-8
             py-2
         "
@@ -27,7 +27,7 @@
                     class="
                         text-[18px]
                         font-medium
-                        text-gray-700
+                        text-gray-700 dark:text-gray-300
                     "
                 >
                     Selamat Datang
@@ -39,7 +39,7 @@
                         mt-1
                         text-[72px]
                         font-black
-                        text-emerald-600
+                        text-emerald-600 dark:text-emerald-400
                         leading-none
                     "
                 >
@@ -51,7 +51,7 @@
                     class="
                         mt-1
                         text-[22px]
-                        text-gray-700
+                        text-gray-700 dark:text-gray-300
                     "
                 >
                     Sebagai
@@ -67,20 +67,20 @@
     <div
         class="
             rounded-xl
-            bg-white
+            bg-white dark:bg-gray-900
             px-6
             py-2
             shadow-sm
             ring-1
-            ring-gray-300
+            ring-gray-300 dark:ring-white/10
         "
     >
 
-        <div class="text-center text-[13px] text-gray-500">
+        <div class="text-center text-[13px] text-gray-500 dark:text-gray-400">
             Hari
         </div>
 
-        <div class="mt-[2px] text-center text-[20px] font-bold text-black">
+        <div class="mt-[2px] text-center text-[20px] font-bold text-black dark:text-white">
             {{ now()->translatedFormat('l') }}
         </div>
 
@@ -90,16 +90,16 @@
     <div
         class="
             rounded-xl
-            bg-white
+            bg-white dark:bg-gray-900
             px-8
             py-2
             shadow-sm
             ring-1
-            ring-gray-300
+            ring-gray-300 dark:ring-white/10
         "
     >
 
-        <div class="text-center text-[13px] text-gray-500">
+        <div class="text-center text-[13px] text-gray-500 dark:text-gray-400">
             Tanggal
         </div>
 
@@ -110,7 +110,7 @@
                 text-center
                 text-[18px]
                 font-bold
-                text-black
+                text-black dark:text-white
             "
         >
             {{ now()->translatedFormat('d F Y') }}
@@ -122,20 +122,20 @@
     <div
         class="
             rounded-xl
-            bg-white
+            bg-white dark:bg-gray-900
             px-6
             py-2
             shadow-sm
             ring-1
-            ring-gray-300
+            ring-gray-300 dark:ring-white/10
         "
     >
 
-        <div class="text-center text-[13px] text-gray-500">
+        <div class="text-center text-[13px] text-gray-500 dark:text-gray-400">
             Jam
         </div>
 
-        <div class="mt-[2px] text-center text-[20px] font-bold text-black">
+        <div class="mt-[2px] text-center text-[20px] font-bold text-black dark:text-white">
             {{ now()->format('H:i') }}
         </div>
 

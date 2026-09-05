@@ -9,10 +9,12 @@
                     fi-wi-stats-overview-stat
                     rounded-xl
                     bg-white
+                    dark:bg-gray-900
                     p-6
                     shadow-sm
                     ring-1
                     ring-gray-950/5
+                    dark:ring-white/10
                 "
             >
 
@@ -20,15 +22,15 @@
 
                     <div>
 
-                        <div class="text-sm text-gray-500">
+                        <div class="text-sm text-gray-500 dark:text-gray-400">
                             {{ $lembaga->nama}}
                         </div>
 
-                        <div class="mt-3 text-3xl font-bold tracking-tight">
+                        <div class="mt-3 text-3xl font-bold tracking-tight text-gray-950 dark:text-white">
                             {{ $lembaga->siswas_count }}
                         </div>
 
-                        <div class="mt-1 text-sm text-success-600">
+                        <div class="mt-1 text-sm text-success-600 dark:text-success-400">
                             Total Siswa
                         </div>
 
@@ -38,8 +40,10 @@
                         class="
                             rounded-full
                             bg-primary-50
+                            dark:bg-primary-500/10
                             p-3
                             text-primary-600
+                            dark:text-primary-400
                         "
                     >
 

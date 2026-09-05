@@ -26,7 +26,7 @@
 
             </h2>
 
-            <p class="mt-1 text-sm text-gray-500">
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
 
                 Generate jadwal otomatis maupun kelola jadwal secara manual.
 
@@ -65,16 +65,16 @@
     {{-- GRID --}}
     {{-- ========================================================= --}}
 
-    <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+    <div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
 
         <table class="w-full table-fixed border-collapse">
 
             <thead>
 
-                <tr class="bg-gray-100">
+                <tr class="bg-gray-100 dark:bg-gray-800">
 
                     <th
-                        class="w-56 border border-gray-200 px-4 py-4 text-left font-semibold">
+                        class="w-56 border border-gray-200 dark:border-gray-700 px-4 py-4 text-left font-semibold text-gray-900 dark:text-gray-100">
 
                         Jam Pelajaran
 
@@ -90,7 +90,7 @@
                     ] as $hari)
 
                         <th
-                            class="border border-gray-200 px-4 py-4 text-center font-semibold">
+                            class="border border-gray-200 dark:border-gray-700 px-4 py-4 text-center font-semibold text-gray-900 dark:text-gray-100">
 
                             {{ $hari }}
 
@@ -106,13 +106,13 @@
 
 @forelse ($grid as $row)
 
-    <tr class="hover:bg-gray-50">
+    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800">
 
         {{-- ===================================================== --}}
         {{-- JAM PELAJARAN --}}
         {{-- ===================================================== --}}
 
-        <td class="border border-gray-200 bg-gray-50 px-4 py-4 align-top">
+        <td class="border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-4 align-top text-gray-900 dark:text-gray-100">
 
             <div class="font-semibold">
 
@@ -120,7 +120,7 @@
 
             </div>
 
-            <div class="mt-1 text-xs text-gray-500">
+            <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
 
                 {{ \Carbon\Carbon::parse($row['jam']->jam_mulai)->format('H:i') }}
                 -
@@ -163,7 +163,7 @@
 
             <td
                 @if ($rowspan > 1) rowspan="{{ $rowspan }}" @endif
-                class="border border-gray-200 p-2 align-top">
+                class="border border-gray-200 dark:border-gray-700 p-2 align-top">
 
                 @if ($item)
 
@@ -192,7 +192,7 @@
 
                             </div>
 
-                            <div class="mt-1 text-sm text-gray-600">
+                            <div class="mt-1 text-sm text-gray-600 dark:text-gray-400">
 
                                 {{ $item->guru?->nama }}
 
@@ -205,7 +205,7 @@
                             <button
                                 type="button"
                                 wire:click="delete('{{ $hari }}', {{ $row['jam']->id }})"
-                                class="rounded-md p-1 text-gray-400 transition hover:bg-red-50 hover:text-red-600"
+                                class="rounded-md p-1 text-gray-400 dark:text-gray-500 transition hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400"
                                 title="Hapus Jadwal">
                         
                                 <x-heroicon-o-trash class="h-4 w-4" />
@@ -222,9 +222,9 @@
                         type="button"
                         wire:click="openModal('{{ $hari }}', {{ $row['jam']->id }})"
                         @disabled(!$kelas_id)
-                        class="flex min-h-[110px] w-full items-center justify-center rounded-lg border-2 border-dashed border-gray-300 transition hover:border-primary-500 hover:bg-primary-50 disabled:cursor-not-allowed disabled:opacity-40">
+                        class="flex min-h-[110px] w-full items-center justify-center rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 transition hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-500/10 disabled:cursor-not-allowed disabled:opacity-40">
 
-                        <span class="text-3xl text-gray-300">
+                        <span class="text-3xl text-gray-300 dark:text-gray-600">
 
                             +
 
@@ -248,7 +248,7 @@
 
         <td
             colspan="7"
-            class="py-12 text-center text-gray-500">
+            class="py-12 text-center text-gray-500 dark:text-gray-400">
 
             Pilih kelas untuk menampilkan jadwal pelajaran.
 
@@ -283,7 +283,7 @@
 
             </h3>
 
-            <p class="mt-1 text-sm text-gray-500">
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
 
                 Pilih mata pelajaran dan guru.
 
@@ -302,7 +302,7 @@
 
             <select
                 wire:model.live="mapel_id"
-                class="w-full rounded-xl border-gray-300">
+                class="w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white">
 
                 <option value="">
                     Pilih Mata Pelajaran
@@ -331,7 +331,7 @@
 
             <select
                 wire:model.live="guru_id"
-                class="w-full rounded-xl border-gray-300">
+                class="w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white">
 
                 <option value="">
                     Pilih Guru

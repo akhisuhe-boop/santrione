@@ -53,15 +53,15 @@
     {{-- ===================== --}}
     @php $spp = $this->getSppData(); @endphp
 
-    <div class="bg-white rounded-xl shadow mb-8">
-        <div class="p-4 font-bold border-b">
+    <div class="bg-white dark:bg-gray-900 rounded-xl shadow mb-8">
+        <div class="p-4 font-bold border-b border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100">
             A. SPP / Bulanan
         </div>
 
         <div class="overflow-x-auto">
-            <table class="w-full text-sm border">
+            <table class="w-full text-sm border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100">
 
-                <thead class="bg-gray-100">
+                <thead class="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
                     <tr>
                         <th class="p-2">No</th>
                         <th class="p-2">Nama</th>
@@ -75,7 +75,7 @@
 
                 <tbody>
                     @foreach ($spp as $i => $record)
-                        <tr class="border-t">
+                        <tr class="border-t border-gray-200 dark:border-gray-700">
                             <td class="p-2 text-center">
                                 {{ ($spp->currentPage() - 1) * $spp->perPage() + $loop->iteration }}
                             </td>
@@ -181,15 +181,15 @@
         $umum = $this->getUmumData(); 
     @endphp
 
-    <div id="table-umum" class="bg-white rounded-xl shadow">
-        <div class="p-4 font-bold border-b">
+    <div id="table-umum" class="bg-white dark:bg-gray-900 rounded-xl shadow">
+        <div class="p-4 font-bold border-b border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100">
             B. Pembayaran Umum (Non SPP)
         </div>
 
         <div class="overflow-x-auto">
-            <table class="w-full text-sm border">
+            <table class="w-full text-sm border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100">
 
-                <thead class="bg-gray-100">
+                <thead class="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
                     <tr>
                         <th class="p-2 text-left">No</th>
                         <th class="p-2 text-left">Nama</th>
@@ -213,7 +213,7 @@
                             $sisa = $tagihan->nominal - $dibayar;
                         @endphp
 
-                        <tr class="border-t">
+                        <tr class="border-t border-gray-200 dark:border-gray-700">
                             <td class="p-2 text-center">
                                 {{ ($umum->currentPage() - 1) * $umum->perPage() + $loop->iteration }}
                             </td>
@@ -269,7 +269,7 @@
 
                     @empty
                         <tr>
-                            <td colspan="8" class="p-4 text-center text-gray-500">
+                            <td colspan="8" class="p-4 text-center text-gray-500 dark:text-gray-400">
                                 Tidak ada data
                             </td>
                         </tr>
@@ -292,7 +292,7 @@
 
     <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
 
-        <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl p-6 max-h-[80vh] overflow-y-auto">
+        <div class="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-2xl p-6 max-h-[80vh] overflow-y-auto">
 
             <div class="flex justify-between items-center mb-4">
                 <h2 class="font-bold text-lg">Riwayat Pembayaran</h2>
@@ -305,7 +305,7 @@
             <div class="overflow-hidden border rounded-xl">
             <table class="w-full text-sm">
 
-                <thead class="bg-gray-100">
+                <thead class="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
                     <tr>
                         <th class="p-3 text-left">Tanggal</th>
                         <th class="p-3 text-left">Jumlah</th>
@@ -336,7 +336,7 @@
                                 {{ $bayar->metode ?? '-' }}
                             </td>
 
-                            <td class="p-2 text-xs text-gray-600">
+                            <td class="p-2 text-xs text-gray-600 dark:text-gray-400">
                                 @if($bayar->diinput_oleh)
                                     Input: {{ $bayar->diinput_oleh }}<br>
                                 @endif
@@ -357,7 +357,7 @@
 
                     @empty
                         <tr>
-                            <td colspan="5" class="p-4 text-center text-gray-500">
+                            <td colspan="5" class="p-4 text-center text-gray-500 dark:text-gray-400">
                                 Belum ada pembayaran
                             </td>
                         </tr>

@@ -24,8 +24,8 @@
             overflow-hidden
             rounded-xl
             border
-            border-gray-200
-            bg-white
+            border-gray-200 dark:border-gray-700
+            bg-white dark:bg-gray-900
             shadow-sm
         "
     >
@@ -35,7 +35,7 @@
                 <table class="w-full">
 
     {{-- HEADER --}}
-    <thead class="bg-gray-50">
+    <thead class="bg-gray-50 dark:bg-gray-800">
 
         <tr>
 
@@ -44,13 +44,13 @@
                 class="
                     rounded-tl-2xl
                     border-b
-                    border-gray-200
+                    border-gray-200 dark:border-gray-700
                     px-6
                     py-3
                     text-left
                     text-sm
                     font-semibold
-                    text-gray-800
+                    text-gray-800 dark:text-gray-100
                 "
             >
                 Mata Pelajaran
@@ -61,13 +61,13 @@
                 class="
                     border-b
                     border-l
-                    border-gray-200
+                    border-gray-200 dark:border-gray-700
                     px-6
                     py-3
                     text-left
                     text-sm
                     font-semibold
-                    text-gray-800
+                    text-gray-800 dark:text-gray-100
                 "
             >
                 Guru Pengampu
@@ -78,13 +78,13 @@
                 class="
                     border-b
                     border-l
-                    border-gray-200
+                    border-gray-200 dark:border-gray-700
                     px-4
                     py-3
                     text-center
                     text-sm
                     font-semibold
-                    text-gray-800
+                    text-gray-800 dark:text-gray-100
                 "
             >
                 Tugas
@@ -95,13 +95,13 @@
                 class="
                     border-b
                     border-l
-                    border-gray-200
+                    border-gray-200 dark:border-gray-700
                     px-4
                     py-3
                     text-center
                     text-sm
                     font-semibold
-                    text-gray-800
+                    text-gray-800 dark:text-gray-100
                 "
             >
                 Harian
@@ -112,13 +112,13 @@
                 class="
                     border-b
                     border-l
-                    border-gray-200
+                    border-gray-200 dark:border-gray-700
                     px-4
                     py-3
                     text-center
                     text-sm
                     font-semibold
-                    text-gray-800
+                    text-gray-800 dark:text-gray-100
                 "
             >
                 UTS
@@ -129,13 +129,13 @@
                 class="
                     border-b
                     border-l
-                    border-gray-200
+                    border-gray-200 dark:border-gray-700
                     px-4
                     py-3
                     text-center
                     text-sm
                     font-semibold
-                    text-gray-800
+                    text-gray-800 dark:text-gray-100
                 "
             >
                 UAS
@@ -147,7 +147,7 @@
                     rounded-tr-2xl
                     border-b
                     border-l
-                    border-gray-200
+                    border-gray-200 dark:border-gray-700
                     px-4
                     py-3
                     text-center
@@ -164,22 +164,22 @@
     </thead>
 
     {{-- BODY --}}
-    <tbody class="bg-white">
+    <tbody class="bg-white dark:bg-gray-900">
 
         @foreach ($rekap as $item)
 
-            <tr class="transition duration-200 hover:bg-gray-50">
+            <tr class="transition duration-200 hover:bg-gray-50 dark:hover:bg-gray-800">
 
                 {{-- MAPEL --}}
                 <td
                     class="
                         border-t
-                        border-gray-100
+                        border-gray-100 dark:border-gray-700
                         px-6
                         py-3
                         text-sm
                         font-medium
-                        text-gray-800
+                        text-gray-800 dark:text-gray-100
 
                         {{ $loop->last ? 'rounded-bl-2xl' : '' }}
                     "
@@ -192,11 +192,11 @@
                     class="
                         border-t
                         border-l
-                        border-gray-100
+                        border-gray-100 dark:border-gray-700
                         px-6
                         py-3
                         text-sm
-                        text-gray-700
+                        text-gray-700 dark:text-gray-300
                     "
                 >
                     {{ $item['guru'] }}
@@ -207,7 +207,7 @@
                     class="
                         border-t
                         border-l
-                        border-gray-100
+                        border-gray-100 dark:border-gray-700
                         px-4
                         py-3
                         text-center
@@ -234,7 +234,7 @@
                     class="
                         border-t
                         border-l
-                        border-gray-100
+                        border-gray-100 dark:border-gray-700
                         px-4
                         py-3
                         text-center
@@ -262,7 +262,7 @@
                     class="
                         border-t
                         border-l
-                        border-gray-100
+                        border-gray-100 dark:border-gray-700
                         px-4
                         py-3
                         text-center
@@ -290,7 +290,7 @@
                     class="
                         border-t
                         border-l
-                        border-gray-100
+                        border-gray-100 dark:border-gray-700
                         px-4
                         py-3
                         text-center
@@ -318,7 +318,7 @@
                     class="
                         border-t
                         border-l
-                        border-gray-100
+                        border-gray-100 dark:border-gray-700
                         px-4
                         py-3
                         text-center

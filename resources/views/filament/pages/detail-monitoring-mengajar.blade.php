@@ -3,17 +3,17 @@
     <div class="space-y-6">
         {{ $this->form }}   
         {{-- INFO GURU --}}
-        <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-6 shadow-sm">
 
             <div class="flex items-center justify-between">
 
                 <div>
 
-                    <div class="text-sm text-gray-500">
+                    <div class="text-sm text-gray-500 dark:text-gray-400">
                         Guru
                     </div>
 
-                    <div class="text-2xl font-bold text-gray-900">
+                    <div class="text-2xl font-bold text-gray-900 dark:text-white">
                         {{ $this->record->nama }}
                     </div>
 
@@ -24,42 +24,42 @@
         </div>
 
         {{-- TABLE --}}
-        <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div class="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
 
             <div class="overflow-x-auto">
 
-                <table class="w-full divide-y divide-gray-200">
+                <table class="w-full divide-y divide-gray-200 dark:divide-gray-700">
 
                     {{-- HEADER --}}
-                    <thead class="bg-gray-50">
+                    <thead class="bg-gray-50 dark:bg-gray-800">
 
                         <tr>
 
-                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
                                 Hari
                             </th>
 
-                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
                                 Tanggal
                             </th>
 
-                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
                                 Mapel
                             </th>
 
-                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
                                 Kelas
                             </th>
 
-                            <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">
+                            <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">
                                 Jam Ke
                             </th>
 
-                            <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">
+                            <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">
                                 JP
                             </th>
 
-                            <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">
+                            <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">
                                 Status
                             </th>
 
@@ -68,7 +68,7 @@
                     </thead>
 
                     {{-- BODY --}}
-                    <tbody class="divide-y divide-gray-100 bg-white">
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-gray-900">
                     @php
                         $jadwals = \App\Models\JadwalPelajaran::query()
                             ->where('pegawai_id', $this->record->id)
@@ -122,7 +122,7 @@
                                         ->first();
                                 @endphp
 
-                                <tr class="hover:bg-gray-50 transition">
+                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition">
 
                                     {{-- HARI --}}
                                     <td class="px-3 py-2 text-sm font-medium">

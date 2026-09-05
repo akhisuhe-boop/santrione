@@ -10,8 +10,8 @@
             overflow-hidden
             rounded-xl
             border
-            border-gray-200
-            bg-white
+            border-gray-200 dark:border-gray-700
+            bg-white dark:bg-gray-900
             shadow-sm
         "
     >
@@ -21,27 +21,27 @@
             <table class="w-full text-sm">
 
                 {{-- HEADER --}}
-                <thead class="bg-gray-50">
+                <thead class="bg-gray-50 dark:bg-gray-800">
 
-                    <tr class="divide-x divide-gray-100">
+                    <tr class="divide-x divide-gray-100 dark:divide-gray-700">
 
-                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
                             Nama Siswa
                         </th>
 
-                        <th class="px-4 py-4 text-center text-sm font-semibold text-gray-700">
+                        <th class="px-4 py-4 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">
                             Tugas
                         </th>
 
-                        <th class="px-4 py-4 text-center text-sm font-semibold text-gray-700">
+                        <th class="px-4 py-4 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">
                             Harian
                         </th>
 
-                        <th class="px-4 py-4 text-center text-sm font-semibold text-gray-700">
+                        <th class="px-4 py-4 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">
                             UTS
                         </th>
 
-                        <th class="px-4 py-4 text-center text-sm font-semibold text-gray-700">
+                        <th class="px-4 py-4 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">
                             UAS
                         </th>
 
@@ -50,14 +50,14 @@
                 </thead>
 
                 {{-- BODY --}}
-                <tbody class="divide-y divide-gray-100 bg-white">
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-gray-900">
 
                     @foreach ($siswas as $index => $siswa)
 
-                        <tr class="transition hover:bg-gray-50">
+                        <tr class="transition hover:bg-gray-50 dark:hover:bg-gray-800">
 
                             {{-- NAMA SISWA --}}
-                            <td class="px-6 py-4 font-medium text-gray-800 whitespace-nowrap">
+                            <td class="px-6 py-4 font-medium text-gray-800 dark:text-gray-100 whitespace-nowrap">
                                 {{ $siswa['nama_lengkap'] }}
                             </td>
 
@@ -71,7 +71,7 @@
                                     class="
                                         w-full
                                         rounded-lg
-                                        border-gray-300
+                                        border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white
                                         text-center
                                         shadow-sm
                                         focus:border-primary-500
@@ -90,7 +90,7 @@
                                     class="
                                         w-full
                                         rounded-lg
-                                        border-gray-300
+                                        border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white
                                         text-center
                                         shadow-sm
                                         focus:border-primary-500
@@ -109,7 +109,7 @@
                                     class="
                                         w-full
                                         rounded-lg
-                                        border-gray-300
+                                        border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white
                                         text-center
                                         shadow-sm
                                         focus:border-primary-500
@@ -128,7 +128,7 @@
                                     class="
                                         w-full
                                         rounded-lg
-                                        border-gray-300
+                                        border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white
                                         text-center
                                         shadow-sm
                                         focus:border-primary-500
