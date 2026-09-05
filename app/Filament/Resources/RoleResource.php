@@ -13,33 +13,35 @@ class RoleResource extends BaseRoleResource
     }
 
     /**
-     * Kelompokkan SEMUA baris di tabel permissions (hasil generate
-     * Filament Shield) jadi "1 menu = 1 grup" -- alih-alih tampilan
-     * asli Shield yang pecah jadi 12 checkbox terpisah (view, view_any,
-     * create, update, delete, delete_any, restore, restore_any,
-     * replicate, reorder, force_delete, force_delete_any) untuk SETIAP
-     * menu. Dikerjakan dengan cara membaca permission yang SUDAH ADA
-     * di database (bukan menebak API internal package Shield secara
-     * langsung), supaya tidak gampang rusak kalau versi package
-     * berubah -- ini murni pola nama string yang sudah stabil dipakai
-     * Shield selama ini.
+     * Kelompokkan permission PERSIS mengikuti struktur menu & sub-menu
+     * yang tenant lihat sendiri di sidebar -- BUKAN lagi dikelompokkan
+     * dari nama tabel/model database (revisi setelah masukan user: itu
+     * tidak mencerminkan menu yang mereka kenal sehari-hari).
+     *
+     * "Menu" = navigationGroup tiap Resource/Page (mis. "Akademik"),
+     * "Sub-menu" = navigationLabel Resource/Page itu sendiri (mis.
+     * "Jadwal Pelajaran"). Permission yang cocok untuk 1 Resource/Page
+     * dicari lewat pola nama standar Shield ({aksi}_{model_snake} untuk
+     * Resource, page_{NamaClass} untuk Page) terhadap permission yang
+     * SUDAH ADA di database -- supaya tetap tidak bergantung menebak
+     * detail internal Shield secara langsung.
      *
      * Return: [
-     *   'Resource' => ['Nama Menu' => ['permission1', 'permission2', ...], ...],
-     *   'Halaman'  => [...],
-     *   'Widget'   => [...],
+     *   'Akademik' => ['Jadwal Pelajaran' => [...permission], 'Nilai' => [...]],
+     *   'Keuangan' => [...],
+     *   'Lainnya'  => [...],  // permission yang tidak match Resource/Page manapun (mis. Widget)
      * ]
      */
     public static function groupPermissionsByMenu(): array
     {
         $semuaNama = \Spatie\Permission\Models\Permission::query()
             ->where('guard_name', 'web')
-            ->pluck('name');
+            ->pluck('name')
+            ->all();
 
-        // Urutan PENTING -- prefix yang lebih spesifik/panjang harus
-        // dicek LEBIH DULU (mis. "view_any" sebelum "view", kalau
-        // tidak "view_any_announcement" akan salah kepotong jadi
-        // subjek "any_announcement").
+        $adaNama = array_flip($semuaNama);
+        $sudahDipakai = [];
+
         $prefixAksi = [
             'view_any', 'view',
             'restore_any', 'restore',
@@ -49,25 +51,67 @@ class RoleResource extends BaseRoleResource
             'create', 'update',
         ];
 
-        $grup = ['Resource' => [], 'Halaman' => [], 'Widget' => []];
+        $panel = \Filament\Facades\Filament::getPanel('admin');
+        $grup = [];
 
+        // RESOURCE (mis. LembagaResource, SiswaResource, dst)
+        foreach ($panel->getResources() as $resourceClass) {
+            if (! class_exists($resourceClass)) {
+                continue;
+            }
+
+            $navGroup = $resourceClass::getNavigationGroup() ?? 'Lainnya';
+            $navLabel = $resourceClass::getNavigationLabel();
+            $subjek = \Illuminate\Support\Str::snake(class_basename($resourceClass::getModel()));
+
+            $daftarPermission = [];
+
+            foreach ($prefixAksi as $prefix) {
+                $nama = $prefix . '_' . $subjek;
+
+                if (isset($adaNama[$nama])) {
+                    $daftarPermission[] = $nama;
+                    $sudahDipakai[$nama] = true;
+                }
+            }
+
+            if (! empty($daftarPermission)) {
+                $grup[$navGroup][$navLabel] = $daftarPermission;
+            }
+        }
+
+        // PAGE MANDIRI (mis. Dashboard, Scan Produk, Langganan, dst)
+        foreach ($panel->getPages() as $pageClass) {
+            if (! class_exists($pageClass)) {
+                continue;
+            }
+
+            $navGroup = $pageClass::getNavigationGroup() ?? 'Lainnya';
+            $navLabel = $pageClass::getNavigationLabel();
+            $nama = 'page_' . class_basename($pageClass);
+
+            if (isset($adaNama[$nama])) {
+                $grup[$navGroup][$navLabel] = [$nama];
+                $sudahDipakai[$nama] = true;
+            }
+        }
+
+        // WIDGET & permission lain yang tidak cocok Resource/Page
+        // manapun -- ditampung supaya tidak hilang dari daftar, bukan
+        // dibuang.
         foreach ($semuaNama as $nama) {
-
-            if (str_starts_with($nama, 'page_')) {
-                $subjek = \Illuminate\Support\Str::of(substr($nama, 5))->headline()->toString();
-                $grup['Halaman'][$subjek][] = $nama;
-
+            if (isset($sudahDipakai[$nama])) {
                 continue;
             }
 
             if (str_starts_with($nama, 'widget_')) {
-                $subjek = \Illuminate\Support\Str::of(substr($nama, 7))->headline()->toString();
-                $grup['Widget'][$subjek][] = $nama;
+                $label = \Illuminate\Support\Str::of(substr($nama, 7))->headline()->toString();
+                $grup['Widget'][$label] = [$nama];
 
                 continue;
             }
 
-            $subjekMentah = null;
+            $subjekMentah = $nama;
 
             foreach ($prefixAksi as $prefix) {
                 if (str_starts_with($nama, $prefix . '_')) {
@@ -77,17 +121,15 @@ class RoleResource extends BaseRoleResource
                 }
             }
 
-            // Nama permission yang tidak cocok pola manapun (custom di
-            // luar Shield) -- masukkan apa adanya sebagai grup sendiri
-            // supaya tidak hilang/terlewat dari daftar.
-            $subjek = \Illuminate\Support\Str::of($subjekMentah ?? $nama)->headline()->toString();
-
-            $grup['Resource'][$subjek][] = $nama;
+            $label = \Illuminate\Support\Str::of($subjekMentah)->headline()->toString();
+            $grup['Lainnya'][$label][] = $nama;
         }
 
-        ksort($grup['Resource']);
-        ksort($grup['Halaman']);
-        ksort($grup['Widget']);
+        ksort($grup);
+
+        foreach ($grup as &$subMenu) {
+            ksort($subMenu);
+        }
 
         return $grup;
     }
@@ -104,16 +146,15 @@ class RoleResource extends BaseRoleResource
     {
         $grup = static::groupPermissionsByMenu();
 
-        $buatToggleSection = function (string $judul, array $menuList) {
-            if (empty($menuList)) {
-                return null;
-            }
+        $sections = [];
+
+        foreach ($grup as $namaMenu => $subMenuList) {
 
             $toggles = [];
 
-            foreach ($menuList as $namaMenu => $daftarPermission) {
-                $toggles[] = \Filament\Forms\Components\Toggle::make('menu_toggle.' . md5($namaMenu . implode(',', $daftarPermission)))
-                    ->label($namaMenu)
+            foreach ($subMenuList as $namaSubMenu => $daftarPermission) {
+                $toggles[] = \Filament\Forms\Components\Toggle::make('menu_toggle.' . md5($namaMenu . '|' . $namaSubMenu . '|' . implode(',', $daftarPermission)))
+                    ->label($namaSubMenu)
                     ->inline(false)
                     ->afterStateHydrated(function (\Filament\Forms\Components\Toggle $component, $record) use ($daftarPermission) {
                         if (! $record) {
@@ -128,18 +169,12 @@ class RoleResource extends BaseRoleResource
                     });
             }
 
-            return \Filament\Forms\Components\Section::make($judul)
+            $sections[] = \Filament\Forms\Components\Section::make($namaMenu)
                 ->collapsible()
                 ->schema([
                     \Filament\Forms\Components\Grid::make(3)->schema($toggles),
                 ]);
-        };
-
-        $sections = collect($grup)
-            ->map(fn ($menuList, $judul) => $buatToggleSection($judul, $menuList))
-            ->filter()
-            ->values()
-            ->all();
+        }
 
         return $form->schema([
             \Filament\Forms\Components\Section::make('Info Peran')
@@ -168,14 +203,14 @@ class RoleResource extends BaseRoleResource
     {
         $grup = static::groupPermissionsByMenu();
 
-        // Bikin peta hash(nama menu + daftar permission) -> daftar
-        // permission, PERSIS seperti cara key toggle dibuat di form()
-        // di atas -- supaya bisa dicocokkan balik.
+        // Bikin peta hash -> daftar permission, PERSIS seperti cara
+        // key toggle dibuat di form() di atas -- supaya bisa
+        // dicocokkan balik.
         $petaHash = [];
 
-        foreach ($grup as $kategori) {
-            foreach ($kategori as $namaMenu => $daftarPermission) {
-                $hash = md5($namaMenu . implode(',', $daftarPermission));
+        foreach ($grup as $namaMenu => $subMenuList) {
+            foreach ($subMenuList as $namaSubMenu => $daftarPermission) {
+                $hash = md5($namaMenu . '|' . $namaSubMenu . '|' . implode(',', $daftarPermission));
                 $petaHash[$hash] = $daftarPermission;
             }
         }
