@@ -105,6 +105,36 @@ class AdminPanelProvider extends PanelProvider
                 : ''
         )
         ->renderHook(
+            PanelsRenderHook::CONTENT_START,
+            function (): string {
+                $tenant = \Filament\Facades\Filament::getTenant();
+
+                if (! $tenant || $tenant->status !== 'trial' || ! $tenant->trial_ends_at) {
+                    return '';
+                }
+
+                $sisaHari = (int) ceil(($tenant->trial_ends_at->timestamp - now()->timestamp) / 86400);
+                $sisaHari = max($sisaHari, 0);
+
+                $urlLangganan = \App\Filament\Pages\Langganan::getUrl(tenant: $tenant);
+
+                return '
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#ecfeff;border:1px solid #a5f3fc;color:#155e75;padding:10px 18px;border-radius:14px;margin-bottom:16px;font-size:13px;">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span style="font-weight:700;">🎁 Masa Trial</span>
+                            <span>' . ($sisaHari > 0
+                                ? "Sisa {$sisaHari} hari lagi dari 14 hari masa coba."
+                                : 'Hari terakhir masa coba Anda.') . '</span>
+                        </div>
+                        <a href="' . $urlLangganan . '"
+                           style="background:#00A39D;color:#fff;padding:6px 16px;border-radius:9999px;font-weight:600;text-decoration:none;white-space:nowrap;">
+                           Aktifkan Sekarang
+                        </a>
+                    </div>
+                ';
+            }
+        )
+        ->renderHook(
         'panels::head.end',
         fn (): string => '
             <link rel="stylesheet" href="' . Vite::asset('resources/css/filament/admin/theme.css') . '">
