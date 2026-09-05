@@ -96,6 +96,15 @@ class AdminPanelProvider extends PanelProvider
             // di sini untuk saat ini.
         ], isPersistent: true)
         ->renderHook(
+            PanelsRenderHook::TOPBAR_START,
+            fn (): string => session('impersonator_id')
+                ? '<a href="' . route('tenant.impersonate.stop-request') . '"
+                       style="display:flex;align-items:center;gap:6px;background:#fef3c7;color:#92400e;padding:6px 14px;font-size:13px;font-weight:600;border-radius:9999px;margin-left:12px;text-decoration:none;">
+                       ⚠️ Mode Login-sebagai — Kembali ke Platform
+                   </a>'
+                : ''
+        )
+        ->renderHook(
         'panels::head.end',
         fn (): string => '
             <link rel="stylesheet" href="' . Vite::asset('resources/css/filament/admin/theme.css') . '">

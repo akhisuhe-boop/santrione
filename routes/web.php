@@ -26,6 +26,32 @@ use App\Http\Controllers\PerizinanController;
 use App\Http\Controllers\RoleLoginController;
 use App\Http\Controllers\ManifestController;
 use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\PlatformImpersonateController;
+
+/*
+|--------------------------------------------------------------------------
+| IMPERSONATE PLATFORM ADMIN -> ADMIN YAYASAN
+|--------------------------------------------------------------------------
+|
+| 2 domain terlibat: panel Platform (config('platform.domain')) tempat
+| tombol "Login" diklik, dan domain tenant (APP_URL) tempat panel
+| admin/{slug} sebenarnya berjalan -- lihat komentar di
+| PlatformImpersonateController untuk alur lengkapnya.
+*/
+
+Route::domain(config('platform.domain'))->group(function () {
+    Route::get('/impersonate/request/{yayasan}', [PlatformImpersonateController::class, 'requestLogin'])
+        ->name('platform.impersonate.request');
+
+    Route::get('/impersonate/stop-consume/{token}', [PlatformImpersonateController::class, 'stopConsume'])
+        ->name('platform.impersonate.stop-consume');
+});
+
+Route::get('/impersonate/consume/{token}', [PlatformImpersonateController::class, 'consume'])
+    ->name('tenant.impersonate.consume');
+
+Route::get('/impersonate/stop-request', [PlatformImpersonateController::class, 'stopRequest'])
+    ->name('tenant.impersonate.stop-request');
 
 use App\Http\Controllers\Guru\GuruAuthController;
 use App\Http\Controllers\Guru\GuruDashboardController;

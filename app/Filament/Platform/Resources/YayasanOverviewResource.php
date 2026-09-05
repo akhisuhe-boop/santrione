@@ -71,8 +71,23 @@ class YayasanOverviewResource extends \App\Filament\Resources\BaseResource
                         default => 'gray',
                     }),
 
+                Tables\Columns\TextColumn::make('paket')
+                    ->label('Paket')
+                    ->state(function (Yayasan $record) {
+                        $subscription = $record->subscriptions()
+                            ->latest('berakhir_pada')
+                            ->first();
+
+                        return $subscription?->plan?->nama ?? '—';
+                    }),
+
                 Tables\Columns\TextColumn::make('lembagas_count')
                     ->label('Jml. Lembaga')
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('Terdaftar')
+                    ->date('d M Y')
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('trial_ends_at')
@@ -81,7 +96,7 @@ class YayasanOverviewResource extends \App\Filament\Resources\BaseResource
                     ->placeholder('—'),
 
                 Tables\Columns\TextColumn::make('langganan_berakhir')
-                    ->label('Langganan Berakhir / Renew')
+                    ->label('Langganan Berakhir')
                     ->state(function (Yayasan $record) {
                         $subscription = $record->subscriptions()
                             ->latest('berakhir_pada')
@@ -122,17 +137,12 @@ class YayasanOverviewResource extends \App\Filament\Resources\BaseResource
                     }),
 
                 Tables\Columns\TextColumn::make('estimasi_tagihan')
-                    ->label('Estimasi Tagihan/Bulan')
+                    ->label('Tagihan')
                     ->state(function (Yayasan $record) {
                         $hasil = app(\App\Services\TenantBillingCalculator::class)->hitungYayasan($record);
 
                         return 'Rp ' . number_format($hasil['total'], 0, ',', '.');
                     }),
-
-                Tables\Columns\TextColumn::make('created_at')
-                    ->label('Terdaftar')
-                    ->date('d M Y')
-                    ->sortable(),
 
             ])
             ->filters([
@@ -175,10 +185,10 @@ class YayasanOverviewResource extends \App\Filament\Resources\BaseResource
                     }),
 
                 Tables\Actions\Action::make('masukSebagaiYayasan')
-                    ->label('Masuk sebagai Yayasan')
-                    ->icon('heroicon-o-arrow-top-right-on-square')
+                    ->label('Login')
+                    ->icon('heroicon-o-arrow-right-on-rectangle')
                     ->color('gray')
-                    ->url(fn (Yayasan $record) => rtrim(config('app.url'), '/') . '/admin/' . $record->slug)
+                    ->url(fn (Yayasan $record) => route('platform.impersonate.request', $record))
                     ->openUrlInNewTab(),
             ])
             ->defaultSort('created_at', 'desc');
