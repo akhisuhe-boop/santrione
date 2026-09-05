@@ -231,7 +231,8 @@
                         <div class="text-sm text-gray-500">Aktifkan Paket Full — lebih hemat daripada pilih modul satu-satu.</div>
 
                         @if ($estimasiPaketFull)
-                            <div class="text-base mt-3 flex items-center gap-2.5 flex-wrap">
+                            <hr class="my-3 border-gray-200 dark:border-gray-700">
+                            <div class="text-base flex items-center gap-2.5 flex-wrap">
                                 <span class="text-gray-500">Sekarang:</span>
                                 <span class="font-semibold text-gray-500 line-through">Rp {{ number_format($estimasi['total'], 0, ',', '.') }}</span>
                                 <x-heroicon-o-arrow-right class="w-4 h-4 text-warning-500" />
