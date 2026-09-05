@@ -50,6 +50,28 @@ class YayasanOverviewResource extends \App\Filament\Resources\BaseResource
         return $form->schema([]);
     }
 
+    /**
+     * Subscription yang BENAR-BENAR relevan buat 1 Yayasan -- baris
+     * PALING BARU DIBUAT (id terbesar), BUKAN baris dengan berakhir_pada
+     * terbesar. 1 Yayasan bisa punya banyak baris Subscription dari
+     * waktu ke waktu (tiap kali langganan lama lewat tanggal berakhir
+     * lalu diaktifkan ulang, dibuat baris BARU -- lihat komentar sama
+     * di CheckExpiredSubscriptions). Baris lama yang sudah ditinggalkan
+     * (mis. sisa langganan tahunan sebelum ganti ke bulanan) bisa
+     * "kelihatan" berakhir lebih jauh ke depan daripada baris yang
+     * sebenarnya sedang berlaku -- jadi HARUS pakai urutan yang sama
+     * persis dengan yang dipakai sistem buat suspend, supaya info di
+     * kolom ini tidak menyesatkan (pernah kejadian: Status = suspended
+     * tapi kolom ini nunjuk tanggal jauh di masa depan).
+     */
+    public static function subscriptionRelevan(Yayasan $record): ?\App\Models\Subscription
+    {
+        return $record->subscriptions()
+            ->whereNotNull('berakhir_pada')
+            ->latest('id')
+            ->first();
+    }
+
     public static function table(Table $table): Table
     {
         return $table
@@ -74,11 +96,7 @@ class YayasanOverviewResource extends \App\Filament\Resources\BaseResource
                 Tables\Columns\TextColumn::make('paket')
                     ->label('Paket')
                     ->state(function (Yayasan $record) {
-                        $subscription = $record->subscriptions()
-                            ->latest('berakhir_pada')
-                            ->first();
-
-                        return $subscription?->plan?->nama ?? '—';
+                        return static::subscriptionRelevan($record)?->plan?->nama ?? '—';
                     }),
 
                 Tables\Columns\TextColumn::make('lembagas_count')
@@ -97,20 +115,12 @@ class YayasanOverviewResource extends \App\Filament\Resources\BaseResource
 
                 Tables\Columns\TextColumn::make('langganan_berakhir')
                     ->label('Langganan Berakhir')
-                    ->state(function (Yayasan $record) {
-                        $subscription = $record->subscriptions()
-                            ->latest('berakhir_pada')
-                            ->first();
-
-                        return $subscription?->berakhir_pada;
-                    })
+                    ->state(fn (Yayasan $record) => static::subscriptionRelevan($record)?->berakhir_pada)
                     ->date('d M Y')
                     ->placeholder('—')
                     ->badge()
                     ->color(function (Yayasan $record) {
-                        $subscription = $record->subscriptions()
-                            ->latest('berakhir_pada')
-                            ->first();
+                        $subscription = static::subscriptionRelevan($record);
 
                         if (! $subscription?->berakhir_pada) {
                             return 'gray';
@@ -125,23 +135,21 @@ class YayasanOverviewResource extends \App\Filament\Resources\BaseResource
                         }
 
                         return 'success';
-                    })
-                    ->sortable(query: function ($query, string $direction) {
-                        return $query->orderBy(
-                            \App\Models\Subscription::select('berakhir_pada')
-                                ->whereColumn('yayasan_id', 'yayasans.id')
-                                ->latest('berakhir_pada')
-                                ->limit(1),
-                            $direction
-                        );
                     }),
 
                 Tables\Columns\TextColumn::make('estimasi_tagihan')
                     ->label('Tagihan')
                     ->state(function (Yayasan $record) {
-                        $hasil = app(\App\Services\TenantBillingCalculator::class)->hitungYayasan($record);
+                        $subscription = static::subscriptionRelevan($record);
+                        $tahunan = $subscription?->siklus_billing === 'tahunan';
 
-                        return 'Rp ' . number_format($hasil['total'], 0, ',', '.');
+                        $calculator = app(\App\Services\TenantBillingCalculator::class);
+
+                        $hasil = $tahunan
+                            ? $calculator->hitungYayasanTahunan($record)
+                            : $calculator->hitungYayasan($record);
+
+                        return 'Rp ' . number_format($hasil['total'], 0, ',', '.') . ($tahunan ? ' /tahun' : ' /bulan');
                     }),
 
             ])
