@@ -148,6 +148,36 @@ class Langganan extends Page
         return Auth::user()->yayasan;
     }
 
+    /**
+     * Tombol "Bayar Sekarang" cuma disembunyikan kalau yayasan ini
+     * SUDAH PERNAH bayar sungguhan (status Yayasan sudah 'active' --
+     * BUKAN cuma subscription trial placeholder yang statusnya juga
+     * 'active') DAN belum mendekati jatuh tempo. Selama masih trial
+     * atau sudah suspended, tombol WAJIB tetap muncul supaya tenant
+     * bisa aktivasi/bayar kapan saja. Begitu masuk jendela H-7 sebelum
+     * jatuh tempo (konsisten dengan reminder WA H-7/H-3/H-1 yang sudah
+     * ada), tombol muncul lagi untuk perpanjangan.
+     */
+    public function shouldShowBayarButton(): bool
+    {
+        $yayasan = $this->getYayasan();
+
+        if ($yayasan->status !== 'active') {
+            // trial atau suspended -- selalu boleh bayar/aktivasi.
+            return true;
+        }
+
+        $subAktif = $this->getSubscriptionAktif();
+
+        if (! $subAktif || ! $subAktif->berakhir_pada) {
+            return true;
+        }
+
+        $sisaHari = ($subAktif->berakhir_pada->timestamp - now()->timestamp) / 86400;
+
+        return $sisaHari <= 7;
+    }
+
     public function setBillingCycle(string $cycle): void
     {
         $this->billingCycle = in_array($cycle, ['bulanan', 'tahunan'], true) ? $cycle : 'bulanan';

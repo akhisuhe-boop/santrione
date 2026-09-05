@@ -74,7 +74,7 @@
                 </a>
             </div>
         </x-filament::section>
-    @else
+    @elseif ($this->shouldShowBayarButton())
         <x-filament::section>
             <div class="flex items-center justify-between flex-wrap gap-3">
                 <div>
