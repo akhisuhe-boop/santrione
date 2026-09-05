@@ -418,7 +418,15 @@ class Langganan extends Page
                 customerName: $yayasan->nama,
                 customerEmail: $yayasan->email ?? Auth::user()->email,
                 judul: 'Langganan ' . $plan->nama . ' (' . ($tahunan ? '1 tahun' : '1 bulan') . ') -- ' . $yayasan->nama,
-                channel: 'ALL'
+                channel: 'ALL',
+                // Ini pembayaran LANGGANAN PLATFORM (sekolah -> Qinara),
+                // BUKAN pembayaran wali murid -- default DokuService
+                // (/wali/keuangan) SALAH untuk kasus ini (ditemukan 5
+                // Sep 2026: admin sekolah yang bayar malah diarahkan
+                // balik ke halaman login WALI). Arahkan ke panel admin
+                // Yayasan ini supaya begitu selesai bayar, admin
+                // sekolah kembali ke tempat yang benar.
+                callbackUrl: rtrim(config('app.url'), '/') . '/admin/' . $yayasan->slug
             );
         } catch (\Throwable $e) {
             Notification::make()

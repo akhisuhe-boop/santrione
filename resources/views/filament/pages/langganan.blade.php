@@ -259,9 +259,11 @@
                         <div class="text-sm text-gray-500">Semua modul di bawah termasuk otomatis, tidak dihitung terpisah.</div>
                     </div>
                 </div>
-                <x-filament::button wire:click="batalkanPaketFull" color="gray" outlined>
-                    Kembali Pilih Satu-satu
-                </x-filament::button>
+                @if ($this->shouldShowBayarButton())
+                    <x-filament::button wire:click="batalkanPaketFull" color="gray" outlined>
+                        Kembali Pilih Satu-satu
+                    </x-filament::button>
+                @endif
             </div>
         </x-filament::section>
     @endif
