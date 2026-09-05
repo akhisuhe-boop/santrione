@@ -52,12 +52,28 @@ body,
     );
 }
 
+.dark .modern-payroll-section.info .fi-section-header {
+    background: linear-gradient(
+        to right,
+        rgb(30 58 138 / 0.25),
+        rgb(17 24 39)
+    );
+}
+
 /* SUCCESS */
 .modern-payroll-section.total .fi-section-header {
     background: linear-gradient(
         to right,
         rgb(240 253 244),
         rgb(248 250 252)
+    );
+}
+
+.dark .modern-payroll-section.total .fi-section-header {
+    background: linear-gradient(
+        to right,
+        rgb(20 83 45 / 0.25),
+        rgb(17 24 39)
     );
 }
 
@@ -70,12 +86,28 @@ body,
     );
 }
 
+.dark .modern-payroll-section.rincian .fi-section-header {
+    background: linear-gradient(
+        to right,
+        rgb(76 29 149 / 0.25),
+        rgb(17 24 39)
+    );
+}
+
 /* ORANGE */
 .modern-payroll-section.adjustment .fi-section-header {
     background: linear-gradient(
         to right,
         rgb(255 247 237),
         rgb(248 250 252)
+    );
+}
+
+.dark .modern-payroll-section.adjustment .fi-section-header {
+    background: linear-gradient(
+        to right,
+        rgb(124 45 18 / 0.25),
+        rgb(17 24 39)
     );
 }
 

@@ -142,16 +142,24 @@ class AdminPanelProvider extends PanelProvider
             <link rel="stylesheet" href="' . Vite::asset('resources/css/filament/admin/theme.css') . '">
 
             <style>
-                .fi-sidebar{
+                /* :not(.dark) -- CSS ini SEBELUMNYA memaksa putih tanpa
+                   syarat (!important), jadi ikut menimpa mode gelap dan
+                   bikin sidebar/topbar tetap putih walau seluruh konten
+                   lain sudah gelap (ditemukan 6 Sep 2026). Filament
+                   menambahkan class "dark" ke <html> waktu dark mode
+                   aktif -- jadi scoping ke :not(.dark) di sini artinya
+                   cuma berlaku di mode terang, dark mode dibiarkan
+                   pakai warna gelap bawaan Filament sendiri. */
+                :root:not(.dark) .fi-sidebar{
                     background:white !important;
                     border-right:1px solid #e5e7eb;
                 }
 
-                .fi-sidebar-nav{
+                :root:not(.dark) .fi-sidebar-nav{
                     background:white !important;
                 }
 
-                .fi-topbar{
+                :root:not(.dark) .fi-topbar{
                     background:white !important;
                 }
             </style>
