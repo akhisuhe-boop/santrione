@@ -51,9 +51,19 @@ class TenantBillingCalculator
      * (menandakan plan itu memang plan gaya "Akses Platform"), pakai
      * itu. Kalau tidak ada, fallback ke plan default is_active urutan
      * pertama yang punya harga_per_siswa_tambahan terisi.
+     *
+     * @param  ?SubscriptionPlan  $planOverride  Kalau diisi, PAKSA pakai
+     *         plan ini (bukan subscription aktif Yayasan) -- dipakai
+     *         buat preview "kalau pindah ke plan X, berapa tagihannya"
+     *         SEBELUM plan itu benar-benar aktif (mis. hitung tagihan
+     *         Paket Full sebelum tenant bayar & benar-benar pindah plan).
      */
-    protected function aksesPlatformPlan(Yayasan $yayasan): ?SubscriptionPlan
+    protected function aksesPlatformPlan(Yayasan $yayasan, ?SubscriptionPlan $planOverride = null): ?SubscriptionPlan
     {
+        if ($planOverride) {
+            return $planOverride;
+        }
+
         $subscription = $yayasan->activeSubscription();
 
         if ($subscription?->plan?->harga_per_siswa_tambahan !== null) {
@@ -72,10 +82,10 @@ class TenantBillingCalculator
      * Dipakai standalone (mis. preview harga di form admin sebelum
      * menyimpan modul) maupun dipanggil berulang oleh hitungYayasan().
      */
-    public function hitungLembaga(Lembaga $lembaga): array
+    public function hitungLembaga(Lembaga $lembaga, ?SubscriptionPlan $planOverride = null): array
     {
         $yayasan = $lembaga->yayasan;
-        $plan = $this->aksesPlatformPlan($yayasan);
+        $plan = $this->aksesPlatformPlan($yayasan, $planOverride);
 
         $jumlahSiswa = $lembaga->jumlah_siswa_billing ?? $lembaga->jumlahSiswaAktif();
 
@@ -161,12 +171,12 @@ class TenantBillingCalculator
      * ulang oleh hitungYayasan() dan hitungYayasanTahunan() di bawah,
      * supaya kedua-duanya selalu mulai dari titik yang sama persis.
      */
-    protected function hitungYayasanMurni(Yayasan $yayasan): array
+    protected function hitungYayasanMurni(Yayasan $yayasan, ?SubscriptionPlan $planOverride = null): array
     {
         $rincianLembaga = $yayasan->lembagas()
             ->orderBy('id')
             ->get()
-            ->map(function (Lembaga $lembaga) use ($yayasan) {
+            ->map(function (Lembaga $lembaga) use ($yayasan, $planOverride) {
                 // setRelation() di sini PENTING -- tanpa ini,
                 // hitungLembaga() (lewat $lembaga->yayasan) akan
                 // LAZY-LOAD ulang Yayasan dari database untuk SETIAP
@@ -176,7 +186,7 @@ class TenantBillingCalculator
                 // (7 Sep 2026).
                 $lembaga->setRelation('yayasan', $yayasan);
 
-                return $this->hitungLembaga($lembaga);
+                return $this->hitungLembaga($lembaga, $planOverride);
             })
             ->values()
             ->all();
@@ -197,9 +207,9 @@ class TenantBillingCalculator
      * ini punya promo pendaftaran yang belum dipakai, diterapkan di
      * sini (satu kali, ke tagihan bulanan berikutnya).
      */
-    public function hitungYayasan(Yayasan $yayasan): array
+    public function hitungYayasan(Yayasan $yayasan, ?SubscriptionPlan $planOverride = null): array
     {
-        $murni = $this->hitungYayasanMurni($yayasan);
+        $murni = $this->hitungYayasanMurni($yayasan, $planOverride);
 
         $promoPersen = $yayasan->promoPendaftaranBelumDipakai() ? (int) $yayasan->promo_pendaftaran_persen : 0;
         $total = $promoPersen > 0
@@ -227,10 +237,10 @@ class TenantBillingCalculator
      *  - Kalau tidak ada promo -> diskon_tahunan_persen paket yang
      *    berlaku seperti biasa.
      */
-    public function hitungYayasanTahunan(Yayasan $yayasan): array
+    public function hitungYayasanTahunan(Yayasan $yayasan, ?SubscriptionPlan $planOverride = null): array
     {
-        $murni = $this->hitungYayasanMurni($yayasan);
-        $plan = $this->aksesPlatformPlan($yayasan);
+        $murni = $this->hitungYayasanMurni($yayasan, $planOverride);
+        $plan = $planOverride ?? $this->aksesPlatformPlan($yayasan);
 
         $totalTahunanSebelumDiskon = $murni['total'] * 12;
         $promoPersen = $yayasan->promoPendaftaranBelumDipakai() ? (int) $yayasan->promo_pendaftaran_persen : 0;

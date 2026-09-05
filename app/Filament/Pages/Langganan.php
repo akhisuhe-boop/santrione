@@ -263,18 +263,86 @@ class Langganan extends Page
             }
         }
 
-        try {
-            $invoiceUrl = app(\App\Services\XenditSubscriptionService::class)
-                ->createTransaction($subscription, $plan, $yayasan->email ?? Auth::user()->email);
+        $this->buatTransaksiDokuDanRedirect($yayasan, $subscription, $plan, $hasil['total'], $tahunan);
+    }
 
-            $this->redirect($invoiceUrl);
+    /**
+     * Buat transaksi pembayaran DOKU untuk 1 Subscription 'pending' &
+     * redirect tenant ke halaman checkout DOKU -- dipakai bersama oleh
+     * bayarSekarang() & aktifkanPaketFull() supaya kedua alur konsisten
+     * (dan tidak dobel kode).
+     *
+     * channel: 'ALL' (bukan salah satu channel spesifik seperti 'QRIS')
+     * -- DokuService::paymentMethodTypes() balikin array KOSONG untuk
+     * channel yang tidak dikenali, dan array kosong artinya DOKU
+     * tampilkan SEMUA metode pembayaran aktif di halaman checkout-nya
+     * (VA semua bank, QRIS, e-wallet, dll), bukan cuma 1 metode
+     * spesifik -- sesuai keputusan Anda.
+     */
+    protected function buatTransaksiDokuDanRedirect(
+        \App\Models\Yayasan $yayasan,
+        \App\Models\Subscription $subscription,
+        \App\Models\SubscriptionPlan $plan,
+        int $amount,
+        bool $tahunan
+    ): void {
+        if (blank(config('services.doku.client_id'))) {
+            Notification::make()
+                ->title('Pembayaran otomatis belum diaktifkan')
+                ->body('Silakan hubungi admin Qinara untuk pembayaran manual.')
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        $referenceId = 'SUB-' . $subscription->id . '-' . time();
+
+        $doku = app(\App\Services\DokuService::class);
+
+        try {
+            $result = $doku->buatPaymentRequest(
+                referenceId: $referenceId,
+                amount: $amount,
+                customerName: $yayasan->nama,
+                customerEmail: $yayasan->email ?? Auth::user()->email,
+                judul: 'Langganan ' . $plan->nama . ' (' . ($tahunan ? '1 tahun' : '1 bulan') . ') -- ' . $yayasan->nama,
+                channel: 'ALL'
+            );
         } catch (\Throwable $e) {
             Notification::make()
                 ->title('Gagal membuat transaksi pembayaran')
                 ->body($e->getMessage())
                 ->danger()
                 ->send();
+
+            return;
         }
+
+        // Path field URL sesuai dokumentasi resmi DOKU Checkout:
+        // response.payment.url (lihat juga catatan yang sama di
+        // SubscriptionController::payDoku()).
+        $paymentUrl = $result['response']['payment']['url'] ?? null;
+
+        if (! $paymentUrl) {
+            Notification::make()
+                ->title('Gagal membuat transaksi pembayaran')
+                ->body('URL pembayaran tidak ditemukan di respons DOKU.')
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        $subscription->payments()->create([
+            'jumlah' => $amount,
+            'metode' => 'doku',
+            'status' => 'pending',
+            'gateway_order_id' => $referenceId,
+            'gateway_raw_response' => $result,
+        ]);
+
+        $this->redirect($paymentUrl);
     }
 
     /**
@@ -294,6 +362,18 @@ class Langganan extends Page
      * dibiarkan semua modul tetap aktif begitu saja (yang bisa bikin
      * sekolah salah kira modul itu memang mereka pilih).
      */
+    /**
+     * "Aktifkan Paket Full" -- SEBELUMNYA method ini langsung
+     * mengaktifkan Paket Full & menyalakan semua modul TANPA lewat
+     * pembayaran sama sekali (celah billing ditemukan 4 Sep 2026).
+     * Sekarang alurnya disamakan persis dengan bayarSekarang(): bikin
+     * Subscription berstatus 'pending', hitung tagihan KHUSUS untuk
+     * plan Paket Full (bukan plan yang sedang aktif sekarang -- lihat
+     * parameter $planOverride di TenantBillingCalculator), lalu
+     * redirect ke payment gateway. Modul di tiap Lembaga BARU dinyalakan
+     * oleh webhook (XenditWebhookController::handleSubscriptionInvoice)
+     * setelah pembayaran BENAR-BENAR sukses -- bukan di sini lagi.
+     */
     public function aktifkanPaketFull(): void
     {
         $yayasan = $this->getYayasan();
@@ -306,9 +386,18 @@ class Langganan extends Page
             return;
         }
 
-        // Snapshot cuma diambil kalau BELUM sedang Paket Full -- supaya
-        // klik "Aktifkan Paket Full" dua kali beruntun tidak menimpa
-        // snapshot lama dengan kondisi "semua aktif" (yang percuma).
+        $calculator = app(TenantBillingCalculator::class);
+
+        $hasil = $tahunan
+            ? $calculator->hitungYayasanTahunan($yayasan, $planFull)
+            : $calculator->hitungYayasan($yayasan, $planFull);
+
+        // Snapshot modul yang sedang berjalan SEBELUM pindah ke Paket
+        // Full -- supaya kalau nanti tenant klik "Kembali Pilih
+        // Satu-satu" (batalkanPaketFull), pilihannya bisa dikembalikan
+        // persis seperti semula. Cuma diambil kalau BELUM sedang Paket
+        // Full, supaya klik dua kali beruntun tidak menimpa snapshot
+        // lama dengan kondisi "semua aktif" (yang percuma).
         if (! $this->isPaketFullAktif()) {
             $snapshot = [];
 
@@ -323,46 +412,39 @@ class Langganan extends Page
             $yayasan->update(['modul_snapshot_sebelum_full' => $snapshot]);
         }
 
-        $subAktif = $yayasan->activeSubscription();
+        $subscription = $yayasan->subscriptions()->create([
+            'subscription_plan_id' => $planFull->id,
+            'siklus_billing' => $tahunan ? 'tahunan' : 'bulanan',
+            'status' => 'pending',
+            'computed_amount' => $hasil['total'],
+            'computed_breakdown' => $hasil,
+            'periode' => $tahunan ? (string) now()->addYear()->year : now()->format('Y-m'),
+        ]);
 
-        if ($subAktif) {
-            $subAktif->update([
-                'subscription_plan_id' => $planFull->id,
-                'siklus_billing' => $tahunan ? 'tahunan' : 'bulanan',
-            ]);
-        } else {
-            $yayasan->subscriptions()->create([
-                'subscription_plan_id' => $planFull->id,
-                'siklus_billing' => $tahunan ? 'tahunan' : 'bulanan',
-                'status' => 'active',
-                'mulai_pada' => now(),
-                'berakhir_pada' => $tahunan ? now()->addYear() : now()->addMonth(),
-            ]);
-        }
+        if (($hasil['promo_pendaftaran_persen'] ?? 0) > 0) {
+            $yayasan->update(['promo_pendaftaran_terpakai' => true]);
 
-        $modulSemua = ModulePrice::aktif()->get();
-
-        foreach ($this->getLembagas() as $lembaga) {
-            foreach ($modulSemua as $mp) {
-                $existing = $lembaga->modules()->where('module_price_id', $mp->id)->first();
-
-                if ($existing) {
-                    $existing->update(['is_active' => true, 'aktif_sejak' => now(), 'nonaktif_sejak' => null]);
-                } else {
-                    $lembaga->modules()->create([
-                        'module_price_id' => $mp->id,
-                        'is_active' => true,
-                        'aktif_sejak' => now(),
-                    ]);
-                }
+            try {
+                \App\Services\NotificationService::sendBroadcastYayasan(
+                    $yayasan,
+                    'Diskon Pendaftaran Diterapkan',
+                    "Tagihan ini sudah termasuk diskon pendaftaran \"{$hasil['promo_pendaftaran_teks']}\" ({$hasil['promo_pendaftaran_persen']}%). " .
+                    'Diskon ini berlaku SATU KALI untuk tagihan ini saja -- tagihan berikutnya akan kembali ke harga normal.'
+                );
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error("Langganan::aktifkanPaketFull: gagal kirim notif penjelasan promo untuk yayasan {$yayasan->id}: {$e->getMessage()}");
             }
         }
 
-        Notification::make()
-            ->title('Paket Full diaktifkan')
-            ->body('Semua modul sekarang termasuk di seluruh Lembaga Anda.')
-            ->success()
-            ->send();
+        try {
+            $this->buatTransaksiDokuDanRedirect($yayasan, $subscription, $planFull, $hasil['total'], $tahunan);
+        } catch (\Throwable $e) {
+            Notification::make()
+                ->title('Gagal membuat transaksi pembayaran')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
+        }
     }
 
     public function isPaketFullAktif(): bool

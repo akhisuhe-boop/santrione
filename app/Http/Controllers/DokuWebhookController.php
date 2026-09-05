@@ -401,6 +401,34 @@ class DokuWebhookController extends Controller
 
                 $yayasan->update(['status' => 'active']);
 
+                // Kalau plan yang baru dibayar ini "termasuk semua modul"
+                // (mis. Paket Full), nyalakan semua modul di semua
+                // Lembaga milik yayasan ini SEKARANG -- setelah
+                // pembayaran beneran sukses, BUKAN lagi langsung waktu
+                // tenant klik tombol "Aktifkan Paket Full" (celah
+                // billing ditemukan 4 Sep 2026, lihat
+                // Langganan::aktifkanPaketFull()).
+                if ($subscription->plan?->termasuk_semua_modul) {
+
+                    $modulSemua = \App\Models\ModulePrice::aktif()->get();
+
+                    foreach ($yayasan->lembagas as $lembaga) {
+                        foreach ($modulSemua as $mp) {
+                            $existing = $lembaga->modules()->where('module_price_id', $mp->id)->first();
+
+                            if ($existing) {
+                                $existing->update(['is_active' => true, 'aktif_sejak' => now(), 'nonaktif_sejak' => null]);
+                            } else {
+                                $lembaga->modules()->create([
+                                    'module_price_id' => $mp->id,
+                                    'is_active' => true,
+                                    'aktif_sejak' => now(),
+                                ]);
+                            }
+                        }
+                    }
+                }
+
                 if ($statusSebelumnya !== 'active') {
                     try {
                         NotificationService::sendAplikasiAktif($yayasan);
