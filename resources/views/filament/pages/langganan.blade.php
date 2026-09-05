@@ -5,11 +5,11 @@
         $lembagas = $this->getLembagas();
         $modulOptions = $this->getModulOptions();
         $subAktif = $this->getSubscriptionAktif();
-        $pendingUrl = $this->getPendingPaymentUrl();
         $broadcasts = $this->getBroadcasts();
         $riwayat = $this->getRiwayatPembayaran();
         $paketFullAktif = $this->isPaketFullAktif();
         $tahunanDipilih = $this->isTahunanDipilih();
+        $yayasanUntukTrial = $this->getYayasan();
     @endphp
 
     {{-- TOGGLE SIKLUS BILLING --}}
@@ -102,13 +102,19 @@
                 @endif
 
                 @if ($subAktif)
-                    <x-filament::badge :color="$subAktif->isTahunan() ? 'success' : 'gray'">
-                        Langganan Aktif: {{ $subAktif->isTahunan() ? 'Tahunan' : 'Bulanan' }}
-                    </x-filament::badge>
+                    @if ($this->getYayasan()->status === 'trial')
+                        <x-filament::badge color="info">
+                            Masa Trial Aktif
+                        </x-filament::badge>
+                    @else
+                        <x-filament::badge :color="$subAktif->isTahunan() ? 'success' : 'gray'">
+                            Langganan Aktif: {{ $subAktif->isTahunan() ? 'Tahunan' : 'Bulanan' }}
+                        </x-filament::badge>
+                    @endif
                 @endif
 
                 <div class="text-gray-500">
-                    Jatuh Tempo:
+                    {{ $this->getYayasan()->status === 'trial' ? 'Masa Trial Aktif sampai:' : 'Jatuh Tempo:' }}
                     <span class="font-semibold text-gray-800 dark:text-gray-100">
                         {{ $subAktif?->berakhir_pada?->locale('id')->translatedFormat('d M Y') ?? 'Belum ada langganan aktif' }}
                     </span>
@@ -358,12 +364,27 @@
                         $sub->status === 'pending' => ['Menunggu Pembayaran', 'warning'],
                         default => [ucfirst($sub->status), 'gray'],
                     };
+
+                    // Baris trial-placeholder yang otomatis dibuat waktu daftar
+                    // (lihat PublicRegistrationController) -- dikenali dari
+                    // berakhir_pada-nya yang PERSIS sama dengan trial_ends_at
+                    // milik Yayasan. Ditampilkan "Trial Awal (14 Hari)", BUKAN
+                    // nama plan/siklus, supaya tidak dikira langganan
+                    // berbayar sungguhan.
+                    $iniBarisTrial = $sub->berakhir_pada
+                        && $yayasanUntukTrial->trial_ends_at
+                        && $sub->berakhir_pada->equalTo($yayasanUntukTrial->trial_ends_at)
+                        && ! $sub->payments()->where('status', 'berhasil')->exists();
                 @endphp
                 <div class="flex items-center justify-between text-sm border-b border-gray-100 dark:border-gray-700 py-3 last:border-0">
                     <div>
                         <div class="font-medium text-gray-800 dark:text-gray-100">
-                            {{ $sub->plan->nama ?? '—' }}
-                            <span class="text-xs font-normal text-gray-400">({{ $sub->isTahunan() ? 'Tahunan' : 'Bulanan' }})</span>
+                            @if ($iniBarisTrial)
+                                Trial Awal (14 Hari)
+                            @else
+                                {{ $sub->plan->nama ?? '—' }}
+                                <span class="text-xs font-normal text-gray-400">({{ $sub->isTahunan() ? 'Tahunan' : 'Bulanan' }})</span>
+                            @endif
                         </div>
                         <div class="text-gray-400 text-xs">{{ $sub->created_at->locale('id')->translatedFormat('d M Y H:i') }}</div>
                     </div>

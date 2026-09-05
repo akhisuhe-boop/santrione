@@ -119,9 +119,12 @@ class AdminPanelProvider extends PanelProvider
                 $urlLangganan = \App\Filament\Pages\Langganan::getUrl(tenant: $tenant);
 
                 return '
-                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#ecfeff;border:1px solid #a5f3fc;color:#155e75;padding:10px 18px;border-radius:14px;margin-bottom:16px;font-size:13px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#ecfeff;border:1px solid #a5f3fc;color:#155e75;padding:10px 18px;border-radius:14px;margin-top:16px;margin-bottom:16px;font-size:13px;">
                         <div style="display:flex;align-items:center;gap:8px;">
-                            <span style="font-weight:700;">🎁 Masa Trial</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:20px;height:20px;flex-shrink:0;">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 11.25v8.25a1.5 1.5 0 0 1-1.5 1.5H4.5a1.5 1.5 0 0 1-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 1 0 9.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1 1 14.625 7.5H12m0 0V21m-8.625-9.75h18c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125h-18c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
+                            </svg>
+                            <span style="font-weight:700;">Masa Trial</span>
                             <span>' . ($sisaHari > 0
                                 ? "Sisa {$sisaHari} hari lagi dari 14 hari masa coba."
                                 : 'Hari terakhir masa coba Anda.') . '</span>

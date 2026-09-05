@@ -293,20 +293,6 @@ class Langganan extends Page
             ->get();
     }
 
-    public function getPendingPaymentUrl(): ?string
-    {
-        $sub = $this->getYayasan()->subscriptions()
-            ->where('status', 'pending')
-            ->with('payments')
-            ->latest()
-            ->first();
-
-        $payment = $sub?->payments()->where('status', 'pending')->latest()->first();
-
-        return $payment?->gateway_raw_response['invoice_url']
-            ?? $payment?->gateway_raw_response['paymentUrl']
-            ?? null;
-    }
 
     /**
      * Bayar sesuai $billingCycle yang sedang dipilih tenant --
