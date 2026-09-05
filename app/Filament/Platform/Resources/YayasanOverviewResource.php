@@ -80,6 +80,47 @@ class YayasanOverviewResource extends \App\Filament\Resources\BaseResource
                     ->date('d M Y')
                     ->placeholder('—'),
 
+                Tables\Columns\TextColumn::make('langganan_berakhir')
+                    ->label('Langganan Berakhir / Renew')
+                    ->state(function (Yayasan $record) {
+                        $subscription = $record->subscriptions()
+                            ->latest('berakhir_pada')
+                            ->first();
+
+                        return $subscription?->berakhir_pada;
+                    })
+                    ->date('d M Y')
+                    ->placeholder('—')
+                    ->badge()
+                    ->color(function (Yayasan $record) {
+                        $subscription = $record->subscriptions()
+                            ->latest('berakhir_pada')
+                            ->first();
+
+                        if (! $subscription?->berakhir_pada) {
+                            return 'gray';
+                        }
+
+                        if ($subscription->berakhir_pada->isPast()) {
+                            return 'danger';
+                        }
+
+                        if ($subscription->berakhir_pada->diffInDays(now()) <= 30) {
+                            return 'warning';
+                        }
+
+                        return 'success';
+                    })
+                    ->sortable(query: function ($query, string $direction) {
+                        return $query->orderBy(
+                            \App\Models\Subscription::select('berakhir_pada')
+                                ->whereColumn('yayasan_id', 'yayasans.id')
+                                ->latest('berakhir_pada')
+                                ->limit(1),
+                            $direction
+                        );
+                    }),
+
                 Tables\Columns\TextColumn::make('estimasi_tagihan')
                     ->label('Estimasi Tagihan/Bulan')
                     ->state(function (Yayasan $record) {

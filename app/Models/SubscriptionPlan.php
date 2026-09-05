@@ -47,6 +47,17 @@ class SubscriptionPlan extends Model
 
     public function hasFeature(string $key): bool
     {
+        // Paket "termasuk semua modul" (mis. Paket Full) harus SELALU
+        // membuka SEMUA fitur, termasuk fitur baru yang ditambahkan ke
+        // FeatureGate SETELAH paket ini dibuat -- bukan cuma fitur yang
+        // sempat dicentang manual waktu form ini terakhir disimpan.
+        // Sebelumnya baris ini tidak ada, jadi paket "Full" bisa
+        // ketinggalan modul baru sampai admin buka lagi form-nya dan
+        // centang ulang satu-satu.
+        if ($this->termasuk_semua_modul) {
+            return true;
+        }
+
         return in_array($key, $this->fitur ?? [], true);
     }
 }
