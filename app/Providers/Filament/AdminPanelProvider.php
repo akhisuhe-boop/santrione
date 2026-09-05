@@ -113,8 +113,7 @@ class AdminPanelProvider extends PanelProvider
                     return '';
                 }
 
-                $sisaHari = (int) ceil(($tenant->trial_ends_at->timestamp - now()->timestamp) / 86400);
-                $sisaHari = max($sisaHari, 0);
+                $sisaHari = $tenant->trialDaysLeft();
 
                 $urlLangganan = \App\Filament\Pages\Langganan::getUrl(tenant: $tenant);
 

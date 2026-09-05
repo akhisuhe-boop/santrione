@@ -227,6 +227,9 @@
 
     {{-- PAKET FULL SHORTCUT --}}
     @if (! $paketFullAktif)
+        @php
+            $estimasiPaketFull = $this->getEstimasiPaketFull();
+        @endphp
         <x-filament::section>
             <div class="flex items-center justify-between flex-wrap gap-4">
                 <div class="flex items-center gap-3">
@@ -236,6 +239,17 @@
                     <div>
                         <div class="font-semibold text-gray-900 dark:text-white">Mau semua modul sekaligus?</div>
                         <div class="text-sm text-gray-500">Aktifkan Paket Full — lebih hemat daripada pilih modul satu-satu.</div>
+
+                        @if ($estimasiPaketFull)
+                            <div class="text-sm mt-2 flex items-center gap-2 flex-wrap">
+                                <span class="text-gray-400">Sekarang (modul dicentang):</span>
+                                <span class="font-semibold text-gray-600 dark:text-gray-300">Rp {{ number_format($estimasi['total'], 0, ',', '.') }}</span>
+                                <x-heroicon-o-arrow-right class="w-3.5 h-3.5 text-gray-400" />
+                                <span class="text-gray-400">Paket Full:</span>
+                                <span class="font-bold text-warning-600">Rp {{ number_format($estimasiPaketFull['total'], 0, ',', '.') }}</span>
+                                <span class="text-gray-400">/ {{ $tahunanDipilih ? 'tahun' : 'bulan' }}</span>
+                            </div>
+                        @endif
                     </div>
                 </div>
                 <x-filament::button wire:click="aktifkanPaketFull" color="warning" outlined>

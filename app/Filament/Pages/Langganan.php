@@ -216,6 +216,28 @@ class Langganan extends Page
             : $calculator->hitungYayasan($yayasan);
     }
 
+    /**
+     * Estimasi tagihan KALAU pindah ke Paket Full -- dipakai buat
+     * tampilkan perbandingan harga di kartu "Aktifkan Paket Full",
+     * supaya tenant tahu angkanya SEBELUM klik, bukan kejutan setelah
+     * diarahkan ke halaman pembayaran.
+     */
+    public function getEstimasiPaketFull(): ?array
+    {
+        $planFull = \App\Models\SubscriptionPlan::where('slug', 'paket-full')->first();
+
+        if (! $planFull) {
+            return null;
+        }
+
+        $calculator = app(TenantBillingCalculator::class);
+        $yayasan = $this->getYayasan();
+
+        return $this->isTahunanDipilih()
+            ? $calculator->hitungYayasanTahunan($yayasan, $planFull)
+            : $calculator->hitungYayasan($yayasan, $planFull);
+    }
+
     public function getModulOptions()
     {
         return $this->modulOptionsCache ??= ModulePrice::aktif()->orderBy('urutan')->get();
