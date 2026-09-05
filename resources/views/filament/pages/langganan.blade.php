@@ -221,7 +221,7 @@
             $estimasiPaketFull = $this->getEstimasiPaketFull();
         @endphp
         <x-filament::section>
-            <div class="flex items-center justify-between flex-wrap gap-4">
+            <div class="flex items-center justify-between flex-wrap gap-4 {{ $estimasiPaketFull ? 'pb-4 border-b border-gray-100 dark:border-gray-700' : '' }}">
                 <div class="flex items-center gap-3">
                     <div class="rounded-xl bg-warning-100 dark:bg-warning-500/10 p-3">
                         <x-heroicon-o-sparkles class="w-6 h-6 text-warning-600" />
@@ -229,24 +229,23 @@
                     <div>
                         <div class="font-semibold text-gray-900 dark:text-white">Mau semua modul sekaligus?</div>
                         <div class="text-sm text-gray-500">Aktifkan Paket Full — lebih hemat daripada pilih modul satu-satu.</div>
-
-                        @if ($estimasiPaketFull)
-                            <hr class="my-3 border-gray-200 dark:border-gray-700">
-                            <div class="text-base flex items-center gap-2.5 flex-wrap">
-                                <span class="text-gray-500">Sekarang:</span>
-                                <span class="font-semibold text-gray-500 line-through">Rp {{ number_format($estimasi['total'], 0, ',', '.') }}</span>
-                                <x-heroicon-o-arrow-right class="w-4 h-4 text-warning-500" />
-                                <span class="text-gray-700 dark:text-gray-200">Paket Full:</span>
-                                <span class="font-extrabold text-lg text-warning-600">Rp {{ number_format($estimasiPaketFull['total'], 0, ',', '.') }}</span>
-                                <span class="text-gray-500">/ {{ $tahunanDipilih ? 'tahun' : 'bulan' }}</span>
-                            </div>
-                        @endif
                     </div>
                 </div>
                 <x-filament::button wire:click="aktifkanPaketFull" color="warning">
                     Aktifkan Paket Full
                 </x-filament::button>
             </div>
+
+            @if ($estimasiPaketFull)
+                <div class="pt-4 text-base flex items-center gap-2.5 flex-wrap">
+                    <span class="text-gray-500">Sekarang:</span>
+                    <span class="font-semibold text-gray-500 line-through">Rp {{ number_format($estimasi['total'], 0, ',', '.') }}</span>
+                    <x-heroicon-o-arrow-right class="w-4 h-4 text-warning-500" />
+                    <span class="text-gray-700 dark:text-gray-200">Paket Full:</span>
+                    <span class="font-extrabold text-lg text-warning-600">Rp {{ number_format($estimasiPaketFull['total'], 0, ',', '.') }}</span>
+                    <span class="text-gray-500">/ {{ $tahunanDipilih ? 'tahun' : 'bulan' }}</span>
+                </div>
+            @endif
         </x-filament::section>
     @else
         <x-filament::section>
