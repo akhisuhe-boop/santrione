@@ -48,6 +48,16 @@ class Langganan extends Page
 
     public string $billingCycle = 'bulanan';
 
+    // Kalau ada pembayaran yang MASIH BISA dilanjutkan (dibuat < 55
+    // menit lalu -- DOKU checkout kadaluarsa 60 menit, lihat
+    // payment_due_date di DokuService::buatPaymentRequest()), URL-nya
+    // ditaruh di sini supaya tenant bisa lanjutkan pembayaran yang
+    // sama, BUKAN bikin transaksi baru tiap klik ulang (sebelumnya
+    // properti ini ada di blade tapi tidak pernah benar-benar diisi
+    // -- ditemukan 5 Sep 2026 waktu ada 2 baris "Paket Full -
+    // Menunggu Pembayaran" kembar gara-gara diklik 2x).
+    public ?string $pendingUrl = null;
+
     // Cache in-memory SEKALI PER REQUEST -- bukan cache permanen/lintas
     // request (properti protected TIDAK di-serialize Livewire antar
     // request, jadi otomatis "kosong lagi" tiap kali halaman di-load
@@ -70,6 +80,39 @@ class Langganan extends Page
         // (toggle selalu nunjukin Bulanan padahal langganan aktifnya
         // Tahunan).
         $this->billingCycle = $this->getSubscriptionAktif()?->siklus_billing ?? 'bulanan';
+
+        $this->pendingUrl = $this->cariPendingUrlPembayaran();
+    }
+
+    /**
+     * Cari URL checkout DOKU dari pembayaran 'pending' PALING BARU yang
+     * masih dalam jendela waktu berlaku (< 55 menit sejak dibuat) --
+     * kalau ketemu, tenant tinggal lanjutkan pembayaran yang sama lewat
+     * link ini, TIDAK perlu (dan tidak boleh) bikin transaksi baru.
+     * Pembayaran yang sudah lewat jendela waktu dianggap kadaluarsa --
+     * biarkan tenant mulai transaksi baru kalau masih mau bayar.
+     */
+    protected function cariPendingUrlPembayaran(): ?string
+    {
+        $subscription = $this->getYayasan()->subscriptions()
+            ->where('status', 'pending')
+            ->latest()
+            ->first();
+
+        if (! $subscription) {
+            return null;
+        }
+
+        $payment = $subscription->payments()
+            ->where('status', 'pending')
+            ->latest()
+            ->first();
+
+        if (! $payment || ! $payment->created_at || $payment->created_at->diffInMinutes(now()) >= 55) {
+            return null;
+        }
+
+        return $payment->gateway_raw_response['response']['payment']['url'] ?? null;
     }
 
     public static function canAccess(): bool
@@ -230,6 +273,12 @@ class Langganan extends Page
      */
     public function bayarSekarang(): void
     {
+        if ($this->pendingUrl) {
+            $this->redirect($this->pendingUrl);
+
+            return;
+        }
+
         $yayasan = $this->getYayasan();
         $plan = \App\Models\SubscriptionPlan::where('slug', 'akses-platform')->firstOrFail();
         $calculator = app(TenantBillingCalculator::class);
@@ -376,6 +425,12 @@ class Langganan extends Page
      */
     public function aktifkanPaketFull(): void
     {
+        if ($this->pendingUrl) {
+            $this->redirect($this->pendingUrl);
+
+            return;
+        }
+
         $yayasan = $this->getYayasan();
         $planFull = \App\Models\SubscriptionPlan::where('slug', 'paket-full')->first();
         $tahunan = $this->isTahunanDipilih();

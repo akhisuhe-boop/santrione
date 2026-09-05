@@ -74,12 +74,12 @@
                 </a>
             </div>
         </x-filament::section>
-    @elseif (! $subAktif || $subAktif->status !== 'active')
+    @else
         <x-filament::section>
             <div class="flex items-center justify-between flex-wrap gap-3">
                 <div>
-                    <div class="font-semibold text-gray-900 dark:text-white">Belum ada langganan aktif</div>
-                    <div class="text-sm text-gray-500">Aktifkan sekarang lewat Xendit (QRIS / VA / E-Wallet) — siklus {{ $tahunanDipilih ? 'tahunan' : 'bulanan' }} sesuai pilihan di atas.</div>
+                    <div class="font-semibold text-gray-900 dark:text-white">Bayar / Perpanjang Langganan</div>
+                    <div class="text-sm text-gray-500">Bayar lewat DOKU (VA semua bank / QRIS / E-Wallet / dll) — siklus {{ $tahunanDipilih ? 'tahunan' : 'bulanan' }} sesuai pilihan di atas, sesuai modul yang sedang dicentang.</div>
                 </div>
                 <x-filament::button wire:click="bayarSekarang" color="primary" icon="heroicon-o-credit-card">
                     Bayar Sekarang
