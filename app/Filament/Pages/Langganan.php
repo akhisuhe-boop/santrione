@@ -91,13 +91,28 @@ class Langganan extends Page
      * link ini, TIDAK perlu (dan tidak boleh) bikin transaksi baru.
      * Pembayaran yang sudah lewat jendela waktu dianggap kadaluarsa --
      * biarkan tenant mulai transaksi baru kalau masih mau bayar.
+     *
+     * @param  ?int  $planId  Kalau diisi, HARUS plan yang sama dengan
+     *         subscription pending itu -- supaya pending lama Paket A
+     *         tidak "ketiban" dipakai balik waktu tenant sebenarnya mau
+     *         bayar Paket B (atau siklus beda). Kosongkan cuma untuk
+     *         cek umum "ada pending apa saja" (dipakai banner info di
+     *         atas halaman).
      */
-    protected function cariPendingUrlPembayaran(): ?string
+    protected function cariPendingUrlPembayaran(?int $planId = null, ?string $siklus = null): ?string
     {
-        $subscription = $this->getYayasan()->subscriptions()
-            ->where('status', 'pending')
-            ->latest()
-            ->first();
+        $query = $this->getYayasan()->subscriptions()
+            ->where('status', 'pending');
+
+        if ($planId) {
+            $query->where('subscription_plan_id', $planId);
+        }
+
+        if ($siklus) {
+            $query->where('siklus_billing', $siklus);
+        }
+
+        $subscription = $query->latest()->first();
 
         if (! $subscription) {
             return null;
@@ -273,16 +288,25 @@ class Langganan extends Page
      */
     public function bayarSekarang(): void
     {
-        if ($this->pendingUrl) {
-            $this->redirect($this->pendingUrl);
+        $yayasan = $this->getYayasan();
+        $plan = \App\Models\SubscriptionPlan::where('slug', 'akses-platform')->firstOrFail();
+        $tahunan = $this->isTahunanDipilih();
+
+        // Cek pending yang cocok PLAN & SIKLUS ini SPESIFIK -- bukan
+        // $this->pendingUrl (dihitung sekali waktu halaman dibuka,
+        // sebelum tenant sempat toggle Bulanan/Tahunan atau ganti
+        // pilihan modul). Kalau dipakai apa adanya, tenant yang sempat
+        // klik bayar Bulanan lalu ganti pikiran ke Tahunan bisa
+        // "terjebak" diarahkan balik ke pending Bulanan yang lama.
+        $pendingUrlCocok = $this->cariPendingUrlPembayaran($plan->id, $tahunan ? 'tahunan' : 'bulanan');
+
+        if ($pendingUrlCocok) {
+            $this->redirect($pendingUrlCocok);
 
             return;
         }
 
-        $yayasan = $this->getYayasan();
-        $plan = \App\Models\SubscriptionPlan::where('slug', 'akses-platform')->firstOrFail();
         $calculator = app(TenantBillingCalculator::class);
-        $tahunan = $this->isTahunanDipilih();
 
         $hasil = $tahunan
             ? $calculator->hitungYayasanTahunan($yayasan)
@@ -425,18 +449,24 @@ class Langganan extends Page
      */
     public function aktifkanPaketFull(): void
     {
-        if ($this->pendingUrl) {
-            $this->redirect($this->pendingUrl);
-
-            return;
-        }
-
         $yayasan = $this->getYayasan();
         $planFull = \App\Models\SubscriptionPlan::where('slug', 'paket-full')->first();
         $tahunan = $this->isTahunanDipilih();
 
         if (! $planFull) {
             Notification::make()->title('Paket Full belum tersedia')->danger()->send();
+
+            return;
+        }
+
+        // Sama seperti bayarSekarang() -- cek pending yang cocok PLAN &
+        // SIKLUS ini spesifik, bukan pending apa saja, supaya tenant
+        // yang ganti pikiran (mis. dari Bulanan ke Tahunan) tidak
+        // "terjebak" diarahkan balik ke pending lama yang beda siklus.
+        $pendingUrlCocok = $this->cariPendingUrlPembayaran($planFull->id, $tahunan ? 'tahunan' : 'bulanan');
+
+        if ($pendingUrlCocok) {
+            $this->redirect($pendingUrlCocok);
 
             return;
         }
