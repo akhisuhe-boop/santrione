@@ -49,16 +49,6 @@
         @if ($tahunanDipilih)
             <p class="text-xs text-gray-400">Bayar 1 tahun sekaligus, langsung dapat diskon. Berlaku untuk pembayaran/aktivasi berikutnya.</p>
         @endif
-
-        @if ($this->isPreviewBerbedaDariAktif())
-            <div class="max-w-xl mx-auto text-xs bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 rounded-lg px-4 py-2.5 flex items-start gap-2">
-                <x-heroicon-o-information-circle class="w-4 h-4 shrink-0 mt-0.5" />
-                <span>
-                    Langganan aktif Anda: <strong>{{ $subAktif->isTahunan() ? 'Tahunan' : 'Bulanan' }}</strong> sampai <strong>{{ $subAktif->berakhir_pada?->locale('id')->translatedFormat('d M Y') }}</strong>.
-                    Tampilan di atas cuma pratinjau — belum ada tagihan sekarang.
-                </span>
-            </div>
-        @endif
     </div>
 
     {{-- TAGIHAN PENDING / BELUM ADA LANGGANAN --}}
@@ -241,18 +231,18 @@
                         <div class="text-sm text-gray-500">Aktifkan Paket Full — lebih hemat daripada pilih modul satu-satu.</div>
 
                         @if ($estimasiPaketFull)
-                            <div class="text-sm mt-2 flex items-center gap-2 flex-wrap">
-                                <span class="text-gray-400">Sekarang (modul dicentang):</span>
-                                <span class="font-semibold text-gray-600 dark:text-gray-300">Rp {{ number_format($estimasi['total'], 0, ',', '.') }}</span>
-                                <x-heroicon-o-arrow-right class="w-3.5 h-3.5 text-gray-400" />
-                                <span class="text-gray-400">Paket Full:</span>
-                                <span class="font-bold text-warning-600">Rp {{ number_format($estimasiPaketFull['total'], 0, ',', '.') }}</span>
-                                <span class="text-gray-400">/ {{ $tahunanDipilih ? 'tahun' : 'bulan' }}</span>
+                            <div class="text-base mt-3 flex items-center gap-2.5 flex-wrap">
+                                <span class="text-gray-500">Sekarang:</span>
+                                <span class="font-semibold text-gray-500 line-through">Rp {{ number_format($estimasi['total'], 0, ',', '.') }}</span>
+                                <x-heroicon-o-arrow-right class="w-4 h-4 text-warning-500" />
+                                <span class="text-gray-700 dark:text-gray-200">Paket Full:</span>
+                                <span class="font-extrabold text-lg text-warning-600">Rp {{ number_format($estimasiPaketFull['total'], 0, ',', '.') }}</span>
+                                <span class="text-gray-500">/ {{ $tahunanDipilih ? 'tahun' : 'bulan' }}</span>
                             </div>
                         @endif
                     </div>
                 </div>
-                <x-filament::button wire:click="aktifkanPaketFull" color="warning" outlined>
+                <x-filament::button wire:click="aktifkanPaketFull" color="warning">
                     Aktifkan Paket Full
                 </x-filament::button>
             </div>
