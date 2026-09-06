@@ -5,19 +5,13 @@
 <div class="min-h-screen bg-[#F8FAFB] px-4 pb-8">
 
     <div class="pt-5">
-        <div class="flex items-start justify-between gap-4">
-            <div>
-                <div class="text-[28px] font-bold tracking-tight text-slate-900">
-                    Isi Jurnal Pengganti
-                </div>
-                <div class="mt-1 text-sm text-slate-500">
-                    {{ now()->locale('id')->translatedFormat('l, d F Y') }} — Pilih kelas yang mau kamu gantikan
-                </div>
+        <div>
+            <div class="text-[20px] font-bold tracking-tight text-slate-900">
+                Isi Jurnal Pengganti
             </div>
-            <a href="{{ route('guru.dashboard') }}"
-               class="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:border-[#00A39D] hover:text-[#00A39D]">
-                Dashboard
-            </a>
+            <div class="mt-1 text-sm text-slate-500">
+                {{ now()->locale('id')->translatedFormat('l, d F Y') }} — Pilih kelas yang ingin digantikan
+            </div>
         </div>
     </div>
 
