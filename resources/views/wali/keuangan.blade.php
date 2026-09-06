@@ -331,7 +331,7 @@
                     @endif
                 <a
                     href="{{ route('wali.pembayaran.show', $tagihan->id) }}"
-                    class="block w-full mt-3 rounded-xl py-2 text-[12px] text-white font-semibold text-center {{ $buttonClass }}">
+                    class="block w-full mt-3 rounded-xl py-2.5 text-[13px] text-white font-semibold text-center {{ $buttonClass }}">
 
                     Bayar Sekarang
 
