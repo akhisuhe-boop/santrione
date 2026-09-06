@@ -14,7 +14,10 @@
                 Isi Jurnal Pengganti
             </div>
             <div class="text-xs text-slate-500 mt-0.5">
-                {{ now()->locale('id')->translatedFormat('l, d F Y') }} &middot; Pilih kelas yang ingin digantikan
+                {{ now()->locale('id')->translatedFormat('l, d F Y') }}
+            </div>
+            <div class="text-xs text-slate-400 mt-0.5">
+                Pilih kelas yang ingin digantikan
             </div>
         </div>
     </div>
