@@ -26,7 +26,8 @@ class SantriIzinTable extends BaseWidget
     public static function canView(): bool
     {
         return auth()->user()->can('view_any_perizinan')
-            || auth()->user()->can('view_any_laporan::perizinan');
+            || auth()->user()->can('view_any_laporan::perizinan')
+            || auth()->user()->can('widget_SantriIzinTable');
     }
 
     /*

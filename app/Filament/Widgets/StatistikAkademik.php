@@ -27,7 +27,8 @@ class StatistikAkademik extends BaseWidget
         return auth()->user()->can('view_any_siswa')
             || auth()->user()->can('page_InputNilai')
             || auth()->user()->can('page_RekapNilai')
-            || auth()->user()->can('page_RaportSiswa');
+            || auth()->user()->can('page_RaportSiswa')
+            || auth()->user()->can('widget_StatistikAkademik');
     }
 
     /*

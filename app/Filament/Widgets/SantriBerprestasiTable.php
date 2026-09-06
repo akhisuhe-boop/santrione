@@ -25,7 +25,8 @@ class SantriBerprestasiTable extends BaseWidget
     {
         return auth()->user()->can('view_any_prestasi')
             || auth()->user()->can('view_any_prestasi::siswa')
-            || auth()->user()->can('view_any_laporan::prestasi');
+            || auth()->user()->can('view_any_laporan::prestasi')
+            || auth()->user()->can('widget_SantriBerprestasiTable');
     }
 
     /*
