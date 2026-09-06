@@ -19,6 +19,7 @@ class KeuanganOverview extends BaseWidget
             || auth()->user()->can('view_any_pembayaran')
             || auth()->user()->can('view_any_tagihan')
             || auth()->user()->can('page_LaporanKas')
+            || auth()->user()->can('widget_KeuanganOverview')
             || auth()->user()->can('page_LaporanPembayaran');
     }
     protected function getColumns(): int

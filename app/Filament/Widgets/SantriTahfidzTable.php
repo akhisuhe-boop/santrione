@@ -27,7 +27,8 @@ class SantriTahfidzTable extends BaseWidget
     {
         return auth()->user()->can('view_any_tahfidz::setoran')
             || auth()->user()->can('view_any_tahfidz::target')
-            || auth()->user()->can('view_any_laporan::tahfidz');
+            || auth()->user()->can('view_any_laporan::tahfidz')
+            || auth()->user()->can('widget_SantriTahfidzTable');
     }
 
     /*

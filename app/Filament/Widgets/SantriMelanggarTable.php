@@ -27,7 +27,8 @@ class SantriMelanggarTable extends BaseWidget
     {
         return auth()->user()->can('view_any_pelanggaran')
             || auth()->user()->can('view_any_pelanggaran::siswa')
-            || auth()->user()->can('view_any_laporan::pelanggaran');
+            || auth()->user()->can('view_any_laporan::pelanggaran')
+            || auth()->user()->can('widget_SantriMelanggarTable');
     }
 
     /*

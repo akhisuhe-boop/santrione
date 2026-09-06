@@ -14,7 +14,8 @@ class GrafikKeuanganChart extends ChartWidget
         return auth()->user()->can('view_any_kas')
             || auth()->user()->can('view_any_pembayaran')
             || auth()->user()->can('page_LaporanKas')
-            || auth()->user()->can('page_LaporanPembayaran');
+            || auth()->user()->can('page_LaporanPembayaran')
+            || auth()->user()->can('widget_GrafikKeuanganChart');
     }
     protected static ?int $sort = 3;
     protected int|string|array $columnSpan = 'full';
