@@ -1,22 +1,22 @@
 <header
     class="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-100"
 >
-    <div class="px-4 py-4 flex items-center justify-between gap-3">
+    <div class="px-4 py-3 flex items-center justify-between gap-3">
 
         {{-- BACK --}}
         <button
             onclick="history.back()"
-            class="w-10 h-10 rounded-xl bg-[#00A39D]/10 flex items-center justify-center hover:bg-[#00A39D]/20 transition"
+            class="w-9 h-9 rounded-xl bg-[#00A39D]/10 flex items-center justify-center hover:bg-[#00A39D]/20 transition"
         >
-            <x-heroicon-o-chevron-left class="w-5 h-5 text-[#00A39D]" />
+            <x-heroicon-o-chevron-left class="w-4 h-4 text-[#00A39D]" />
         </button>
 
         {{-- TITLE --}}
         <div class="flex-1 text-center px-2">
-            <p class="text-xs text-slate-500 font-medium">
+            <p class="text-[10px] text-slate-500 font-medium">
                 Portal Wali Santri
             </p>
-            <h1 class="text-base font-bold text-slate-900 truncate">
+            <h1 class="text-sm font-bold text-slate-900 truncate">
                 {{ $yayasan->nama ?? 'Nama Yayasan' }}
             </h1>
         </div>
@@ -33,9 +33,9 @@
 
                 <button
                     @click="open = !open"
-                    class="relative w-10 h-10 rounded-xl bg-[#00A39D]/10 border border-[#00A39D]/20 flex items-center justify-center hover:bg-[#00A39D]/20 transition"
+                    class="relative w-9 h-9 rounded-xl bg-[#00A39D]/10 border border-[#00A39D]/20 flex items-center justify-center hover:bg-[#00A39D]/20 transition"
                 >
-                    <x-heroicon-o-bell class="w-5 h-5 text-[#00A39D]" />
+                    <x-heroicon-o-bell class="w-4 h-4 text-[#00A39D]" />
 
                     {{-- BADGE --}}
                     @if($notifCount > 0)
@@ -112,9 +112,9 @@
 
                 <button
                     type="submit"
-                    class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center hover:bg-red-100 transition"
+                    class="w-9 h-9 rounded-xl bg-red-50 flex items-center justify-center hover:bg-red-100 transition"
                 >
-                    <x-heroicon-o-arrow-right-on-rectangle class="w-5 h-5 text-red-500" />
+                    <x-heroicon-o-arrow-right-on-rectangle class="w-4 h-4 text-red-500" />
                 </button>
 
             </form>

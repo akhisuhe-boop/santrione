@@ -10,21 +10,21 @@
          <div class="flex justify-between items-center px-3 py-2">
 
             <div>
-                <div class="text-xs text-slate-500">
+                <div class="text-[11px] text-slate-500">
                     Assalamualaikum, Selamat Datang
                 </div>
 
-                <div class="font-bold text-base text-slate-900">
+                <div class="font-bold text-[13px] text-slate-900">
                     {{ session('wali_nama') }}
                 </div>
             </div>
 
             <div class="text-right">
-                <div class="text-xs text-slate-500">
+                <div class="text-[11px] text-slate-500">
                     {{ now()->translatedFormat('l') }}
                 </div>
 
-                <div class="text-sm font-semibold text-slate-900">
+                <div class="text-xs font-semibold text-slate-900">
                     {{ now()->translatedFormat('d M Y') }}
                 </div>
             </div>
@@ -89,7 +89,7 @@
 
                 <div
                     class="
-                        w-[72px] h-[72px]
+                        w-16 h-16
                         rounded-2xl
                         overflow-hidden
                         bg-white/20
@@ -113,7 +113,7 @@
                             class="
                                 w-full h-full
                                 flex items-center justify-center
-                                text-xl font-bold
+                                text-lg font-bold
                                 text-white
                             "
                         >
@@ -151,7 +151,7 @@
                         Nama Siswa
                     </div>
 
-                    <div class="text-lg font-bold leading-tight">
+                    <div class="text-base font-bold leading-tight">
                         {{ $siswa->nama_lengkap }}
                     </div>
                 </div>
@@ -259,7 +259,7 @@
 
                 <div
                     class="
-                        text-sm
+                        text-[13px]
                         font-semibold
                     ">
 
@@ -295,7 +295,7 @@
 
                 <div
                     class="
-                        text-sm
+                        text-[13px]
                         font-semibold
                     ">
 
@@ -402,95 +402,95 @@
 
     @endphp
 
-    <div class="rounded-[20px] border {{ $cardClass }} p-4 mb-4">
+    <div class="rounded-2xl border {{ $cardClass }} p-3.5 mb-3">
 
         <div class="flex items-center justify-between gap-3">
 
             {{-- KIRI --}}
-            <div class="flex items-center gap-4 flex-1">
+            <div class="flex items-center gap-3 flex-1 min-w-0">
 
             {{-- ICON --}}
             <div
-                class="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 {{ $iconClass }}">
-            
+                class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 {{ $iconClass }}">
+
                 @if(
                     str_contains($status,'lunas') ||
                     str_contains($status,'sudah bayar')
                 )
-            
+
                     {{-- Lunas --}}
-                    <x-heroicon-o-check-badge class="w-6 h-6" />
-            
+                    <x-heroicon-o-check-badge class="w-5 h-5" />
+
                 @elseif(str_contains($status,'segera'))
-            
+
                     {{-- Akademik --}}
-                    <x-heroicon-o-academic-cap class="w-6 h-6" />
-            
+                    <x-heroicon-o-academic-cap class="w-5 h-5" />
+
                 @else
-            
+
                     {{-- Tagihan --}}
-                    <x-heroicon-o-wallet class="w-6 h-6" />
-            
+                    <x-heroicon-o-wallet class="w-5 h-5" />
+
                 @endif
-            
+
             </div>
-            
-                            {{-- INFO --}}
-                            <div>
-            
-                                <div class="font-semibold text-[16px] leading-tight text-slate-900">
-                                    {{ $tagihan->judul }}
-                                </div>
-            
-                                <div class="mt-1 text-[12px] text-slate-600">
-            
-                                    Jatuh tempo:
-                                    {{ optional($tagihan->jatuh_tempo)->format('d M Y') }}
-                                
-                                </div>
-            
-                            </div>
-            
-                        </div>
-            
-                        {{-- KANAN --}}
-                        <div class="text-right">
-            
-                            <div class="font-bold text-[18px] leading-tight {{ $amountClass }}">
-                                Rp {{ number_format($tagihan->nominal,0,',','.') }}
-                            </div>
-            
-                            <span
-                                class="inline-flex mt-2 px-3 py-1 rounded-xl text-[11px] font-semibold {{ $badgeClass }}">
-                                {{ $tagihan->status }}
-                            </span>
-            
-                        </div>
-            
-                    </div>
-            
+
+            {{-- INFO --}}
+            <div class="min-w-0">
+
+                <div class="font-semibold text-[13px] leading-tight text-slate-900 truncate">
+                    {{ $tagihan->judul }}
                 </div>
+
+                <div class="mt-1 text-[11px] text-slate-500">
+
+                    Jatuh tempo:
+                    {{ optional($tagihan->jatuh_tempo)->format('d M Y') }}
+
+                </div>
+
+            </div>
+
+            </div>
+
+            {{-- KANAN --}}
+            <div class="text-right flex-shrink-0">
+
+                <div class="font-bold text-[14px] leading-tight {{ $amountClass }}">
+                    Rp {{ number_format($tagihan->nominal,0,',','.') }}
+                </div>
+
+                <span
+                    class="inline-flex mt-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-semibold {{ $badgeClass }}">
+                    {{ $tagihan->status }}
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
             
             @endforeach
 
     {{-- TOTAL TAGIHAN --}}
     <div
-        class="bg-[#FF0000] rounded-[15px] p-4 mt-5 text-white flex items-center justify-between shadow-lg">
+        class="bg-gradient-to-br from-rose-500 to-red-500 rounded-2xl p-4 mt-4 text-white flex items-center justify-between shadow-md shadow-red-500/20">
 
-        <div>
+        <div class="min-w-0">
 
-            <div class="text-sm text-white/80">
+            <div class="text-[11px] text-white/75">
                 Total Tagihan
             </div>
 
-            <div class="text-xl font-bold leading-none mt-1">
+            <div class="text-lg font-bold leading-tight mt-0.5 truncate">
                 Rp {{ number_format($totalTagihan,0,',','.') }}
             </div>
 
         </div>
 
         <a href="{{ route('wali.keuangan') }}"
-           class="bg-white text-[#FF0000] px-4 py-3 rounded-2xl font-semibold text-sm shadow-sm">
+           class="flex-shrink-0 bg-white text-red-500 px-3.5 py-2 rounded-xl font-semibold text-[12px] shadow-sm ml-3">
             Bayar Sekarang →
         </a>
 
@@ -502,9 +502,9 @@
     {{-- HEADER --}}
     <div class="flex items-center justify-between mb-4">
         <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center">
+            <div class="w-9 h-9 rounded-xl bg-teal-50 flex items-center justify-center">
                 <svg xmlns="http://www.w3.org/2000/svg"
-                    class="w-5 h-5 text-[#00A39D]"
+                    class="w-4 h-4 text-[#00A39D]"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke-width="1.8"
@@ -516,7 +516,7 @@
                 </svg>
             </div>
             <div>
-                <div class="text-base font-bold text-slate-900">
+                <div class="text-sm font-bold text-slate-900">
                     Menu Utama
                 </div>
                 <div class="text-xs text-slate-500">
@@ -528,31 +528,31 @@
     </div>
 
     {{-- MAIN CARD --}}
-    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-4">
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-3">
 
-        <div class="grid grid-cols-4 sm:grid-cols-4 gap-3">
+        <div class="grid grid-cols-4 sm:grid-cols-4 gap-2">
 
             {{-- TAHFIDZ --}}
             <a href="{{ route('wali.tahfidz') }}"
-               class="group relative p-4 rounded-2xl border border-slate-100 bg-cyan-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
+               class="group relative flex flex-col p-3 rounded-2xl border border-slate-100 bg-cyan-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200">
 
-                <div class="relative w-11 h-11 rounded-xl bg-cyan-500 shadow-md shadow-cyan-500/25 flex items-center justify-center mb-3">
-                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <div class="relative w-9 h-9 rounded-xl bg-cyan-500 shadow-md shadow-cyan-500/25 flex items-center justify-center mb-2">
+                    <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="M12 6.253v13M12 6.253C10.832 5.477 9.246 5 7.5 5A4.5 4.5 0 003 9.5v9A4.5 4.5 0 017.5 14c1.746 0 3.332.477 4.5 1.253M12 6.253C13.168 5.477 14.754 5 16.5 5A4.5 4.5 0 0121 9.5v9A4.5 4.5 0 0016.5 14c-1.746 0-3.332.477-4.5 1.253"/>
                     </svg>
                 </div>
 
-                <div class="font-semibold text-sm text-slate-900">Tahfidz</div>
+                <div class="font-semibold text-[12px] leading-snug text-slate-900">Tahfidz</div>
 
             </a>
 
             {{-- ABSENSI --}}
             <a href="{{ route('wali.absensi') }}"
-               class="group relative p-4 rounded-2xl border border-slate-100 bg-blue-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
+               class="group relative flex flex-col p-3 rounded-2xl border border-slate-100 bg-blue-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200">
 
-                <div class="relative w-11 h-11 rounded-xl bg-blue-500 shadow-md shadow-blue-500/25 flex items-center justify-center mb-3">
-                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <div class="relative w-9 h-9 rounded-xl bg-blue-500 shadow-md shadow-blue-500/25 flex items-center justify-center mb-2">
+                    <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="M9 12.75L11.25 15 15 9.75"/>
                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -560,16 +560,16 @@
                     </svg>
                 </div>
 
-                <div class="font-semibold text-sm text-slate-900">Absensi</div>
+                <div class="font-semibold text-[12px] leading-snug text-slate-900">Absensi</div>
 
             </a>
 
             {{-- PELANGGARAN --}}
             <a href="{{ route('wali.pelanggaran') }}"
-               class="group relative p-4 rounded-2xl border border-slate-100 bg-orange-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
+               class="group relative flex flex-col p-3 rounded-2xl border border-slate-100 bg-orange-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200">
 
-                <div class="relative w-11 h-11 rounded-xl bg-orange-500 shadow-md shadow-orange-500/25 flex items-center justify-center mb-3">
-                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <div class="relative w-9 h-9 rounded-xl bg-orange-500 shadow-md shadow-orange-500/25 flex items-center justify-center mb-2">
+                    <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="M12 9v3.75m0 3.75h.008v.008H12v-.008z"/>
                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -577,80 +577,80 @@
                     </svg>
                 </div>
 
-                <div class="font-semibold text-sm text-slate-900">Pelanggaran</div>
+                <div class="font-semibold text-[12px] leading-snug text-slate-900">Pelanggaran</div>
 
             </a>
 
             {{-- PRESTASI --}}
             <a href="{{ route('wali.prestasi') }}"
-               class="group relative p-4 rounded-2xl border border-slate-100 bg-yellow-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
+               class="group relative flex flex-col p-3 rounded-2xl border border-slate-100 bg-yellow-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200">
 
-                <div class="relative w-11 h-11 rounded-xl bg-yellow-500 shadow-md shadow-yellow-500/25 flex items-center justify-center mb-3">
-                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <div class="relative w-9 h-9 rounded-xl bg-yellow-500 shadow-md shadow-yellow-500/25 flex items-center justify-center mb-2">
+                    <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="M11.48 3.5a.56.56 0 011.04 0l2.12 5.11a.56.56 0 00.48.35l5.52.44a.56.56 0 01.32.99l-4.2 3.6a.56.56 0 00-.18.56l1.28 5.38a.56.56 0 01-.84.61L12 17.06l-4.72 2.89a.56.56 0 01-.84-.61l1.28-5.38a.56.56 0 00-.18-.56l-4.2-3.6a.56.56 0 01.32-.99l5.52-.44a.56.56 0 00.48-.35l2.12-5.11z"/>
                     </svg>
                 </div>
 
-                <div class="font-semibold text-sm text-slate-900">Prestasi</div>
+                <div class="font-semibold text-[12px] leading-snug text-slate-900">Prestasi</div>
 
             </a>
 
             {{-- PERIZINAN --}}
             <a href="{{ route('wali.perizinan') }}"
-               class="group relative p-4 rounded-2xl border border-slate-100 bg-violet-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
+               class="group relative flex flex-col p-3 rounded-2xl border border-slate-100 bg-violet-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200">
 
-                <div class="relative w-11 h-11 rounded-xl bg-violet-500 shadow-md shadow-violet-500/25 flex items-center justify-center mb-3">
-                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <div class="relative w-9 h-9 rounded-xl bg-violet-500 shadow-md shadow-violet-500/25 flex items-center justify-center mb-2">
+                    <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-3.75 0h16.5A1.125 1.125 0 0121.375 11.625v7.125A1.125 1.125 0 0120.25 20.25H3.75A1.125 1.125 0 012.625 18.75V11.625A1.125 1.125 0 013.75 10.5z"/>
                     </svg>
                 </div>
 
-                <div class="font-semibold text-sm text-slate-900">Perizinan</div>
+                <div class="font-semibold text-[12px] leading-snug text-slate-900">Perizinan</div>
 
             </a>
 
             {{-- IZIN TIDAK MASUK --}}
             <a href="{{ route('wali.izin-tidak-masuk') }}"
-               class="group relative p-4 rounded-2xl border border-slate-100 bg-amber-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
+               class="group relative flex flex-col p-3 rounded-2xl border border-slate-100 bg-amber-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200">
 
-                <div class="relative w-11 h-11 rounded-xl bg-amber-500 shadow-md shadow-amber-500/25 flex items-center justify-center mb-3">
-                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <div class="relative w-9 h-9 rounded-xl bg-amber-500 shadow-md shadow-amber-500/25 flex items-center justify-center mb-2">
+                    <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                 </div>
 
-                <div class="font-semibold text-sm text-slate-900">Izin Sekolah</div>
+                <div class="font-semibold text-[12px] leading-snug text-slate-900">Izin Sekolah</div>
 
             </a>
 
             {{-- RAPORT --}}
             <a href="{{ route('wali.raport') }}"
-               class="group relative p-4 rounded-2xl border border-slate-100 bg-emerald-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
+               class="group relative flex flex-col p-3 rounded-2xl border border-slate-100 bg-emerald-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200">
 
-                <div class="relative w-11 h-11 rounded-xl bg-emerald-500 shadow-md shadow-emerald-500/25 flex items-center justify-center mb-3">
-                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <div class="relative w-9 h-9 rounded-xl bg-emerald-500 shadow-md shadow-emerald-500/25 flex items-center justify-center mb-2">
+                    <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="M3 13h18M3 6h18M3 20h18"/>
                     </svg>
                 </div>
 
-                <div class="font-semibold text-sm text-slate-900">Raport</div>
+                <div class="font-semibold text-[12px] leading-snug text-slate-900">Raport</div>
 
             </a>
 
             {{-- KANTIN --}}
             @if (\App\Models\Yayasan::find(session('active_public_yayasan_id'))?->hasFeature(\App\Support\FeatureGate::E_KANTIN))
             <a href="{{ route('wali.kantin') }}"
-               class="group relative p-4 rounded-2xl border border-slate-100 bg-rose-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
+               class="group relative flex flex-col p-3 rounded-2xl border border-slate-100 bg-rose-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200">
 
-                <div class="relative w-11 h-11 rounded-xl bg-rose-500 shadow-md shadow-rose-500/25 flex items-center justify-center mb-3">
-                    <x-heroicon-o-shopping-bag class="w-5 h-5 text-white" />
+                <div class="relative w-9 h-9 rounded-xl bg-rose-500 shadow-md shadow-rose-500/25 flex items-center justify-center mb-2">
+                    <x-heroicon-o-shopping-bag class="w-4 h-4 text-white" />
                 </div>
 
-                <div class="font-semibold text-sm text-slate-900">Kantin</div>
+                <div class="font-semibold text-[12px] leading-snug text-slate-900">Kantin</div>
 
             </a>
             @endif
@@ -667,9 +667,9 @@
     {{-- HEADER --}}
     <div class="flex items-center justify-between mb-4">
         <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center">
+            <div class="w-9 h-9 rounded-xl bg-teal-50 flex items-center justify-center">
                 <svg xmlns="http://www.w3.org/2000/svg"
-                    class="w-5 h-5 text-[#00A39D]"
+                    class="w-4 h-4 text-[#00A39D]"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke-width="1.8"
@@ -682,7 +682,7 @@
                 </svg>
             </div>
             <div>
-                <div class="text-base font-bold text-slate-900">
+                <div class="text-sm font-bold text-slate-900">
                     Pengumuman
                 </div>
                 <div class="text-xs text-slate-500">
@@ -739,10 +739,10 @@
                 <div class="flex gap-3">
 
                     {{-- ICON --}}
-                    <div class="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center flex-shrink-0">
+                    <div class="w-9 h-9 rounded-xl bg-teal-50 flex items-center justify-center flex-shrink-0">
 
                         <svg xmlns="http://www.w3.org/2000/svg"
-                            class="w-5 h-5 text-[#00A39D]"
+                            class="w-4 h-4 text-[#00A39D]"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke-width="1.8"
