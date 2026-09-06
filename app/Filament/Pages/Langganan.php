@@ -133,14 +133,36 @@ class Langganan extends Page
     public static function canAccess(): bool
     {
         // Platform admin tidak perlu halaman ini (urusan billing per
-        // Yayasan dikelola dari Panel Platform). Untuk user Yayasan,
-        // SELALU bisa akses -- ini pengecualian dari hasFeature(),
-        // supaya tetap terlihat walau belum ada modul apapun aktif.
+        // Yayasan dikelola dari Panel Platform).
         if (auth()->user()?->is_platform_admin) {
             return false;
         }
 
-        return (bool) auth()->user()?->yayasan_id;
+        $user = auth()->user();
+
+        if (! $user?->yayasan_id) {
+            return false;
+        }
+
+        // Kalau yayasan SEDANG BUTUH BAYAR (trial habis / suspended),
+        // halaman ini WAJIB tetap bisa diakses siapa pun yang berhasil
+        // login ke yayasan itu -- ini jalan keluar darurat, tidak
+        // peduli role/permission apa pun (lihat RedirectSuspendedYayasan
+        // yang bergantung pada halaman ini SELALU bisa dicapai).
+        //
+        // Di LUAR kondisi darurat itu (yayasan aktif normal), ikuti
+        // permission Shield biasa seperti halaman lain -- supaya role
+        // seperti "Kasir" yang memang sengaja tidak dicentang aksesnya
+        // TIDAK melihat menu ini di kondisi sehari-hari (ditemukan 6
+        // Sep 2026: menu ini kelihatan terus untuk semua role, padahal
+        // togglenya tidak dicentang).
+        $yayasan = $user->yayasan;
+
+        if ($yayasan && ! $yayasan->hasAccess()) {
+            return true;
+        }
+
+        return (bool) $user->can('page_Langganan');
     }
 
     public function getYayasan()

@@ -19,6 +19,24 @@ class DetailNilai extends Page
 {
     protected static bool $shouldRegisterNavigation = false;
 
+    /**
+     * Sama seperti PengaturanNotifikasi -- sebelumnya tidak ada
+     * canAccess() sama sekali, jadi permission "page_DetailNilai"
+     * yang sudah di-generate Shield tidak pernah benar-benar dicek.
+     * Halaman ini memang tidak muncul di sidebar (shouldRegisterNavigation
+     * false, diakses lewat link dari Rekap Nilai), tapi tetap perlu
+     * ditutup dari akses langsung lewat URL oleh role yang tidak
+     * seharusnya boleh.
+     */
+    public static function canAccess(): bool
+    {
+        if (auth()->user()?->is_platform_admin) {
+            return true;
+        }
+
+        return (bool) auth()->user()?->can('page_DetailNilai');
+    }
+
     protected static ?string $slug =
         'detail-nilai/{kelas}/{mapel}/{tahun}';
 

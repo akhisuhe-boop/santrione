@@ -28,6 +28,24 @@ class PengaturanNotifikasi extends Page
     protected static ?string $navigationGroup = 'Master Setting';
     protected static ?string $title = 'Pengaturan Notifikasi WhatsApp';
 
+    /**
+     * SEBELUMNYA halaman ini TIDAK PUNYA canAccess() sama sekali --
+     * jadi meski Filament Shield sudah generate permission
+     * "page_PengaturanNotifikasi" untuknya, tidak ada yang benar-benar
+     * MEMBACA permission itu untuk menentukan siapa boleh lihat
+     * halaman ini. Efeknya: role apa pun (mis. "Kasir") tetap melihat
+     * menu ini walau toggle-nya sengaja tidak dicentang waktu bikin
+     * role itu (ditemukan 6 Sep 2026).
+     */
+    public static function canAccess(): bool
+    {
+        if (auth()->user()?->is_platform_admin) {
+            return true;
+        }
+
+        return (bool) auth()->user()?->can('page_PengaturanNotifikasi');
+    }
+
     protected static string $view = 'filament.pages.pengaturan-notifikasi';
 
     public function getLembagas()
