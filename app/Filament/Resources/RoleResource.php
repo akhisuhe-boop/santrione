@@ -378,6 +378,12 @@ class RoleResource extends BaseRoleResource
     {
         $pages = parent::getPages();
 
+        // 'index' WAJIB di-override juga -- Pages\ListRoles bawaan Shield
+        // hardcode $resource ke class RoleResource Shield sendiri (bukan
+        // late-static-bound), jadi query tabelnya lolos dari scoping tenant
+        // di getEloquentQuery() atas kalau tidak diganti (lihat penjelasan
+        // lengkap di App\Filament\Resources\RoleResource\Pages\ListRoles).
+        $pages['index'] = \App\Filament\Resources\RoleResource\Pages\ListRoles::route('/');
         $pages['create'] = \App\Filament\Resources\RoleResource\Pages\CreateRole::route('/create');
         $pages['edit'] = \App\Filament\Resources\RoleResource\Pages\EditRole::route('/{record}/edit');
 
