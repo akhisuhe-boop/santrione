@@ -303,7 +303,7 @@
     class="
         border-t
         border-white/30
-        my-4
+        my-3
     ">
 </div>
 
@@ -322,7 +322,7 @@
             bg-white/10
             backdrop-blur-sm
             border border-white/10
-            p-3
+            px-3 py-2
         ">
 
         <div
@@ -330,7 +330,7 @@
                 flex items-center gap-1
                 text-[11px]
                 text-white/70
-                mb-1
+                mb-0.5
             ">
 
             <x-heroicon-o-identification class="w-3 h-3"/>
@@ -341,7 +341,7 @@
 
         <div
             class="
-                text-sm
+                text-[13px]
                 font-semibold
             ">
 
@@ -358,7 +358,7 @@
             bg-white/10
             backdrop-blur-sm
             border border-white/10
-            p-3
+            px-3 py-2
         ">
 
         <div
@@ -366,7 +366,7 @@
                 flex items-center gap-1
                 text-[11px]
                 text-white/70
-                mb-1
+                mb-0.5
             ">
 
             <x-heroicon-o-briefcase class="w-3 h-3"/>
@@ -377,7 +377,7 @@
 
         <div
             class="
-                text-sm
+                text-[13px]
                 font-semibold
                 truncate
             ">
@@ -395,7 +395,7 @@
             bg-white/10
             backdrop-blur-sm
             border border-white/10
-            p-3
+            px-3 py-2
         ">
 
         <div
@@ -403,7 +403,7 @@
                 flex items-center gap-1
                 text-[11px]
                 text-white/70
-                mb-1
+                mb-0.5
             ">
 
             <x-heroicon-o-building-office-2 class="w-3 h-3"/>
@@ -414,7 +414,7 @@
 
         <div
             class="
-                text-sm
+                text-[13px]
                 font-semibold
                 truncate
             ">
@@ -440,7 +440,7 @@
             <x-heroicon-o-calendar-days class="w-5 h-5 text-blue-600"/>
         </div>
 
-        <div class="font-bold text-base text-slate-900">
+        <div class="font-bold text-[13px] text-slate-900">
             Jadwal Mengajar Hari Ini
         </div>
 
