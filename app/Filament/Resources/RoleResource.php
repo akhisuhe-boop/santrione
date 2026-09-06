@@ -53,6 +53,7 @@ class RoleResource extends BaseRoleResource
 
         $panel = \Filament\Facades\Filament::getPanel('admin');
         $grup = [];
+        $sortResource = []; // navGroup|navLabel -> nilai navigationSort, untuk urutan dalam 1 grup
 
         // RESOURCE (mis. LembagaResource, SiswaResource, dst)
         foreach ($panel->getResources() as $resourceClass) {
@@ -62,7 +63,19 @@ class RoleResource extends BaseRoleResource
 
             $navGroup = $resourceClass::getNavigationGroup() ?? 'Lainnya';
             $navLabel = $resourceClass::getNavigationLabel();
-            $subjek = \Illuminate\Support\Str::snake(class_basename($resourceClass::getModel()));
+
+            // PENTING: subjek permission Shield diambil dari nama
+            // CLASS RESOURCE itu sendiri (dikurangi akhiran "Resource"),
+            // BUKAN dari nama model belakangnya -- keduanya sering beda
+            // (mis. LaporanPerizinanResource modelnya Siswa, bukan
+            // LaporanPerizinan). Salah ambil dari getModel() sebelumnya
+            // bikin HAMPIR SEMUA resource gagal cocok, numpuk semua di
+            // "Lainnya" (ditemukan 6 Sep 2026). Shield juga pakai "::"
+            // sebagai pemisah kata, BUKAN underscore biasa.
+            $namaResource = \Illuminate\Support\Str::of(class_basename($resourceClass))
+                ->beforeLast('Resource')
+                ->toString();
+            $subjek = \Illuminate\Support\Str::snake($namaResource, '::');
 
             $daftarPermission = [];
 
@@ -77,6 +90,7 @@ class RoleResource extends BaseRoleResource
 
             if (! empty($daftarPermission)) {
                 $grup[$navGroup][$navLabel] = $daftarPermission;
+                $sortResource[$navGroup . '|' . $navLabel] = $resourceClass::getNavigationSort();
             }
         }
 
@@ -93,6 +107,7 @@ class RoleResource extends BaseRoleResource
             if (isset($adaNama[$nama])) {
                 $grup[$navGroup][$navLabel] = [$nama];
                 $sudahDipakai[$nama] = true;
+                $sortResource[$navGroup . '|' . $navLabel] = $pageClass::getNavigationSort();
             }
         }
 
@@ -121,15 +136,56 @@ class RoleResource extends BaseRoleResource
                 }
             }
 
-            $label = \Illuminate\Support\Str::of($subjekMentah)->headline()->toString();
+            $label = \Illuminate\Support\Str::of($subjekMentah)->replace('::', ' ')->headline()->toString();
             $grup['Lainnya'][$label][] = $nama;
         }
 
-        ksort($grup);
+        // Urutan section (menu) IKUT PERSIS urutan resmi yang
+        // didefinisikan di AdminPanelProvider::navigationGroups() --
+        // bukan diurutkan alfabetis -- supaya otomatis konsisten sama
+        // sidebar dan otomatis ikut berubah kalau urutan itu diubah,
+        // tanpa perlu ubah kode di sini juga. Grup yang TIDAK ada di
+        // daftar resmi itu (mis. "Lainnya", "Widget") ditaruh PALING
+        // BAWAH.
+        $urutanResmi = collect($panel->getNavigationGroups())
+            ->map(fn ($g) => $g->getLabel())
+            ->values()
+            ->all();
 
-        foreach ($grup as &$subMenu) {
-            ksort($subMenu);
+        uksort($grup, function ($a, $b) use ($urutanResmi) {
+            $posA = array_search($a, $urutanResmi);
+            $posB = array_search($b, $urutanResmi);
+            $posA = $posA === false ? 9999 : $posA;
+            $posB = $posB === false ? 9999 : $posB;
+
+            return $posA <=> $posB ?: $a <=> $b;
+        });
+
+        // Urutan sub-menu DALAM 1 grup ikut getNavigationSort() resmi
+        // tiap Resource/Page (angka lebih kecil duluan, null di
+        // belakang) -- sama seperti cara Filament sendiri mengurutkan
+        // sidebar.
+        foreach ($grup as $namaMenu => &$subMenu) {
+            uksort($subMenu, function ($a, $b) use ($namaMenu, $sortResource) {
+                $sortA = $sortResource[$namaMenu . '|' . $a] ?? null;
+                $sortB = $sortResource[$namaMenu . '|' . $b] ?? null;
+
+                if ($sortA === $sortB) {
+                    return $a <=> $b;
+                }
+
+                if ($sortA === null) {
+                    return 1;
+                }
+
+                if ($sortB === null) {
+                    return -1;
+                }
+
+                return $sortA <=> $sortB;
+            });
         }
+        unset($subMenu);
 
         return $grup;
     }
