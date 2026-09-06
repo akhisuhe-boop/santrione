@@ -28,7 +28,14 @@ class ScanProduk extends Page
             return false;
         }
 
-        return parent::canAccess();
+        // SEBELUMNYA "return parent::canAccess();" -- ternyata default
+        // Filament TIDAK otomatis mengecek permission Shield halaman ini,
+        // cuma FeatureGate (langganan) di atas. Efeknya: role apa pun
+        // (yang sudah lolos FeatureGate) tetap lihat menu ini walau
+        // togglenya sengaja tidak dicentang waktu bikin role custom
+        // (ditemukan 6 Sep 2026, sama seperti kasus Langganan/Pengaturan
+        // Notifikasi). Sekarang dicek eksplisit.
+        return (bool) auth()->user()?->can('page_ScanProduk');
     }
 
     // Sama seperti Kasir -- kalau cuma ada 1 kantin aktif, langsung
