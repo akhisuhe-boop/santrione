@@ -20,10 +20,10 @@
             </div>
         </div>
         <div class="text-right shrink-0">
-            <div class="text-xs text-slate-500">
+            <div class="text-[15px] font-bold tracking-tight text-slate-900">
                 {{ now()->locale('id')->translatedFormat('l,') }}
             </div>
-            <div class="text-xs text-slate-500">
+            <div class="text-xs text-slate-400 mt-0.5">
                 {{ now()->locale('id')->translatedFormat('d F Y') }}
             </div>
         </div>
