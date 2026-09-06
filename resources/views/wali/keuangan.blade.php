@@ -161,14 +161,14 @@
     {{-- TAGIHAN --}}
     <div class="bg-white rounded-[28px] shadow-sm p-4 mt-5">
 
-        <div class="flex justify-between items-center mb-4">
+        <div class="flex justify-between items-center mb-3">
 
-            <h3 class="font-bold text-[16px] text-slate-900">
+            <h3 class="font-bold text-[14px] text-slate-900">
                 Tagihan Aktif
             </h3>
 
             <span
-                class="bg-red-100 text-red-500 px-3 py-1 rounded-full text-[11px] font-semibold">
+                class="bg-red-100 text-red-500 px-2.5 py-1 rounded-full text-[10px] font-semibold">
                 {{ $jumlahTagihan }} Tagihan
             </span>
 
@@ -215,14 +215,14 @@
             @endphp
 
             <div
-                class="rounded-[22px] border p-4 mb-4 {{ $cardClass }}">
+                class="rounded-2xl border p-3.5 mb-3 {{ $cardClass }}">
 
                 <div class="flex justify-between gap-3">
 
-                    <div class="flex gap-3 flex-1">
+                    <div class="flex gap-3 flex-1 min-w-0">
 
                         <div
-                            class="w-11 h-11 rounded-2xl flex items-center justify-center {{ $iconClass }}">
+                            class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 {{ $iconClass }}">
 
                             <svg xmlns="http://www.w3.org/2000/svg"
                                  fill="none"
@@ -237,19 +237,19 @@
 
                         </div>
 
-                        <div>
+                        <div class="min-w-0">
 
-                            <div class="font-semibold text-[15px] text-slate-900">
+                            <div class="font-semibold text-[13px] text-slate-900 truncate">
                                 {{ $tagihan->judul }}
                             </div>
 
-                            <div class="text-[12px] text-slate-500 mt-1">
+                            <div class="text-[11px] text-slate-500 mt-1">
                                 Jatuh Tempo:
                                 {{ optional($tagihan->jatuh_tempo)->format('d M Y') }}
                             </div>
 
                             <span
-                                class="inline-flex mt-2 px-3 py-1 rounded-xl text-[11px] font-semibold {{ $badgeClass }}">
+                                class="inline-flex mt-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-semibold {{ $badgeClass }}">
                                 {{ $tagihan->status }}
                             </span>
 
@@ -257,10 +257,10 @@
 
                     </div>
 
-                    <div class="text-right">
+                    <div class="text-right flex-shrink-0">
 
                         <div
-                            class="font-bold text-[16px] text-slate-900">
+                            class="font-bold text-[14px] text-slate-900">
 
                             Rp {{ number_format($tagihan->nominal,0,',','.') }}
 
@@ -331,7 +331,7 @@
                     @endif
                 <a
                     href="{{ route('wali.pembayaran.show', $tagihan->id) }}"
-                    class="block w-full mt-3 rounded-2xl py-2.5 text-[13px] text-white font-semibold text-center {{ $buttonClass }}">
+                    class="block w-full mt-3 rounded-xl py-2.5 text-[13px] text-white font-semibold text-center {{ $buttonClass }}">
 
                     Bayar Sekarang
 
