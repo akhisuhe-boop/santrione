@@ -61,6 +61,30 @@ class RoleResource extends BaseRoleResource
                 continue;
             }
 
+            // Resource yang sengaja disembunyikan dari sidebar
+            // (shouldRegisterNavigation() false -- biasanya diakses
+            // lewat relasi/halaman lain, bukan link langsung, mis.
+            // KantinResource/KantinTransaksiResource) TIDAK ditampilkan
+            // di sini juga, supaya form ini PERSIS mencerminkan menu
+            // yang tenant benar-benar lihat -- bukan menu "hantu" yang
+            // sebenarnya tidak pernah muncul di sidebar mereka.
+            if (! $resourceClass::shouldRegisterNavigation()) {
+
+                // Tetap tandai permission-nya "sudah ditangani" (walau
+                // tidak dibuatkan toggle) -- supaya tidak malah nyasar
+                // muncul lagi di grup "Lainnya" di bawah.
+                $subjekTersembunyi = \Illuminate\Support\Str::snake(
+                    \Illuminate\Support\Str::of(class_basename($resourceClass))->beforeLast('Resource')->toString(),
+                    '::'
+                );
+
+                foreach ($prefixAksi as $prefix) {
+                    $sudahDipakai[$prefix . '_' . $subjekTersembunyi] = true;
+                }
+
+                continue;
+            }
+
             $navGroup = $resourceClass::getNavigationGroup() ?? 'Lainnya';
             $navLabel = $resourceClass::getNavigationLabel();
 
@@ -97,6 +121,12 @@ class RoleResource extends BaseRoleResource
         // PAGE MANDIRI (mis. Dashboard, Scan Produk, Langganan, dst)
         foreach ($panel->getPages() as $pageClass) {
             if (! class_exists($pageClass)) {
+                continue;
+            }
+
+            if (! $pageClass::shouldRegisterNavigation()) {
+                $sudahDipakai['page_' . class_basename($pageClass)] = true;
+
                 continue;
             }
 
