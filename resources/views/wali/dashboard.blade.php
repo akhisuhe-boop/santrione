@@ -206,27 +206,6 @@
                             font-medium
                         ">
 
-                        {{ $semesterAktif?->semester }}
-
-                    </span>
-
-                    <span
-                        class="
-                            px-3
-                            py-1
-
-                            rounded-full
-
-                            bg-white/15
-                            backdrop-blur-sm
-
-                            border
-                            border-white/20
-
-                            text-[11px]
-                            font-medium
-                        ">
-
                         {{ $siswa->kelas?->nama ?? '-' }}
 
                     </span>
@@ -555,9 +534,9 @@
 
             {{-- TAHFIDZ --}}
             <a href="{{ route('wali.tahfidz') }}"
-               class="group relative p-4 rounded-2xl border border-slate-100 bg-cyan-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
+               class="group relative flex flex-col items-center text-center gap-2 p-3 rounded-2xl hover:bg-slate-50 transition-all duration-200">
 
-                <div class="relative w-11 h-11 rounded-xl bg-cyan-500 shadow-md shadow-cyan-500/25 flex items-center justify-center mb-3">
+                <div class="relative w-11 h-11 rounded-xl bg-cyan-500 shadow-md shadow-cyan-500/25 flex items-center justify-center">
                     <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="M12 6.253v13M12 6.253C10.832 5.477 9.246 5 7.5 5A4.5 4.5 0 003 9.5v9A4.5 4.5 0 017.5 14c1.746 0 3.332.477 4.5 1.253M12 6.253C13.168 5.477 14.754 5 16.5 5A4.5 4.5 0 0121 9.5v9A4.5 4.5 0 0016.5 14c-1.746 0-3.332.477-4.5 1.253"/>
@@ -565,15 +544,14 @@
                 </div>
 
                 <div class="font-semibold text-sm text-slate-900">Tahfidz</div>
-                <div class="text-[11px] text-slate-500 mt-1">Hafalan Al-Qur’an</div>
 
             </a>
 
             {{-- ABSENSI --}}
             <a href="{{ route('wali.absensi') }}"
-               class="group relative p-4 rounded-2xl border border-slate-100 bg-blue-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
+               class="group relative flex flex-col items-center text-center gap-2 p-3 rounded-2xl hover:bg-slate-50 transition-all duration-200">
 
-                <div class="relative w-11 h-11 rounded-xl bg-blue-500 shadow-md shadow-blue-500/25 flex items-center justify-center mb-3">
+                <div class="relative w-11 h-11 rounded-xl bg-blue-500 shadow-md shadow-blue-500/25 flex items-center justify-center">
                     <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="M9 12.75L11.25 15 15 9.75"/>
@@ -583,15 +561,14 @@
                 </div>
 
                 <div class="font-semibold text-sm text-slate-900">Absensi</div>
-                <div class="text-[11px] text-slate-500 mt-1">Kehadiran harian</div>
 
             </a>
 
             {{-- PELANGGARAN --}}
             <a href="{{ route('wali.pelanggaran') }}"
-               class="group relative p-4 rounded-2xl border border-slate-100 bg-orange-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
+               class="group relative flex flex-col items-center text-center gap-2 p-3 rounded-2xl hover:bg-slate-50 transition-all duration-200">
 
-                <div class="relative w-11 h-11 rounded-xl bg-orange-500 shadow-md shadow-orange-500/25 flex items-center justify-center mb-3">
+                <div class="relative w-11 h-11 rounded-xl bg-orange-500 shadow-md shadow-orange-500/25 flex items-center justify-center">
                     <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="M12 9v3.75m0 3.75h.008v.008H12v-.008z"/>
@@ -601,15 +578,14 @@
                 </div>
 
                 <div class="font-semibold text-sm text-slate-900">Pelanggaran</div>
-                <div class="text-[11px] text-slate-500 mt-1">Catatan disiplin</div>
 
             </a>
 
             {{-- PRESTASI --}}
             <a href="{{ route('wali.prestasi') }}"
-               class="group relative p-4 rounded-2xl border border-slate-100 bg-yellow-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
+               class="group relative flex flex-col items-center text-center gap-2 p-3 rounded-2xl hover:bg-slate-50 transition-all duration-200">
 
-                <div class="relative w-11 h-11 rounded-xl bg-yellow-500 shadow-md shadow-yellow-500/25 flex items-center justify-center mb-3">
+                <div class="relative w-11 h-11 rounded-xl bg-yellow-500 shadow-md shadow-yellow-500/25 flex items-center justify-center">
                     <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="M11.48 3.5a.56.56 0 011.04 0l2.12 5.11a.56.56 0 00.48.35l5.52.44a.56.56 0 01.32.99l-4.2 3.6a.56.56 0 00-.18.56l1.28 5.38a.56.56 0 01-.84.61L12 17.06l-4.72 2.89a.56.56 0 01-.84-.61l1.28-5.38a.56.56 0 00-.18-.56l-4.2-3.6a.56.56 0 01.32-.99l5.52-.44a.56.56 0 00.48-.35l2.12-5.11z"/>
@@ -617,15 +593,14 @@
                 </div>
 
                 <div class="font-semibold text-sm text-slate-900">Prestasi</div>
-                <div class="text-[11px] text-slate-500 mt-1">Capaian siswa</div>
 
             </a>
 
             {{-- PERIZINAN --}}
             <a href="{{ route('wali.perizinan') }}"
-               class="group relative p-4 rounded-2xl border border-slate-100 bg-violet-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
+               class="group relative flex flex-col items-center text-center gap-2 p-3 rounded-2xl hover:bg-slate-50 transition-all duration-200">
 
-                <div class="relative w-11 h-11 rounded-xl bg-violet-500 shadow-md shadow-violet-500/25 flex items-center justify-center mb-3">
+                <div class="relative w-11 h-11 rounded-xl bg-violet-500 shadow-md shadow-violet-500/25 flex items-center justify-center">
                     <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-3.75 0h16.5A1.125 1.125 0 0121.375 11.625v7.125A1.125 1.125 0 0120.25 20.25H3.75A1.125 1.125 0 012.625 18.75V11.625A1.125 1.125 0 013.75 10.5z"/>
@@ -633,15 +608,14 @@
                 </div>
 
                 <div class="font-semibold text-sm text-slate-900">Perizinan</div>
-                <div class="text-[11px] text-slate-500 mt-1">Ajukan izin</div>
 
             </a>
 
             {{-- IZIN TIDAK MASUK --}}
             <a href="{{ route('wali.izin-tidak-masuk') }}"
-               class="group relative p-4 rounded-2xl border border-slate-100 bg-amber-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
+               class="group relative flex flex-col items-center text-center gap-2 p-3 rounded-2xl hover:bg-slate-50 transition-all duration-200">
 
-                <div class="relative w-11 h-11 rounded-xl bg-amber-500 shadow-md shadow-amber-500/25 flex items-center justify-center mb-3">
+                <div class="relative w-11 h-11 rounded-xl bg-amber-500 shadow-md shadow-amber-500/25 flex items-center justify-center">
                     <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -649,15 +623,14 @@
                 </div>
 
                 <div class="font-semibold text-sm text-slate-900">Izin Sekolah</div>
-                <div class="text-[11px] text-slate-500 mt-1">Tidak masuk sekolah</div>
 
             </a>
 
             {{-- RAPORT --}}
             <a href="{{ route('wali.raport') }}"
-               class="group relative p-4 rounded-2xl border border-slate-100 bg-emerald-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
+               class="group relative flex flex-col items-center text-center gap-2 p-3 rounded-2xl hover:bg-slate-50 transition-all duration-200">
 
-                <div class="relative w-11 h-11 rounded-xl bg-emerald-500 shadow-md shadow-emerald-500/25 flex items-center justify-center mb-3">
+                <div class="relative w-11 h-11 rounded-xl bg-emerald-500 shadow-md shadow-emerald-500/25 flex items-center justify-center">
                     <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="M3 13h18M3 6h18M3 20h18"/>
@@ -665,21 +638,19 @@
                 </div>
 
                 <div class="font-semibold text-sm text-slate-900">Raport</div>
-                <div class="text-[11px] text-slate-500 mt-1">Nilai akademik</div>
 
             </a>
 
             {{-- KANTIN --}}
             @if (\App\Models\Yayasan::find(session('active_public_yayasan_id'))?->hasFeature(\App\Support\FeatureGate::E_KANTIN))
             <a href="{{ route('wali.kantin') }}"
-               class="group relative p-4 rounded-2xl border border-slate-100 bg-rose-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
+               class="group relative flex flex-col items-center text-center gap-2 p-3 rounded-2xl hover:bg-slate-50 transition-all duration-200">
 
-                <div class="relative w-11 h-11 rounded-xl bg-rose-500 shadow-md shadow-rose-500/25 flex items-center justify-center mb-3">
+                <div class="relative w-11 h-11 rounded-xl bg-rose-500 shadow-md shadow-rose-500/25 flex items-center justify-center">
                     <x-heroicon-o-shopping-bag class="w-5 h-5 text-white" />
                 </div>
 
                 <div class="font-semibold text-sm text-slate-900">Kantin</div>
-                <div class="text-[11px] text-slate-500 mt-1">Riwayat & limit belanja</div>
 
             </a>
             @endif
