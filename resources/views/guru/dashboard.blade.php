@@ -654,7 +654,7 @@
                     <x-heroicon-o-user-group class="w-6 h-6 text-white"/>
                 </div>
 
-                <div class="font-semibold text-[13px] leading-snug text-slate-900">Jurnal Pengganti</div>
+                <div class="font-semibold text-[13px] leading-snug text-slate-900">Pengganti</div>
                 <div class="text-[11px] leading-snug text-slate-600 mt-1">Gantikan guru lain</div>
 
             </a>
@@ -681,7 +681,7 @@
                     <x-heroicon-o-document-text class="w-6 h-6 text-white"/>
                 </div>
 
-                <div class="font-semibold text-[13px] leading-snug text-slate-900">Izin Sekolah</div>
+                <div class="font-semibold text-[13px] leading-snug text-slate-900">Izin</div>
                 <div class="text-[11px] leading-snug text-slate-600 mt-1">Tidak&nbsp;masuk mengajar</div>
 
             </a>
