@@ -90,7 +90,7 @@
                 </div>
 
                 <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-center justify-between gap-3 mb-5 mt-4">
-                    <div class="text-xl font-mono font-bold tracking-widest text-slate-900 break-all">
+                    <div class="text-[15px] font-mono font-bold tracking-wide text-slate-900 break-all min-w-0">
                         {{ $vaNumber }}
                     </div>
                     <button type="button" onclick="copyToClipboard('{{ $vaNumber }}', this)"
@@ -168,7 +168,7 @@
                 </p>
 
                 <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-center justify-between gap-3">
-                    <div class="text-xl font-mono font-bold tracking-widest text-slate-900 break-all">
+                    <div class="text-[15px] font-mono font-bold tracking-wide text-slate-900 break-all min-w-0">
                         {{ $paymentCode }}
                     </div>
                     <button type="button" onclick="copyToClipboard('{{ $paymentCode }}', this)"
