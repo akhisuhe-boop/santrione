@@ -30,6 +30,34 @@ class LembagaResource extends BaseResource
     protected static ?string $pluralModelLabel = 'Lembaga';
     protected static ?string $navigationLabel = 'Lembaga';
 
+    /**
+     * WAJIB override eksplisit -- resource ini pakai model Lembaga::class
+     * yang SAMA dengan PengaturanHonorPenggantiResource, dan Shield
+     * ternyata memenangkan permission PengaturanHonorPengganti waktu
+     * generate LembagaPolicy (viewAny() di sana cuma cek
+     * "view_any_pengaturan::honor::pengganti", BUKAN "view_any_lembaga").
+     * Ini resource yang PALING SERING dipakai, jadi wajib dipastikan
+     * benar -- ditemukan 6 Sep 2026.
+     */
+    public static function canViewAny(): bool
+    {
+        if (auth()->user()?->is_platform_admin) {
+            return true;
+        }
+
+        $key = \App\Support\FeatureGate::keyForNavigationGroup(static::$navigationGroup);
+
+        if ($key !== null) {
+            $tenant = \Filament\Facades\Filament::getTenant();
+
+            if (! $tenant?->hasFeature($key)) {
+                return false;
+            }
+        }
+
+        return (bool) auth()->user()?->can('view_any_lembaga');
+    }
+
     public static function form(Form $form): Form
     {
         return $form

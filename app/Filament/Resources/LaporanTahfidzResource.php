@@ -22,6 +22,38 @@ class LaporanTahfidzResource extends BaseResource
         return false;
     }
 
+    /**
+     * WAJIB override eksplisit -- resource ini pakai model Siswa::class
+     * yang SAMA dengan SiswaResource (dan LaporanPerizinanResource).
+     * Laravel cuma bisa punya SATU file Policy per model, jadi
+     * SiswaPolicy::viewAny() yang di-generate Shield cuma cek
+     * "view_any_siswa" -- BUKAN permission spesifik resource ini
+     * ("view_any_laporan::tahfidz"). Efeknya: role yang TIDAK dikasih
+     * akses ke Siswa (resource utama) otomatis ikut kehilangan akses ke
+     * Laporan Tahfidz juga, walau permission-nya sendiri sudah benar
+     * dicentang (ditemukan 6 Sep 2026). Solusinya: cek permission
+     * resource ini SENDIRI di sini, jangan lewat parent::canViewAny()
+     * yang ujungnya balik ke SiswaPolicy yang salah sasaran.
+     */
+    public static function canViewAny(): bool
+    {
+        if (auth()->user()?->is_platform_admin) {
+            return true;
+        }
+
+        $key = \App\Support\FeatureGate::keyForNavigationGroup(static::$navigationGroup);
+
+        if ($key !== null) {
+            $tenant = \Filament\Facades\Filament::getTenant();
+
+            if (! $tenant?->hasFeature($key)) {
+                return false;
+            }
+        }
+
+        return (bool) auth()->user()?->can('view_any_laporan::tahfidz');
+    }
+
     public static function form(\Filament\Forms\Form $form): \Filament\Forms\Form
     {
         return $form;

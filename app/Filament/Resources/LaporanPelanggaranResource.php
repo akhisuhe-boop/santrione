@@ -19,6 +19,32 @@ class LaporanPelanggaranResource extends BaseResource
 {
     protected static ?string $model = PelanggaranSiswa::class;
     protected static ?string $navigationGroup = 'Konseling';
+
+    /**
+     * Sama seperti LaporanPrestasiResource -- resource ini pakai model
+     * PelanggaranSiswa::class yang sama dengan PelanggaranSiswaResource,
+     * jadi policy yang di-generate Shield cuma cek
+     * "view_any_pelanggaran::siswa", BUKAN "view_any_laporan::pelanggaran"
+     * milik resource ini sendiri (ditemukan 6 Sep 2026).
+     */
+    public static function canViewAny(): bool
+    {
+        if (auth()->user()?->is_platform_admin) {
+            return true;
+        }
+
+        $key = \App\Support\FeatureGate::keyForNavigationGroup(static::$navigationGroup);
+
+        if ($key !== null) {
+            $tenant = \Filament\Facades\Filament::getTenant();
+
+            if (! $tenant?->hasFeature($key)) {
+                return false;
+            }
+        }
+
+        return (bool) auth()->user()?->can('view_any_laporan::pelanggaran');
+    }
     protected static ?int $navigationSort = 10;
     protected static ?string $navigationLabel = 'Laporan Pelanggaran';
     protected static ?string $navigationIcon = 'heroicon-o-presentation-chart-bar';

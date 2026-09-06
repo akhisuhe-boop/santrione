@@ -18,6 +18,33 @@ class LaporanPerizinanResource extends BaseResource
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
     protected static ?string $navigationGroup = 'Perizinan';
+
+    /**
+     * Sama seperti LaporanTahfidzResource -- resource ini pakai model
+     * Siswa::class yang sama dengan SiswaResource, jadi SiswaPolicy
+     * yang di-generate Shield cuma cek "view_any_siswa", BUKAN
+     * "view_any_laporan::perizinan" milik resource ini sendiri.
+     * Dicek eksplisit di sini supaya tidak ikut salah sasaran
+     * (ditemukan 6 Sep 2026).
+     */
+    public static function canViewAny(): bool
+    {
+        if (auth()->user()?->is_platform_admin) {
+            return true;
+        }
+
+        $key = \App\Support\FeatureGate::keyForNavigationGroup(static::$navigationGroup);
+
+        if ($key !== null) {
+            $tenant = \Filament\Facades\Filament::getTenant();
+
+            if (! $tenant?->hasFeature($key)) {
+                return false;
+            }
+        }
+
+        return (bool) auth()->user()?->can('view_any_laporan::perizinan');
+    }
     protected static ?string $navigationLabel = 'Laporan Perizinan';
     protected static ?int $navigationSort = 13;
 

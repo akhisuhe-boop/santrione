@@ -18,6 +18,34 @@ class LaporanPrestasiResource extends BaseResource
 {
     protected static ?string $model = PrestasiSiswa::class;
     protected static ?string $navigationGroup = 'Konseling';
+
+    /**
+     * Resource ini pakai model PrestasiSiswa::class yang SAMA dengan
+     * PrestasiSiswaResource -- PrestasiSiswaPolicy yang di-generate
+     * Shield cuma cek "view_any_prestasi::siswa" (milik
+     * PrestasiSiswaResource), BUKAN "view_any_laporan::prestasi" milik
+     * resource ini sendiri. Dicek eksplisit di sini supaya tidak ikut
+     * salah sasaran (ditemukan 6 Sep 2026, kasus sama seperti Laporan
+     * Tahfidz/Perizinan).
+     */
+    public static function canViewAny(): bool
+    {
+        if (auth()->user()?->is_platform_admin) {
+            return true;
+        }
+
+        $key = \App\Support\FeatureGate::keyForNavigationGroup(static::$navigationGroup);
+
+        if ($key !== null) {
+            $tenant = \Filament\Facades\Filament::getTenant();
+
+            if (! $tenant?->hasFeature($key)) {
+                return false;
+            }
+        }
+
+        return (bool) auth()->user()?->can('view_any_laporan::prestasi');
+    }
     protected static ?string $navigationLabel = 'Laporan Prestasi';
     protected static ?string $navigationIcon = 'heroicon-o-trophy';
     protected static ?int $navigationSort = 11;

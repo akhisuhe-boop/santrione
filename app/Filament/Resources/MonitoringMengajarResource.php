@@ -24,6 +24,33 @@ class MonitoringMengajarResource extends BaseResource
     {
         return false;
     }
+
+    /**
+     * Resource ini pakai model Pegawai::class yang SAMA dengan
+     * PegawaiResource -- PegawaiPolicy yang di-generate Shield cuma
+     * cek "view_any_pegawai" (milik PegawaiResource), BUKAN
+     * "view_any_monitoring::mengajar" milik resource ini sendiri.
+     * Dicek eksplisit di sini supaya tidak ikut salah sasaran
+     * (ditemukan 6 Sep 2026).
+     */
+    public static function canViewAny(): bool
+    {
+        if (auth()->user()?->is_platform_admin) {
+            return true;
+        }
+
+        $key = \App\Support\FeatureGate::keyForNavigationGroup(static::$navigationGroup);
+
+        if ($key !== null) {
+            $tenant = \Filament\Facades\Filament::getTenant();
+
+            if (! $tenant?->hasFeature($key)) {
+                return false;
+            }
+        }
+
+        return (bool) auth()->user()?->can('view_any_monitoring::mengajar');
+    }
     /*
     |--------------------------------------------------------------------------
     | NAVIGATION
