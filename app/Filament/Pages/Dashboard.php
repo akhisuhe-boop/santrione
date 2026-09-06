@@ -46,7 +46,23 @@ class Dashboard extends BaseDashboard
             || $user->can('view_any_laporan::perizinan')
             || $user->can('view_any_tahfidz::setoran')
             || $user->can('view_any_tahfidz::target')
-            || $user->can('view_any_laporan::tahfidz');
+            || $user->can('view_any_laporan::tahfidz')
+            // DITAMBAHKAN 6 Sep 2026 -- daftar di atas cuma cek
+            // permission resource/halaman, LUPA menyertakan permission
+            // widget yang JUGA dipakai getWidgets() di bawah. Efeknya:
+            // role yang CUMA dikasih akses widget tertentu (mis.
+            // "Pengasuhan" yang cuma dikasih widget_SiswaPerLembaga,
+            // tanpa permission resource/halaman apa pun di atas) ditolak
+            // masuk Dashboard SAMA SEKALI, padahal harusnya cukup lihat
+            // widget itu saja.
+            || $user->can('widget_StatistikAkademik')
+            || $user->can('widget_SiswaPerLembaga')
+            || $user->can('widget_KeuanganOverview')
+            || $user->can('widget_GrafikKeuanganChart')
+            || $user->can('widget_SantriTahfidzTable')
+            || $user->can('widget_SantriIzinTable')
+            || $user->can('widget_SantriMelanggarTable')
+            || $user->can('widget_SantriBerprestasiTable');
     }
 
     public function getColumns(): int | string | array
@@ -76,11 +92,19 @@ class Dashboard extends BaseDashboard
             auth()->user()->can('view_any_siswa') ||
             auth()->user()->can('page_InputNilai') ||
             auth()->user()->can('page_RekapNilai') ||
-            auth()->user()->can('page_RaportSiswa')
+            auth()->user()->can('page_RaportSiswa') ||
+            auth()->user()->can('widget_StatistikAkademik')
         ) {
-
             $widgets[] = \App\Filament\Widgets\StatistikAkademik::class;
+        }
 
+        if (
+            auth()->user()->can('view_any_siswa') ||
+            auth()->user()->can('page_InputNilai') ||
+            auth()->user()->can('page_RekapNilai') ||
+            auth()->user()->can('page_RaportSiswa') ||
+            auth()->user()->can('widget_SiswaPerLembaga')
+        ) {
             $widgets[] = \App\Filament\Widgets\SiswaPerLembaga::class;
         }
 
@@ -93,11 +117,18 @@ class Dashboard extends BaseDashboard
         if (
             auth()->user()->can('view_any_kas') ||
             auth()->user()->can('page_LaporanKas') ||
-            auth()->user()->can('page_LaporanPembayaran')
+            auth()->user()->can('page_LaporanPembayaran') ||
+            auth()->user()->can('widget_KeuanganOverview')
         ) {
-
             $widgets[] = \App\Filament\Widgets\KeuanganOverview::class;
+        }
 
+        if (
+            auth()->user()->can('view_any_kas') ||
+            auth()->user()->can('page_LaporanKas') ||
+            auth()->user()->can('page_LaporanPembayaran') ||
+            auth()->user()->can('widget_GrafikKeuanganChart')
+        ) {
             $widgets[] = \App\Filament\Widgets\GrafikKeuanganChart::class;
         }
 
@@ -110,7 +141,8 @@ class Dashboard extends BaseDashboard
         if (
             auth()->user()->can('view_any_prestasi') ||
             auth()->user()->can('view_any_prestasi::siswa') ||
-            auth()->user()->can('view_any_laporan::prestasi')
+            auth()->user()->can('view_any_laporan::prestasi') ||
+            auth()->user()->can('widget_SantriBerprestasiTable')
         ) {
 
             $widgets[] = \App\Filament\Widgets\SantriBerprestasiTable::class;
@@ -125,7 +157,8 @@ class Dashboard extends BaseDashboard
         if (
             auth()->user()->can('view_any_pelanggaran') ||
             auth()->user()->can('view_any_pelanggaran::siswa') ||
-            auth()->user()->can('view_any_laporan::pelanggaran')
+            auth()->user()->can('view_any_laporan::pelanggaran') ||
+            auth()->user()->can('widget_SantriMelanggarTable')
         ) {
 
             $widgets[] = \App\Filament\Widgets\SantriMelanggarTable::class;
@@ -139,7 +172,8 @@ class Dashboard extends BaseDashboard
 
         if (
             auth()->user()->can('view_any_perizinan') ||
-            auth()->user()->can('view_any_laporan::perizinan')
+            auth()->user()->can('view_any_laporan::perizinan') ||
+            auth()->user()->can('widget_SantriIzinTable')
         ) {
 
             $widgets[] = \App\Filament\Widgets\SantriIzinTable::class;
@@ -154,7 +188,8 @@ class Dashboard extends BaseDashboard
         if (
             auth()->user()->can('view_any_tahfidz::setoran') ||
             auth()->user()->can('view_any_tahfidz::target') ||
-            auth()->user()->can('view_any_laporan::tahfidz')
+            auth()->user()->can('view_any_laporan::tahfidz') ||
+            auth()->user()->can('widget_SantriTahfidzTable')
         ) {
 
             $widgets[] = \App\Filament\Widgets\SantriTahfidzTable::class;
