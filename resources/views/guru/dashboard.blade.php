@@ -669,7 +669,7 @@
                 </div>
 
                 <div class="font-semibold text-[13px] leading-snug text-slate-900">Absensi</div>
-                <div class="text-[11px] leading-snug text-slate-600 mt-1">Kehadiran siswa</div>
+                <div class="text-[11px] leading-snug text-slate-600 mt-1">Kehadiran guru</div>
 
             </a>
 
