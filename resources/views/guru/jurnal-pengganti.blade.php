@@ -5,19 +5,26 @@
 <div class="min-h-screen bg-[#F8FAFB] px-4 pb-8">
 
     {{-- HEADER --}}
-    <div class="pt-5 flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
-            <x-heroicon-o-user-group class="w-5 h-5 text-amber-500" />
+    <div class="pt-5 flex items-start justify-between gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+            <div class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
+                <x-heroicon-o-user-group class="w-5 h-5 text-amber-500" />
+            </div>
+            <div class="min-w-0">
+                <div class="text-[15px] font-bold tracking-tight text-slate-900">
+                    Isi Jurnal Pengganti
+                </div>
+                <div class="text-xs text-slate-400 mt-0.5">
+                    Pilih kelas yang ingin digantikan
+                </div>
+            </div>
         </div>
-        <div class="min-w-0">
-            <div class="text-[15px] font-bold tracking-tight text-slate-900">
-                Isi Jurnal Pengganti
+        <div class="text-right shrink-0">
+            <div class="text-xs text-slate-500">
+                {{ now()->locale('id')->translatedFormat('l,') }}
             </div>
-            <div class="text-xs text-slate-500 mt-0.5">
-                {{ now()->locale('id')->translatedFormat('l, d F Y') }}
-            </div>
-            <div class="text-xs text-slate-400 mt-0.5">
-                Pilih kelas yang ingin digantikan
+            <div class="text-xs text-slate-500">
+                {{ now()->locale('id')->translatedFormat('d F Y') }}
             </div>
         </div>
     </div>
