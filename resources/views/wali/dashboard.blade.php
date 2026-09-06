@@ -627,8 +627,8 @@
                     </svg>
                 </div>
 
-                <div class="font-semibold text-[13px] leading-snug text-slate-900">Dispensasi</div>
-                <div class="text-[11px] leading-snug text-slate-600 mt-1">Tidak masuk sekolah</div>
+                <div class="font-semibold text-[13px] leading-snug text-slate-900">Izin</div>
+                <div class="text-[11px] leading-snug text-slate-600 mt-1">Tidak&nbsp;masuk sekolah</div>
 
             </a>
 
