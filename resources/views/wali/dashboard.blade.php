@@ -530,13 +530,13 @@
     {{-- MAIN CARD --}}
     <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-4">
 
-        <div class="grid grid-cols-3 sm:grid-cols-3 gap-3">
+        <div class="grid grid-cols-4 sm:grid-cols-4 gap-3">
 
             {{-- TAHFIDZ --}}
             <a href="{{ route('wali.tahfidz') }}"
-               class="group relative flex flex-col items-center text-center gap-2 p-3 rounded-2xl hover:bg-slate-50 transition-all duration-200">
+               class="group relative p-4 rounded-2xl border border-slate-100 bg-cyan-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
 
-                <div class="relative w-11 h-11 rounded-xl bg-cyan-500 shadow-md shadow-cyan-500/25 flex items-center justify-center">
+                <div class="relative w-11 h-11 rounded-xl bg-cyan-500 shadow-md shadow-cyan-500/25 flex items-center justify-center mb-3">
                     <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="M12 6.253v13M12 6.253C10.832 5.477 9.246 5 7.5 5A4.5 4.5 0 003 9.5v9A4.5 4.5 0 017.5 14c1.746 0 3.332.477 4.5 1.253M12 6.253C13.168 5.477 14.754 5 16.5 5A4.5 4.5 0 0121 9.5v9A4.5 4.5 0 0016.5 14c-1.746 0-3.332.477-4.5 1.253"/>
@@ -549,9 +549,9 @@
 
             {{-- ABSENSI --}}
             <a href="{{ route('wali.absensi') }}"
-               class="group relative flex flex-col items-center text-center gap-2 p-3 rounded-2xl hover:bg-slate-50 transition-all duration-200">
+               class="group relative p-4 rounded-2xl border border-slate-100 bg-blue-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
 
-                <div class="relative w-11 h-11 rounded-xl bg-blue-500 shadow-md shadow-blue-500/25 flex items-center justify-center">
+                <div class="relative w-11 h-11 rounded-xl bg-blue-500 shadow-md shadow-blue-500/25 flex items-center justify-center mb-3">
                     <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="M9 12.75L11.25 15 15 9.75"/>
@@ -566,9 +566,9 @@
 
             {{-- PELANGGARAN --}}
             <a href="{{ route('wali.pelanggaran') }}"
-               class="group relative flex flex-col items-center text-center gap-2 p-3 rounded-2xl hover:bg-slate-50 transition-all duration-200">
+               class="group relative p-4 rounded-2xl border border-slate-100 bg-orange-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
 
-                <div class="relative w-11 h-11 rounded-xl bg-orange-500 shadow-md shadow-orange-500/25 flex items-center justify-center">
+                <div class="relative w-11 h-11 rounded-xl bg-orange-500 shadow-md shadow-orange-500/25 flex items-center justify-center mb-3">
                     <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="M12 9v3.75m0 3.75h.008v.008H12v-.008z"/>
@@ -583,9 +583,9 @@
 
             {{-- PRESTASI --}}
             <a href="{{ route('wali.prestasi') }}"
-               class="group relative flex flex-col items-center text-center gap-2 p-3 rounded-2xl hover:bg-slate-50 transition-all duration-200">
+               class="group relative p-4 rounded-2xl border border-slate-100 bg-yellow-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
 
-                <div class="relative w-11 h-11 rounded-xl bg-yellow-500 shadow-md shadow-yellow-500/25 flex items-center justify-center">
+                <div class="relative w-11 h-11 rounded-xl bg-yellow-500 shadow-md shadow-yellow-500/25 flex items-center justify-center mb-3">
                     <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="M11.48 3.5a.56.56 0 011.04 0l2.12 5.11a.56.56 0 00.48.35l5.52.44a.56.56 0 01.32.99l-4.2 3.6a.56.56 0 00-.18.56l1.28 5.38a.56.56 0 01-.84.61L12 17.06l-4.72 2.89a.56.56 0 01-.84-.61l1.28-5.38a.56.56 0 00-.18-.56l-4.2-3.6a.56.56 0 01.32-.99l5.52-.44a.56.56 0 00.48-.35l2.12-5.11z"/>
@@ -598,9 +598,9 @@
 
             {{-- PERIZINAN --}}
             <a href="{{ route('wali.perizinan') }}"
-               class="group relative flex flex-col items-center text-center gap-2 p-3 rounded-2xl hover:bg-slate-50 transition-all duration-200">
+               class="group relative p-4 rounded-2xl border border-slate-100 bg-violet-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
 
-                <div class="relative w-11 h-11 rounded-xl bg-violet-500 shadow-md shadow-violet-500/25 flex items-center justify-center">
+                <div class="relative w-11 h-11 rounded-xl bg-violet-500 shadow-md shadow-violet-500/25 flex items-center justify-center mb-3">
                     <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-3.75 0h16.5A1.125 1.125 0 0121.375 11.625v7.125A1.125 1.125 0 0120.25 20.25H3.75A1.125 1.125 0 012.625 18.75V11.625A1.125 1.125 0 013.75 10.5z"/>
@@ -613,9 +613,9 @@
 
             {{-- IZIN TIDAK MASUK --}}
             <a href="{{ route('wali.izin-tidak-masuk') }}"
-               class="group relative flex flex-col items-center text-center gap-2 p-3 rounded-2xl hover:bg-slate-50 transition-all duration-200">
+               class="group relative p-4 rounded-2xl border border-slate-100 bg-amber-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
 
-                <div class="relative w-11 h-11 rounded-xl bg-amber-500 shadow-md shadow-amber-500/25 flex items-center justify-center">
+                <div class="relative w-11 h-11 rounded-xl bg-amber-500 shadow-md shadow-amber-500/25 flex items-center justify-center mb-3">
                     <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -628,9 +628,9 @@
 
             {{-- RAPORT --}}
             <a href="{{ route('wali.raport') }}"
-               class="group relative flex flex-col items-center text-center gap-2 p-3 rounded-2xl hover:bg-slate-50 transition-all duration-200">
+               class="group relative p-4 rounded-2xl border border-slate-100 bg-emerald-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
 
-                <div class="relative w-11 h-11 rounded-xl bg-emerald-500 shadow-md shadow-emerald-500/25 flex items-center justify-center">
+                <div class="relative w-11 h-11 rounded-xl bg-emerald-500 shadow-md shadow-emerald-500/25 flex items-center justify-center mb-3">
                     <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="M3 13h18M3 6h18M3 20h18"/>
@@ -644,9 +644,9 @@
             {{-- KANTIN --}}
             @if (\App\Models\Yayasan::find(session('active_public_yayasan_id'))?->hasFeature(\App\Support\FeatureGate::E_KANTIN))
             <a href="{{ route('wali.kantin') }}"
-               class="group relative flex flex-col items-center text-center gap-2 p-3 rounded-2xl hover:bg-slate-50 transition-all duration-200">
+               class="group relative p-4 rounded-2xl border border-slate-100 bg-rose-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
 
-                <div class="relative w-11 h-11 rounded-xl bg-rose-500 shadow-md shadow-rose-500/25 flex items-center justify-center">
+                <div class="relative w-11 h-11 rounded-xl bg-rose-500 shadow-md shadow-rose-500/25 flex items-center justify-center mb-3">
                     <x-heroicon-o-shopping-bag class="w-5 h-5 text-white" />
                 </div>
 
