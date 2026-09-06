@@ -534,26 +534,26 @@
 
             {{-- TAHFIDZ --}}
             <a href="{{ route('wali.tahfidz') }}"
-               class="group relative flex flex-col items-center text-center p-4 rounded-2xl border border-slate-100 bg-cyan-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200">
+               class="group relative flex flex-col items-center text-center p-5 rounded-2xl border border-slate-100 bg-cyan-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200">
 
-                <div class="relative w-11 h-11 rounded-xl bg-cyan-500 shadow-md shadow-cyan-500/25 flex items-center justify-center mb-2.5">
-                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <div class="relative w-12 h-12 rounded-xl bg-cyan-500 shadow-md shadow-cyan-500/25 flex items-center justify-center mb-2.5">
+                    <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="M12 6.253v13M12 6.253C10.832 5.477 9.246 5 7.5 5A4.5 4.5 0 003 9.5v9A4.5 4.5 0 017.5 14c1.746 0 3.332.477 4.5 1.253M12 6.253C13.168 5.477 14.754 5 16.5 5A4.5 4.5 0 0121 9.5v9A4.5 4.5 0 0016.5 14c-1.746 0-3.332.477-4.5 1.253"/>
                     </svg>
                 </div>
 
-                <div class="font-semibold text-[12px] leading-snug text-slate-900">Tahfidz</div>
-                <div class="text-[10px] leading-snug text-slate-400 mt-0.5">Hafalan Al-Qur'an</div>
+                <div class="font-semibold text-[13px] leading-snug text-slate-900">Tahfidz</div>
+                <div class="text-[11px] leading-snug text-slate-600 mt-1">Hafalan Al-Qur'an</div>
 
             </a>
 
             {{-- ABSENSI --}}
             <a href="{{ route('wali.absensi') }}"
-               class="group relative flex flex-col items-center text-center p-4 rounded-2xl border border-slate-100 bg-blue-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200">
+               class="group relative flex flex-col items-center text-center p-5 rounded-2xl border border-slate-100 bg-blue-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200">
 
-                <div class="relative w-11 h-11 rounded-xl bg-blue-500 shadow-md shadow-blue-500/25 flex items-center justify-center mb-2.5">
-                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <div class="relative w-12 h-12 rounded-xl bg-blue-500 shadow-md shadow-blue-500/25 flex items-center justify-center mb-2.5">
+                    <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="M9 12.75L11.25 15 15 9.75"/>
                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -561,17 +561,17 @@
                     </svg>
                 </div>
 
-                <div class="font-semibold text-[12px] leading-snug text-slate-900">Absensi</div>
-                <div class="text-[10px] leading-snug text-slate-400 mt-0.5">Kehadiran harian</div>
+                <div class="font-semibold text-[13px] leading-snug text-slate-900">Absensi</div>
+                <div class="text-[11px] leading-snug text-slate-600 mt-1">Kehadiran harian</div>
 
             </a>
 
             {{-- PELANGGARAN --}}
             <a href="{{ route('wali.pelanggaran') }}"
-               class="group relative flex flex-col items-center text-center p-4 rounded-2xl border border-slate-100 bg-orange-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200">
+               class="group relative flex flex-col items-center text-center p-5 rounded-2xl border border-slate-100 bg-orange-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200">
 
-                <div class="relative w-11 h-11 rounded-xl bg-orange-500 shadow-md shadow-orange-500/25 flex items-center justify-center mb-2.5">
-                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <div class="relative w-12 h-12 rounded-xl bg-orange-500 shadow-md shadow-orange-500/25 flex items-center justify-center mb-2.5">
+                    <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="M12 9v3.75m0 3.75h.008v.008H12v-.008z"/>
                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -579,86 +579,86 @@
                     </svg>
                 </div>
 
-                <div class="font-semibold text-[12px] leading-snug text-slate-900">Disiplin</div>
-                <div class="text-[10px] leading-snug text-slate-400 mt-0.5">Catatan pelanggaran</div>
+                <div class="font-semibold text-[13px] leading-snug text-slate-900">Disiplin</div>
+                <div class="text-[11px] leading-snug text-slate-600 mt-1">Catatan pelanggaran</div>
 
             </a>
 
             {{-- PRESTASI --}}
             <a href="{{ route('wali.prestasi') }}"
-               class="group relative flex flex-col items-center text-center p-4 rounded-2xl border border-slate-100 bg-yellow-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200">
+               class="group relative flex flex-col items-center text-center p-5 rounded-2xl border border-slate-100 bg-yellow-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200">
 
-                <div class="relative w-11 h-11 rounded-xl bg-yellow-500 shadow-md shadow-yellow-500/25 flex items-center justify-center mb-2.5">
-                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <div class="relative w-12 h-12 rounded-xl bg-yellow-500 shadow-md shadow-yellow-500/25 flex items-center justify-center mb-2.5">
+                    <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="M11.48 3.5a.56.56 0 011.04 0l2.12 5.11a.56.56 0 00.48.35l5.52.44a.56.56 0 01.32.99l-4.2 3.6a.56.56 0 00-.18.56l1.28 5.38a.56.56 0 01-.84.61L12 17.06l-4.72 2.89a.56.56 0 01-.84-.61l1.28-5.38a.56.56 0 00-.18-.56l-4.2-3.6a.56.56 0 01.32-.99l5.52-.44a.56.56 0 00.48-.35l2.12-5.11z"/>
                     </svg>
                 </div>
 
-                <div class="font-semibold text-[12px] leading-snug text-slate-900">Prestasi</div>
-                <div class="text-[10px] leading-snug text-slate-400 mt-0.5">Capaian siswa</div>
+                <div class="font-semibold text-[13px] leading-snug text-slate-900">Prestasi</div>
+                <div class="text-[11px] leading-snug text-slate-600 mt-1">Catatan Prestasi</div>
 
             </a>
 
             {{-- PERIZINAN --}}
             <a href="{{ route('wali.perizinan') }}"
-               class="group relative flex flex-col items-center text-center p-4 rounded-2xl border border-slate-100 bg-violet-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200">
+               class="group relative flex flex-col items-center text-center p-5 rounded-2xl border border-slate-100 bg-violet-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200">
 
-                <div class="relative w-11 h-11 rounded-xl bg-violet-500 shadow-md shadow-violet-500/25 flex items-center justify-center mb-2.5">
-                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <div class="relative w-12 h-12 rounded-xl bg-violet-500 shadow-md shadow-violet-500/25 flex items-center justify-center mb-2.5">
+                    <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-3.75 0h16.5A1.125 1.125 0 0121.375 11.625v7.125A1.125 1.125 0 0120.25 20.25H3.75A1.125 1.125 0 012.625 18.75V11.625A1.125 1.125 0 013.75 10.5z"/>
                     </svg>
                 </div>
 
-                <div class="font-semibold text-[12px] leading-snug text-slate-900">Perizinan</div>
-                <div class="text-[10px] leading-snug text-slate-400 mt-0.5">Ajukan izin</div>
+                <div class="font-semibold text-[13px] leading-snug text-slate-900">Perizinan</div>
+                <div class="text-[11px] leading-snug text-slate-600 mt-1">Ajukan izin keluar/pulang</div>
 
             </a>
 
             {{-- IZIN TIDAK MASUK --}}
             <a href="{{ route('wali.izin-tidak-masuk') }}"
-               class="group relative flex flex-col items-center text-center p-4 rounded-2xl border border-slate-100 bg-amber-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200">
+               class="group relative flex flex-col items-center text-center p-5 rounded-2xl border border-slate-100 bg-amber-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200">
 
-                <div class="relative w-11 h-11 rounded-xl bg-amber-500 shadow-md shadow-amber-500/25 flex items-center justify-center mb-2.5">
-                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <div class="relative w-12 h-12 rounded-xl bg-amber-500 shadow-md shadow-amber-500/25 flex items-center justify-center mb-2.5">
+                    <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                 </div>
 
-                <div class="font-semibold text-[12px] leading-snug text-slate-900">Dispensasi</div>
-                <div class="text-[10px] leading-snug text-slate-400 mt-0.5">Tidak masuk sekolah</div>
+                <div class="font-semibold text-[13px] leading-snug text-slate-900">Dispensasi</div>
+                <div class="text-[11px] leading-snug text-slate-600 mt-1">Tidak masuk sekolah</div>
 
             </a>
 
             {{-- RAPORT --}}
             <a href="{{ route('wali.raport') }}"
-               class="group relative flex flex-col items-center text-center p-4 rounded-2xl border border-slate-100 bg-emerald-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200">
+               class="group relative flex flex-col items-center text-center p-5 rounded-2xl border border-slate-100 bg-emerald-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200">
 
-                <div class="relative w-11 h-11 rounded-xl bg-emerald-500 shadow-md shadow-emerald-500/25 flex items-center justify-center mb-2.5">
-                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <div class="relative w-12 h-12 rounded-xl bg-emerald-500 shadow-md shadow-emerald-500/25 flex items-center justify-center mb-2.5">
+                    <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="M3 13h18M3 6h18M3 20h18"/>
                     </svg>
                 </div>
 
-                <div class="font-semibold text-[12px] leading-snug text-slate-900">Raport</div>
-                <div class="text-[10px] leading-snug text-slate-400 mt-0.5">Nilai akademik</div>
+                <div class="font-semibold text-[13px] leading-snug text-slate-900">Raport</div>
+                <div class="text-[11px] leading-snug text-slate-600 mt-1">Nilai akademik</div>
 
             </a>
 
             {{-- KANTIN --}}
             @if (\App\Models\Yayasan::find(session('active_public_yayasan_id'))?->hasFeature(\App\Support\FeatureGate::E_KANTIN))
             <a href="{{ route('wali.kantin') }}"
-               class="group relative flex flex-col items-center text-center p-4 rounded-2xl border border-slate-100 bg-rose-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200">
+               class="group relative flex flex-col items-center text-center p-5 rounded-2xl border border-slate-100 bg-rose-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_28px_-6px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200">
 
-                <div class="relative w-11 h-11 rounded-xl bg-rose-500 shadow-md shadow-rose-500/25 flex items-center justify-center mb-2.5">
-                    <x-heroicon-o-shopping-bag class="w-5 h-5 text-white" />
+                <div class="relative w-12 h-12 rounded-xl bg-rose-500 shadow-md shadow-rose-500/25 flex items-center justify-center mb-2.5">
+                    <x-heroicon-o-shopping-bag class="w-6 h-6 text-white" />
                 </div>
 
-                <div class="font-semibold text-[12px] leading-snug text-slate-900">Kantin</div>
-                <div class="text-[10px] leading-snug text-slate-400 mt-0.5">Riwayat & limit belanja</div>
+                <div class="font-semibold text-[13px] leading-snug text-slate-900">Kantin</div>
+                <div class="text-[11px] leading-snug text-slate-600 mt-1">Riwayat & limit belanja</div>
 
             </a>
             @endif
