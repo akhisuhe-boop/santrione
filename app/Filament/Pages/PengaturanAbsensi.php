@@ -167,7 +167,9 @@ class PengaturanAbsensi extends Page implements HasForms, HasTable
 
     public function save(): void
     {
-        $lembagaId = $this->data['lembaga_id'] ?? null;
+        $data = $this->form->getState();
+
+        $lembagaId = $data['lembaga_id'] ?? null;
 
         $lembaga = Lembaga::find($lembagaId);
 
@@ -181,11 +183,11 @@ class PengaturanAbsensi extends Page implements HasForms, HasTable
         }
 
         $lembaga->update([
-            'jam_masuk_siswa' => $this->data['jam_masuk_siswa'] ?? null,
-            'jam_pulang_siswa' => $this->data['jam_pulang_siswa'] ?? null,
-            'jam_masuk_guru' => $this->data['jam_masuk_guru'] ?? null,
-            'jam_pulang_guru' => $this->data['jam_pulang_guru'] ?? null,
-            'toleransi_telat_menit' => $this->data['toleransi_telat_menit'] ?? 15,
+            'jam_masuk_siswa' => $data['jam_masuk_siswa'] ?? null,
+            'jam_pulang_siswa' => $data['jam_pulang_siswa'] ?? null,
+            'jam_masuk_guru' => $data['jam_masuk_guru'] ?? null,
+            'jam_pulang_guru' => $data['jam_pulang_guru'] ?? null,
+            'toleransi_telat_menit' => $data['toleransi_telat_menit'] ?? 15,
         ]);
 
         Notification::make()
