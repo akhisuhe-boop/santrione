@@ -106,7 +106,7 @@ class PpdbPembayaranController extends Controller
         $amountCharged = $amount + $feeAdmin;
 
         $lembaga = $ppdb->lembaga;
-        $akunTujuan = $lembaga ? $lembaga->rekeningUntuk($tagihan->jenisTagihan?->tipe_sistem) : null;
+        $akunTujuan = $lembaga ? $lembaga->rekeningUntuk($tagihan->jenisTagihan?->kategori_rekening) : null;
         $customerName = $ppdb->nama_lengkap ?? $ppdb->nama ?? 'Pendaftar PPDB';
         $customerEmail = \App\Services\DokuService::emailAman($ppdb->email ?? null, $ppdb->wa_wali ?? $ppdb->id);
 

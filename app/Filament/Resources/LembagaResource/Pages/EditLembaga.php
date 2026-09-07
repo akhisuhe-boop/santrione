@@ -71,42 +71,43 @@ class EditLembaga extends EditRecord
                     }
                 }),
 
-            // DITAMBAHKAN -- daftarkan rekening TERPISAH untuk kategori
-            // PPDB (child sub-account dari sub-account utama Lembaga di
-            // atas). Lembaga yang tidak butuh pisah rekening cukup pakai
-            // tombol "Daftarkan ke DOKU" saja -- tombol ini opsional,
-            // cuma untuk yang eksplisit minta rekening PPDB terpisah
-            // dari SPP (lihat Lembaga::rekeningUntuk()).
-            Actions\Action::make('daftarkanRekeningPpdb')
-                ->label(function () {
-                    $r = $this->record->rekenings()->where('kategori', 'ppdb')->first();
-                    return ($r?->doku_split_rule_id && $r?->doku_split_rule_id_flat) ? 'Terdaftar: Rekening PPDB' : 'Daftarkan Rekening PPDB Terpisah';
-                })
+            // DIUBAH -- sebelumnya khusus PPDB saja. Sekarang generic:
+            // admin isi sendiri kategori (bebas, harus sama persis
+            // dengan yang diisi di field "Kategori Rekening DOKU" pada
+            // Jenis Tagihan terkait -- lihat JenisTagihanResource).
+            Actions\Action::make('daftarkanRekeningLain')
+                ->label('+ Daftarkan Rekening Kategori Lain')
                 ->icon('heroicon-o-banknotes')
-                ->color(function () {
-                    $r = $this->record->rekenings()->where('kategori', 'ppdb')->first();
-                    return ($r?->doku_split_rule_id && $r?->doku_split_rule_id_flat) ? 'success' : 'gray';
-                })
-                ->disabled(function () {
-                    $r = $this->record->rekenings()->where('kategori', 'ppdb')->first();
-                    return (bool) ($r?->doku_split_rule_id && $r?->doku_split_rule_id_flat);
-                })
+                ->color('gray')
                 ->visible(fn () => (bool) auth()->user()?->is_platform_admin && (bool) $this->record->doku_sub_account_id)
+                ->form([
+                    \Filament\Forms\Components\TextInput::make('kategori')
+                        ->label('Kategori')
+                        ->helperText('Slug bebas, huruf kecil & underscore saja (mis. "ppdb", "uang_gedung", "seragam"). Harus PERSIS sama dengan yang diisi di field "Kategori Rekening DOKU" pada Jenis Tagihan terkait.')
+                        ->required()
+                        ->rule('regex:/^[a-z0-9_]+$/')
+                        ->validationMessages(['regex' => 'Hanya huruf kecil, angka, dan underscore.'])
+                        ->unique(table: \App\Models\LembagaRekening::class, column: 'kategori', modifyRuleUsing: fn ($rule) => $rule->where('lembaga_id', $this->record->id)),
+                    \Filament\Forms\Components\TextInput::make('nama')
+                        ->label('Label (opsional)')
+                        ->placeholder('mis. Rekening PPDB Al-Mubarok')
+                        ->maxLength(128),
+                ])
                 ->requiresConfirmation()
-                ->modalDescription('Daftarkan rekening DOKU TERPISAH khusus kegiatan PPDB untuk Lembaga ini (child dari sub-account utama). Pakai ini HANYA kalau Lembaga memang minta rekening PPDB berbeda dari SPP -- kalau tidak, biarkan kosong (otomatis pakai rekening utama).')
-                ->action(function () {
+                ->modalDescription('Daftarkan rekening DOKU TERPISAH untuk kategori ini (child dari sub-account utama). Setelah ini, tandai Jenis Tagihan yang sesuai dengan kategori yang sama persis di field "Kategori Rekening DOKU".')
+                ->action(function (array $data) {
                     try {
-                        app(\App\Services\DokuService::class)->registerRekening($this->record, 'ppdb');
+                        app(\App\Services\DokuService::class)->registerRekening($this->record, $data['kategori'], $data['nama'] ?? null);
 
                         \Filament\Notifications\Notification::make()
-                            ->title('Rekening PPDB berhasil didaftarkan')
+                            ->title("Rekening '{$data['kategori']}' berhasil didaftarkan")
                             ->success()
                             ->send();
 
                         $this->record->refresh();
                     } catch (\Throwable $e) {
                         \Filament\Notifications\Notification::make()
-                            ->title('Gagal mendaftarkan rekening PPDB')
+                            ->title('Gagal mendaftarkan rekening')
                             ->body($e->getMessage())
                             ->danger()
                             ->send();

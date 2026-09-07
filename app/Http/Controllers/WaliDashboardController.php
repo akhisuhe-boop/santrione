@@ -603,7 +603,7 @@ class WaliDashboardController extends Controller
                 // bisa kendalikan dari sisi kode. Memanggil endpoint
                 // Non-SNAP langsung (bukan lewat Checkout Link) memberi
                 // hasil yang konsisten.
-                $akunTujuan = $lembaga ? $lembaga->rekeningUntuk($tagihan->jenisTagihan?->tipe_sistem) : null;
+                $akunTujuan = $lembaga ? $lembaga->rekeningUntuk($tagihan->jenisTagihan?->kategori_rekening) : null;
 
                 $result = $doku->buatVaLangsung(
                     referenceId: $referenceId,

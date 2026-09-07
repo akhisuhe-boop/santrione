@@ -88,28 +88,38 @@ class Lembaga extends Model
     }
 
     /**
-     * DITAMBAHKAN -- resolver rekening DOKU untuk 1 kategori kegiatan
-     * (mis. 'ppdb', 'spp'). Urutan fallback:
+     * DIUBAH -- sebelumnya menerima JenisTagihan.tipe_sistem lalu
+     * diterjemahkan lewat kategoriDariTipeSistem() ke kategori rekening.
+     * DIPISAH TOTAL sekarang: parameter ini adalah JenisTagihan.
+     * kategori_rekening LANGSUNG -- field baru yang independen dari
+     * tipe_sistem (yang tetap dipakai murni untuk logika alur PPDB
+     * otomatis, tidak disentuh sama sekali oleh perubahan ini). Alasan
+     * pemisahan: tipe_sistem cuma py 2 nilai tetap (PPDB), kalau dipaksa
+     * menampung kategori rekening bebas (uang gedung, seragam, dst)
+     * berisiko mengacaukan kode lain yang query spesifik nilai
+     * tipe_sistem itu.
+     *
+     * Urutan fallback:
      * 1. LembagaRekening dengan kategori yang persis cocok.
      * 2. LembagaRekening kategori 'default' (kalau Lembaga sengaja
      *    setup 1 rekening umum tapi belum pisah semua kategori).
      * 3. Kolom doku_* LANGSUNG di tabel `lembagas` (rekening lama/
      *    legacy -- SEMUA Lembaga yang sudah didaftarkan sebelum fitur
-     *    multi-rekening ini ada, termasuk data testing SDIT Testing,
-     *    tetap jalan tanpa perlu migrasi data apapun).
+     *    multi-rekening ini ada tetap jalan tanpa migrasi data apapun).
      *
-     * $tipeSistem: nilai dari JenisTagihan::tipe_sistem (mis.
-     * 'pendaftaran_ppdb', 'daftar_ulang_ppdb') -- dipetakan ke kategori
-     * rekening lewat kategoriDariTipeSistem(). null/tidak dikenal ->
-     * langsung ke kategori 'default'.
+     * $kategoriRekening: nilai bebas dari JenisTagihan::kategori_rekening
+     * (mis. 'ppdb', 'uang_gedung') -- null/kosong -> langsung ke
+     * kategori 'default'. TIDAK ada daftar tetap, TIDAK perlu ubah kode
+     * ini setiap kali ada kategori baru -- cukup isi field itu di Jenis
+     * Tagihan & daftarkan rekening dengan kategori yang sama persis.
      *
      * Return array ternormalisasi (BUKAN model) supaya konsumen
      * (DokuService::pilihSplitRuleId(), controller) tidak perlu tahu
      * apakah sumbernya dari LembagaRekening atau kolom legacy Lembaga.
      */
-    public function rekeningUntuk(?string $tipeSistem): array
+    public function rekeningUntuk(?string $kategoriRekening): array
     {
-        $kategori = self::kategoriDariTipeSistem($tipeSistem);
+        $kategori = $kategoriRekening ?: 'default';
 
         $rekening = $this->rekenings->firstWhere('kategori', $kategori)
             ?? $this->rekenings->firstWhere('kategori', 'default');
@@ -129,20 +139,6 @@ class Lembaga extends Model
             'split_rule_id' => $this->doku_split_rule_id,
             'split_rule_id_flat' => $this->doku_split_rule_id_flat,
         ];
-    }
-
-    /**
-     * Pemetaan JenisTagihan.tipe_sistem -> kategori LembagaRekening.
-     * Tambah baris baru di sini kalau ada tipe_sistem baru yang perlu
-     * dipisah rekeningnya -- tidak perlu migration ulang, cukup kategori
-     * string baru & daftarkan LembagaRekening dengan kategori itu.
-     */
-    public static function kategoriDariTipeSistem(?string $tipeSistem): string
-    {
-        return match ($tipeSistem) {
-            'pendaftaran_ppdb', 'daftar_ulang_ppdb' => 'ppdb',
-            default => 'default',
-        };
     }
 
     

@@ -57,6 +57,15 @@ class JenisTagihanResource extends BaseResource
                             ->placeholder('Tagihan umum (bukan bagian alur PPDB otomatis)')
                             ->nullable(),
 
+                        Forms\Components\TextInput::make('kategori_rekening')
+                            ->label('Kategori Rekening DOKU')
+                            ->helperText('Isi HANYA kalau tagihan ini perlu masuk ke rekening DOKU terpisah dari rekening utama Lembaga (mis. "ppdb", "uang_gedung", "seragam"). Kosongkan untuk pakai rekening utama. Kategori ini independen dari "Peran Sistem" di atas -- tidak memengaruhi alur PPDB otomatis. Harus PERSIS sama dengan kategori yang didaftarkan di halaman Edit Lembaga.')
+                            ->placeholder('Kosongkan = rekening utama Lembaga')
+                            ->maxLength(32)
+                            ->rule('nullable|regex:/^[a-z0-9_]+$/')
+                            ->validationMessages(['regex' => 'Hanya huruf kecil, angka, dan underscore (mis. uang_gedung).'])
+                            ->nullable(),
+
                         Forms\Components\TextInput::make('default_nominal')
                             ->label('Nominal')
                             ->numeric()
@@ -115,6 +124,13 @@ class JenisTagihanResource extends BaseResource
                         'daftar_ulang_ppdb' => 'Daftar Ulang PPDB',
                         default => 'Tagihan Umum',
                     }),
+
+                Tables\Columns\TextColumn::make('kategori_rekening')
+                    ->label('Kategori Rekening')
+                    ->badge()
+                    ->color('info')
+                    ->placeholder('Rekening utama')
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('nama')
                     ->label('Jenis Tagihan')
