@@ -45,6 +45,12 @@ class TandaiAlpaAbsensiHarian extends Command
 
         Siswa::whereIn('kelas_id', $kelasIdsAdaJadwal)
             ->where('status_siswa', 'Aktif')
+            // Lembaga yang BELUM mengatur Jam Absensi (jam_masuk_siswa
+            // masih kosong) dianggap belum pakai fitur absensi ini --
+            // jangan auto-tandai Alpa siswanya, supaya lembaga yang
+            // belum punya alat/fitur scan tidak selalu ditandai Alpa
+            // setiap hari.
+            ->whereHas('lembaga', fn ($q) => $q->whereNotNull('jam_masuk_siswa'))
             ->chunk(200, function ($siswas) use ($tanggal, &$totalSiswaAlpa) {
 
                 foreach ($siswas as $siswa) {
@@ -83,6 +89,14 @@ class TandaiAlpaAbsensiHarian extends Command
             ->chunk(200, function ($pegawais) use ($tanggal, &$totalGuruAlpa) {
 
                 foreach ($pegawais as $pegawai) {
+
+                    // Sama seperti siswa -- kalau lembaga utama pegawai
+                    // ini belum atur Jam Absensi Guru, jangan auto-Alpa.
+                    $lembagaGuru = $pegawai->lembagaUtama();
+
+                    if (!$lembagaGuru || !$lembagaGuru->jam_masuk_guru) {
+                        continue;
+                    }
 
                     $sudahAda = AbsensiHarian::where('tanggal', $tanggal)
                         ->where('pegawai_id', $pegawai->id)
