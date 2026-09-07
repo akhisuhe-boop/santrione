@@ -33,7 +33,6 @@ class BersihkanAlpaInvalid extends Command
     public function handle(): int
     {
         $lembagaSiswaKosong = Lembaga::whereNull('jam_masuk_siswa')->pluck('id');
-        $lembagaGuruKosong = Lembaga::whereNull('jam_masuk_guru')->pluck('id');
 
         // ===============================
         // SISWA
@@ -44,21 +43,45 @@ class BersihkanAlpaInvalid extends Command
             ->where('metode_masuk', 'Auto (tidak scan)')
             ->whereHas('siswa', fn ($q) => $q->whereIn('lembaga_id', $lembagaSiswaKosong));
 
+        $totalSiswa = (clone $querySiswa)->count();
+
         // ===============================
-        // GURU/PEGAWAI (lewat lembaga utama pegawai)
+        // GURU/PEGAWAI
         // ===============================
-        $queryGuru = AbsensiHarian::query()
+        // Guru bisa terhubung ke LEBIH DARI 1 lembaga (pivot many-to-many).
+        // Yang menentukan valid/tidaknya Alpa dia HARUS pakai lembaga utama
+        // yang sama persis dengan yang dipakai TandaiAlpaAbsensiHarian
+        // (lembagaUtama()), bukan "salah satu dari semua lembaganya" --
+        // supaya guru yang lembaga utamanya SUDAH atur jam (mis. SDIT)
+        // tidak ikut kehapus gara-gara dia juga kebetulan punya jadwal
+        // di lembaga lain yang belum diatur.
+        $idAlpaGuruDihapus = [];
+        $rincianGuruMap = [];
+
+        AbsensiHarian::query()
             ->where('tipe', 'guru')
             ->where('status_masuk', 'Alpa')
             ->where('metode_masuk', 'Auto (tidak scan)')
-            ->whereHas('pegawai.lembagas', fn ($q) => $q->whereIn('lembagas.id', $lembagaGuruKosong));
+            ->with('pegawai')
+            ->chunkById(500, function ($rows) use (&$idAlpaGuruDihapus, &$rincianGuruMap) {
+                foreach ($rows as $row) {
+                    $lembagaUtama = $row->pegawai?->lembagaUtama();
 
-        $totalSiswa = (clone $querySiswa)->count();
-        $totalGuru = (clone $queryGuru)->count();
+                    if (!$lembagaUtama || $lembagaUtama->jam_masuk_guru !== null) {
+                        continue;
+                    }
+
+                    $idAlpaGuruDihapus[] = $row->id;
+                    $nama = $lembagaUtama->nama;
+                    $rincianGuruMap[$nama] = ($rincianGuruMap[$nama] ?? 0) + 1;
+                }
+            });
+
+        $totalGuru = count($idAlpaGuruDihapus);
 
         $this->newLine();
         $this->info("Lembaga yang jam absensi siswanya belum diatur: " . $lembagaSiswaKosong->count());
-        $this->info("Lembaga yang jam absensi gurunya belum diatur: " . $lembagaGuruKosong->count());
+        $this->info("Lembaga yang jam absensi gurunya belum diatur (berdasarkan lembaga utama guru): " . count($rincianGuruMap));
         $this->newLine();
 
         $this->table(
@@ -85,16 +108,10 @@ class BersihkanAlpaInvalid extends Command
             }
         }
 
-        $rincianGuru = (clone $queryGuru)
-            ->with('pegawai')
-            ->get()
-            ->groupBy(fn ($a) => $a->pegawai?->lembagaUtama()?->nama ?? '(tidak diketahui)')
-            ->map->count();
-
-        if ($rincianGuru->isNotEmpty()) {
+        if (!empty($rincianGuruMap)) {
             $this->newLine();
-            $this->info('Rincian Alpa guru per lembaga:');
-            foreach ($rincianGuru as $namaLembaga => $jumlah) {
+            $this->info('Rincian Alpa guru per lembaga (lembaga utama guru):');
+            foreach ($rincianGuruMap as $namaLembaga => $jumlah) {
                 $this->line("  - {$namaLembaga}: {$jumlah}");
             }
         }
@@ -109,7 +126,7 @@ class BersihkanAlpaInvalid extends Command
         }
 
         $hapusSiswa = (clone $querySiswa)->delete();
-        $hapusGuru = (clone $queryGuru)->delete();
+        $hapusGuru = AbsensiHarian::whereIn('id', $idAlpaGuruDihapus)->delete();
 
         $this->newLine();
         $this->info("Selesai. Terhapus -> Siswa: {$hapusSiswa}, Guru: {$hapusGuru}");
