@@ -25,6 +25,7 @@ class Lembaga extends Model
     'kepala_sekolah',
     'bendahara_id',
     'printer_kwitansi',
+    'limit_tunai_kantin_harian',
     'logo',
     'npsn',
     'nss',
@@ -88,30 +89,21 @@ class Lembaga extends Model
     }
 
     /**
-     * DIUBAH -- sebelumnya menerima JenisTagihan.tipe_sistem lalu
-     * diterjemahkan lewat kategoriDariTipeSistem() ke kategori rekening.
-     * DIPISAH TOTAL sekarang: parameter ini adalah JenisTagihan.
-     * kategori_rekening LANGSUNG -- field baru yang independen dari
-     * tipe_sistem (yang tetap dipakai murni untuk logika alur PPDB
-     * otomatis, tidak disentuh sama sekali oleh perubahan ini). Alasan
-     * pemisahan: tipe_sistem cuma py 2 nilai tetap (PPDB), kalau dipaksa
-     * menampung kategori rekening bebas (uang gedung, seragam, dst)
-     * berisiko mengacaukan kode lain yang query spesifik nilai
-     * tipe_sistem itu.
+     * Resolver rekening DOKU untuk 1 kategori kegiatan. $kategoriRekening
+     * adalah nilai bebas dari JenisTagihan::kategori_rekening (mis.
+     * 'ppdb', 'uang_gedung') -- field ini INDEPENDEN dari tipe_sistem
+     * (yang tetap dipakai murni untuk logika alur PPDB otomatis, tidak
+     * disentuh sama sekali oleh fitur ini). null/kosong -> kategori
+     * 'default'. TIDAK ada daftar tetap, tidak perlu ubah kode ini
+     * setiap kali ada kategori baru -- cukup isi field itu di Jenis
+     * Tagihan & daftarkan rekening dengan kategori yang sama persis.
      *
      * Urutan fallback:
      * 1. LembagaRekening dengan kategori yang persis cocok.
-     * 2. LembagaRekening kategori 'default' (kalau Lembaga sengaja
-     *    setup 1 rekening umum tapi belum pisah semua kategori).
-     * 3. Kolom doku_* LANGSUNG di tabel `lembagas` (rekening lama/
-     *    legacy -- SEMUA Lembaga yang sudah didaftarkan sebelum fitur
-     *    multi-rekening ini ada tetap jalan tanpa migrasi data apapun).
-     *
-     * $kategoriRekening: nilai bebas dari JenisTagihan::kategori_rekening
-     * (mis. 'ppdb', 'uang_gedung') -- null/kosong -> langsung ke
-     * kategori 'default'. TIDAK ada daftar tetap, TIDAK perlu ubah kode
-     * ini setiap kali ada kategori baru -- cukup isi field itu di Jenis
-     * Tagihan & daftarkan rekening dengan kategori yang sama persis.
+     * 2. LembagaRekening kategori 'default'.
+     * 3. Kolom doku_* LANGSUNG di tabel `lembagas` (rekening lama/legacy
+     *    -- Lembaga yang sudah didaftarkan sebelum fitur ini ada tetap
+     *    jalan tanpa migrasi data apapun).
      *
      * Return array ternormalisasi (BUKAN model) supaya konsumen
      * (DokuService::pilihSplitRuleId(), controller) tidak perlu tahu
@@ -141,7 +133,6 @@ class Lembaga extends Model
         ];
     }
 
-    
     public function bendahara()
     {
         return $this->belongsTo(Pegawai::class, 'bendahara_id');

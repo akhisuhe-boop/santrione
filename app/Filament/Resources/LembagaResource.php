@@ -30,6 +30,114 @@ class LembagaResource extends BaseResource
     protected static ?string $pluralModelLabel = 'Lembaga';
     protected static ?string $navigationLabel = 'Lembaga';
 
+    /**
+     * WAJIB override eksplisit -- resource ini pakai model Lembaga::class
+     * yang SAMA dengan PengaturanHonorPenggantiResource, dan Shield
+     * ternyata memenangkan permission PengaturanHonorPengganti waktu
+     * generate LembagaPolicy (viewAny() di sana cuma cek
+     * "view_any_pengaturan::honor::pengganti", BUKAN "view_any_lembaga").
+     * Ini resource yang PALING SERING dipakai, jadi wajib dipastikan
+     * benar -- ditemukan 6 Sep 2026.
+     */
+    /**
+     * WAJIB override eksplisit untuk SEMUA aksi (bukan cuma viewAny)
+     * -- resource ini pakai model Lembaga::class yang SAMA dengan
+     * PengaturanHonorPenggantiResource, dan Shield ternyata
+     * memenangkan permission PengaturanHonorPengganti waktu generate
+     * LembagaPolicy -- SEMUA method di sana (viewAny, view, create,
+     * update, delete, dst) cuma cek permission
+     * "..._pengaturan::honor::pengganti", BUKAN "..._lembaga" milik
+     * resource ini sendiri. Karena Lembaga PUNYA create/edit/delete
+     * sungguhan (beda dari resource "Laporan" lain yang cuma
+     * read-only, di situ cukup canViewAny() saja yang perlu
+     * diperbaiki), di sini SEMUA method canX() perlu diperbaiki --
+     * ditemukan & diaudit tuntas 6 Sep 2026.
+     */
+    public static function canViewAny(): bool
+    {
+        return static::cekAksesLembaga('view_any_lembaga');
+    }
+
+    public static function canView($record): bool
+    {
+        return static::cekAksesLembaga('view_lembaga');
+    }
+
+    public static function canCreate(): bool
+    {
+        return static::cekAksesLembaga('create_lembaga');
+    }
+
+    public static function canEdit($record): bool
+    {
+        return static::cekAksesLembaga('update_lembaga');
+    }
+
+    public static function canDelete($record): bool
+    {
+        return static::cekAksesLembaga('delete_lembaga');
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return static::cekAksesLembaga('delete_any_lembaga');
+    }
+
+    public static function canForceDelete($record): bool
+    {
+        return static::cekAksesLembaga('force_delete_lembaga');
+    }
+
+    public static function canForceDeleteAny(): bool
+    {
+        return static::cekAksesLembaga('force_delete_any_lembaga');
+    }
+
+    public static function canRestore($record): bool
+    {
+        return static::cekAksesLembaga('restore_lembaga');
+    }
+
+    public static function canRestoreAny(): bool
+    {
+        return static::cekAksesLembaga('restore_any_lembaga');
+    }
+
+    public static function canReplicate($record): bool
+    {
+        return static::cekAksesLembaga('replicate_lembaga');
+    }
+
+    public static function canReorder(): bool
+    {
+        return static::cekAksesLembaga('reorder_lembaga');
+    }
+
+    /**
+     * Helper bersama untuk SEMUA method canX() di atas -- ditulis
+     * SEKALI di sini alih-alih diulang 11x, supaya kalau logikanya
+     * (mis. cara cek FeatureGate) berubah nanti, cukup diubah di 1
+     * tempat.
+     */
+    protected static function cekAksesLembaga(string $permission): bool
+    {
+        if (auth()->user()?->is_platform_admin) {
+            return true;
+        }
+
+        $key = \App\Support\FeatureGate::keyForNavigationGroup(static::$navigationGroup);
+
+        if ($key !== null) {
+            $tenant = \Filament\Facades\Filament::getTenant();
+
+            if (! $tenant?->hasFeature($key)) {
+                return false;
+            }
+        }
+
+        return (bool) auth()->user()?->can($permission);
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -102,7 +210,7 @@ class LembagaResource extends BaseResource
                             ->label('Menggunakan Tes Masuk?')
                             ->helperText('Jika aktif, calon siswa wajib mengikuti tes sebelum dinyatakan lulus.')
                             ->default(true),
-    
+
                     ])
                     ->columns(3),
     
