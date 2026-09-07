@@ -100,6 +100,7 @@ class GuruJurnalController extends Controller
     */
     
     $siswas = Siswa::where('kelas_id', $jadwal->kelas_id)
+        ->where('status_siswa', 'Aktif')
         ->orderBy('nama_lengkap')
         ->get();
     
@@ -131,6 +132,7 @@ class GuruJurnalController extends Controller
     $absensis = AbsensiMapel::with('siswa')
         ->where('jadwal_pelajaran_id', $jadwal->id)
         ->whereDate('tanggal', today())
+        ->whereHas('siswa', fn ($q) => $q->where('status_siswa', 'Aktif'))
         ->orderBy('siswa_id')
         ->get();
     
@@ -254,6 +256,7 @@ class GuruJurnalController extends Controller
         );
 
         $siswas = Siswa::where('kelas_id', $jadwal->kelas_id)
+            ->where('status_siswa', 'Aktif')
             ->orderBy('nama_lengkap')
             ->get();
 
@@ -274,6 +277,7 @@ class GuruJurnalController extends Controller
         $absensis = AbsensiMapel::with('siswa')
             ->where('jadwal_pelajaran_id', $jadwal->id)
             ->whereDate('tanggal', today())
+            ->whereHas('siswa', fn ($q) => $q->where('status_siswa', 'Aktif'))
             ->orderBy('siswa_id')
             ->get();
 
