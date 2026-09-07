@@ -71,6 +71,48 @@ class EditLembaga extends EditRecord
                     }
                 }),
 
+            // DITAMBAHKAN -- daftarkan rekening TERPISAH untuk kategori
+            // PPDB (child sub-account dari sub-account utama Lembaga di
+            // atas). Lembaga yang tidak butuh pisah rekening cukup pakai
+            // tombol "Daftarkan ke DOKU" saja -- tombol ini opsional,
+            // cuma untuk yang eksplisit minta rekening PPDB terpisah
+            // dari SPP (lihat Lembaga::rekeningUntuk()).
+            Actions\Action::make('daftarkanRekeningPpdb')
+                ->label(function () {
+                    $r = $this->record->rekenings()->where('kategori', 'ppdb')->first();
+                    return ($r?->doku_split_rule_id && $r?->doku_split_rule_id_flat) ? 'Terdaftar: Rekening PPDB' : 'Daftarkan Rekening PPDB Terpisah';
+                })
+                ->icon('heroicon-o-banknotes')
+                ->color(function () {
+                    $r = $this->record->rekenings()->where('kategori', 'ppdb')->first();
+                    return ($r?->doku_split_rule_id && $r?->doku_split_rule_id_flat) ? 'success' : 'gray';
+                })
+                ->disabled(function () {
+                    $r = $this->record->rekenings()->where('kategori', 'ppdb')->first();
+                    return (bool) ($r?->doku_split_rule_id && $r?->doku_split_rule_id_flat);
+                })
+                ->visible(fn () => (bool) auth()->user()?->is_platform_admin && (bool) $this->record->doku_sub_account_id)
+                ->requiresConfirmation()
+                ->modalDescription('Daftarkan rekening DOKU TERPISAH khusus kegiatan PPDB untuk Lembaga ini (child dari sub-account utama). Pakai ini HANYA kalau Lembaga memang minta rekening PPDB berbeda dari SPP -- kalau tidak, biarkan kosong (otomatis pakai rekening utama).')
+                ->action(function () {
+                    try {
+                        app(\App\Services\DokuService::class)->registerRekening($this->record, 'ppdb');
+
+                        \Filament\Notifications\Notification::make()
+                            ->title('Rekening PPDB berhasil didaftarkan')
+                            ->success()
+                            ->send();
+
+                        $this->record->refresh();
+                    } catch (\Throwable $e) {
+                        \Filament\Notifications\Notification::make()
+                            ->title('Gagal mendaftarkan rekening PPDB')
+                            ->body($e->getMessage())
+                            ->danger()
+                            ->send();
+                    }
+                }),
+
             Actions\DeleteAction::make(),
         ];
     }

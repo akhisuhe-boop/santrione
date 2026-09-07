@@ -106,6 +106,7 @@ class PpdbPembayaranController extends Controller
         $amountCharged = $amount + $feeAdmin;
 
         $lembaga = $ppdb->lembaga;
+        $akunTujuan = $lembaga ? $lembaga->rekeningUntuk($tagihan->jenisTagihan?->tipe_sistem) : null;
         $customerName = $ppdb->nama_lengkap ?? $ppdb->nama ?? 'Pendaftar PPDB';
         $customerEmail = \App\Services\DokuService::emailAman($ppdb->email ?? null, $ppdb->wa_wali ?? $ppdb->id);
 
@@ -126,10 +127,10 @@ class PpdbPembayaranController extends Controller
                     judul: $tagihan->judul,
                     customerName: $customerName,
                     customerEmail: $customerEmail,
-                    dokuSubAccountId: $lembaga?->doku_sub_account_id,
+                    dokuSubAccountId: $akunTujuan['sub_account_id'] ?? null,
                     // DIPERBAIKI -- lihat catatan sama di
                     // WaliDashboardController::doku().
-                    splitRuleId: $lembaga ? $doku->pilihSplitRuleId($lembaga, $amountCharged) : null,
+                    splitRuleId: $akunTujuan ? $doku->pilihSplitRuleId($akunTujuan, $amountCharged) : null,
                 );
 
                 $vaNumber = $result['virtual_account_info']['virtual_account_number'] ?? null;

@@ -201,77 +201,34 @@ class WaliDashboardController extends Controller
         return back()->with('success', 'Limit belanja harian berhasil diperbarui.');
     }
 
-    public function absensi(Request $request)
+    public function absensi()
     {
-        // Periode -- default bulan berjalan. Sebelumnya TIDAK ada filter
-        // periode sama sekali (akumulasi dari awal data ada), yang bikin
-        // angka "Tingkat Kehadiran" tidak pernah benar-benar mewakili
-        // "bulan ini".
-        $bulan = (int) $request->query('bulan', now()->month);
-        $tahun = (int) $request->query('tahun', now()->year);
-
         $siswa = Siswa::with([
 
-            'absensis' => fn ($q) => $q
-                ->whereMonth('waktu', $bulan)
-                ->whereYear('waktu', $tahun)
-                ->with('jadwalKegiatan.template'),
+            'absensis.jadwalKegiatan.template',
 
-            'absensiMapels' => fn ($q) => $q
-                ->whereMonth('tanggal', $bulan)
-                ->whereYear('tanggal', $tahun)
-                ->with(['jadwalPelajaran.mataPelajaran', 'jadwalPelajaran.guru']),
+            'absensiMapels.jadwalPelajaran.mataPelajaran',
+            'absensiMapels.jadwalPelajaran.guru',
 
-            'absensiHarians' => fn ($q) => $q
-                ->whereMonth('tanggal', $bulan)
-                ->whereYear('tanggal', $tahun),
+            'absensiHarians',
 
         ])->findOrFail(session('siswa_id'));
 
-        // Tingkat Kehadiran resmi -- MURNI dari AbsensiHarian (1 baris per
-        // hari, sumber paling otoritatif buat "hadir di sekolah atau
-        // tidak"), BUKAN lagi dicampur dengan absensi per-mapel/kegiatan
-        // yang jumlah barisnya beda-beda tiap hari tergantung berapa
-        // mapel/kegiatan yang kebetulan diabsen guru.
-        $totalHariTercatat = $siswa->absensiHarians->count();
-        $hariHadir = $siswa->absensiHarians->whereIn('status_masuk', ['Hadir', 'Terlambat'])->count();
-
-        $persentaseKehadiran = $totalHariTercatat > 0
-            ? round(($hariHadir / $totalHariTercatat) * 100)
-            : 0;
-
         return view(
             'wali.absensi',
-            compact('siswa', 'bulan', 'tahun', 'persentaseKehadiran', 'totalHariTercatat', 'hariHadir')
+            compact('siswa')
         );
     }
 
-    public function perizinan(Request $request)
+    public function perizinan()
     {
         $siswa = Siswa::findOrFail(session('siswa_id'));
 
-        // Periode -- default bulan berjalan, sama seperti Absensi Santri.
-        $bulan = (int) $request->query('bulan', now()->month);
-        $tahun = (int) $request->query('tahun', now()->year);
-
         $perizinans = Perizinan::where('siswa_id', $siswa->id)
-            ->whereMonth('tanggal_mulai', $bulan)
-            ->whereYear('tanggal_mulai', $tahun)
             ->latest()
             ->get();
 
-        // Total izin yang benar-benar DISETUJUI admin bulan ini --
-        // bukan lagi total semua pengajuan (termasuk yang masih pending
-        // atau ditolak).
-        $totalIzinDisetujui = $perizinans->where('status', 'approved')->count();
-
-        return view('wali.perizinan', compact(
-            'siswa',
-            'perizinans',
-            'bulan',
-            'tahun',
-            'totalIzinDisetujui'
-        ));
+        return view('wali.perizinan', compact('siswa', 'perizinans'));
     }
 
     public function storePerizinan(Request $request)
@@ -646,20 +603,29 @@ class WaliDashboardController extends Controller
                 // bisa kendalikan dari sisi kode. Memanggil endpoint
                 // Non-SNAP langsung (bukan lewat Checkout Link) memberi
                 // hasil yang konsisten.
+                $akunTujuan = $lembaga ? $lembaga->rekeningUntuk($tagihan->jenisTagihan?->tipe_sistem) : null;
+
                 $result = $doku->buatVaLangsung(
                     referenceId: $referenceId,
                     amount: $amountCharged,
                     judul: $tagihan->judul,
                     customerName: $customerName,
                     customerEmail: $customerEmail,
-                    dokuSubAccountId: $lembaga?->doku_sub_account_id,
+                    // DIPERBAIKI -- sebelumnya selalu ambil sub-account
+                    // utama Lembaga. Sekarang lewat rekeningUntuk() yang
+                    // otomatis pilih rekening kategori sesuai jenis
+                    // tagihan (mis. 'ppdb' vs 'default'/SPP) kalau
+                    // Lembaga sudah setup multi-rekening -- fallback ke
+                    // sub-account utama Lembaga kalau belum (lihat
+                    // Lembaga::rekeningUntuk()).
+                    dokuSubAccountId: $akunTujuan['sub_account_id'] ?? null,
                     // DIPERBAIKI -- sebelumnya statis pakai
                     // $lembaga->doku_split_rule_id (rule PERCENTAGE
                     // murni saja, tanpa cap). Sekarang dipilih dinamis
                     // per transaksi lewat pilihSplitRuleId() supaya
                     // konsisten dengan cap di hitungFeeTotal() -- lihat
                     // catatan lengkap di DokuService::pilihSplitRuleId().
-                    splitRuleId: $lembaga ? $doku->pilihSplitRuleId($lembaga, $amountCharged) : null,
+                    splitRuleId: $akunTujuan ? $doku->pilihSplitRuleId($akunTujuan, $amountCharged) : null,
                 );
 
                 $vaNumber = $result['virtual_account_info']['virtual_account_number'] ?? null;

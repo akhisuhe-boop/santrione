@@ -25,7 +25,6 @@ class Lembaga extends Model
     'kepala_sekolah',
     'bendahara_id',
     'printer_kwitansi',
-    'limit_tunai_kantin_harian',
     'logo',
     'npsn',
     'nss',
@@ -82,6 +81,70 @@ class Lembaga extends Model
     {
         return $this->belongsTo(Yayasan::class);
     }
+
+    public function rekenings()
+    {
+        return $this->hasMany(\App\Models\LembagaRekening::class);
+    }
+
+    /**
+     * DITAMBAHKAN -- resolver rekening DOKU untuk 1 kategori kegiatan
+     * (mis. 'ppdb', 'spp'). Urutan fallback:
+     * 1. LembagaRekening dengan kategori yang persis cocok.
+     * 2. LembagaRekening kategori 'default' (kalau Lembaga sengaja
+     *    setup 1 rekening umum tapi belum pisah semua kategori).
+     * 3. Kolom doku_* LANGSUNG di tabel `lembagas` (rekening lama/
+     *    legacy -- SEMUA Lembaga yang sudah didaftarkan sebelum fitur
+     *    multi-rekening ini ada, termasuk data testing SDIT Testing,
+     *    tetap jalan tanpa perlu migrasi data apapun).
+     *
+     * $tipeSistem: nilai dari JenisTagihan::tipe_sistem (mis.
+     * 'pendaftaran_ppdb', 'daftar_ulang_ppdb') -- dipetakan ke kategori
+     * rekening lewat kategoriDariTipeSistem(). null/tidak dikenal ->
+     * langsung ke kategori 'default'.
+     *
+     * Return array ternormalisasi (BUKAN model) supaya konsumen
+     * (DokuService::pilihSplitRuleId(), controller) tidak perlu tahu
+     * apakah sumbernya dari LembagaRekening atau kolom legacy Lembaga.
+     */
+    public function rekeningUntuk(?string $tipeSistem): array
+    {
+        $kategori = self::kategoriDariTipeSistem($tipeSistem);
+
+        $rekening = $this->rekenings->firstWhere('kategori', $kategori)
+            ?? $this->rekenings->firstWhere('kategori', 'default');
+
+        if ($rekening) {
+            return [
+                'sub_account_id' => $rekening->doku_sub_account_id,
+                'account_no' => $rekening->doku_account_no,
+                'split_rule_id' => $rekening->doku_split_rule_id,
+                'split_rule_id_flat' => $rekening->doku_split_rule_id_flat,
+            ];
+        }
+
+        return [
+            'sub_account_id' => $this->doku_sub_account_id,
+            'account_no' => $this->doku_account_no,
+            'split_rule_id' => $this->doku_split_rule_id,
+            'split_rule_id_flat' => $this->doku_split_rule_id_flat,
+        ];
+    }
+
+    /**
+     * Pemetaan JenisTagihan.tipe_sistem -> kategori LembagaRekening.
+     * Tambah baris baru di sini kalau ada tipe_sistem baru yang perlu
+     * dipisah rekeningnya -- tidak perlu migration ulang, cukup kategori
+     * string baru & daftarkan LembagaRekening dengan kategori itu.
+     */
+    public static function kategoriDariTipeSistem(?string $tipeSistem): string
+    {
+        return match ($tipeSistem) {
+            'pendaftaran_ppdb', 'daftar_ulang_ppdb' => 'ppdb',
+            default => 'default',
+        };
+    }
+
     
     public function bendahara()
     {

@@ -454,42 +454,17 @@ class DokuService
             throw new RuntimeException('Lembaga belum punya doku_account_no -- panggil registerSubAccount() dulu.');
         }
 
-        $platformAccountNo = config('services.doku.platform_account_no');
-
-        if (blank($platformAccountNo)) {
-            throw new RuntimeException('DOKU_PLATFORM_ACCOUNT_NO belum diisi di .env -- Qinara wajib punya sub-account/accountNo sendiri di DOKU dulu sebelum Split Rule bisa dibuat (lihat catatan di config/services.php).');
-        }
-
-        $persen = $feePersen ?? (float) config('services.doku.fee_persen', 0.85);
-        $cap = $feeCap ?? (int) config('services.doku.fee_cap', 8500);
-        $persenLembaga = round(100 - $persen, 4);
-
-        // Rule 1 -- PERCENTAGE murni, dipakai untuk nominal di bawah
-        // titik potong (0.85% x nominal <= cap).
-        $resultPersen = $this->postSnap('/sub-account/v2.0/split-rules', [
-            'transactionType' => 'PAYMENT',
-            'rules' => [
-                ['type' => 'PERCENTAGE', 'value' => $persenLembaga, 'accountNumber' => $lembaga->doku_account_no],
-                ['type' => 'PERCENTAGE', 'value' => $persen, 'accountNumber' => $platformAccountNo],
-            ],
-        ]);
-
-        // Rule 2 -- FLAT senilai cap ke Qinara, sisanya (yang tidak
-        // dideklarasikan eksplisit) otomatis tetap di sub-account
-        // Lembaga -- dipakai untuk nominal di atas titik potong.
-        $resultFlat = $this->postSnap('/sub-account/v2.0/split-rules', [
-            'transactionType' => 'PAYMENT',
-            'rules' => [
-                ['type' => 'FLAT', 'value' => $cap, 'currency' => 'IDR', 'accountNumber' => $platformAccountNo],
-            ],
-        ]);
+        // DIREFAKTOR -- logika inti dipindah ke buatSplitRuleUntukAccountNo()
+        // supaya dipakai bareng dengan registerRekening() (skema
+        // multi-rekening PPDB/SPP), tanpa duplikasi.
+        $result = $this->buatSplitRuleUntukAccountNo($lembaga->doku_account_no, $feePersen, $feeCap);
 
         $lembaga->update([
-            'doku_split_rule_id' => $resultPersen['splitRuleId'] ?? null,
-            'doku_split_rule_id_flat' => $resultFlat['splitRuleId'] ?? null,
+            'doku_split_rule_id' => $result['percentage']['splitRuleId'] ?? null,
+            'doku_split_rule_id_flat' => $result['flat']['splitRuleId'] ?? null,
         ]);
 
-        return ['percentage' => $resultPersen, 'flat' => $resultFlat];
+        return $result;
     }
 
     /**
@@ -510,31 +485,125 @@ class DokuService
     }
 
     /**
-     * Pilih split_rule_id yang benar untuk 1 transaksi, berdasarkan
-     * nominal yang BENAR-BENAR di-charge ke wali ($amountDicharge --
-     * hasil hitungFeeTotal(), BUKAN nominal tagihan asli). Logikanya
-     * PERSIS meniru hitungFee()/hitungFeeTotal(): kalau 0.85% dari
-     * nominal masih <= cap, pakai rule PERCENTAGE; begitu lewat cap,
-     * pindah ke rule FLAT -- supaya split yang benar-benar terjadi di
-     * DOKU selalu sama dengan fee yang ditampilkan ke wali.
+     * DIUBAH -- sebelumnya menerima Lembaga langsung (cuma bisa 1
+     * rekening per Lembaga). Sekarang menerima array hasil
+     * Lembaga::rekeningUntuk() supaya kompatibel dengan skema
+     * multi-rekening (PPDB/SPP dkk) TANPA mengubah logika pemilihan
+     * persentase-vs-flat sama sekali -- cuma sumber datanya yang
+     * digeneralisasi.
      *
-     * Return null kalau Lembaga belum lengkap setup split rule-nya
-     * (mis. belum panggil buatSplitRule()) -- pemanggil (buatVaLangsung/
-     * buatPaymentRequest) tetap jalan tanpa split kalau ini null (dana
-     * masuk penuh ke Lembaga, TIDAK ada fee ke Qinara -- lebih aman
-     * daripada payment gagal total karena split_rule_id kosong/invalid).
+     * @param array{sub_account_id: ?string, account_no: ?string, split_rule_id: ?string, split_rule_id_flat: ?string} $akun
      */
-    public function pilihSplitRuleId(\App\Models\Lembaga $lembaga, int $amountDicharge): ?string
+    public function pilihSplitRuleId(array $akun, int $amountDicharge): ?string
     {
         $persen = (float) config('services.doku.fee_persen', 0.85);
         $cap = (int) config('services.doku.fee_cap', 8500);
         $feePersenMurni = (int) round($amountDicharge * $persen / 100);
 
         if ($feePersenMurni <= $cap) {
-            return $lembaga->doku_split_rule_id;
+            return $akun['split_rule_id'] ?? null;
         }
 
-        return $lembaga->doku_split_rule_id_flat;
+        return $akun['split_rule_id_flat'] ?? null;
+    }
+
+    /**
+     * DITAMBAHKAN -- daftarkan 1 rekening kategori tertentu (mis. 'ppdb')
+     * untuk Lembaga yang butuh pisah rekening dari default-nya. Dibuat
+     * sebagai CHILD sub-account (parentProfileId = doku_sub_account_id
+     * milik Lembaga) kalau Lembaga sudah punya sub-account sendiri --
+     * kalau belum, dibuat sebagai sub-account top-level biasa (hierarchy
+     * di DOKU cuma untuk pengelompokan visual di dashboard mereka, TIDAK
+     * memengaruhi logika split rule kita sama sekali).
+     *
+     * Email WAJIB unik per sub-account (lihat bug email 25 karakter &
+     * "Email Already Exists" yang pernah ditemukan) -- dibedakan dari
+     * email Lembaga utama dengan awalan kategori.
+     */
+    public function registerRekening(\App\Models\Lembaga $lembaga, string $kategori, ?string $nama = null): \App\Models\LembagaRekening
+    {
+        $email = $this->emailUntukRekening($lembaga, $kategori);
+
+        $body = [
+            'partnerReferenceNo' => 'LBG-' . $lembaga->id . '-' . $kategori . '-' . now()->format('YmdHis'),
+            'type' => 'DEFAULT',
+            'email' => $email,
+            'name' => Str::limit(($nama ?? ($lembaga->nama . ' - ' . strtoupper($kategori))), 128, ''),
+            'phoneNo' => $lembaga->yayasan?->no_wa ?? null,
+            'countryCode' => 'ID',
+        ];
+
+        if ($lembaga->doku_sub_account_id) {
+            $body['parentProfileId'] = $lembaga->doku_sub_account_id;
+        }
+
+        $result = $this->postSnap('/sub-account/v2.0/register', $body);
+
+        $accountIdr = collect($result['accounts'] ?? [])->firstWhere('type', 'DOKU_MERCHANT_IDR');
+
+        $rekening = \App\Models\LembagaRekening::updateOrCreate(
+            ['lembaga_id' => $lembaga->id, 'kategori' => $kategori],
+            [
+                'nama' => $nama,
+                'doku_sub_account_id' => $result['profileId'] ?? null,
+                'doku_account_no' => $accountIdr['accountNo'] ?? null,
+                'doku_status' => 'menunggu_verifikasi',
+            ]
+        );
+
+        $split = $this->buatSplitRuleUntukAccountNo($rekening->doku_account_no);
+        $rekening->update([
+            'doku_split_rule_id' => $split['percentage']['splitRuleId'] ?? null,
+            'doku_split_rule_id_flat' => $split['flat']['splitRuleId'] ?? null,
+        ]);
+
+        return $rekening->fresh();
+    }
+
+    protected function emailUntukRekening(\App\Models\Lembaga $lembaga, string $kategori): string
+    {
+        $fallback = 'l' . $lembaga->id . $kategori[0] . '@qinaraindonesia.id';
+
+        if (strlen($fallback) > 25) {
+            throw new RuntimeException("Email fallback rekening '{$fallback}' melebihi batas 25 karakter DOKU -- perpendek kategori atau domain.");
+        }
+
+        return $fallback;
+    }
+
+    /**
+     * Diekstrak dari buatSplitRule() supaya dipakai bareng untuk rekening
+     * Lembaga (accountNo langsung di kolom lembagas) MAUPUN LembagaRekening
+     * (accountNo di tabel terpisah) -- tanpa duplikasi logika.
+     */
+    protected function buatSplitRuleUntukAccountNo(string $accountNo, ?float $feePersen = null, ?int $feeCap = null): array
+    {
+        $platformAccountNo = config('services.doku.platform_account_no');
+
+        if (blank($platformAccountNo)) {
+            throw new RuntimeException('DOKU_PLATFORM_ACCOUNT_NO belum diisi di .env.');
+        }
+
+        $persen = $feePersen ?? (float) config('services.doku.fee_persen', 0.85);
+        $cap = $feeCap ?? (int) config('services.doku.fee_cap', 8500);
+        $persenLain = round(100 - $persen, 4);
+
+        $resultPersen = $this->postSnap('/sub-account/v2.0/split-rules', [
+            'transactionType' => 'PAYMENT',
+            'rules' => [
+                ['type' => 'PERCENTAGE', 'value' => $persenLain, 'accountNumber' => $accountNo],
+                ['type' => 'PERCENTAGE', 'value' => $persen, 'accountNumber' => $platformAccountNo],
+            ],
+        ]);
+
+        $resultFlat = $this->postSnap('/sub-account/v2.0/split-rules', [
+            'transactionType' => 'PAYMENT',
+            'rules' => [
+                ['type' => 'FLAT', 'value' => $cap, 'currency' => 'IDR', 'accountNumber' => $platformAccountNo],
+            ],
+        ]);
+
+        return ['percentage' => $resultPersen, 'flat' => $resultFlat];
     }
 
     /**
