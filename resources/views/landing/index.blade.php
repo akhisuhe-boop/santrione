@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $setting->brand_name }} - Aplikasi Manajemen & Digitalisasi Lembaga Pendidikan Islam</title>
     <link rel="icon" type="image/png" href="{{ asset('favicon-qinaraapps.png') }}">
     <link rel="apple-touch-icon" href="{{ asset('favicon-qinaraapps.png') }}">
@@ -603,6 +604,64 @@
     </figure>
 </div>
 @endif
+
+<!-- MODAL - form popup "Jadwalkan Demo Gratis" -->
+<div id="demo-modal" class="fixed inset-0 z-[999999] bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4" onclick="if(event.target===this) closeDemoModal()">
+    <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl p-6 sm:p-8 relative">
+        <button onclick="closeDemoModal()" aria-label="Tutup" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors">
+            <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+
+        <!-- STATE: FORM -->
+        <div id="demo-modal-form-state">
+            <div class="w-12 h-12 rounded-2xl bg-primary-50 flex items-center justify-center mb-4">
+                <i data-lucide="calendar-check" class="w-6 h-6 text-primary-500"></i>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900">Jadwalkan Demo Gratis</h3>
+            <p class="text-sm text-slate-500 mt-1 mb-5">Isi data singkat ini, tim kami akan segera menghubungi Anda lewat WhatsApp.</p>
+
+            <form id="demo-form" class="space-y-4" onsubmit="submitDemoForm(event)">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">Nama Lengkap</label>
+                    <input type="text" name="nama_pic" required maxlength="150"
+                           class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                           placeholder="Nama Anda">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">Nomor WhatsApp</label>
+                    <input type="tel" name="no_hp" required maxlength="30"
+                           class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                           placeholder="08xxxxxxxxxx">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">Nama Lembaga/Sekolah <span class="text-slate-400 font-normal">(opsional)</span></label>
+                    <input type="text" name="nama_lembaga" maxlength="150"
+                           class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                           placeholder="Nama pesantren/madrasah/sekolah">
+                </div>
+
+                <p id="demo-form-error" class="text-sm text-red-500 hidden"></p>
+
+                <button type="submit" id="demo-form-submit"
+                        class="w-full rounded-full bg-primary-500 hover:bg-primary-600 text-white font-semibold py-3 text-sm shadow-md transition-all disabled:opacity-60 disabled:cursor-not-allowed">
+                    Kirim
+                </button>
+            </form>
+        </div>
+
+        <!-- STATE: SUKSES -->
+        <div id="demo-modal-success-state" class="hidden text-center py-4">
+            <div class="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="check-circle-2" class="w-7 h-7 text-emerald-500"></i>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900">Terima Kasih!</h3>
+            <p id="demo-modal-success-text" class="text-sm text-slate-500 mt-1.5 mb-6">Tim kami akan segera menghubungi Anda untuk menjadwalkan demo.</p>
+            <button onclick="closeDemoModal()" class="w-full rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-3 text-sm transition-all">
+                Tutup
+            </button>
+        </div>
+    </div>
+</div>
 
 <!-- STUDI KASUS - dinamis, manual -->
 @if($studiKasusList->isNotEmpty())
@@ -1225,14 +1284,84 @@
         window.open(url, "_blank");
     }
 
-    // Tombol "Jadwalkan Demo Gratis" -- pesan WA khusus, beda dari
-    // hubungiSales() (yang dipakai tombol "Konsultasi via WhatsApp"),
-    // supaya admin langsung tahu maksud calon klien dari pesan
-    // pembukanya, tanpa perlu tanya ulang.
+    // Tombol "Jadwalkan Demo Gratis" -- dulu langsung buka WhatsApp
+    // pengunjung dengan pesan template dan BERHARAP mereka menekan
+    // kirim (kalau tab WA ditutup begitu saja, datanya hilang total,
+    // tidak pernah tercatat). Sekarang buka popup form singkat dulu --
+    // begitu disubmit, data PASTI tersimpan sebagai Lead di panel CRM,
+    // baru admin dinotifikasi via WA otomatis oleh sistem.
     function jadwalkanDemo() {
-        const pesan = "Halo, saya ingin menjadwalkan demo gratis " + "{{ $setting->brand_name }}" + ". Mohon info jadwal yang tersedia 🙏";
-        const url = "https://wa.me/" + waNumber + "?text=" + encodeURIComponent(pesan);
-        window.open(url, "_blank");
+        const modal = document.getElementById('demo-modal');
+        if (!modal) return;
+
+        document.getElementById('demo-modal-form-state').classList.remove('hidden');
+        document.getElementById('demo-modal-success-state').classList.add('hidden');
+        document.getElementById('demo-form-error').classList.add('hidden');
+        document.getElementById('demo-form').reset();
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeDemoModal() {
+        const modal = document.getElementById('demo-modal');
+        if (!modal) return;
+
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.style.overflow = '';
+    }
+
+    function submitDemoForm(event) {
+        event.preventDefault();
+
+        const form = event.target;
+        const btn = document.getElementById('demo-form-submit');
+        const errorEl = document.getElementById('demo-form-error');
+
+        errorEl.classList.add('hidden');
+        btn.disabled = true;
+        btn.textContent = 'Mengirim...';
+
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+        fetch("{{ route('landing.demo-request') }}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+            },
+            body: JSON.stringify({
+                nama_pic: form.nama_pic.value,
+                no_hp: form.no_hp.value,
+                nama_lembaga: form.nama_lembaga.value,
+            }),
+        })
+        .then(async (res) => {
+            const data = await res.json().catch(() => ({}));
+
+            if (!res.ok) {
+                // Error validasi (422) -- tampilkan pesan pertama yang ada
+                const firstError = data.errors
+                    ? Object.values(data.errors)[0]?.[0]
+                    : (data.message || 'Terjadi kesalahan, silakan coba lagi.');
+                throw new Error(firstError);
+            }
+
+            document.getElementById('demo-modal-form-state').classList.add('hidden');
+            document.getElementById('demo-modal-success-text').textContent = data.message;
+            document.getElementById('demo-modal-success-state').classList.remove('hidden');
+        })
+        .catch((err) => {
+            errorEl.textContent = err.message || 'Terjadi kesalahan, silakan coba lagi.';
+            errorEl.classList.remove('hidden');
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.textContent = 'Kirim';
+        });
     }
 
     // Slider testimoni (scroll-snap native, responsif otomatis)
