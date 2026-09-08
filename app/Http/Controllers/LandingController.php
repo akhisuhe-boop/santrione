@@ -62,16 +62,21 @@ class LandingController extends Controller
         $data = $request->validate([
             'nama_pic' => ['required', 'string', 'max:150'],
             'no_hp' => ['required', 'string', 'max:30'],
-            'nama_lembaga' => ['nullable', 'string', 'max:150'],
+            'nama_lembaga' => ['required', 'string', 'max:150'],
+            'email' => ['required', 'email', 'max:150'],
         ], [
             'nama_pic.required' => 'Nama wajib diisi.',
             'no_hp.required' => 'Nomor WhatsApp wajib diisi.',
+            'nama_lembaga.required' => 'Nama lembaga wajib diisi.',
+            'email.required' => 'Email wajib diisi.',
+            'email.email' => 'Format email tidak valid.',
         ]);
 
         $lead = Lead::create([
-            'nama_lembaga' => $data['nama_lembaga'] ?: '-',
+            'nama_lembaga' => $data['nama_lembaga'],
             'nama_pic' => $data['nama_pic'],
             'no_hp' => $data['no_hp'],
+            'email' => $data['email'],
             'sumber' => 'Demo Gratis (Landing Page)',
             'status' => 'baru',
         ]);
