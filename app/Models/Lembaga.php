@@ -49,6 +49,7 @@ class Lembaga extends Model
     'doku_split_rule_id',
     'doku_split_rule_id_flat',
     'doku_status',
+    'rekening_id',
     ];
     
     protected static function booted()
@@ -86,6 +87,27 @@ class Lembaga extends Model
     public function rekenings()
     {
         return $this->hasMany(\App\Models\LembagaRekening::class);
+    }
+
+    /**
+     * DITAMBAHKAN -- rekening bank ASLI tujuan pencairan untuk
+     * rekening DOKU UTAMA/default Lembaga ini (bukan kategori
+     * tambahan -- itu di LembagaRekening::rekeningTujuan()). Murni
+     * referensi untuk job Disbursement nanti.
+     */
+    public function rekeningTujuan()
+    {
+        return $this->belongsTo(\App\Models\Rekening::class, 'rekening_id');
+    }
+
+    /**
+     * Semua rekening bank asli (tabel `rekenings`) milik Lembaga ini
+     * -- dipakai buat pilihan dropdown saat menghubungkan kategori
+     * DOKU ke rekening bank asli.
+     */
+    public function rekeningBankAsli()
+    {
+        return $this->hasMany(\App\Models\Rekening::class);
     }
 
     /**

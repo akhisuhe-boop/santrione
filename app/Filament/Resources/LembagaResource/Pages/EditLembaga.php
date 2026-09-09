@@ -92,12 +92,28 @@ class EditLembaga extends EditRecord
                         ->label('Label (opsional)')
                         ->placeholder('mis. Rekening PPDB Al-Mubarok')
                         ->maxLength(128),
+
+                    // DITAMBAHKAN -- langsung tanya rekening bank asli
+                    // tujuannya sekalian, supaya tidak ada kategori DOKU
+                    // yang "menggantung" tanpa tujuan pencairan.
+                    \Filament\Forms\Components\Select::make('rekening_id')
+                        ->label('Rekening Bank Asli Tujuan (opsional)')
+                        ->helperText('Kalau sudah tahu rekening bank mana yang jadi tujuan kategori ini, pilih di sini. Boleh dikosongkan dulu dan dihubungkan belakangan lewat tab "Rekening Kategori Khusus".')
+                        ->options(fn () => \App\Models\Rekening::where('lembaga_id', $this->record->id)
+                            ->where('tipe', 'bank')
+                            ->get()
+                            ->mapWithKeys(fn ($r) => [$r->id => trim("{$r->nama} — {$r->bank} {$r->no_rekening}")]))
+                        ->searchable(),
                 ])
                 ->requiresConfirmation()
                 ->modalDescription('Daftarkan rekening DOKU TERPISAH untuk kategori ini (child dari sub-account utama). Setelah ini, tandai Jenis Tagihan yang sesuai dengan kategori yang sama persis di field "Kategori Rekening DOKU".')
                 ->action(function (array $data) {
                     try {
-                        app(\App\Services\DokuService::class)->registerRekening($this->record, $data['kategori'], $data['nama'] ?? null);
+                        $rekening = app(\App\Services\DokuService::class)->registerRekening($this->record, $data['kategori'], $data['nama'] ?? null);
+
+                        if (! empty($data['rekening_id'])) {
+                            $rekening->update(['rekening_id' => $data['rekening_id']]);
+                        }
 
                         \Filament\Notifications\Notification::make()
                             ->title("Rekening '{$data['kategori']}' berhasil didaftarkan")
@@ -112,6 +128,37 @@ class EditLembaga extends EditRecord
                             ->danger()
                             ->send();
                     }
+                }),
+
+            // DITAMBAHKAN -- rekening bank asli tujuan pencairan untuk
+            // rekening DOKU UTAMA/default Lembaga (bukan kategori
+            // tambahan -- itu sudah ditangani di tab "Rekening Kategori
+            // Khusus"). Murni referensi untuk job Disbursement nanti,
+            // tidak memengaruhi alur split rule yang sudah jalan.
+            Actions\Action::make('hubungkanRekeningUtama')
+                ->label(fn () => $this->record->rekening_id ? 'Ubah Rekening Utama Tujuan' : 'Hubungkan Rekening Utama')
+                ->icon('heroicon-o-link')
+                ->color(fn () => $this->record->rekening_id ? 'gray' : 'warning')
+                ->visible(fn () => (bool) auth()->user()?->is_platform_admin && (bool) $this->record->doku_sub_account_id)
+                ->form([
+                    \Filament\Forms\Components\Select::make('rekening_id')
+                        ->label('Rekening Bank Asli Tujuan')
+                        ->helperText('Rekening bank sungguhan yang jadi tujuan pencairan untuk rekening DOKU utama/default Lembaga ini (dipakai tagihan yang tidak diberi Kategori Rekening DOKU khusus, mis. SPP biasa).')
+                        ->options(fn () => \App\Models\Rekening::where('lembaga_id', $this->record->id)
+                            ->where('tipe', 'bank')
+                            ->get()
+                            ->mapWithKeys(fn ($r) => [$r->id => trim("{$r->nama} — {$r->bank} {$r->no_rekening}")]))
+                        ->searchable()
+                        ->required(),
+                ])
+                ->fillForm(fn () => ['rekening_id' => $this->record->rekening_id])
+                ->action(function (array $data) {
+                    $this->record->update(['rekening_id' => $data['rekening_id']]);
+
+                    \Filament\Notifications\Notification::make()
+                        ->title('Rekening utama berhasil dihubungkan')
+                        ->success()
+                        ->send();
                 }),
 
             Actions\DeleteAction::make(),

@@ -53,9 +53,42 @@ class LembagaRekeningRelationManager extends RelationManager
 
                 Tables\Columns\TextColumn::make('doku_status')
                     ->label('Status'),
+
+                Tables\Columns\TextColumn::make('rekeningTujuan.nama')
+                    ->label('Rekening Bank Tujuan')
+                    ->placeholder('Belum dihubungkan')
+                    ->color(fn ($state) => $state ? null : 'danger')
+                    ->description(fn ($record) => $record->rekeningTujuan
+                        ? trim(($record->rekeningTujuan->bank ?? '').' '.($record->rekeningTujuan->no_rekening ?? ''))
+                        : 'Uang kategori ini belum ada tujuan pencairan yang jelas'),
             ])
             ->headerActions([])
             ->actions([
+                Tables\Actions\Action::make('hubungkanRekening')
+                    ->label(fn ($record) => $record->rekening_id ? 'Ubah Rekening Tujuan' : 'Hubungkan ke Rekening Bank')
+                    ->icon('heroicon-o-link')
+                    ->color(fn ($record) => $record->rekening_id ? 'gray' : 'warning')
+                    ->form([
+                        \Filament\Forms\Components\Select::make('rekening_id')
+                            ->label('Rekening Bank Asli Tujuan')
+                            ->helperText('Pilih rekening bank sungguhan (dari menu Keuangan > Input Rekening) yang jadi tujuan pencairan untuk kategori DOKU ini. Ini murni penanda referensi -- belum mencairkan uang apa pun, cuma persiapan untuk fitur pencairan yang akan dibangun.')
+                            ->options(fn ($record) => \App\Models\Rekening::where('lembaga_id', $record->lembaga_id)
+                                ->where('tipe', 'bank')
+                                ->get()
+                                ->mapWithKeys(fn ($r) => [$r->id => trim("{$r->nama} — {$r->bank} {$r->no_rekening}")]))
+                            ->searchable()
+                            ->required(),
+                    ])
+                    ->fillForm(fn ($record) => ['rekening_id' => $record->rekening_id])
+                    ->action(function ($record, array $data) {
+                        $record->update(['rekening_id' => $data['rekening_id']]);
+
+                        \Filament\Notifications\Notification::make()
+                            ->title('Rekening tujuan berhasil dihubungkan')
+                            ->success()
+                            ->send();
+                    }),
+
                 Tables\Actions\DeleteAction::make()
                     ->label('Hapus')
                     ->requiresConfirmation()
