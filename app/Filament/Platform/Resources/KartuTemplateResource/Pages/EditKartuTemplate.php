@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Filament\Resources\KartuTemplateResource\Pages;
+namespace App\Filament\Platform\Resources\KartuTemplateResource\Pages;
 
-use App\Filament\Resources\KartuTemplateResource;
+use App\Filament\Platform\Resources\KartuTemplateResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 

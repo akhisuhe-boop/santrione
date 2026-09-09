@@ -1,9 +1,8 @@
 <?php
 
-namespace App\Filament\Resources\KartuTemplateResource\Pages;
+namespace App\Filament\Platform\Resources\KartuTemplateResource\Pages;
 
-use App\Filament\Resources\KartuTemplateResource;
-use Filament\Actions;
+use App\Filament\Platform\Resources\KartuTemplateResource;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateKartuTemplate extends CreateRecord
