@@ -78,22 +78,15 @@ class PlatformPanelProvider extends PanelProvider
                 for: 'App\\Filament\\Platform\\Pages'
             )
             ->navigationGroups([
-                // DITAMBAHKAN -- sebelumnya 'Disbursement' & 'Master
-                // Setting' tidak terdaftar di sini, jadi tampil sebagai
-                // grup teks polos tanpa ikon di sidebar. Sekaligus
-                // diganti nama supaya lebih jelas & sesuai isinya
-                // (bukan istilah teknis/jargon).
-                NavigationGroup::make('Pencairan Dana')
-                    ->icon('heroicon-o-arrow-up-on-square-stack'),
-
-                NavigationGroup::make('Kartu ID')
-                    ->icon('heroicon-o-identification'),
+                // DIUBAH -- urutan disesuaikan permintaan user, dan
+                // 'Disbursement' -> 'Pencairan Dana' (bug sebelumnya:
+                // 2 resource di bawah masih pakai nama lama, sudah
+                // diperbaiki juga).
+                NavigationGroup::make('Landing Page')
+                    ->icon('heroicon-o-globe-alt'),
 
                 NavigationGroup::make('Yayasan')
                     ->icon('heroicon-o-building-office-2'),
-                    
-                NavigationGroup::make('Landing Page')
-                    ->icon('heroicon-o-globe-alt'),
 
                 NavigationGroup::make('Billing & Harga')
                     ->icon('heroicon-o-currency-dollar'),
@@ -106,6 +99,15 @@ class PlatformPanelProvider extends PanelProvider
 
                 NavigationGroup::make('CRM')
                     ->icon('heroicon-o-user-group'),
+
+                // TODO -- 'Role & Pengguna' belum ada resource-nya di
+                // panel Platform, belum bisa dimasukkan ke urutan ini.
+
+                NavigationGroup::make('Pencairan Dana')
+                    ->icon('heroicon-o-arrow-up-on-square-stack'),
+
+                NavigationGroup::make('Kartu ID')
+                    ->icon('heroicon-o-identification'),
 
                 NavigationGroup::make('e-Kantin')
                     ->icon('heroicon-o-shopping-bag'),

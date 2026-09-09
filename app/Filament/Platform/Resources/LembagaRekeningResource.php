@@ -19,7 +19,7 @@ use Filament\Tables\Table;
  * halaman Edit Lembaga (satu per satu). Resource ini menampilkan
  * SEMUA kategori tambahan lintas Lembaga & Yayasan sekaligus.
  *
- * Dikelompokkan di navigationGroup yang sama ('Disbursement') dengan
+ * Dikelompokkan di navigationGroup yang sama ('Pencairan Dana') dengan
  * RekeningUtamaLembagaResource supaya keduanya bersebelahan di
  * sidebar -- satu tempat terpusat untuk urusan pemetaan rekening
  * Disbursement, meski secara teknis 2 resource terpisah (rekening
@@ -30,7 +30,7 @@ class LembagaRekeningResource extends BaseResource
 {
     protected static ?string $model = LembagaRekening::class;
     protected static ?string $navigationLabel = 'Rekening Kategori Khusus';
-    protected static ?string $navigationGroup = 'Disbursement';
+    protected static ?string $navigationGroup = 'Pencairan Dana';
     protected static ?int $navigationSort = 2;
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
     protected static ?string $modelLabel = 'Rekening Kategori Khusus';

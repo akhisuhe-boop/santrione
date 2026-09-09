@@ -30,7 +30,7 @@ class RekeningUtamaLembagaResource extends BaseResource
 {
     protected static ?string $model = Lembaga::class;
     protected static ?string $navigationLabel = 'Rekening Utama Lembaga';
-    protected static ?string $navigationGroup = 'Disbursement';
+    protected static ?string $navigationGroup = 'Pencairan Dana';
     protected static ?int $navigationSort = 1;
     protected static ?string $navigationIcon = 'heroicon-o-building-library';
     protected static ?string $modelLabel = 'Rekening Utama Lembaga';
