@@ -35,7 +35,7 @@ class KartuTemplateResource extends BaseResource
 {
     protected static ?string $model = KartuTemplate::class;
     protected static ?string $navigationLabel = 'Template Kartu';
-    protected static ?string $navigationGroup = 'Master Setting';
+    protected static ?string $navigationGroup = 'Kartu ID';
     protected static ?int $navigationSort = 3;
     protected static ?string $navigationIcon = 'heroicon-o-identification';
 

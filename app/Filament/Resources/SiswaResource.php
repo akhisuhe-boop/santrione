@@ -710,21 +710,9 @@ class SiswaResource extends BaseResource
     ->successNotificationTitle('Siswa berhasil dipindahkan')
     ->color('warning'),
 
-    BulkAction::make('cetak_massal')
-    ->label('Cetak Kartu Massal')
-    ->icon('heroicon-o-printer')
-    ->color('success')
-    ->visible(fn () => (bool) auth()->user()?->is_platform_admin)
-
-    ->action(function ($records) {
-
-        $ids = $records->pluck('id')->implode(',');
-
-        return redirect(
-            url('/kartu/siswa-massal?ids='.$ids)
-        );
-    })
-    ->deselectRecordsAfterCompletion()
+    // DIPINDAH ke App\Filament\Platform\Resources\CetakKartuSiswaResource
+    // -- bulk action ini sejak awal is_platform_admin-only, jadi murni
+    // pindah lokasi ke panel Platform, bukan perubahan akses.
             ]);
     }
 

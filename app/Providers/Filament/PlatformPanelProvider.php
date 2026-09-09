@@ -78,6 +78,17 @@ class PlatformPanelProvider extends PanelProvider
                 for: 'App\\Filament\\Platform\\Pages'
             )
             ->navigationGroups([
+                // DITAMBAHKAN -- sebelumnya 'Disbursement' & 'Master
+                // Setting' tidak terdaftar di sini, jadi tampil sebagai
+                // grup teks polos tanpa ikon di sidebar. Sekaligus
+                // diganti nama supaya lebih jelas & sesuai isinya
+                // (bukan istilah teknis/jargon).
+                NavigationGroup::make('Pencairan Dana')
+                    ->icon('heroicon-o-arrow-up-on-square-stack'),
+
+                NavigationGroup::make('Kartu ID')
+                    ->icon('heroicon-o-identification'),
+
                 NavigationGroup::make('Yayasan')
                     ->icon('heroicon-o-building-office-2'),
                     

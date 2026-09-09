@@ -310,19 +310,10 @@ class PegawaiResource extends BaseResource
             
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
-                Tables\Actions\BulkAction::make('cetak_kartu')
-                ->label('Cetak Kartu ID')
-                ->icon('heroicon-o-identification')
-                ->color('success')
-                ->visible(fn () => (bool) auth()->user()?->is_platform_admin)
-                ->action(function ($records) {
-
-                    $ids = $records->pluck('id')->join(',');
-
-                    return redirect()->route('kartu.pegawai', [
-                        'ids' => $ids
-                    ]);
-                }),         
+                // DIPINDAH ke App\Filament\Platform\Resources\CetakKartuPegawaiResource
+                // -- bulk action ini sejak awal is_platform_admin-only,
+                // jadi murni pindah lokasi ke panel Platform, bukan
+                // perubahan akses.
             ])
             
             ->headerActions([
