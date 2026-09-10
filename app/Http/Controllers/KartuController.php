@@ -72,11 +72,10 @@ class KartuController extends Controller
 
             // Judul.
             $canvas->text('KARTU TANDA PELAJAR', $marginX, 38, function ($font) use ($fontBold) {
-                $font->setFilepath($fontBold);
-                $font->setSize(28);
-                $font->setColor('#111111');
-                $font->setAlignmentHorizontal('left');
-                $font->setAlignmentVertical('top');
+                $font->filename($fontBold);
+                    $font->size(28);
+                    $font->color('#111111');
+                    $font->align('left', 'top');
             });
 
             // Foto siswa.
@@ -111,18 +110,16 @@ class KartuController extends Controller
             $rowY = $fotoY + 3;
             foreach ($rows as [$label, $value]) {
                 $canvas->text($label, $dataX, $rowY, function ($font) use ($fontBold) {
-                    $font->setFilepath($fontBold);
-                    $font->setSize(17);
-                    $font->setColor('#111111');
-                    $font->setAlignmentHorizontal('left');
-                    $font->setAlignmentVertical('top');
+                    $font->filename($fontBold);
+                    $font->size(17);
+                    $font->color('#111111');
+                    $font->align('left', 'top');
                 });
                 $canvas->text(': ' . $value, $dataX + $labelW, $rowY, function ($font) use ($fontRegular) {
-                    $font->setFilepath($fontRegular);
-                    $font->setSize(17);
-                    $font->setColor('#111111');
-                    $font->setAlignmentHorizontal('left');
-                    $font->setAlignmentVertical('top');
+                    $font->filename($fontRegular);
+                    $font->size(17);
+                    $font->color('#111111');
+                    $font->align('left', 'top');
                 });
                 $rowY += 32;
             }
