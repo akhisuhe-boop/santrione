@@ -13,11 +13,6 @@ class KartuController extends Controller
     // ======================
     // CETAK 1 SISWA
     // ======================
-    // DIUBAH -- sebelumnya PDF-stream via DomPDF, sekarang halaman
-    // print biasa (sama seperti KantinBarcodeController) supaya bisa
-    // pakai JsBarcode untuk barcode batang di kartu belakang.
-    // DomPDF tidak menjalankan JavaScript sama sekali, jadi JsBarcode
-    // tidak akan berfungsi kalau tetap lewat Pdf::loadView().
     public function cetakSatu($id)
     {
         set_time_limit(120);
@@ -32,18 +27,17 @@ class KartuController extends Controller
             ->first()
             ?? KartuTemplate::where('jenis', 'siswa')->first();
 
-        return view('kartu.siswa', [
+        $pdf = Pdf::loadView('kartu.siswa', [
             'siswas'   => $siswas,
-            'template' => $template,
+            'template' => $template
         ]);
+
+        return $pdf->stream('kartu-siswa.pdf');
     }
 
     // ======================
     // CETAK MASSAL
     // ======================
-    // DIUBAH -- sama seperti cetakSatu(), pindah dari PDF-stream ke
-    // halaman print biasa supaya JsBarcode (barcode batang kartu
-    // belakang) bisa jalan.
     public function cetakMassal(Request $request)
     {
         set_time_limit(180);
@@ -61,10 +55,12 @@ class KartuController extends Controller
             ->first()
             ?? KartuTemplate::where('jenis', 'siswa')->first();
 
-        return view('kartu.siswa', [
+        $pdf = Pdf::loadView('kartu.siswa', [
             'siswas'   => $siswas,
-            'template' => $template,
+            'template' => $template
         ]);
+
+        return $pdf->stream('kartu-massal.pdf');
     }
 
     // ======================

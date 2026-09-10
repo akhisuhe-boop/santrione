@@ -2,8 +2,6 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>Cetak Kartu Siswa</title>
-<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 
 <style>
 @page {
@@ -14,36 +12,6 @@
 body{
     font-family: sans-serif;
     margin:0;
-}
-
-/* DITAMBAHKAN -- toolbar & tombol print, sama pola dengan
-   kantin/cetak-barcode.blade.php. Disembunyikan saat print. */
-.toolbar{
-    padding:16px 24px;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    background:#f3f4f6;
-}
-
-.toolbar h1{
-    font-size:16px;
-    margin:0;
-}
-
-.toolbar button{
-    background:#00A39D;
-    color:#fff;
-    border:none;
-    padding:10px 20px;
-    border-radius:10px;
-    font-weight:600;
-    font-size:14px;
-    cursor:pointer;
-}
-
-@media print{
-    .toolbar{ display:none; }
 }
 
 table{
@@ -126,44 +94,17 @@ td{
 }
 
 /* ====== KARTU BELAKANG -- DITAMBAHKAN ======
-   Kotak luar (.card-belakang) ukurannya SAMA PERSIS dengan .card
-   (5.4cm x 8.56cm) -- posisi & ukuran kertas di lembar cetak TIDAK
-   berubah. Yang dirotasi cuma isinya (.back-rotator), dibuat dengan
-   dimensi kebalikannya (8.56cm x 5.4cm, "landscape") lalu diputar
-   90 derajat di tengah kotak luar -- supaya background & konten
-   belakang bisa didesain landscape tanpa background jadi gepeng/
-   terdistorsi seperti sebelumnya (dulu background landscape dipaksa
-   masuk kotak portrait apa adanya). */
-.card-belakang{
-    width:5.4cm;
-    height:8.56cm;
-    position:relative;
-    margin:auto;
-    overflow:hidden;
-}
-
-.back-rotator{
-    position:absolute;
-    width:8.56cm;
-    height:5.4cm;
-    top:50%;
-    left:50%;
-    transform:translate(-50%, -50%) rotate(90deg);
-    transform-origin:center center;
-}
-
-.back-bg{
-    position:absolute;
-    width:100%;
-    height:100%;
-    object-fit:cover;
-}
-
+   Sengaja pakai kotak portrait biasa (sama seperti .card di depan
+   yang sudah terbukti rapi), TIDAK pakai CSS transform:rotate() --
+   dukungan transform di DomPDF tidak konsisten dan berisiko bikin
+   layout berantakan. Data ditata memanjang ke bawah di dalam kotak
+   portrait yang sama. */
 .back-foto{
     position:absolute;
-    top:0.35cm;
-    left:0.35cm;
-    width:1.7cm;
+    top:0.3cm;
+    left:50%;
+    transform:translateX(-50%);
+    width:1.8cm;
     height:2cm;
     object-fit:cover;
     border-radius:4px;
@@ -171,39 +112,33 @@ td{
 
 .back-data{
     position:absolute;
-    top:0.35cm;
-    left:2.25cm;
-    width:6cm;
-    font-size:7.5px;
-    line-height:1.35;
+    top:2.55cm;
+    left:0.3cm;
+    width:4.8cm;
+    font-size:8px;
+    line-height:1.5;
 }
 
 .back-data b{
     display:inline-block;
-    width:1.55cm;
+    width:1.6cm;
 }
 
 .back-barcode{
     position:absolute;
-    bottom:0.3cm;
+    bottom:0.35cm;
     left:50%;
     transform:translateX(-50%);
     text-align:center;
 }
 
-.back-barcode svg{
-    height:0.9cm;
-    max-width:100%;
+.back-barcode img{
+    height:1cm;
 }
 </style>
 </head>
 
 <body>
-
-<div class="toolbar">
-    <h1>Cetak Kartu Siswa ({{ $siswas->count() }} kartu)</h1>
-    <button onclick="window.print()">🖨️ Print</button>
-</div>
 
 @php
     $bgDepanBase64 = null;
@@ -295,11 +230,10 @@ NIS : {{ $siswa->nis }}
 @foreach($chunk as $i => $siswa)
 
 <td>
-<div class="card-belakang">
-<div class="back-rotator">
+<div class="card">
 
 @if($bgBelakangBase64)
-<img class="back-bg" src="{{ $bgBelakangBase64 }}">
+<img class="bg" src="{{ $bgBelakangBase64 }}">
 @endif
 
 @php
@@ -313,6 +247,13 @@ NIS : {{ $siswa->nis }}
     }
 
     $ttl = trim(($siswa->tempat_lahir ?? '-') . ', ' . ($siswa->tanggal_lahir ? \Carbon\Carbon::parse($siswa->tanggal_lahir)->translatedFormat('d M Y') : '-'));
+
+    $barcodeBase64 = null;
+    try {
+        $barcodeBase64 = \Milon\Barcode\Facades\DNS1DFacade::getBarcodePNG($siswa->nis, 'C128', 2, 40);
+    } catch (\Throwable $e) {
+        $barcodeBase64 = null;
+    }
 @endphp
 
 @if($fotoBase64Belakang)
@@ -329,11 +270,12 @@ NIS : {{ $siswa->nis }}
 <b>Alamat</b>: {{ strtoupper($siswa->desa ?? $siswa->kecamatan ?? '-') }}
 </div>
 
+@if($barcodeBase64)
 <div class="back-barcode">
-<svg class="barcode-batang" data-barcode="{{ $siswa->nis }}"></svg>
+<img src="data:image/png;base64,{{ $barcodeBase64 }}">
 </div>
+@endif
 
-</div>
 </div>
 </td>
 
@@ -350,18 +292,6 @@ NIS : {{ $siswa->nis }}
 @endif
 
 @endforeach
-
-<script>
-    document.querySelectorAll('.barcode-batang').forEach(function (el) {
-        JsBarcode(el, el.dataset.barcode, {
-            format: 'CODE128',
-            width: 1.2,
-            height: 34,
-            fontSize: 9,
-            margin: 2,
-        });
-    });
-</script>
 
 </body>
 </html>
