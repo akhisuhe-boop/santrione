@@ -403,20 +403,23 @@ class KartuController extends Controller
             $totalContentHeight = $titleBlockHeight + $gapTitleBody + $bodyBlockHeight + $gapBodyBarcode
                 + $barcodeHeight + $gapBarcodeCaption + $barcodeCaptionHeight;
 
-            // PENTING -- urutan konten DIBALIK jadi [foto/data] ->
-            // [judul] -> [barcode] (sebelumnya [judul] -> [foto/data]
-            // -> [barcode]). Kenapa: dengan urutan lama, judul selalu
-            // jadi elemen PALING UJUNG di satu sisi kartu -- dan
-            // ternyata sisi itu bertepatan dengan area hijau template
-            // sekolah ini. Menaruh blok foto/data DULU (area yang
-            // sudah terbukti render di atas putih) baru judul
-            // menyusul persis setelahnya, mendorong judul jauh dari
-            // ujung tsb ke area yang lebih aman -- sekaligus membuat
-            // barcode (elemen terakhir) lebih dekat ke ujung satunya
-            // (dekat aksen kuning), sesuai yang diminta.
-            $bodyY = max(20, (int) (($H - $totalContentHeight) / 2));
-            $titleY = $bodyY + $bodyBlockHeight + $gapTitleBody;
-            $barcodeY = $titleY + $titleBlockHeight + $gapBodyBarcode;
+            // PENTING -- dari screenshot terbaru, terbukti template ini
+            // punya DUA sisi hijau: (1) dekat Y kecil -- ini yang
+            // sebelumnya menimpa judul saat masih di posisi lama
+            // (~Y108), DAN ternyata (2) sisi itu masih menimpa NAMA/
+            // NIS-NISN (baris data pertama, Y~108-144) walau judul
+            // sudah dipindah -- karena percobaan sebelumnya menaruh
+            // blok foto/data PERSIS di posisi lama judul itu. Jadi
+            // batas hijau-nya ada di kira-kira Y<170.
+            // Urutan dikembalikan ke [judul] -> [foto/data] ->
+            // [barcode] (sesuai permintaan: judul harus di atas Nama),
+            // TAPI titleY tidak lagi dihitung dari tengah kanvas --
+            // dipaksa mulai dari Y=190 (aman jauh melewati Y170) agar
+            // SEMUA elemen (judul, foto, kelima baris data, barcode)
+            // jatuh di area putih.
+            $titleY = 190;
+            $bodyY = $titleY + $titleBlockHeight + $gapTitleBody;
+            $barcodeY = $bodyY + $bodyBlockHeight + $gapBodyBarcode;
             $captionY = $barcodeY + $barcodeHeight + $gapBarcodeCaption;
 
             // TAHAP 2 -- gambar semuanya pakai posisi yang sudah
