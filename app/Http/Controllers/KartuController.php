@@ -257,7 +257,7 @@ class KartuController extends Controller
             // paket yang sudah dipakai & terbukti jalan di kartu depan.
             $qrY = min($rowY + 10, $H - 160);
             try {
-                $qrRaw = \QrCode::format('png')->size(150)->generate($siswa->nis);
+                $qrRaw = \QrCode::size(150)->generate($siswa->nis);
                 $qr = $manager->decodeBinary($qrRaw);
                 $canvas->insert($qr, $marginX, $qrY, 'top-left');
             } catch (\Throwable $e) {
