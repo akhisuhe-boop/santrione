@@ -331,8 +331,14 @@ class KartuController extends Controller
                 }
             }
 
-            $fontBold = storage_path('fonts/PlusJakartaSans-Bold.ttf');
-            $fontRegular = storage_path('fonts/PlusJakartaSans-Regular.ttf');
+            $fontBold = base_path('vendor/dompdf/dompdf/lib/fonts/DejaVuSans-Bold.ttf');
+            $fontRegular = base_path('vendor/dompdf/dompdf/lib/fonts/DejaVuSans.ttf');
+            if (!is_file($fontBold) || !is_file($fontRegular)) {
+                // Fallback kalau path bundel dompdf ternyata beda di
+                // server ini -- supaya tetap tidak crash.
+                $fontBold = storage_path('fonts/PlusJakartaSans-Bold.ttf');
+                $fontRegular = storage_path('fonts/PlusJakartaSans-Regular.ttf');
+            }
 
             // Zona aman konten diperlebar (570 -> 880) -- asumsi
             // sebelumnya (zona putih 57% dari template) ternyata
@@ -347,7 +353,7 @@ class KartuController extends Controller
 
             $fotoW = 160;
             $fotoH = 205;
-            $dataX = $marginX + $fotoW + 24;
+            $dataX = $marginX + $fotoW + 14;
             $labelFontSize = 18;
             $labelW = (int) ceil($this->measureTextWidth('NIS / NISN', $fontBold, $labelFontSize)) + 12;
             $valueMaxWidth = $safeRight - ($dataX + $labelW) - 8;
@@ -396,11 +402,21 @@ class KartuController extends Controller
 
             $totalContentHeight = $titleBlockHeight + $gapTitleBody + $bodyBlockHeight + $gapBodyBarcode
                 + $barcodeHeight + $gapBarcodeCaption + $barcodeCaptionHeight;
-            $startY = max(20, (int) (($H - $totalContentHeight) / 2));
 
-            $titleY = $startY;
-            $bodyY = $titleY + $titleBlockHeight + $gapTitleBody;
-            $barcodeY = $bodyY + $bodyBlockHeight + $gapBodyBarcode;
+            // PENTING -- urutan konten DIBALIK jadi [foto/data] ->
+            // [judul] -> [barcode] (sebelumnya [judul] -> [foto/data]
+            // -> [barcode]). Kenapa: dengan urutan lama, judul selalu
+            // jadi elemen PALING UJUNG di satu sisi kartu -- dan
+            // ternyata sisi itu bertepatan dengan area hijau template
+            // sekolah ini. Menaruh blok foto/data DULU (area yang
+            // sudah terbukti render di atas putih) baru judul
+            // menyusul persis setelahnya, mendorong judul jauh dari
+            // ujung tsb ke area yang lebih aman -- sekaligus membuat
+            // barcode (elemen terakhir) lebih dekat ke ujung satunya
+            // (dekat aksen kuning), sesuai yang diminta.
+            $bodyY = max(20, (int) (($H - $totalContentHeight) / 2));
+            $titleY = $bodyY + $bodyBlockHeight + $gapTitleBody;
+            $barcodeY = $titleY + $titleBlockHeight + $gapBodyBarcode;
             $captionY = $barcodeY + $barcodeHeight + $gapBarcodeCaption;
 
             // TAHAP 2 -- gambar semuanya pakai posisi yang sudah
