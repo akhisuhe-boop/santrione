@@ -100,16 +100,13 @@ td{
    dimensi kebalikannya (8.56cm x 5.4cm, "landscape") lalu diputar
    90 derajat di tengah kotak luar.
 
-   PENTING -- pemetaan margin setelah rotate(90deg) SEARAH JARUM JAM:
-   - margin `left` (kecil) di elemen dalam back-rotator -> jadi margin
-     VISUAL ATAS pada kartu hasil cetak
-   - jarak dari tepi kanan (8.56cm dikurangi left+width)  -> margin
-     VISUAL BAWAH
-   - margin `top` (kecil)   -> jadi margin VISUAL KANAN
-   - jarak dari tepi bawah (5.4cm dikurangi top+height)   -> margin
-     VISUAL KIRI
-   Jadi untuk nambah spasi ATAS/BAWAH tampilan akhir, yang diubah
-   justru nilai LEFT & lebar (width) elemen, BUKAN top/bottom. */
+   DIUBAH -- daripada menata tiap elemen pakai position:absolute lalu
+   menghitung manual ke mana arahnya setelah rotasi (gampang salah
+   arah, sudah 2x meleset), sekarang isi back-rotator ditata pakai
+   TABEL biasa (alur dokumen normal) dengan padding di .back-content.
+   Karena ini 1 blok utuh yang alurnya normal (bukan absolute
+   scattered), padding di 4 sisi akan tetap konsisten di 4 sisi juga
+   SETELAH dirotasi -- tidak perlu hitung arah lagi. */
 .card-belakang{
     width:5.4cm;
     height:8.56cm;
@@ -135,21 +132,34 @@ td{
     object-fit:cover;
 }
 
+.back-content{
+    position:relative;
+    width:100%;
+    height:100%;
+    padding:0.7cm 0.8cm;
+    box-sizing:border-box;
+}
+
+.back-content table.back-layout{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.back-foto-cell{
+    width:2.1cm;
+    vertical-align:top;
+}
+
 .back-foto{
-    position:absolute;
-    top:0.5cm;
-    left:1.3cm;
     width:1.9cm;
     height:2.3cm;
     object-fit:cover;
     border-radius:4px;
 }
 
-.back-data{
-    position:absolute;
-    top:0.75cm;
-    left:3.1cm;
-    width:4.6cm;
+.back-data-cell{
+    vertical-align:top;
+    padding-left:0.35cm;
 }
 
 .back-data table{
@@ -176,11 +186,8 @@ td{
 }
 
 .back-barcode{
-    position:absolute;
-    bottom:0.4cm;
-    left:50%;
-    transform:translateX(-50%);
     text-align:center;
+    margin-top:0.4cm;
 }
 
 .back-barcode img{
@@ -308,10 +315,16 @@ NIS : {{ $siswa->nis }}
     }
 @endphp
 
+<div class="back-content">
+
+<table class="back-layout">
+<tr>
+<td class="back-foto-cell">
 @if($fotoBase64Belakang)
 <img class="back-foto" src="{{ $fotoBase64Belakang }}">
 @endif
-
+</td>
+<td class="back-data-cell">
 <div class="back-data">
 <table>
 <tr><td class="label">Nama</td><td class="titik">:</td><td>{{ strtoupper($siswa->nama_lengkap) }}</td></tr>
@@ -322,12 +335,17 @@ NIS : {{ $siswa->nis }}
 <tr><td class="label">Alamat</td><td class="titik">:</td><td>{{ strtoupper($siswa->desa ?? $siswa->kecamatan ?? '-') }}</td></tr>
 </table>
 </div>
+</td>
+</tr>
+</table>
 
 @if($barcodeBase64)
 <div class="back-barcode">
 <img src="data:image/png;base64,{{ $barcodeBase64 }}">
 </div>
 @endif
+
+</div>
 
 </div>
 </div>
