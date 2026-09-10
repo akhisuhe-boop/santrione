@@ -354,10 +354,10 @@ class KartuController extends Controller
             $fotoW = 160;
             $fotoH = 205;
             $dataX = $marginX + $fotoW + 40;
-            $labelFontSize = 20;
+            $labelFontSize = 24;
             $labelW = (int) ceil($this->measureTextWidth('NIS / NISN', $fontBold, $labelFontSize)) + 12;
             $valueMaxWidth = $safeRight - ($dataX + $labelW) - 8;
-            $lineHeight = 28;
+            $lineHeight = 32;
             $rowGap = 10;
             $ttl = trim(($siswa->tempat_lahir ?? '-') . ', ' . ($siswa->tanggal_lahir
                 ? \Carbon\Carbon::parse($siswa->tanggal_lahir)->translatedFormat('d M Y')
@@ -381,7 +381,7 @@ class KartuController extends Controller
             $computedRows = [];
             $dataBlockHeight = 0;
             foreach ($rows as [$label, $value]) {
-                [$lines, $valueFontSize] = $this->fitAndWrapText((string) $value, $fontRegular, 24, 18, $valueMaxWidth, 1);
+                [$lines, $valueFontSize] = $this->fitAndWrapText((string) $value, $fontRegular, 27, 20, $valueMaxWidth, 1);
                 $computedRows[] = [$label, $lines, $valueFontSize];
                 $dataBlockHeight += $lineHeight * count($lines) + $rowGap;
             }
