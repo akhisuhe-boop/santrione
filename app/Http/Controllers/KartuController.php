@@ -149,35 +149,6 @@ class KartuController extends Controller
         }
     }
 
-    /**
-     * DITAMBAHKAN SEMENTARA -- untuk debugging, tampilkan gambar
-     * kartu belakang MENTAH (hasil compose Intervention Image)
-     * langsung sebagai response gambar, TANPA lewat DomPDF sama
-     * sekali. Buka /kartu/debug-belakang/{id} di browser.
-     * BOLEH DIHAPUS setelah selesai debugging.
-     */
-    public function debugKartuBelakang($id)
-    {
-        $siswa = Siswa::with('lembaga')->findOrFail($id);
-
-        $template = KartuTemplate::where('jenis', 'siswa')
-            ->where('lembaga_id', $siswa->lembaga_id)
-            ->first()
-            ?? KartuTemplate::where('jenis', 'siswa')->first();
-
-        $dataUri = $this->buildKartuBelakangImage($siswa, $template);
-
-        if (!$dataUri) {
-            return response('Gagal compose gambar -- cek storage/logs/laravel.log', 500);
-        }
-
-        // Ambil bagian base64 setelah koma, decode jadi binary PNG asli.
-        $base64 = explode(',', $dataUri, 2)[1] ?? '';
-        $binary = base64_decode($base64);
-
-        return response($binary, 200)->header('Content-Type', 'image/png');
-    }
-
     // ======================
     // CETAK 1 SISWA
     // ======================

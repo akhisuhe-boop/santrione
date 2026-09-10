@@ -187,8 +187,7 @@ Route::middleware(['auth'])->group(function () {
     // belakang MENTAH (hasil compose Intervention Image), tanpa lewat
     // DomPDF sama sekali. Berguna memastikan apakah masalah ada di
     // gambar itu sendiri, atau di cara DomPDF menampilkannya.
-    // BOLEH DIHAPUS setelah selesai debugging.
-    Route::get('/kartu/debug-belakang/{id}', [KartuController::class, 'debugKartuBelakang']);
+    // DIHAPUS setelah selesai debugging (sudah tidak dipakai).
 
     Route::get('/siswa/template', function () {
         return Excel::download(new SiswaTemplateExport, 'template-siswa.xlsx');
