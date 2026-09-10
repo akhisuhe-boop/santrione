@@ -93,21 +93,18 @@ td{
     font-weight:bold;
 }
 
-/* ====== KARTU BELAKANG -- ROTASI LANDSCAPE ======
-   Kotak luar (.card-belakang) ukurannya SAMA PERSIS dengan .card
-   (5.4cm x 8.56cm) -- posisi & ukuran kertas di lembar cetak TIDAK
-   berubah. Yang dirotasi cuma isinya (.back-rotator), dibuat dengan
-   dimensi kebalikannya (8.56cm x 5.4cm, "landscape") lalu diputar
-   90 derajat di tengah kotak luar.
+/* ====== KARTU BELAKANG -- LANDSCAPE, DIROTASI KE PORTRAIT ======
+   Isi konten (judul, foto, data, barcode) TERBUKTI RAPI tanpa nabrak
+   template saat dites landscape murni tanpa rotasi -- jadi masalah
+   sebelumnya BUKAN di layout kontennya, tapi di cara rotasinya.
 
-   DIUBAH -- daripada menata tiap elemen pakai position:absolute lalu
-   menghitung manual ke mana arahnya setelah rotasi (gampang salah
-   arah, sudah 2x meleset), sekarang isi back-rotator ditata pakai
-   TABEL biasa (alur dokumen normal) dengan padding di .back-content.
-   Karena ini 1 blok utuh yang alurnya normal (bukan absolute
-   scattered), padding di 4 sisi akan tetap konsisten di 4 sisi juga
-   SETELAH dirotasi -- tidak perlu hitung arah lagi. */
-.card-belakang{
+   PERBEDAAN dari percobaan rotasi sebelumnya: dulu "menengahkan" dan
+   "memutar" digabung jadi SATU transform (translate(-50%,-50%)
+   rotate(90deg)) -- diduga DomPDF salah hitung kalau 2 fungsi
+   transform digabung begitu. Sekarang dipisah: menengahkan pakai
+   margin negatif biasa (bukan transform), dan transform CUMA berisi
+   SATU fungsi (rotate(90deg) saja). */
+.card-belakang-wrap{
     width:5.4cm;
     height:8.56cm;
     position:relative;
@@ -115,58 +112,53 @@ td{
     overflow:hidden;
 }
 
-.back-rotator{
-    position:absolute;
+.card-belakang{
     width:8.56cm;
     height:5.4cm;
+    position:absolute;
     top:50%;
     left:50%;
-    transform:translate(-50%, -50%) rotate(90deg);
-    transform-origin:center center;
+    margin-top:-2.7cm;
+    margin-left:-4.28cm;
+    transform:rotate(90deg);
+    padding:0.35cm 0.5cm;
+    box-sizing:border-box;
 }
 
 .back-bg{
     position:absolute;
+    top:0;
+    left:0;
     width:100%;
     height:100%;
     object-fit:cover;
+    z-index:0;
 }
 
-.back-content{
-    /* DIUBAH -- sebelumnya width:100% + padding + box-sizing:border-box,
-       ternyata tidak dihitung benar oleh DomPDF saat parent-nya
-       dirotasi (konten masih meluber ke kanan). Ganti ke ukuran
-       EKSPLISIT dalam cm supaya tidak ambigu -- lebih pasti dipatuhi.
-       Kotak ini sengaja jauh lebih kecil dari 8.56cm x 5.4cm penuh,
-       menyisakan margin di semua sisi + zona kanan untuk panel
-       desain/logo template. */
-    position:absolute;
-    top:0.5cm;
-    left:0.6cm;
-    width:5.2cm;
-    height:4.4cm;
+.back-inner{
+    position:relative;
+    z-index:1;
 }
 
 .back-title{
-    font-size:12px;
+    font-size:13px;
     font-weight:bold;
-    margin-bottom:0.25cm;
-    letter-spacing:0.3px;
+    margin-bottom:0.2cm;
 }
 
-.back-content table.back-layout{
-    width:100%;
+table.back-layout{
+    width:60%;
     border-collapse:collapse;
 }
 
 .back-foto-cell{
-    width:1.9cm;
+    width:2.1cm;
     vertical-align:top;
 }
 
 .back-foto{
-    width:1.7cm;
-    height:2.1cm;
+    width:1.9cm;
+    height:2.3cm;
     object-fit:cover;
     border-radius:4px;
 }
@@ -184,7 +176,7 @@ td{
 .back-data td{
     text-align:left;
     vertical-align:top;
-    font-size:7.5px;
+    font-size:8px;
     line-height:1.55;
     padding:0;
 }
@@ -200,8 +192,7 @@ td{
 }
 
 .back-barcode{
-    text-align:left;
-    margin-top:0.3cm;
+    margin-top:0.25cm;
 }
 
 .back-barcode img{
@@ -302,8 +293,8 @@ NIS : {{ $siswa->nis }}
 @foreach($chunk as $i => $siswa)
 
 <td>
+<div class="card-belakang-wrap">
 <div class="card-belakang">
-<div class="back-rotator">
 
 @if($bgBelakangBase64)
 <img class="back-bg" src="{{ $bgBelakangBase64 }}">
@@ -329,7 +320,7 @@ NIS : {{ $siswa->nis }}
     }
 @endphp
 
-<div class="back-content">
+<div class="back-inner">
 
 <div class="back-title">KARTU TANDA PELAJAR</div>
 
