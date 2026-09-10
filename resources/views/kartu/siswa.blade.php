@@ -136,8 +136,21 @@ td{
     position:relative;
     width:100%;
     height:100%;
-    padding:0.7cm 0.8cm;
+    /* DIUBAH -- sisakan zona kosong di kanan (2.3cm) untuk panel
+       desain/branding template (logo, aksen warna, dll) yang nanti
+       didesain sekolah masing-masing, supaya konten tidak menabrak
+       ke sana. Ini dihitung dalam sistem koordinat SEBELUM rotasi,
+       yang setelah dirotasi jadi sisi kanan kartu landscape yang
+       sudah benar orientasinya. */
+    padding:0.5cm 2.3cm 0.5cm 0.6cm;
     box-sizing:border-box;
+}
+
+.back-title{
+    font-size:12px;
+    font-weight:bold;
+    margin-bottom:0.25cm;
+    letter-spacing:0.3px;
 }
 
 .back-content table.back-layout{
@@ -146,20 +159,20 @@ td{
 }
 
 .back-foto-cell{
-    width:2.1cm;
+    width:1.9cm;
     vertical-align:top;
 }
 
 .back-foto{
-    width:1.9cm;
-    height:2.3cm;
+    width:1.7cm;
+    height:2.1cm;
     object-fit:cover;
     border-radius:4px;
 }
 
 .back-data-cell{
     vertical-align:top;
-    padding-left:0.35cm;
+    padding-left:0.3cm;
 }
 
 .back-data table{
@@ -170,28 +183,28 @@ td{
 .back-data td{
     text-align:left;
     vertical-align:top;
-    font-size:8px;
-    line-height:1.6;
+    font-size:7.5px;
+    line-height:1.55;
     padding:0;
 }
 
 .back-data td.label{
-    width:1.7cm;
+    width:1.5cm;
     font-weight:bold;
     white-space:nowrap;
 }
 
 .back-data td.titik{
-    width:0.25cm;
+    width:0.2cm;
 }
 
 .back-barcode{
-    text-align:center;
-    margin-top:0.4cm;
+    text-align:left;
+    margin-top:0.3cm;
 }
 
 .back-barcode img{
-    height:0.9cm;
+    height:0.85cm;
 }
 </style>
 </head>
@@ -316,6 +329,8 @@ NIS : {{ $siswa->nis }}
 @endphp
 
 <div class="back-content">
+
+<div class="back-title">KARTU TANDA PELAJAR</div>
 
 <table class="back-layout">
 <tr>
