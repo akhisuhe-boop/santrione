@@ -183,6 +183,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/kartu/siswa/{id}', [KartuController::class,'cetakSatu']);
     Route::get('/kartu/siswa-massal', [KartuController::class,'cetakMassal']);
 
+    // DITAMBAHKAN SEMENTARA -- route debug untuk lihat gambar kartu
+    // belakang MENTAH (hasil compose Intervention Image), tanpa lewat
+    // DomPDF sama sekali. Berguna memastikan apakah masalah ada di
+    // gambar itu sendiri, atau di cara DomPDF menampilkannya.
+    // BOLEH DIHAPUS setelah selesai debugging.
+    Route::get('/kartu/debug-belakang/{id}', [KartuController::class, 'debugKartuBelakang']);
+
     Route::get('/siswa/template', function () {
         return Excel::download(new SiswaTemplateExport, 'template-siswa.xlsx');
     })->name('siswa.template');
