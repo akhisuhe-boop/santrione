@@ -17,10 +17,7 @@ class KartuController extends Controller
     /**
      * DITAMBAHKAN -- ukur lebar teks (px) untuk font TTF tertentu,
      * dipakai supaya nilai field (nama/alamat/dll) tidak pernah
-     * menabrak/menumpuk tepi kanan kartu seperti yang terjadi
-     * sebelumnya (root cause kartu belakang terlihat berantakan:
-     * teks panjang ditulis apa adanya di ukuran font tetap 17px
-     * tanpa pernah dicek muat atau tidak sampai ke $safeRight).
+     * menabrak/menumpuk tepi kanan kartu.
      */
     private function measureTextWidth(string $text, string $fontFile, int $fontSize): float
     {
@@ -111,6 +108,111 @@ class KartuController extends Controller
     }
 
     /**
+     * DITAMBAHKAN -- generator barcode Code128 (subset B) MURNI pakai
+     * GD (imagecreatetruecolor/imagefilledrectangle/imagepng) --
+     * TIDAK butuh extension Imagick dan TIDAK butuh package composer
+     * tambahan apa pun. GD sudah pasti ada di server ini karena
+     * Intervention Image sendiri jalan di atas GD driver.
+     *
+     * Kenapa ganti dari QR (simplesoftwareio/simple-qrcode) ke ini:
+     * package itu butuh Imagick untuk output PNG (tanpa Imagick cuma
+     * bisa SVG, dan Intervention Image tidak bisa decode SVG). Server
+     * tidak boleh ditambah extension baru, jadi barcode-nya digambar
+     * manual jadi PNG langsung.
+     *
+     * PENTING -- tabel pola & rumus checksum di bawah ini BUKAN
+     * tebakan: diambil dari source code library `python-barcode`
+     * (implementasi Code128 yang sudah lama dipakai luas), lalu
+     * di-generate contoh & DI-SCAN ULANG pakai pembaca barcode (zbar)
+     * untuk memastikan hasilnya valid dan cocok 100% sebelum dipasang
+     * di sini.
+     */
+    private const CODE128_PATTERNS = [
+        '11011001100','11001101100','11001100110','10010011000','10010001100','10001001100',
+        '10011001000','10011000100','10001100100','11001001000','11001000100','11000100100',
+        '10110011100','10011011100','10011001110','10111001100','10011101100','10011100110',
+        '11001110010','11001011100','11001001110','11011100100','11001110100','11101101110',
+        '11101001100','11100101100','11100100110','11101100100','11100110100','11100110010',
+        '11011011000','11011000110','11000110110','10100011000','10001011000','10001000110',
+        '10110001000','10001101000','10001100010','11010001000','11000101000','11000100010',
+        '10110111000','10110001110','10001101110','10111011000','10111000110','10001110110',
+        '11101110110','11010001110','11000101110','11011101000','11011100010','11011101110',
+        '11101011000','11101000110','11100010110','11101101000','11101100010','11100011010',
+        '11101111010','11001000010','11110001010','10100110000','10100001100','10010110000',
+        '10010000110','10000101100','10000100110','10110010000','10110000100','10011010000',
+        '10011000010','10000110100','10000110010','11000010010','11001010000','11110111010',
+        '11000010100','10001111010','10100111100','10010111100','10010011110','10111100100',
+        '10011110100','10011110010','11110100100','11110010100','11110010010','11011011110',
+        '11011110110','11110110110','10101111000','10100011110','10001011110','10111101000',
+        '10111100010','11110101000','11110100010','10111011110','10111101110','11101011110',
+        '11110101110','11010000100','11010010000','11010011100',
+    ];
+
+    // STOP pattern (11 modul) + 2 modul penutup akhir = 13 modul total,
+    // sesuai spesifikasi resmi Code128.
+    private const CODE128_STOP = '1100011101011';
+
+    /**
+     * Encode $text (charset B: ASCII 32 spasi s/d 126 ~) jadi string
+     * pola bit "1"/"0". Karakter di luar rentang itu diganti "?"
+     * supaya tidak merusak pola (NIS normalnya cuma angka, jadi ini
+     * selalu aman dipakai).
+     */
+    private function encodeCode128B(string $text): string
+    {
+        $startB = 104;
+        $values = [$startB];
+
+        foreach (str_split($text) as $ch) {
+            $ord = ord($ch);
+            if ($ord < 32 || $ord > 126) {
+                $ord = 63; // '?'
+            }
+            $values[] = $ord - 32;
+        }
+
+        $checksum = 0;
+        foreach ($values as $i => $v) {
+            $checksum += $i === 0 ? $v : $i * $v;
+        }
+        $values[] = $checksum % 103;
+
+        $bits = '';
+        foreach ($values as $v) {
+            $bits .= self::CODE128_PATTERNS[$v];
+        }
+
+        return $bits . self::CODE128_STOP;
+    }
+
+    /**
+     * Gambar pola bit ("1"/"0") jadi PNG hitam-putih pakai GD murni,
+     * kembalikan sebagai binary PNG siap di-decode Intervention Image.
+     */
+    private function renderBarcodePng(string $bits, int $moduleWidth, int $heightPx): string
+    {
+        $width = max(1, strlen($bits) * $moduleWidth);
+        $im = imagecreatetruecolor($width, $heightPx);
+        $white = imagecolorallocate($im, 255, 255, 255);
+        $black = imagecolorallocate($im, 0, 0, 0);
+        imagefilledrectangle($im, 0, 0, $width - 1, $heightPx - 1, $white);
+
+        for ($i = 0, $len = strlen($bits); $i < $len; $i++) {
+            if ($bits[$i] === '1') {
+                $x0 = $i * $moduleWidth;
+                imagefilledrectangle($im, $x0, 0, $x0 + $moduleWidth - 1, $heightPx - 1, $black);
+            }
+        }
+
+        ob_start();
+        imagepng($im);
+        $data = (string) ob_get_clean();
+        imagedestroy($im);
+
+        return $data;
+    }
+
+    /**
      * DITAMBAHKAN -- compose kartu BELAKANG (landscape) sebagai SATU
      * gambar raster, baru gambar itu yang diputar 90 derajat.
      *
@@ -121,29 +223,10 @@ class KartuController extends Controller
      * Rotasi gambar RASTER (bukan CSS) tidak punya masalah itu sama
      * sekali.
      *
-     * PENTING -- nama method di bawah ini sudah diverifikasi LANGSUNG
-     * ke source code Intervention\Image v4 (github.com/Intervention/image,
-     * tag 4.1.1), bukan tebakan lagi -- percobaan pertama gagal karena
-     * beberapa nama method meleset (create() -> createImage(),
-     * place() -> insert() dengan urutan parameter beda, font
-     * filename()/size()/color()/align()/valign() -> setFilepath()/
-     * setSize()/setColor()/setAlignmentHorizontal()/
-     * setAlignmentVertical(), toPng() -> encodeUsingMediaType()
-     * ->toDataUri()).
-     *
-     * PERBAIKAN (rapikan kartu belakang) -- root cause tampilan
-     * berantakan: (1) nilai field (nama/alamat/dll) ditulis di ukuran
-     * font TETAP tanpa pernah dicek muat atau tidak, jadi teks
-     * panjang menabrak/menumpuk elemen lain -> sekarang dipas-kan via
-     * fitText(); (2) label terpendek ("Nama") vs terpanjang ("NIS/
-     * NISN") berbagi $labelW yang sama sehingga titik dua tidak rata
-     * dan nilai NIS/NISN nyaris menempel labelnya -> $labelW
-     * dilebarkan; (3) jarak antar baris & antara foto-barcode
-     * terlalu rapat -> dilebarkan sedikit. (drawLine/drawRectangle
-     * sempat dicoba untuk garis pemisah & bingkai foto tapi DIHAPUS
-     * lagi karena bikin exception di compose -- lihat catatan di
-     * bawah kalau mau dicoba lagi, verifikasi dulu versi Intervention
-     * Image yang ter-install.)
+     * PENTING -- nama method Intervention Image di bawah ini sudah
+     * diverifikasi LANGSUNG ke source code Intervention\Image v4
+     * (tag 4.1.1): createImage(), insert(), font->filename()/size()/
+     * color()/align(), encodeUsingMediaType()->toDataUri().
      *
      * Mengembalikan data URI base64 PNG, atau null kalau gagal
      * (caller WAJIB siapkan fallback kalau null).
@@ -173,24 +256,21 @@ class KartuController extends Controller
             $fontBold = storage_path('fonts/PlusJakartaSans-Bold.ttf');
             $fontRegular = storage_path('fonts/PlusJakartaSans-Regular.ttf');
 
-            // Zona aman konten: 0 - 590px dari 1000px (~59%, menyamai
-            // table.back-layout{width:60%} di versi CSS) -- sisanya
-            // (590 - 1000px) sengaja dikosongkan untuk panel
-            // desain/logo template yang dibuat sekolah.
+            // Zona aman konten: 0 - 590px dari 1000px (~59%) -- sisanya
+            // sengaja dikosongkan untuk panel desain/logo template
+            // yang dibuat sekolah.
             $marginX = 40;
             $safeRight = 590;
 
-            // Judul -- dibesarkan (26 -> 44) karena sebelumnya
-            // terlalu kecil setelah kartu di-scale-down ke ukuran
-            // cetak sebenarnya (~1/3.1x).
+            // Judul.
             $canvas->text('KARTU TANDA PELAJAR', $marginX, 30, function ($font) use ($fontBold) {
                 $font->filename($fontBold);
-                    $font->size(44);
-                    $font->color('#111111');
-                    $font->align('left', 'top');
+                $font->size(44);
+                $font->color('#111111');
+                $font->align('left', 'top');
             });
 
-            // Foto siswa -- dibesarkan (150x190 -> 160x205).
+            // Foto siswa.
             $fotoW = 160;
             $fotoH = 205;
             $fotoY = 100;
@@ -250,24 +330,25 @@ class KartuController extends Controller
                 $rowY += $lineHeight * max(count($lines), 1) + 10;
             }
 
-            // Barcode -- DIGANTI dari milon/barcode (paket ini TIDAK
-            // ter-install di composer.json project, itu sebabnya
-            // sebelumnya selalu gagal diam-diam dan tidak pernah
-            // tampil) ke QR code pakai simplesoftwareio/simple-qrcode,
-            // paket yang sudah dipakai & terbukti jalan di kartu depan.
-            $qrY = min($rowY + 10, $H - 160);
+            // Barcode -- generator GD murni di atas (encodeCode128B +
+            // renderBarcodePng), TIDAK butuh Imagick / package apa pun.
             try {
-                $qrRaw = \QrCode::size(150)->generate($siswa->nis);
-                $qr = $manager->decodeBinary($qrRaw);
-                $canvas->insert($qr, $marginX, $qrY, 'top-left');
+                $bits = $this->encodeCode128B((string) $siswa->nis);
+                $moduleWidth = 3;
+                $maxBarcodeWidth = $safeRight - $marginX;
+                while ($moduleWidth > 2 && strlen($bits) * $moduleWidth > $maxBarcodeWidth) {
+                    $moduleWidth--;
+                }
+                $barcodeRaw = $this->renderBarcodePng($bits, $moduleWidth, 110);
+                $barcodeImg = $manager->decodeBinary($barcodeRaw);
+                $qrY = min($rowY + 10, $H - 120);
+                $canvas->insert($barcodeImg, $marginX, $qrY, 'top-left');
             } catch (\Throwable $e) {
-                Log::warning('Kartu belakang: gagal membuat QR/barcode', ['error' => $e->getMessage()]);
+                Log::warning('Kartu belakang: gagal membuat barcode', ['error' => $e->getMessage()]);
             }
 
             // Putar 90 derajat -- ini SATU-SATUNYA rotasi, dilakukan
-            // di level gambar raster, bukan CSS. Arah (-90) dipilih
-            // supaya sama dengan arah rotate(90deg) CSS yang sudah
-            // dikonfirmasi benar strukturnya di percobaan sebelumnya.
+            // di level gambar raster, bukan CSS.
             $canvas->rotate(-90);
 
             return (string) $canvas->encodeUsingMediaType('image/png')->toDataUri();
@@ -299,7 +380,6 @@ class KartuController extends Controller
             return response('Gagal compose gambar -- cek storage/logs/laravel.log', 500);
         }
 
-        // Ambil bagian base64 setelah koma, decode jadi binary PNG asli.
         $base64 = explode(',', $dataUri, 2)[1] ?? '';
         $binary = base64_decode($base64);
 
