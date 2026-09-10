@@ -213,6 +213,84 @@ class KartuController extends Controller
     }
 
     /**
+     * DITAMBAHKAN -- crop+resize foto (cover) lalu beri sudut
+     * membulat (rounded corner), MURNI pakai GD (tanpa method
+     * Intervention Image yang belum tentu ada di versi ter-install
+     * -- lihat catatan drawLine/drawRectangle di atas kenapa ini
+     * dihindari). Sudah dites & preview-nya benar sebelum dipasang.
+     * Return null kalau $rawBytes bukan gambar valid.
+     */
+    private function roundedPhotoPng(string $rawBytes, int $w, int $h, int $radius): ?string
+    {
+        $src = @imagecreatefromstring($rawBytes);
+        if (!$src) {
+            return null;
+        }
+
+        $srcW = imagesx($src);
+        $srcH = imagesy($src);
+        $srcRatio = $srcW / $srcH;
+        $dstRatio = $w / $h;
+        if ($srcRatio > $dstRatio) {
+            $cropH = $srcH;
+            $cropW = (int) round($srcH * $dstRatio);
+            $cropX = (int) (($srcW - $cropW) / 2);
+            $cropY = 0;
+        } else {
+            $cropW = $srcW;
+            $cropH = (int) round($srcW / $dstRatio);
+            $cropX = 0;
+            $cropY = (int) (($srcH - $cropH) / 2);
+        }
+
+        $resized = imagecreatetruecolor($w, $h);
+        imagealphablending($resized, false);
+        imagesavealpha($resized, true);
+        $transparent = imagecolorallocatealpha($resized, 0, 0, 0, 127);
+        imagefilledrectangle($resized, 0, 0, $w, $h, $transparent);
+        imagecopyresampled($resized, $src, 0, 0, $cropX, $cropY, $w, $h, $cropW, $cropH);
+        imagedestroy($src);
+
+        // Mask bentuk rounded-rect: putih (opaque) di dalam bentuk,
+        // transparan di luar -- lalu di-terapkan ke alpha channel
+        // foto per-pixel.
+        $mask = imagecreatetruecolor($w, $h);
+        imagealphablending($mask, false);
+        imagesavealpha($mask, true);
+        $transparentMask = imagecolorallocatealpha($mask, 0, 0, 0, 127);
+        imagefilledrectangle($mask, 0, 0, $w, $h, $transparentMask);
+        $opaque = imagecolorallocatealpha($mask, 0, 0, 0, 0);
+        imagefilledrectangle($mask, $radius, 0, $w - $radius - 1, $h - 1, $opaque);
+        imagefilledrectangle($mask, 0, $radius, $w - 1, $h - $radius - 1, $opaque);
+        imagefilledellipse($mask, $radius, $radius, $radius * 2, $radius * 2, $opaque);
+        imagefilledellipse($mask, $w - $radius - 1, $radius, $radius * 2, $radius * 2, $opaque);
+        imagefilledellipse($mask, $radius, $h - $radius - 1, $radius * 2, $radius * 2, $opaque);
+        imagefilledellipse($mask, $w - $radius - 1, $h - $radius - 1, $radius * 2, $radius * 2, $opaque);
+
+        for ($y = 0; $y < $h; $y++) {
+            for ($x = 0; $x < $w; $x++) {
+                $maskAlpha = (imagecolorat($mask, $x, $y) >> 24) & 0x7F;
+                if ($maskAlpha === 127) {
+                    $pixel = imagecolorat($resized, $x, $y);
+                    $r = ($pixel >> 16) & 0xFF;
+                    $g = ($pixel >> 8) & 0xFF;
+                    $b = $pixel & 0xFF;
+                    $newColor = imagecolorallocatealpha($resized, $r, $g, $b, 127);
+                    imagesetpixel($resized, $x, $y, $newColor);
+                }
+            }
+        }
+        imagedestroy($mask);
+
+        ob_start();
+        imagepng($resized);
+        $data = (string) ob_get_clean();
+        imagedestroy($resized);
+
+        return $data;
+    }
+
+    /**
      * DITAMBAHKAN -- compose kartu BELAKANG (landscape) sebagai SATU
      * gambar raster, baru gambar itu yang diputar 90 derajat.
      *
@@ -256,44 +334,20 @@ class KartuController extends Controller
             $fontBold = storage_path('fonts/PlusJakartaSans-Bold.ttf');
             $fontRegular = storage_path('fonts/PlusJakartaSans-Regular.ttf');
 
-            // Zona aman konten: 0 - 590px dari 1000px (~59%) -- sisanya
-            // sengaja dikosongkan untuk panel desain/logo template
-            // yang dibuat sekolah.
+            // Zona aman konten: 0 - 570px dari 1000px -- sisanya sengaja
+            // dikosongkan untuk panel desain/logo template yang dibuat
+            // sekolah, dengan sedikit margin ekstra biar tidak nabrak.
             $marginX = 40;
-            $safeRight = 590;
+            $safeRight = 570;
 
-            // Judul.
-            $canvas->text('KARTU TANDA PELAJAR', $marginX, 30, function ($font) use ($fontBold) {
-                $font->filename($fontBold);
-                $font->size(44);
-                $font->color('#111111');
-                $font->align('left', 'top');
-            });
-
-            // Foto siswa.
             $fotoW = 160;
             $fotoH = 205;
-            $fotoY = 100;
-            if ($siswa->foto) {
-                try {
-                    $fotoRaw = Storage::disk('r2-public')->get($siswa->foto);
-                    $foto = $manager->decodeBinary($fotoRaw)->cover($fotoW, $fotoH);
-                    $canvas->insert($foto, $marginX, $fotoY, 'top-left');
-                } catch (\Throwable $e) {
-                    Log::warning('Kartu belakang: gagal memuat foto siswa', ['error' => $e->getMessage()]);
-                }
-            }
-
-            // Data siswa, di sebelah kanan foto -- muat sampai $safeRight.
-            // Value yang panjang (nama/alamat) dicoba ditampilkan UTUH
-            // dulu di font besar (sampai 3 baris); kalau masih tidak
-            // muat, font dikecilkan bertahap; hanya kalau di font
-            // minimum pun masih kepanjangan baru dipotong "...".
             $dataX = $marginX + $fotoW + 24;
-            $labelFontSize = 18;
-            $labelW = (int) ceil($this->measureTextWidth('NIS / NISN', $fontBold, $labelFontSize)) + 14;
+            $labelFontSize = 16;
+            $labelW = (int) ceil($this->measureTextWidth('NIS / NISN', $fontBold, $labelFontSize)) + 12;
             $valueMaxWidth = $safeRight - ($dataX + $labelW) - 8;
-            $lineHeight = 24;
+            $lineHeight = 22;
+            $rowGap = 8;
             $ttl = trim(($siswa->tempat_lahir ?? '-') . ', ' . ($siswa->tanggal_lahir
                 ? \Carbon\Carbon::parse($siswa->tanggal_lahir)->translatedFormat('d M Y')
                 : '-'));
@@ -306,10 +360,62 @@ class KartuController extends Controller
                 ['ALAMAT', strtoupper($siswa->desa ?? $siswa->kecamatan ?? '-')],
             ];
 
-            $rowY = $fotoY + 6;
+            // TAHAP 1 -- hitung dulu semua wrap teks & tinggi total
+            // konten SEBELUM menggambar apa pun, supaya seluruh blok
+            // (judul + foto/data + barcode) bisa diposisikan di
+            // TENGAH kanvas secara vertikal -- sebelumnya judul
+            // ditulis mepet ke atas (y=30) dengan font kegedean
+            // (44px), jadi sisa konten kedorong ke bawah dan barcode
+            // nyaris/kepotong di tepi bawah kartu.
+            $computedRows = [];
+            $dataBlockHeight = 0;
             foreach ($rows as [$label, $value]) {
-                [$lines, $valueFontSize] = $this->fitAndWrapText((string) $value, $fontRegular, 20, 13, $valueMaxWidth, 3);
+                [$lines, $valueFontSize] = $this->fitAndWrapText((string) $value, $fontRegular, 18, 12, $valueMaxWidth, 3);
+                $computedRows[] = [$label, $lines, $valueFontSize];
+                $dataBlockHeight += $lineHeight * count($lines) + $rowGap;
+            }
+            $dataBlockHeight -= $rowGap;
 
+            $titleFontSize = 30;
+            $titleBlockHeight = $titleFontSize + 14;
+            $bodyBlockHeight = max($fotoH, $dataBlockHeight);
+            $barcodeHeight = 90;
+            $gapTitleBody = 18;
+            $gapBodyBarcode = 18;
+
+            $totalContentHeight = $titleBlockHeight + $gapTitleBody + $bodyBlockHeight + $gapBodyBarcode + $barcodeHeight;
+            $startY = max(20, (int) (($H - $totalContentHeight) / 2));
+
+            $titleY = $startY;
+            $bodyY = $titleY + $titleBlockHeight + $gapTitleBody;
+            $barcodeY = $bodyY + $bodyBlockHeight + $gapBodyBarcode;
+
+            // TAHAP 2 -- gambar semuanya pakai posisi yang sudah
+            // dihitung di atas.
+            $canvas->text('KARTU TANDA PELAJAR', $marginX, $titleY, function ($font) use ($fontBold, $titleFontSize) {
+                $font->filename($fontBold);
+                $font->size($titleFontSize);
+                $font->color('#111111');
+                $font->align('left', 'top');
+            });
+
+            // Foto siswa -- sudut dibulatkan (rounded corner) pakai
+            // roundedPhotoPng(), sama seperti gaya foto di kartu depan.
+            if ($siswa->foto) {
+                try {
+                    $fotoRaw = Storage::disk('r2-public')->get($siswa->foto);
+                    $roundedRaw = $this->roundedPhotoPng($fotoRaw, $fotoW, $fotoH, 18);
+                    if ($roundedRaw) {
+                        $foto = $manager->decodeBinary($roundedRaw);
+                        $canvas->insert($foto, $marginX, $bodyY, 'top-left');
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('Kartu belakang: gagal memuat foto siswa', ['error' => $e->getMessage()]);
+                }
+            }
+
+            $rowY = $bodyY;
+            foreach ($computedRows as [$label, $lines, $valueFontSize]) {
                 $canvas->text($label, $dataX, $rowY, function ($font) use ($fontBold, $labelFontSize) {
                     $font->filename($fontBold);
                     $font->size($labelFontSize);
@@ -327,7 +433,7 @@ class KartuController extends Controller
                     });
                 }
 
-                $rowY += $lineHeight * max(count($lines), 1) + 10;
+                $rowY += $lineHeight * max(count($lines), 1) + $rowGap;
             }
 
             // Barcode -- generator GD murni di atas (encodeCode128B +
@@ -339,17 +445,16 @@ class KartuController extends Controller
                 while ($moduleWidth > 2 && strlen($bits) * $moduleWidth > $maxBarcodeWidth) {
                     $moduleWidth--;
                 }
-                $barcodeRaw = $this->renderBarcodePng($bits, $moduleWidth, 110);
+                $barcodeRaw = $this->renderBarcodePng($bits, $moduleWidth, $barcodeHeight);
                 $barcodeImg = $manager->decodeBinary($barcodeRaw);
-                $qrY = min($rowY + 10, $H - 120);
-                $canvas->insert($barcodeImg, $marginX, $qrY, 'top-left');
+                $canvas->insert($barcodeImg, $marginX, $barcodeY, 'top-left');
             } catch (\Throwable $e) {
                 Log::warning('Kartu belakang: gagal membuat barcode', ['error' => $e->getMessage()]);
             }
 
-            // Putar 90 derajat -- ini SATU-SATUNYA rotasi, dilakukan
-            // di level gambar raster, bukan CSS.
-            $canvas->rotate(-90);
+            // Putar 90 derajat -- arah dibalik (90, bukan -90) karena
+            // hasil sebelumnya terbalik 180 derajat dari yang diminta.
+            $canvas->rotate(90);
 
             return (string) $canvas->encodeUsingMediaType('image/png')->toDataUri();
         } catch (\Throwable $e) {
