@@ -108,9 +108,7 @@ td{
 }
 
 .card-belakang img.back-final{
-    width:100%;
-    height:100%;
-    object-fit:cover;
+    display:block;
 }
 </style>
 </head>
@@ -211,7 +209,7 @@ NIS : {{ $siswa->nis }}
     $kartuBelakangSrc = $kartuBelakangImages[$siswa->id] ?? null;
 @endphp
 @if($kartuBelakangSrc)
-<img class="back-final" src="{{ $kartuBelakangSrc }}">
+<img class="back-final" width="204" height="323" src="{{ $kartuBelakangSrc }}">
 @endif
 </div>
 </td>
