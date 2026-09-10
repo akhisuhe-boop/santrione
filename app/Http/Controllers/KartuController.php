@@ -23,13 +23,17 @@ class KartuController extends Controller
      * hitung ukuran/posisi begitu parent-nya di-rotate) -- padahal
      * layout landscape TANPA rotasi sudah terbukti rapi sempurna.
      * Rotasi gambar RASTER (bukan CSS) tidak punya masalah itu sama
-     * sekali -- operasi rotate gambar adalah hal yang sudah sangat
-     * matang & dapat diprediksi.
+     * sekali.
      *
-     * Proporsi di sini SENGAJA disamakan dengan versi CSS yang sudah
-     * terbukti rapi (padding, lebar zona konten 60% dari lebar
-     * kartu, urutan field NIS/NISN digabung) -- supaya hasilnya
-     * konsisten dengan apa yang sudah divalidasi sebelumnya.
+     * PENTING -- nama method di bawah ini sudah diverifikasi LANGSUNG
+     * ke source code Intervention\Image v4 (github.com/Intervention/image,
+     * tag 4.1.1), bukan tebakan lagi -- percobaan pertama gagal karena
+     * beberapa nama method meleset (create() -> createImage(),
+     * place() -> insert() dengan urutan parameter beda, font
+     * filename()/size()/color()/align()/valign() -> setFilepath()/
+     * setSize()/setColor()/setAlignmentHorizontal()/
+     * setAlignmentVertical(), toPng() -> encodeUsingMediaType()
+     * ->toDataUri()).
      *
      * Mengembalikan data URI base64 PNG, atau null kalau gagal
      * (caller WAJIB siapkan fallback kalau null).
@@ -43,14 +47,14 @@ class KartuController extends Controller
             $H = 630;
 
             $manager = new ImageManager(new Driver());
-            $canvas = $manager->create($W, $H)->fill('#ffffff');
+            $canvas = $manager->createImage($W, $H)->fill('#ffffff');
 
             // Background (kalau ada) -- isi penuh kanvas.
             if ($template?->background_belakang) {
                 try {
                     $bgRaw = Storage::disk('r2-public')->get($template->background_belakang);
-                    $bg = $manager->read($bgRaw)->cover($W, $H);
-                    $canvas->place($bg, 'top-left', 0, 0);
+                    $bg = $manager->decodeBinary($bgRaw)->cover($W, $H);
+                    $canvas->insert($bg, 0, 0, 'top-left');
                 } catch (\Throwable $e) {
                     Log::warning('Kartu belakang: gagal memuat background', ['error' => $e->getMessage()]);
                 }
@@ -68,11 +72,11 @@ class KartuController extends Controller
 
             // Judul.
             $canvas->text('KARTU TANDA PELAJAR', $marginX, 38, function ($font) use ($fontBold) {
-                $font->filename($fontBold);
-                $font->size(28);
-                $font->color('#111111');
-                $font->align('left');
-                $font->valign('top');
+                $font->setFilepath($fontBold);
+                $font->setSize(28);
+                $font->setColor('#111111');
+                $font->setAlignmentHorizontal('left');
+                $font->setAlignmentVertical('top');
             });
 
             // Foto siswa.
@@ -82,8 +86,8 @@ class KartuController extends Controller
             if ($siswa->foto) {
                 try {
                     $fotoRaw = Storage::disk('r2-public')->get($siswa->foto);
-                    $foto = $manager->read($fotoRaw)->cover($fotoW, $fotoH);
-                    $canvas->place($foto, 'top-left', $marginX, $fotoY);
+                    $foto = $manager->decodeBinary($fotoRaw)->cover($fotoW, $fotoH);
+                    $canvas->insert($foto, $marginX, $fotoY, 'top-left');
                 } catch (\Throwable $e) {
                     Log::warning('Kartu belakang: gagal memuat foto siswa', ['error' => $e->getMessage()]);
                 }
@@ -96,8 +100,6 @@ class KartuController extends Controller
                 ? \Carbon\Carbon::parse($siswa->tanggal_lahir)->translatedFormat('d M Y')
                 : '-'));
 
-            // DIUBAH -- NIS/NISN digabung 1 baris, sama seperti versi
-            // CSS yang sudah terbukti rapi.
             $rows = [
                 ['Nama', strtoupper($siswa->nama_lengkap)],
                 ['NIS/NISN', $siswa->nis . '/' . $siswa->nisn],
@@ -109,18 +111,18 @@ class KartuController extends Controller
             $rowY = $fotoY + 3;
             foreach ($rows as [$label, $value]) {
                 $canvas->text($label, $dataX, $rowY, function ($font) use ($fontBold) {
-                    $font->filename($fontBold);
-                    $font->size(17);
-                    $font->color('#111111');
-                    $font->align('left');
-                    $font->valign('top');
+                    $font->setFilepath($fontBold);
+                    $font->setSize(17);
+                    $font->setColor('#111111');
+                    $font->setAlignmentHorizontal('left');
+                    $font->setAlignmentVertical('top');
                 });
                 $canvas->text(': ' . $value, $dataX + $labelW, $rowY, function ($font) use ($fontRegular) {
-                    $font->filename($fontRegular);
-                    $font->size(17);
-                    $font->color('#111111');
-                    $font->align('left');
-                    $font->valign('top');
+                    $font->setFilepath($fontRegular);
+                    $font->setSize(17);
+                    $font->setColor('#111111');
+                    $font->setAlignmentHorizontal('left');
+                    $font->setAlignmentVertical('top');
                 });
                 $rowY += 32;
             }
@@ -129,10 +131,10 @@ class KartuController extends Controller
             try {
                 $barcodeBase64 = \Milon\Barcode\Facades\DNS1DFacade::getBarcodePNG($siswa->nis, 'C128', 2, 2);
                 $barcodeRaw = base64_decode($barcodeBase64);
-                $barcode = $manager->read($barcodeRaw);
+                $barcode = $manager->decodeBinary($barcodeRaw);
                 $barcodeMaxW = $safeRight - $marginX;
                 $barcode->resize(width: min(380, $barcodeMaxW), height: null);
-                $canvas->place($barcode, 'top-left', $marginX, $fotoY + $fotoH + 18);
+                $canvas->insert($barcode, $marginX, $fotoY + $fotoH + 18, 'top-left');
             } catch (\Throwable $e) {
                 Log::warning('Kartu belakang: gagal membuat barcode', ['error' => $e->getMessage()]);
             }
@@ -143,7 +145,7 @@ class KartuController extends Controller
             // dikonfirmasi benar strukturnya di percobaan sebelumnya.
             $canvas->rotate(-90);
 
-            return 'data:image/png;base64,' . base64_encode((string) $canvas->toPng());
+            return (string) $canvas->encodeUsingMediaType('image/png')->toDataUri();
         } catch (\Throwable $e) {
             Log::error('Kartu belakang: gagal compose gambar', ['error' => $e->getMessage()]);
             return null;
