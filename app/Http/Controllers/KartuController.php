@@ -29,23 +29,85 @@ class KartuController extends Controller
     }
 
     /**
-     * Kecilkan ukuran font bertahap sampai muat di $maxWidthPx; kalau
-     * di ukuran minimum pun masih kepanjangan, potong dengan "...".
-     * Mengembalikan [teks_final, ukuran_font_final].
+     * Coba tampilkan $text dalam maksimal $maxLines baris di ukuran
+     * font tertentu, TANPA membuang kata apa pun. Return null kalau
+     * tidak muat di ukuran itu (dipakai fitAndWrapText() untuk
+     * mencoba ukuran font yang lebih kecil).
      */
-    private function fitText(string $text, string $fontFile, int $maxFontSize, int $minFontSize, float $maxWidthPx): array
+    private function tryWrapExact(string $text, string $fontFile, int $fontSize, float $maxWidthPx, int $maxLines): ?array
     {
-        $size = $maxFontSize;
-        while ($size > $minFontSize && $this->measureTextWidth($text, $fontFile, $size) > $maxWidthPx) {
-            $size--;
-        }
-        if ($this->measureTextWidth($text, $fontFile, $size) > $maxWidthPx) {
-            while (mb_strlen($text) > 3 && $this->measureTextWidth($text . '...', $fontFile, $size) > $maxWidthPx) {
-                $text = mb_substr($text, 0, -1);
+        $words = preg_split('/\s+/', trim($text)) ?: [''];
+        $lines = [];
+        $current = '';
+        foreach ($words as $word) {
+            $candidate = $current === '' ? $word : $current . ' ' . $word;
+            if ($current === '' || $this->measureTextWidth($candidate, $fontFile, $fontSize) <= $maxWidthPx) {
+                $current = $candidate;
+            } else {
+                $lines[] = $current;
+                if (count($lines) >= $maxLines) {
+                    return null;
+                }
+                $current = $word;
             }
-            $text .= '...';
         }
-        return [$text, $size];
+        if ($current !== '') {
+            $lines[] = $current;
+        }
+        return count($lines) <= $maxLines ? $lines : null;
+    }
+
+    /**
+     * Cari ukuran font TERBESAR (dari $maxFontSize turun ke
+     * $minFontSize) yang bisa menampilkan $text UTUH (tanpa kata
+     * hilang) dalam $maxLines baris. Kalau bahkan di $minFontSize
+     * masih tidak muat (misal alamat sangat panjang), baris terakhir
+     * dipotong dengan "..." -- ini satu-satunya kondisi di mana teks
+     * boleh terpotong, dan selalu ditandai jelas dengan "...".
+     * Mengembalikan [baris[], ukuran_font_final].
+     */
+    private function fitAndWrapText(string $text, string $fontFile, int $maxFontSize, int $minFontSize, float $maxWidthPx, int $maxLines): array
+    {
+        for ($size = $maxFontSize; $size >= $minFontSize; $size--) {
+            $lines = $this->tryWrapExact($text, $fontFile, $size, $maxWidthPx, $maxLines);
+            if ($lines !== null) {
+                return [$lines, $size];
+            }
+        }
+
+        // Fallback -- paksa wrap di ukuran minimum, potong baris
+        // terakhir dengan "..." kalau masih ada sisa yang tak muat.
+        $words = preg_split('/\s+/', trim($text)) ?: [''];
+        $lines = [];
+        $current = '';
+        foreach ($words as $word) {
+            $candidate = $current === '' ? $word : $current . ' ' . $word;
+            if ($current === '' || $this->measureTextWidth($candidate, $fontFile, $minFontSize) <= $maxWidthPx) {
+                $current = $candidate;
+            } else {
+                $lines[] = $current;
+                if (count($lines) >= $maxLines) {
+                    $current = '';
+                    break;
+                }
+                $current = $word;
+            }
+        }
+        if ($current !== '' && count($lines) < $maxLines) {
+            $lines[] = $current;
+        }
+        if (empty($lines)) {
+            $lines[] = $text;
+        }
+
+        $lastIdx = count($lines) - 1;
+        $last = $lines[$lastIdx];
+        while (mb_strlen($last) > 3 && $this->measureTextWidth($last . '...', $fontFile, $minFontSize) > $maxWidthPx) {
+            $last = mb_substr($last, 0, -1);
+        }
+        $lines[$lastIdx] = $last . '...';
+
+        return [$lines, $minFontSize];
     }
 
     /**
@@ -118,18 +180,20 @@ class KartuController extends Controller
             $marginX = 40;
             $safeRight = 590;
 
-            // Judul.
-            $canvas->text('KARTU TANDA PELAJAR', $marginX, 34, function ($font) use ($fontBold) {
+            // Judul -- dibesarkan (26 -> 44) karena sebelumnya
+            // terlalu kecil setelah kartu di-scale-down ke ukuran
+            // cetak sebenarnya (~1/3.1x).
+            $canvas->text('KARTU TANDA PELAJAR', $marginX, 30, function ($font) use ($fontBold) {
                 $font->filename($fontBold);
-                    $font->size(26);
+                    $font->size(44);
                     $font->color('#111111');
                     $font->align('left', 'top');
             });
 
-            // Foto siswa.
-            $fotoW = 150;
-            $fotoH = 190;
-            $fotoY = 96;
+            // Foto siswa -- dibesarkan (150x190 -> 160x205).
+            $fotoW = 160;
+            $fotoH = 205;
+            $fotoY = 100;
             if ($siswa->foto) {
                 try {
                     $fotoRaw = Storage::disk('r2-public')->get($siswa->foto);
@@ -141,13 +205,15 @@ class KartuController extends Controller
             }
 
             // Data siswa, di sebelah kanan foto -- muat sampai $safeRight.
-            // labelW dilebarkan (120 -> 140) supaya label terpanjang
-            // ("NIS/NISN") tidak pernah menabrak kolom nilai, dan
-            // setiap baris punya jarak vertikal lebih lega (32 -> 36px)
-            // supaya tidak terlihat padat seperti sebelumnya.
+            // Value yang panjang (nama/alamat) dicoba ditampilkan UTUH
+            // dulu di font besar (sampai 3 baris); kalau masih tidak
+            // muat, font dikecilkan bertahap; hanya kalau di font
+            // minimum pun masih kepanjangan baru dipotong "...".
             $dataX = $marginX + $fotoW + 24;
-            $labelW = 140;
+            $labelFontSize = 18;
+            $labelW = (int) ceil($this->measureTextWidth('NIS / NISN', $fontBold, $labelFontSize)) + 14;
             $valueMaxWidth = $safeRight - ($dataX + $labelW) - 8;
+            $lineHeight = 24;
             $ttl = trim(($siswa->tempat_lahir ?? '-') . ', ' . ($siswa->tanggal_lahir
                 ? \Carbon\Carbon::parse($siswa->tanggal_lahir)->translatedFormat('d M Y')
                 : '-'));
@@ -160,40 +226,42 @@ class KartuController extends Controller
                 ['ALAMAT', strtoupper($siswa->desa ?? $siswa->kecamatan ?? '-')],
             ];
 
-            $rowY = $fotoY + 4;
+            $rowY = $fotoY + 6;
             foreach ($rows as [$label, $value]) {
-                // Nilai (bukan label) yang dipas-kan ukuran fontnya --
-                // ini bagian yang sebelumnya tidak ada sama sekali,
-                // jadi nama/alamat panjang menabrak/menumpuk elemen
-                // lain di sisi kanan kartu.
-                [$fitValue, $fitSize] = $this->fitText((string) $value, $fontRegular, 16, 11, $valueMaxWidth);
+                [$lines, $valueFontSize] = $this->fitAndWrapText((string) $value, $fontRegular, 20, 13, $valueMaxWidth, 3);
 
-                $canvas->text($label, $dataX, $rowY, function ($font) use ($fontBold) {
+                $canvas->text($label, $dataX, $rowY, function ($font) use ($fontBold, $labelFontSize) {
                     $font->filename($fontBold);
-                    $font->size(14);
+                    $font->size($labelFontSize);
                     $font->color('#444444');
                     $font->align('left', 'top');
                 });
-                $canvas->text(': ' . $fitValue, $dataX + $labelW, $rowY, function ($font) use ($fontRegular, $fitSize) {
-                    $font->filename($fontRegular);
-                    $font->size($fitSize);
-                    $font->color('#111111');
-                    $font->align('left', 'top');
-                });
-                $rowY += 36;
+
+                foreach ($lines as $li => $line) {
+                    $prefix = $li === 0 ? ': ' : '  ';
+                    $canvas->text($prefix . $line, $dataX + $labelW, $rowY + ($li * $lineHeight), function ($font) use ($fontRegular, $valueFontSize) {
+                        $font->filename($fontRegular);
+                        $font->size($valueFontSize);
+                        $font->color('#111111');
+                        $font->align('left', 'top');
+                    });
+                }
+
+                $rowY += $lineHeight * max(count($lines), 1) + 10;
             }
 
-            // Barcode, di bawah foto -- diturunkan sedikit (18 -> 26px
-            // jarak) supaya tidak menempel ke bingkai foto baru.
+            // Barcode -- DIGANTI dari milon/barcode (paket ini TIDAK
+            // ter-install di composer.json project, itu sebabnya
+            // sebelumnya selalu gagal diam-diam dan tidak pernah
+            // tampil) ke QR code pakai simplesoftwareio/simple-qrcode,
+            // paket yang sudah dipakai & terbukti jalan di kartu depan.
+            $qrY = min($rowY + 10, $H - 160);
             try {
-                $barcodeBase64 = \Milon\Barcode\Facades\DNS1DFacade::getBarcodePNG($siswa->nis, 'C128', 2, 2);
-                $barcodeRaw = base64_decode($barcodeBase64);
-                $barcode = $manager->decodeBinary($barcodeRaw);
-                $barcodeMaxW = $safeRight - $marginX;
-                $barcode->resize(width: min(380, $barcodeMaxW), height: null);
-                $canvas->insert($barcode, $marginX, $fotoY + $fotoH + 26, 'top-left');
+                $qrRaw = \QrCode::format('png')->size(150)->generate($siswa->nis);
+                $qr = $manager->decodeBinary($qrRaw);
+                $canvas->insert($qr, $marginX, $qrY, 'top-left');
             } catch (\Throwable $e) {
-                Log::warning('Kartu belakang: gagal membuat barcode', ['error' => $e->getMessage()]);
+                Log::warning('Kartu belakang: gagal membuat QR/barcode', ['error' => $e->getMessage()]);
             }
 
             // Putar 90 derajat -- ini SATU-SATUNYA rotasi, dilakukan
