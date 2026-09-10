@@ -98,7 +98,18 @@ td{
    (5.4cm x 8.56cm) -- posisi & ukuran kertas di lembar cetak TIDAK
    berubah. Yang dirotasi cuma isinya (.back-rotator), dibuat dengan
    dimensi kebalikannya (8.56cm x 5.4cm, "landscape") lalu diputar
-   90 derajat di tengah kotak luar. */
+   90 derajat di tengah kotak luar.
+
+   PENTING -- pemetaan margin setelah rotate(90deg) SEARAH JARUM JAM:
+   - margin `left` (kecil) di elemen dalam back-rotator -> jadi margin
+     VISUAL ATAS pada kartu hasil cetak
+   - jarak dari tepi kanan (8.56cm dikurangi left+width)  -> margin
+     VISUAL BAWAH
+   - margin `top` (kecil)   -> jadi margin VISUAL KANAN
+   - jarak dari tepi bawah (5.4cm dikurangi top+height)   -> margin
+     VISUAL KIRI
+   Jadi untuk nambah spasi ATAS/BAWAH tampilan akhir, yang diubah
+   justru nilai LEFT & lebar (width) elemen, BUKAN top/bottom. */
 .card-belakang{
     width:5.4cm;
     height:8.56cm;
@@ -127,7 +138,7 @@ td{
 .back-foto{
     position:absolute;
     top:0.5cm;
-    left:0.4cm;
+    left:1.3cm;
     width:1.9cm;
     height:2.3cm;
     object-fit:cover;
@@ -137,8 +148,8 @@ td{
 .back-data{
     position:absolute;
     top:0.75cm;
-    left:2.5cm;
-    width:5.8cm;
+    left:3.1cm;
+    width:4.6cm;
 }
 
 .back-data table{
