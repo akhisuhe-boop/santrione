@@ -353,11 +353,11 @@ class KartuController extends Controller
 
             $fotoW = 160;
             $fotoH = 205;
-            $dataX = $marginX + $fotoW + 14;
-            $labelFontSize = 18;
+            $dataX = $marginX + $fotoW + 40;
+            $labelFontSize = 20;
             $labelW = (int) ceil($this->measureTextWidth('NIS / NISN', $fontBold, $labelFontSize)) + 12;
             $valueMaxWidth = $safeRight - ($dataX + $labelW) - 8;
-            $lineHeight = 26;
+            $lineHeight = 28;
             $rowGap = 10;
             $ttl = trim(($siswa->tempat_lahir ?? '-') . ', ' . ($siswa->tanggal_lahir
                 ? \Carbon\Carbon::parse($siswa->tanggal_lahir)->translatedFormat('d M Y')
@@ -381,7 +381,7 @@ class KartuController extends Controller
             $computedRows = [];
             $dataBlockHeight = 0;
             foreach ($rows as [$label, $value]) {
-                [$lines, $valueFontSize] = $this->fitAndWrapText((string) $value, $fontRegular, 22, 16, $valueMaxWidth, 1);
+                [$lines, $valueFontSize] = $this->fitAndWrapText((string) $value, $fontRegular, 24, 18, $valueMaxWidth, 1);
                 $computedRows[] = [$label, $lines, $valueFontSize];
                 $dataBlockHeight += $lineHeight * count($lines) + $rowGap;
             }
@@ -390,7 +390,7 @@ class KartuController extends Controller
             // Judul -- dibesarkan (30 -> 36) dan dipas-kan juga
             // lebarnya (measureTextWidth) supaya tidak pernah
             // melewati $safeRight.
-            [$titleLines, $titleFontSize] = $this->fitAndWrapText('KARTU TANDA PELAJAR', $fontBold, 36, 24, $safeRight - $marginX, 1);
+            [$titleLines, $titleFontSize] = $this->fitAndWrapText('KARTU TANDA PELAJAR', $fontBold, 40, 26, $safeRight - $marginX, 1);
             $titleText = $titleLines[0];
             $titleBlockHeight = $titleFontSize + 14;
             $bodyBlockHeight = max($fotoH, $dataBlockHeight);
@@ -488,7 +488,7 @@ class KartuController extends Controller
             // di kartu depan).
             $canvas->text('NIS : ' . $siswa->nis, $marginX, $captionY, function ($font) use ($fontBold) {
                 $font->filename($fontBold);
-                $font->size(18);
+                $font->size(20);
                 $font->color('#111111');
                 $font->align('left', 'top');
             });
