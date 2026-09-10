@@ -133,17 +133,18 @@ td{
 }
 
 .back-content{
-    position:relative;
-    width:100%;
-    height:100%;
-    /* DIUBAH -- sisakan zona kosong di kanan (2.3cm) untuk panel
-       desain/branding template (logo, aksen warna, dll) yang nanti
-       didesain sekolah masing-masing, supaya konten tidak menabrak
-       ke sana. Ini dihitung dalam sistem koordinat SEBELUM rotasi,
-       yang setelah dirotasi jadi sisi kanan kartu landscape yang
-       sudah benar orientasinya. */
-    padding:0.5cm 2.3cm 0.5cm 0.6cm;
-    box-sizing:border-box;
+    /* DIUBAH -- sebelumnya width:100% + padding + box-sizing:border-box,
+       ternyata tidak dihitung benar oleh DomPDF saat parent-nya
+       dirotasi (konten masih meluber ke kanan). Ganti ke ukuran
+       EKSPLISIT dalam cm supaya tidak ambigu -- lebih pasti dipatuhi.
+       Kotak ini sengaja jauh lebih kecil dari 8.56cm x 5.4cm penuh,
+       menyisakan margin di semua sisi + zona kanan untuk panel
+       desain/logo template. */
+    position:absolute;
+    top:0.5cm;
+    left:0.6cm;
+    width:5.2cm;
+    height:4.4cm;
 }
 
 .back-title{
@@ -343,8 +344,7 @@ NIS : {{ $siswa->nis }}
 <div class="back-data">
 <table>
 <tr><td class="label">Nama</td><td class="titik">:</td><td>{{ strtoupper($siswa->nama_lengkap) }}</td></tr>
-<tr><td class="label">NIS</td><td class="titik">:</td><td>{{ $siswa->nis }}</td></tr>
-<tr><td class="label">NISN</td><td class="titik">:</td><td>{{ $siswa->nisn }}</td></tr>
+<tr><td class="label">NIS/NISN</td><td class="titik">:</td><td>{{ $siswa->nis }}/{{ $siswa->nisn }}</td></tr>
 <tr><td class="label">TTL</td><td class="titik">:</td><td>{{ $ttl }}</td></tr>
 <tr><td class="label">Lembaga</td><td class="titik">:</td><td>{{ strtoupper($siswa->lembaga->nama ?? '-') }}</td></tr>
 <tr><td class="label">Alamat</td><td class="titik">:</td><td>{{ strtoupper($siswa->desa ?? $siswa->kecamatan ?? '-') }}</td></tr>
