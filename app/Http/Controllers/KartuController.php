@@ -334,20 +334,25 @@ class KartuController extends Controller
             $fontBold = storage_path('fonts/PlusJakartaSans-Bold.ttf');
             $fontRegular = storage_path('fonts/PlusJakartaSans-Regular.ttf');
 
-            // Zona aman konten: 0 - 570px dari 1000px -- sisanya sengaja
-            // dikosongkan untuk panel desain/logo template yang dibuat
-            // sekolah, dengan sedikit margin ekstra biar tidak nabrak.
+            // Zona aman konten diperlebar (570 -> 880) -- asumsi
+            // sebelumnya (zona putih 57% dari template) ternyata
+            // tidak cocok dengan template asli sekolah ini (template-
+            // nya mayoritas hijau, bukan mayoritas putih), jadi judul
+            // & data harus dipepetkan padahal ruangnya sebenarnya
+            // masih banyak. Kalau nanti masih nabrak elemen desain
+            // template, kirim file background_belakang-nya biar bisa
+            // dipas-in koordinatnya persis.
             $marginX = 40;
-            $safeRight = 570;
+            $safeRight = 880;
 
             $fotoW = 160;
             $fotoH = 205;
             $dataX = $marginX + $fotoW + 24;
-            $labelFontSize = 16;
+            $labelFontSize = 18;
             $labelW = (int) ceil($this->measureTextWidth('NIS / NISN', $fontBold, $labelFontSize)) + 12;
             $valueMaxWidth = $safeRight - ($dataX + $labelW) - 8;
-            $lineHeight = 22;
-            $rowGap = 8;
+            $lineHeight = 26;
+            $rowGap = 10;
             $ttl = trim(($siswa->tempat_lahir ?? '-') . ', ' . ($siswa->tanggal_lahir
                 ? \Carbon\Carbon::parse($siswa->tanggal_lahir)->translatedFormat('d M Y')
                 : '-'));
@@ -362,37 +367,45 @@ class KartuController extends Controller
 
             // TAHAP 1 -- hitung dulu semua wrap teks & tinggi total
             // konten SEBELUM menggambar apa pun, supaya seluruh blok
-            // (judul + foto/data + barcode) bisa diposisikan di
-            // TENGAH kanvas secara vertikal -- sebelumnya judul
-            // ditulis mepet ke atas (y=30) dengan font kegedean
-            // (44px), jadi sisa konten kedorong ke bawah dan barcode
-            // nyaris/kepotong di tepi bawah kartu.
+            // bisa diposisikan di TENGAH kanvas. maxLines dipaksa 1
+            // (bukan 3 lagi) -- sekarang $valueMaxWidth jauh lebih
+            // lebar (zona aman 880px), jadi value seharusnya selalu
+            // muat 1 baris; kalau ada kasus ekstrem yang tetap tidak
+            // muat, font-nya yang mengecil dulu sebelum baris ke-2.
             $computedRows = [];
             $dataBlockHeight = 0;
             foreach ($rows as [$label, $value]) {
-                [$lines, $valueFontSize] = $this->fitAndWrapText((string) $value, $fontRegular, 18, 12, $valueMaxWidth, 3);
+                [$lines, $valueFontSize] = $this->fitAndWrapText((string) $value, $fontRegular, 22, 16, $valueMaxWidth, 1);
                 $computedRows[] = [$label, $lines, $valueFontSize];
                 $dataBlockHeight += $lineHeight * count($lines) + $rowGap;
             }
             $dataBlockHeight -= $rowGap;
 
-            $titleFontSize = 30;
+            // Judul -- dibesarkan (30 -> 36) dan dipas-kan juga
+            // lebarnya (measureTextWidth) supaya tidak pernah
+            // melewati $safeRight.
+            [$titleLines, $titleFontSize] = $this->fitAndWrapText('KARTU TANDA PELAJAR', $fontBold, 36, 24, $safeRight - $marginX, 1);
+            $titleText = $titleLines[0];
             $titleBlockHeight = $titleFontSize + 14;
             $bodyBlockHeight = max($fotoH, $dataBlockHeight);
             $barcodeHeight = 90;
+            $barcodeCaptionHeight = 26;
             $gapTitleBody = 18;
             $gapBodyBarcode = 18;
+            $gapBarcodeCaption = 6;
 
-            $totalContentHeight = $titleBlockHeight + $gapTitleBody + $bodyBlockHeight + $gapBodyBarcode + $barcodeHeight;
+            $totalContentHeight = $titleBlockHeight + $gapTitleBody + $bodyBlockHeight + $gapBodyBarcode
+                + $barcodeHeight + $gapBarcodeCaption + $barcodeCaptionHeight;
             $startY = max(20, (int) (($H - $totalContentHeight) / 2));
 
             $titleY = $startY;
             $bodyY = $titleY + $titleBlockHeight + $gapTitleBody;
             $barcodeY = $bodyY + $bodyBlockHeight + $gapBodyBarcode;
+            $captionY = $barcodeY + $barcodeHeight + $gapBarcodeCaption;
 
             // TAHAP 2 -- gambar semuanya pakai posisi yang sudah
             // dihitung di atas.
-            $canvas->text('KARTU TANDA PELAJAR', $marginX, $titleY, function ($font) use ($fontBold, $titleFontSize) {
+            $canvas->text($titleText, $marginX, $titleY, function ($font) use ($fontBold, $titleFontSize) {
                 $font->filename($fontBold);
                 $font->size($titleFontSize);
                 $font->color('#111111');
@@ -451,6 +464,15 @@ class KartuController extends Controller
             } catch (\Throwable $e) {
                 Log::warning('Kartu belakang: gagal membuat barcode', ['error' => $e->getMessage()]);
             }
+
+            // Teks NIS di bawah barcode (seperti caption "NIS : xxx"
+            // di kartu depan).
+            $canvas->text('NIS : ' . $siswa->nis, $marginX, $captionY, function ($font) use ($fontBold) {
+                $font->filename($fontBold);
+                $font->size(18);
+                $font->color('#111111');
+                $font->align('left', 'top');
+            });
 
             // Putar 90 derajat -- arah dibalik (90, bukan -90) karena
             // hasil sebelumnya terbalik 180 derajat dari yang diminta.
