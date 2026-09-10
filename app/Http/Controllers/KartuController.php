@@ -76,9 +76,12 @@ class KartuController extends Controller
      * fitText(); (2) label terpendek ("Nama") vs terpanjang ("NIS/
      * NISN") berbagi $labelW yang sama sehingga titik dua tidak rata
      * dan nilai NIS/NISN nyaris menempel labelnya -> $labelW
-     * dilebarkan; (3) foto siswa ditempel polos tanpa bingkai -> now
-     * diberi border tipis; (4) jarak antar baris & antara foto-barcode
-     * terlalu rapat -> dilebarkan sedikit.
+     * dilebarkan; (3) jarak antar baris & antara foto-barcode
+     * terlalu rapat -> dilebarkan sedikit. (drawLine/drawRectangle
+     * sempat dicoba untuk garis pemisah & bingkai foto tapi DIHAPUS
+     * lagi karena bikin exception di compose -- lihat catatan di
+     * bawah kalau mau dicoba lagi, verifikasi dulu versi Intervention
+     * Image yang ter-install.)
      *
      * Mengembalikan data URI base64 PNG, atau null kalau gagal
      * (caller WAJIB siapkan fallback kalau null).
@@ -123,18 +126,7 @@ class KartuController extends Controller
                     $font->align('left', 'top');
             });
 
-            // Garis pemisah tipis di bawah judul, biar judul & data
-            // tidak terasa menempel begitu saja seperti sebelumnya.
-            $canvas->drawLine($marginX, 78, function ($line) use ($safeRight) {
-                $line->to($safeRight, 78);
-                $line->color('#cccccc');
-                $line->width(2);
-            });
-
-            // Foto siswa -- diberi bingkai tipis supaya ada batas
-            // yang jelas dari data di sebelahnya (sebelumnya foto
-            // ditempel polos tanpa bingkai, jadi menyatu/berantakan
-            // kalau foto siswa gelap atau berbatas transparan).
+            // Foto siswa.
             $fotoW = 150;
             $fotoH = 190;
             $fotoY = 96;
@@ -143,10 +135,6 @@ class KartuController extends Controller
                     $fotoRaw = Storage::disk('r2-public')->get($siswa->foto);
                     $foto = $manager->decodeBinary($fotoRaw)->cover($fotoW, $fotoH);
                     $canvas->insert($foto, $marginX, $fotoY, 'top-left');
-                    $canvas->drawRectangle($marginX, $fotoY, function ($rect) use ($fotoW, $fotoH) {
-                        $rect->size($fotoW, $fotoH);
-                        $rect->border('#bbbbbb', 2);
-                    });
                 } catch (\Throwable $e) {
                     Log::warning('Kartu belakang: gagal memuat foto siswa', ['error' => $e->getMessage()]);
                 }
