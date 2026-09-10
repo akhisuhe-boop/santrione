@@ -15,6 +15,40 @@ use Intervention\Image\Drivers\Gd\Driver;
 class KartuController extends Controller
 {
     /**
+     * DITAMBAHKAN -- ukur lebar teks (px) untuk font TTF tertentu,
+     * dipakai supaya nilai field (nama/alamat/dll) tidak pernah
+     * menabrak/menumpuk tepi kanan kartu seperti yang terjadi
+     * sebelumnya (root cause kartu belakang terlihat berantakan:
+     * teks panjang ditulis apa adanya di ukuran font tetap 17px
+     * tanpa pernah dicek muat atau tidak sampai ke $safeRight).
+     */
+    private function measureTextWidth(string $text, string $fontFile, int $fontSize): float
+    {
+        $box = imagettfbbox($fontSize, 0, $fontFile, $text);
+        return abs($box[2] - $box[0]);
+    }
+
+    /**
+     * Kecilkan ukuran font bertahap sampai muat di $maxWidthPx; kalau
+     * di ukuran minimum pun masih kepanjangan, potong dengan "...".
+     * Mengembalikan [teks_final, ukuran_font_final].
+     */
+    private function fitText(string $text, string $fontFile, int $maxFontSize, int $minFontSize, float $maxWidthPx): array
+    {
+        $size = $maxFontSize;
+        while ($size > $minFontSize && $this->measureTextWidth($text, $fontFile, $size) > $maxWidthPx) {
+            $size--;
+        }
+        if ($this->measureTextWidth($text, $fontFile, $size) > $maxWidthPx) {
+            while (mb_strlen($text) > 3 && $this->measureTextWidth($text . '...', $fontFile, $size) > $maxWidthPx) {
+                $text = mb_substr($text, 0, -1);
+            }
+            $text .= '...';
+        }
+        return [$text, $size];
+    }
+
+    /**
      * DITAMBAHKAN -- compose kartu BELAKANG (landscape) sebagai SATU
      * gambar raster, baru gambar itu yang diputar 90 derajat.
      *
@@ -34,6 +68,17 @@ class KartuController extends Controller
      * setSize()/setColor()/setAlignmentHorizontal()/
      * setAlignmentVertical(), toPng() -> encodeUsingMediaType()
      * ->toDataUri()).
+     *
+     * PERBAIKAN (rapikan kartu belakang) -- root cause tampilan
+     * berantakan: (1) nilai field (nama/alamat/dll) ditulis di ukuran
+     * font TETAP tanpa pernah dicek muat atau tidak, jadi teks
+     * panjang menabrak/menumpuk elemen lain -> sekarang dipas-kan via
+     * fitText(); (2) label terpendek ("Nama") vs terpanjang ("NIS/
+     * NISN") berbagi $labelW yang sama sehingga titik dua tidak rata
+     * dan nilai NIS/NISN nyaris menempel labelnya -> $labelW
+     * dilebarkan; (3) foto siswa ditempel polos tanpa bingkai -> now
+     * diberi border tipis; (4) jarak antar baris & antara foto-barcode
+     * terlalu rapat -> dilebarkan sedikit.
      *
      * Mengembalikan data URI base64 PNG, atau null kalau gagal
      * (caller WAJIB siapkan fallback kalau null).
@@ -71,67 +116,94 @@ class KartuController extends Controller
             $safeRight = 590;
 
             // Judul.
-            $canvas->text('KARTU TANDA PELAJAR', $marginX, 38, function ($font) use ($fontBold) {
+            $canvas->text('KARTU TANDA PELAJAR', $marginX, 34, function ($font) use ($fontBold) {
                 $font->filename($fontBold);
-                    $font->size(28);
+                    $font->size(26);
                     $font->color('#111111');
                     $font->align('left', 'top');
             });
 
-            // Foto siswa.
+            // Garis pemisah tipis di bawah judul, biar judul & data
+            // tidak terasa menempel begitu saja seperti sebelumnya.
+            $canvas->drawLine($marginX, 78, function ($line) use ($safeRight) {
+                $line->to($safeRight, 78);
+                $line->color('#cccccc');
+                $line->width(2);
+            });
+
+            // Foto siswa -- diberi bingkai tipis supaya ada batas
+            // yang jelas dari data di sebelahnya (sebelumnya foto
+            // ditempel polos tanpa bingkai, jadi menyatu/berantakan
+            // kalau foto siswa gelap atau berbatas transparan).
             $fotoW = 150;
-            $fotoH = 185;
-            $fotoY = 90;
+            $fotoH = 190;
+            $fotoY = 96;
             if ($siswa->foto) {
                 try {
                     $fotoRaw = Storage::disk('r2-public')->get($siswa->foto);
                     $foto = $manager->decodeBinary($fotoRaw)->cover($fotoW, $fotoH);
                     $canvas->insert($foto, $marginX, $fotoY, 'top-left');
+                    $canvas->drawRectangle($marginX, $fotoY, function ($rect) use ($fotoW, $fotoH) {
+                        $rect->size($fotoW, $fotoH);
+                        $rect->border('#bbbbbb', 2);
+                    });
                 } catch (\Throwable $e) {
                     Log::warning('Kartu belakang: gagal memuat foto siswa', ['error' => $e->getMessage()]);
                 }
             }
 
             // Data siswa, di sebelah kanan foto -- muat sampai $safeRight.
-            $dataX = $marginX + $fotoW + 20;
-            $labelW = 120;
+            // labelW dilebarkan (120 -> 140) supaya label terpanjang
+            // ("NIS/NISN") tidak pernah menabrak kolom nilai, dan
+            // setiap baris punya jarak vertikal lebih lega (32 -> 36px)
+            // supaya tidak terlihat padat seperti sebelumnya.
+            $dataX = $marginX + $fotoW + 24;
+            $labelW = 140;
+            $valueMaxWidth = $safeRight - ($dataX + $labelW) - 8;
             $ttl = trim(($siswa->tempat_lahir ?? '-') . ', ' . ($siswa->tanggal_lahir
                 ? \Carbon\Carbon::parse($siswa->tanggal_lahir)->translatedFormat('d M Y')
                 : '-'));
 
             $rows = [
-                ['Nama', strtoupper($siswa->nama_lengkap)],
-                ['NIS/NISN', $siswa->nis . '/' . $siswa->nisn],
-                ['TTL', $ttl],
-                ['Lembaga', strtoupper($siswa->lembaga->nama ?? '-')],
-                ['Alamat', strtoupper($siswa->desa ?? $siswa->kecamatan ?? '-')],
+                ['NAMA', strtoupper($siswa->nama_lengkap)],
+                ['NIS / NISN', $siswa->nis . ' / ' . $siswa->nisn],
+                ['T.T.L', $ttl],
+                ['LEMBAGA', strtoupper($siswa->lembaga->nama ?? '-')],
+                ['ALAMAT', strtoupper($siswa->desa ?? $siswa->kecamatan ?? '-')],
             ];
 
-            $rowY = $fotoY + 3;
+            $rowY = $fotoY + 4;
             foreach ($rows as [$label, $value]) {
+                // Nilai (bukan label) yang dipas-kan ukuran fontnya --
+                // ini bagian yang sebelumnya tidak ada sama sekali,
+                // jadi nama/alamat panjang menabrak/menumpuk elemen
+                // lain di sisi kanan kartu.
+                [$fitValue, $fitSize] = $this->fitText((string) $value, $fontRegular, 16, 11, $valueMaxWidth);
+
                 $canvas->text($label, $dataX, $rowY, function ($font) use ($fontBold) {
                     $font->filename($fontBold);
-                    $font->size(17);
-                    $font->color('#111111');
+                    $font->size(14);
+                    $font->color('#444444');
                     $font->align('left', 'top');
                 });
-                $canvas->text(': ' . $value, $dataX + $labelW, $rowY, function ($font) use ($fontRegular) {
+                $canvas->text(': ' . $fitValue, $dataX + $labelW, $rowY, function ($font) use ($fontRegular, $fitSize) {
                     $font->filename($fontRegular);
-                    $font->size(17);
+                    $font->size($fitSize);
                     $font->color('#111111');
                     $font->align('left', 'top');
                 });
-                $rowY += 32;
+                $rowY += 36;
             }
 
-            // Barcode, di bawah foto.
+            // Barcode, di bawah foto -- diturunkan sedikit (18 -> 26px
+            // jarak) supaya tidak menempel ke bingkai foto baru.
             try {
                 $barcodeBase64 = \Milon\Barcode\Facades\DNS1DFacade::getBarcodePNG($siswa->nis, 'C128', 2, 2);
                 $barcodeRaw = base64_decode($barcodeBase64);
                 $barcode = $manager->decodeBinary($barcodeRaw);
                 $barcodeMaxW = $safeRight - $marginX;
                 $barcode->resize(width: min(380, $barcodeMaxW), height: null);
-                $canvas->insert($barcode, $marginX, $fotoY + $fotoH + 18, 'top-left');
+                $canvas->insert($barcode, $marginX, $fotoY + $fotoH + 26, 'top-left');
             } catch (\Throwable $e) {
                 Log::warning('Kartu belakang: gagal membuat barcode', ['error' => $e->getMessage()]);
             }
@@ -147,6 +219,35 @@ class KartuController extends Controller
             Log::error('Kartu belakang: gagal compose gambar', ['error' => $e->getMessage()]);
             return null;
         }
+    }
+
+    /**
+     * DITAMBAHKAN SEMENTARA -- untuk debugging, tampilkan gambar
+     * kartu belakang MENTAH (hasil compose Intervention Image)
+     * langsung sebagai response gambar, TANPA lewat DomPDF sama
+     * sekali. Buka /kartu/debug-belakang/{id} di browser.
+     * BOLEH DIHAPUS setelah selesai debugging.
+     */
+    public function debugKartuBelakang($id)
+    {
+        $siswa = Siswa::with('lembaga')->findOrFail($id);
+
+        $template = KartuTemplate::where('jenis', 'siswa')
+            ->where('lembaga_id', $siswa->lembaga_id)
+            ->first()
+            ?? KartuTemplate::where('jenis', 'siswa')->first();
+
+        $dataUri = $this->buildKartuBelakangImage($siswa, $template);
+
+        if (!$dataUri) {
+            return response('Gagal compose gambar -- cek storage/logs/laravel.log', 500);
+        }
+
+        // Ambil bagian base64 setelah koma, decode jadi binary PNG asli.
+        $base64 = explode(',', $dataUri, 2)[1] ?? '';
+        $binary = base64_decode($base64);
+
+        return response($binary, 200)->header('Content-Type', 'image/png');
     }
 
     // ======================
