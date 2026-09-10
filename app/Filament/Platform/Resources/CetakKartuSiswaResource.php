@@ -64,6 +64,7 @@ class CetakKartuSiswaResource extends BaseResource
             ->columns([
                 Tables\Columns\ImageColumn::make('foto')
                     ->label('Foto')
+                    ->disk('r2-public')
                     ->circular(),
 
                 Tables\Columns\TextColumn::make('lembaga.yayasan.nama')
@@ -89,11 +90,27 @@ class CetakKartuSiswaResource extends BaseResource
                     ->label('Kelas'),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('yayasan_id')
+                    ->label('Yayasan')
+                    ->options(fn () => \App\Models\Yayasan::pluck('nama', 'id'))
+                    ->searchable()
+                    ->query(fn ($query, array $data) => $query->when(
+                        $data['value'] ?? null,
+                        fn ($q, $value) => $q->whereHas('lembaga', fn ($lq) => $lq->where('yayasan_id', $value))
+                    )),
+
                 Tables\Filters\SelectFilter::make('lembaga_id')
                     ->label('Lembaga')
                     ->options(fn () => \App\Models\Lembaga::with('yayasan')
                         ->get()
                         ->mapWithKeys(fn ($l) => [$l->id => trim(($l->nama ?? '-').' — '.($l->yayasan?->nama ?? '-'))]))
+                    ->searchable(),
+
+                Tables\Filters\SelectFilter::make('kelas_id')
+                    ->label('Kelas')
+                    ->options(fn () => \App\Models\Kelas::with('lembaga')
+                        ->get()
+                        ->mapWithKeys(fn ($k) => [$k->id => trim(($k->nama ?? '-').' — '.($k->lembaga?->nama ?? '-'))]))
                     ->searchable(),
             ])
             ->actions([

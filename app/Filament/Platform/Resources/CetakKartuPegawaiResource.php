@@ -64,6 +64,7 @@ class CetakKartuPegawaiResource extends BaseResource
             ->columns([
                 Tables\Columns\ImageColumn::make('foto')
                     ->label('Foto')
+                    ->disk('r2-public')
                     ->circular(),
 
                 Tables\Columns\TextColumn::make('yayasan.nama')
