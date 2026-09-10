@@ -126,32 +126,47 @@ td{
 
 .back-foto{
     position:absolute;
-    top:0.3cm;
-    left:0.3cm;
-    width:1.8cm;
-    height:2cm;
+    top:0.5cm;
+    left:0.4cm;
+    width:1.9cm;
+    height:2.3cm;
     object-fit:cover;
     border-radius:4px;
 }
 
 .back-data{
     position:absolute;
-    top:0.3cm;
-    left:2.3cm;
-    width:6cm;
-    font-size:8px;
-    line-height:1.7;
+    top:0.75cm;
+    left:2.5cm;
+    width:5.8cm;
 }
 
-.back-data b{
-    display:inline-block;
-    width:2cm;
+.back-data table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.back-data td{
+    text-align:left;
     vertical-align:top;
+    font-size:8px;
+    line-height:1.6;
+    padding:0;
+}
+
+.back-data td.label{
+    width:1.7cm;
+    font-weight:bold;
+    white-space:nowrap;
+}
+
+.back-data td.titik{
+    width:0.25cm;
 }
 
 .back-barcode{
     position:absolute;
-    bottom:0.25cm;
+    bottom:0.4cm;
     left:50%;
     transform:translateX(-50%);
     text-align:center;
@@ -287,13 +302,14 @@ NIS : {{ $siswa->nis }}
 @endif
 
 <div class="back-data">
-<b>Nama</b>: {{ strtoupper($siswa->nama_lengkap) }}<br>
-<b>NIS</b>: {{ $siswa->nis }}<br>
-<b>NISN</b>: {{ $siswa->nisn }}<br>
-<b>Lembaga</b>: {{ strtoupper($siswa->lembaga->nama ?? '-') }}<br>
-<b>TTL</b>: {{ $ttl }}<br>
-<b>Gol. Darah</b>: {{ $siswa->golongan_darah ?? '-' }}<br>
-<b>Alamat</b>: {{ strtoupper($siswa->desa ?? $siswa->kecamatan ?? '-') }}
+<table>
+<tr><td class="label">Nama</td><td class="titik">:</td><td>{{ strtoupper($siswa->nama_lengkap) }}</td></tr>
+<tr><td class="label">NIS</td><td class="titik">:</td><td>{{ $siswa->nis }}</td></tr>
+<tr><td class="label">NISN</td><td class="titik">:</td><td>{{ $siswa->nisn }}</td></tr>
+<tr><td class="label">TTL</td><td class="titik">:</td><td>{{ $ttl }}</td></tr>
+<tr><td class="label">Lembaga</td><td class="titik">:</td><td>{{ strtoupper($siswa->lembaga->nama ?? '-') }}</td></tr>
+<tr><td class="label">Alamat</td><td class="titik">:</td><td>{{ strtoupper($siswa->desa ?? $siswa->kecamatan ?? '-') }}</td></tr>
+</table>
 </div>
 
 @if($barcodeBase64)
