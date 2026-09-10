@@ -93,17 +93,41 @@ td{
     font-weight:bold;
 }
 
-/* ====== KARTU BELAKANG -- DITAMBAHKAN ======
-   Sengaja pakai kotak portrait biasa (sama seperti .card di depan
-   yang sudah terbukti rapi), TIDAK pakai CSS transform:rotate() --
-   dukungan transform di DomPDF tidak konsisten dan berisiko bikin
-   layout berantakan. Data ditata memanjang ke bawah di dalam kotak
-   portrait yang sama. */
+/* ====== KARTU BELAKANG -- ROTASI LANDSCAPE ======
+   Kotak luar (.card-belakang) ukurannya SAMA PERSIS dengan .card
+   (5.4cm x 8.56cm) -- posisi & ukuran kertas di lembar cetak TIDAK
+   berubah. Yang dirotasi cuma isinya (.back-rotator), dibuat dengan
+   dimensi kebalikannya (8.56cm x 5.4cm, "landscape") lalu diputar
+   90 derajat di tengah kotak luar. */
+.card-belakang{
+    width:5.4cm;
+    height:8.56cm;
+    position:relative;
+    margin:auto;
+    overflow:hidden;
+}
+
+.back-rotator{
+    position:absolute;
+    width:8.56cm;
+    height:5.4cm;
+    top:50%;
+    left:50%;
+    transform:translate(-50%, -50%) rotate(90deg);
+    transform-origin:center center;
+}
+
+.back-bg{
+    position:absolute;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
 .back-foto{
     position:absolute;
     top:0.3cm;
-    left:50%;
-    transform:translateX(-50%);
+    left:0.3cm;
     width:1.8cm;
     height:2cm;
     object-fit:cover;
@@ -112,28 +136,29 @@ td{
 
 .back-data{
     position:absolute;
-    top:2.55cm;
-    left:0.3cm;
-    width:4.8cm;
+    top:0.3cm;
+    left:2.3cm;
+    width:6cm;
     font-size:8px;
-    line-height:1.5;
+    line-height:1.7;
 }
 
 .back-data b{
     display:inline-block;
-    width:1.6cm;
+    width:2cm;
+    vertical-align:top;
 }
 
 .back-barcode{
     position:absolute;
-    bottom:0.35cm;
+    bottom:0.25cm;
     left:50%;
     transform:translateX(-50%);
     text-align:center;
 }
 
 .back-barcode img{
-    height:1cm;
+    height:0.9cm;
 }
 </style>
 </head>
@@ -230,10 +255,11 @@ NIS : {{ $siswa->nis }}
 @foreach($chunk as $i => $siswa)
 
 <td>
-<div class="card">
+<div class="card-belakang">
+<div class="back-rotator">
 
 @if($bgBelakangBase64)
-<img class="bg" src="{{ $bgBelakangBase64 }}">
+<img class="back-bg" src="{{ $bgBelakangBase64 }}">
 @endif
 
 @php
@@ -276,6 +302,7 @@ NIS : {{ $siswa->nis }}
 </div>
 @endif
 
+</div>
 </div>
 </td>
 
