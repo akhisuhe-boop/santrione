@@ -19,7 +19,7 @@ class QinaraKasKategoriResource extends BaseResource
     protected static ?string $model = QinaraKasKategori::class;
     protected static ?string $navigationLabel = 'Kategori Kas';
     protected static ?string $navigationGroup = 'Keuangan Qinara';
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 2;
     protected static ?string $navigationIcon = 'heroicon-o-tag';
     protected static ?string $modelLabel = 'Kategori Kas';
     protected static ?string $pluralModelLabel = 'Kategori Kas';

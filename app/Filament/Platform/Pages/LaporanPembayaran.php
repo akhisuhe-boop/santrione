@@ -10,7 +10,7 @@ class LaporanPembayaran extends Page
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
     protected static ?string $navigationLabel = 'Laporan Pembayaran';
     protected static ?string $navigationGroup = 'Keuangan Qinara';
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 4;
     protected static ?string $title = 'Laporan Pembayaran Berhasil per Bulan';
 
     protected static string $view = 'filament.platform.pages.laporan-pembayaran';

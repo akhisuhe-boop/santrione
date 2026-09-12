@@ -22,7 +22,7 @@ class QinaraKasTransaksiResource extends BaseResource
     protected static ?string $model = QinaraKasTransaksi::class;
     protected static ?string $navigationLabel = 'Kas Masuk & Keluar';
     protected static ?string $navigationGroup = 'Keuangan Qinara';
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 3;
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
     protected static ?string $modelLabel = 'Transaksi Kas';
     protected static ?string $pluralModelLabel = 'Kas Masuk & Keluar';
