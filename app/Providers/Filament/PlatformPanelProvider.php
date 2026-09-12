@@ -111,6 +111,13 @@ class PlatformPanelProvider extends PanelProvider
 
                 NavigationGroup::make('e-Kantin')
                     ->icon('heroicon-o-shopping-bag'),
+
+                // DITAMBAHKAN -- pembukuan internal bisnis Qinara
+                // sendiri (kas masuk/keluar operasional Qinara),
+                // BUKAN kas sekolah/Yayasan client (itu sudah ada
+                // sendiri di panel tenant, model Kas).
+                NavigationGroup::make('Pembukuan Qinara')
+                    ->icon('heroicon-o-calculator'),
             ])
             ->colors([
                 'primary' => Color::hex('#00A39D'),
