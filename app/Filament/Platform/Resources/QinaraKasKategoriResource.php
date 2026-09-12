@@ -18,8 +18,8 @@ class QinaraKasKategoriResource extends BaseResource
 {
     protected static ?string $model = QinaraKasKategori::class;
     protected static ?string $navigationLabel = 'Kategori Kas';
-    protected static ?string $navigationGroup = 'Pembukuan Qinara';
-    protected static ?int $navigationSort = 1;
+    protected static ?string $navigationGroup = 'Keuangan Qinara';
+    protected static ?int $navigationSort = 3;
     protected static ?string $navigationIcon = 'heroicon-o-tag';
     protected static ?string $modelLabel = 'Kategori Kas';
     protected static ?string $pluralModelLabel = 'Kategori Kas';
@@ -37,22 +37,26 @@ class QinaraKasKategoriResource extends BaseResource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('nama')
-                ->required()
-                ->maxLength(255),
+            Forms\Components\Section::make('Kategori Kas')
+                ->schema([
+                    Forms\Components\TextInput::make('nama')
+                        ->required()
+                        ->maxLength(255),
 
-            Forms\Components\Select::make('tipe')
-                ->label('Tipe')
-                ->options([
-                    'masuk' => 'Kas Masuk (Pemasukan)',
-                    'keluar' => 'Kas Keluar (Pengeluaran)',
+                    Forms\Components\Select::make('tipe')
+                        ->label('Tipe')
+                        ->options([
+                            'masuk' => 'Kas Masuk (Pemasukan)',
+                            'keluar' => 'Kas Keluar (Pengeluaran)',
+                        ])
+                        ->required(),
+
+                    Forms\Components\Toggle::make('aktif')
+                        ->label('Aktif')
+                        ->default(true)
+                        ->helperText('Nonaktifkan kategori yang sudah tidak dipakai lagi (tanpa menghapus riwayat transaksi lama).'),
                 ])
-                ->required(),
-
-            Forms\Components\Toggle::make('aktif')
-                ->label('Aktif')
-                ->default(true)
-                ->helperText('Nonaktifkan kategori yang sudah tidak dipakai lagi (tanpa menghapus riwayat transaksi lama).'),
+                ->columns(2),
         ]);
     }
 

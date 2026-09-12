@@ -16,8 +16,8 @@ class LaporanLabaRugi extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-chart-bar';
     protected static ?string $navigationLabel = 'Laporan Laba Rugi';
-    protected static ?string $navigationGroup = 'Pembukuan Qinara';
-    protected static ?int $navigationSort = 3;
+    protected static ?string $navigationGroup = 'Keuangan Qinara';
+    protected static ?int $navigationSort = 5;
     protected static ?string $title = 'Laporan Laba Rugi Qinara';
 
     protected static string $view = 'filament.platform.pages.laporan-laba-rugi';

@@ -91,9 +91,11 @@ class PlatformPanelProvider extends PanelProvider
                 NavigationGroup::make('Billing & Harga')
                     ->icon('heroicon-o-currency-dollar'),
 
-                NavigationGroup::make('Pembayaran')
-                    ->icon('heroicon-o-banknotes'),
-
+                // DIUBAH -- 'Pembayaran' digabung jadi satu dengan
+                // 'Pembukuan Qinara' (skrg 'Keuangan Qinara') sesuai
+                // permintaan user: semua yang berkaitan dengan uang
+                // Qinara (pembayaran client masuk, kas internal)
+                // dikumpulkan di satu grup.
                 NavigationGroup::make('Komunikasi')
                     ->icon('heroicon-o-megaphone'),
 
@@ -112,11 +114,11 @@ class PlatformPanelProvider extends PanelProvider
                 NavigationGroup::make('e-Kantin')
                     ->icon('heroicon-o-shopping-bag'),
 
-                // DITAMBAHKAN -- pembukuan internal bisnis Qinara
-                // sendiri (kas masuk/keluar operasional Qinara),
-                // BUKAN kas sekolah/Yayasan client (itu sudah ada
-                // sendiri di panel tenant, model Kas).
-                NavigationGroup::make('Pembukuan Qinara')
+                // DIUBAH -- 'Pembukuan Qinara' -> 'Keuangan Qinara',
+                // dan sekarang jadi rumah bersama untuk Verifikasi/
+                // Laporan Pembayaran client (dulu grup 'Pembayaran'
+                // sendiri) + kas internal Qinara.
+                NavigationGroup::make('Keuangan Qinara')
                     ->icon('heroicon-o-calculator'),
             ])
             ->colors([

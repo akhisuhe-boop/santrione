@@ -18,6 +18,7 @@ class QinaraKasTransaksi extends Model
         'tanggal',
         'tipe',
         'kategori_id',
+        'subscription_payment_id',
         'nominal',
         'keterangan',
         'diinput_oleh_id',
@@ -36,5 +37,15 @@ class QinaraKasTransaksi extends Model
     public function diinputOleh()
     {
         return $this->belongsTo(User::class, 'diinput_oleh_id');
+    }
+
+    /**
+     * DITAMBAHKAN -- kalau terisi, transaksi ini tercatat OTOMATIS
+     * dari pembayaran client yang berhasil (lihat
+     * SubscriptionPaymentObserver), bukan input manual.
+     */
+    public function subscriptionPayment()
+    {
+        return $this->belongsTo(SubscriptionPayment::class, 'subscription_payment_id');
     }
 }

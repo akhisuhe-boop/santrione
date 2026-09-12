@@ -11,6 +11,8 @@ use Illuminate\Pagination\Paginator;
 use App\Http\Responses\LogoutResponse;
 use Filament\Http\Responses\Auth\Contracts\LogoutResponse as LogoutResponseContract;
 use Filament\Facades\Filament;
+use App\Models\SubscriptionPayment;
+use App\Observers\SubscriptionPaymentObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -24,6 +26,10 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // DITAMBAHKAN -- Kas Masuk otomatis dari pembayaran client
+        // yang berhasil (lihat SubscriptionPaymentObserver).
+        SubscriptionPayment::observe(SubscriptionPaymentObserver::class);
+
         if (Schema::hasTable('yayasans')) {
             // PENTING: pakai View::composer, BUKAN View::share.
             // View::share dieksekusi saat service provider boot -- SEBELUM
