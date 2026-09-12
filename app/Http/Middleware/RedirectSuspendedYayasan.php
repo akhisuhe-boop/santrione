@@ -59,6 +59,7 @@ class RedirectSuspendedYayasan
         // redirect atau nggak bisa logout sama sekali.
         $ruteBoleh = [
             'filament.admin.pages.langganan',
+            'filament.admin.pages.checkout-langganan',
             'filament.admin.auth.logout',
         ];
 
