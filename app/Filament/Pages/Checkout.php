@@ -210,7 +210,7 @@ class Checkout extends Page
 
     public function getModulOptions()
     {
-        return $this->modulOptionsCache ??= ModulePrice::aktif()->orderBy('urutan')->get();
+        return $this->modulOptionsCache ??= ModulePrice::aktif()->where('is_gratis', false)->orderBy('urutan')->get();
     }
 
     public function getLembagas()
@@ -220,46 +220,58 @@ class Checkout extends Page
             ->get();
     }
 
-    public function isModuleActive(int $lembagaId, int $modulePriceId): bool
+    /**
+     * DIUBAH -- modul sekarang level Yayasan, cukup cek Lembaga
+     * PERTAMA (semua Lembaga selalu tersinkron lewat toggleModule()
+     * di bawah + LembagaObserver untuk Lembaga baru).
+     */
+    public function isModuleActive(int $modulePriceId): bool
     {
-        foreach ($this->getLembagas() as $lembaga) {
-            if ($lembaga->id !== $lembagaId) {
-                continue;
-            }
+        $lembagaPertama = $this->getLembagas()->first();
 
-            foreach ($lembaga->modules as $lm) {
-                if ($lm->module_price_id === $modulePriceId && $lm->is_active) {
-                    return true;
-                }
-            }
+        if (! $lembagaPertama) {
+            return false;
         }
 
-        return false;
+        return $lembagaPertama->modules->contains(
+            fn ($lm) => $lm->module_price_id === $modulePriceId && $lm->is_active
+        );
     }
 
-    public function toggleModule(int $lembagaId, int $modulePriceId): void
+    /**
+     * DIUBAH -- toggle SEKARANG berlaku untuk SEMUA Lembaga se-Yayasan
+     * sekaligus (bukan cuma 1 Lembaga lagi), sesuai skema harga baru
+     * (aktivasi modul level Yayasan, bukan per-Lembaga).
+     */
+    public function toggleModule(int $modulePriceId): void
     {
-        $lembaga = $this->getYayasan()->lembagas()->findOrFail($lembagaId);
+        $mauAktif = ! $this->isModuleActive($modulePriceId);
 
-        $existing = $lembaga->modules()->where('module_price_id', $modulePriceId)->first();
+        foreach ($this->getYayasan()->lembagas as $lembaga) {
+            $existing = $lembaga->modules()->where('module_price_id', $modulePriceId)->first();
 
-        if ($existing && $existing->is_active) {
-            $existing->update(['is_active' => false, 'nonaktif_sejak' => now()]);
-
-            Notification::make()->title('Modul dinonaktifkan')->success()->send();
-        } elseif ($existing) {
-            $existing->update(['is_active' => true, 'aktif_sejak' => now(), 'nonaktif_sejak' => null]);
-
-            Notification::make()->title('Modul diaktifkan')->body('Otomatis masuk tagihan bulan berikutnya.')->success()->send();
-        } else {
-            $lembaga->modules()->create([
-                'module_price_id' => $modulePriceId,
-                'is_active' => true,
-                'aktif_sejak' => now(),
-            ]);
-
-            Notification::make()->title('Modul diaktifkan')->body('Otomatis masuk tagihan bulan berikutnya.')->success()->send();
+            if ($existing) {
+                $existing->update([
+                    'is_active' => $mauAktif,
+                    'aktif_sejak' => $mauAktif ? now() : $existing->aktif_sejak,
+                    'nonaktif_sejak' => $mauAktif ? null : now(),
+                ]);
+            } elseif ($mauAktif) {
+                $lembaga->modules()->create([
+                    'module_price_id' => $modulePriceId,
+                    'is_active' => true,
+                    'aktif_sejak' => now(),
+                ]);
+            }
         }
+
+        $this->lembagasCache = null;
+
+        Notification::make()
+            ->title($mauAktif ? 'Modul diaktifkan' : 'Modul dinonaktifkan')
+            ->body($mauAktif ? 'Berlaku untuk semua Lembaga, otomatis masuk tagihan bulan berikutnya.' : 'Berlaku untuk semua Lembaga.')
+            ->success()
+            ->send();
     }
 
     public function getSubscriptionAktif()

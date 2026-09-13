@@ -83,34 +83,29 @@
         </div>
     </x-filament::section>
 
-    {{-- MODUL AKTIF PER LEMBAGA (READ-ONLY) --}}
-    <x-filament::section heading="Modul Aktif per Lembaga" icon="heroicon-o-squares-2x2">
+    {{-- MODUL AKTIF (level Yayasan -- berlaku sama untuk semua Lembaga) --}}
+    <x-filament::section heading="Modul Aktif" icon="heroicon-o-squares-2x2">
         @if ($lembagas->isEmpty())
             <div class="text-center py-6 text-gray-400">Belum ada Lembaga.</div>
         @else
-            <div class="space-y-4">
-                @foreach ($lembagas as $lembaga)
-                    @php
-                        $modulAktif = $lembaga->modules->where('is_active', true);
-                    @endphp
-                    <div class="border-b border-gray-100 dark:border-gray-800 pb-3 last:border-0 last:pb-0">
-                        <div class="font-medium text-gray-900 dark:text-white mb-1">{{ $lembaga->nama }}</div>
-                        @if ($paketFullAktif)
-                            <div class="text-sm text-success-600 flex items-center gap-1">
-                                <x-heroicon-o-check-badge class="w-4 h-4" /> Semua modul aktif (Paket Full)
-                            </div>
-                        @elseif ($modulAktif->isEmpty())
-                            <div class="text-sm text-gray-400">Belum ada modul aktif.</div>
-                        @else
-                            <div class="flex flex-wrap gap-1.5">
-                                @foreach ($modulAktif as $lm)
-                                    <x-filament::badge color="gray">{{ $lm->modulePrice?->nama }}</x-filament::badge>
-                                @endforeach
-                            </div>
-                        @endif
-                    </div>
-                @endforeach
-            </div>
+            @php
+                $lembagaContoh = $lembagas->first();
+                $modulAktif = $lembagaContoh->modules->where('is_active', true);
+            @endphp
+            @if ($paketFullAktif)
+                <div class="text-sm text-success-600 flex items-center gap-1">
+                    <x-heroicon-o-check-badge class="w-4 h-4" /> Semua modul aktif (Paket Full)
+                </div>
+            @elseif ($modulAktif->isEmpty())
+                <div class="text-sm text-gray-400">Belum ada modul berbayar aktif.</div>
+            @else
+                <div class="flex flex-wrap gap-1.5">
+                    @foreach ($modulAktif as $lm)
+                        <x-filament::badge color="gray">{{ $lm->modulePrice?->nama }}</x-filament::badge>
+                    @endforeach
+                </div>
+            @endif
+            <p class="text-xs text-gray-400 mt-3">Berlaku untuk semua Lembaga: {{ $lembagas->pluck('nama')->implode(', ') }}.</p>
         @endif
     </x-filament::section>
 

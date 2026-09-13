@@ -2,210 +2,173 @@
 
 namespace App\Services;
 
+use App\Models\DiskonVolumeSiswa;
 use App\Models\Lembaga;
+use App\Models\ModulePrice;
 use App\Models\SubscriptionPlan;
 use App\Models\Yayasan;
 
 /**
- * Satu-satunya tempat rumus tagihan skema "Skema Pembiayaan Qinara
- * Apps" dihitung — Akses Platform + tambahan siswa/lembaga + modul
- * add-on, dengan diskon volume multi-lembaga.
+ * Satu-satunya tempat rumus tagihan dihitung.
  *
- * KENAPA SERVICE INI PENTING (bukan sekadar rapi kode): draft dokumen
- * penawaran sebelumnya sempat salah hitung total Yayasan multi-lembaga
- * karena angkanya disalin manual antar revisi tanpa dihitung ulang.
- * Selama TOTAL Yayasan SELALU dihasilkan dari array_sum() atas
- * subtotal per-Lembaga yang baru saja dihitung method ini sendiri
- * (bukan angka terpisah yang bisa "lupa disinkron"), kesalahan jenis
- * itu tidak mungkin terjadi lagi — lihat test
- * tests/Unit/TenantBillingCalculatorTest.php yang menjaga invarian ini.
+ * DIUBAH TOTAL (12 Sep 2026) -- skema harga per-Lembaga (kuota siswa
+ * per Lembaga, diskon bertingkat per-urutan-Lembaga) diganti skema
+ * per-YAYASAN yang jauh lebih sederhana, sesuai diskusi & ACC:
  *
- * PROMO PENDAFTARAN (baru): kalau Yayasan pernah daftar saat promo
- * landing page aktif (snapshot di Yayasan->promo_pendaftaran_*, lihat
- * PublicRegistrationController) dan BELUM PERNAH dipakai, promo itu
- * MENANG atas diskon tahunan untuk TEPAT SATU tagihan berikutnya
- * (siapa pun caller-nya -- generate-monthly-invoice, generate-annual-
- * invoice, atau bayarSekarang() manual). Method di sini HANYA
- * menghitung apakah promo itu akan berlaku -- yang MENANDAI promo
- * sebagai "terpakai" adalah tanggung jawab kode yang benar-benar
- * membuat baris Subscription (bukan di sini), supaya method hitung di
- * class ini tetap murni/tidak override) dan aman dipanggil berkali-kali
- * cuma untuk preview (halaman Langganan) tanpa efek samping.
+ *   rate per siswa = harga_dasar_per_siswa (SELALU, berapa pun modul
+ *                     aktif -- pengganti pendapatan modul gratis)
+ *                   + jumlah(harga_per_siswa tiap modul BERBAYAR yang
+ *                     aktif untuk Yayasan ini)
+ *
+ *   subtotal        = rate per siswa x TOTAL siswa se-Yayasan (semua
+ *                      Lembaga digabung, bukan dihitung per-Lembaga
+ *                      lalu dijumlah lagi)
+ *   - diskon volume (tabel DiskonVolumeSiswa, berdasar total siswa)
+ *   - diskon Paket Full (KHUSUS kalau plan-nya Paket Full, di atas
+ *     diskon volume)
+ *   - diskon tahunan / promo pendaftaran (LOGIKANYA TIDAK BERUBAH,
+ *     tetap saling eksklusif seperti sebelumnya -- lihat
+ *     hitungYayasanTahunan())
+ *
+ * PENTING -- modul TIDAK dihitung per-Lembaga lagi. Aktivasi modul
+ * disinkronkan ke SEMUA Lembaga se-Yayasan sekaligus (lihat
+ * Checkout::toggleModule() dan LembagaObserver), jadi "modul aktif
+ * untuk Yayasan" cukup dicek dari LEMBAGA MANA SAJA milik Yayasan itu
+ * (asumsikan semuanya tersinkron). Tabel/relasi `lembaga_modules`
+ * SENGAJA TIDAK DIUBAH STRUKTURNYA -- supaya 20+ tempat lain yang cek
+ * modul per-Lembaga (Jurnal Mengajar, Laporan Tahfidz, dst) tetap
+ * jalan tanpa disentuh.
+ *
+ * Tidak ada Yayasan yang bayar dengan skema lama saat perubahan ini
+ * dibuat, jadi tidak ada migrasi data/harga yang perlu dijaga
+ * kompatibel ke belakang.
  */
 class TenantBillingCalculator
 {
-    /** Lembaga 1 = 0% diskon, ke-2 & ke-3 = 20%, ke-4 dst = 35%. */
-    protected function diskonPersenUntukUrutan(int $urutanKe): int
+    protected function planAksesPlatform(): ?SubscriptionPlan
     {
-        return match (true) {
-            $urutanKe <= 1 => 0,
-            $urutanKe <= 3 => 20,
-            default => 35,
-        };
+        return SubscriptionPlan::where('slug', 'akses-platform')->first();
+    }
+
+    protected function planPaketFull(): ?SubscriptionPlan
+    {
+        return SubscriptionPlan::where('slug', 'paket-full')->first();
     }
 
     /**
-     * Ambil SubscriptionPlan yang berperan sebagai "Akses Platform"
-     * (basis biaya dasar) untuk sebuah Yayasan. Kalau Yayasan punya
-     * subscription plan aktif yang memang diisi harga_per_siswa_tambahan
-     * (menandakan plan itu memang plan gaya "Akses Platform"), pakai
-     * itu. Kalau tidak ada, fallback ke plan default is_active urutan
-     * pertama yang punya harga_per_siswa_tambahan terisi.
-     *
-     * @param  ?SubscriptionPlan  $planOverride  Kalau diisi, PAKSA pakai
-     *         plan ini (bukan subscription aktif Yayasan) -- dipakai
-     *         buat preview "kalau pindah ke plan X, berapa tagihannya"
-     *         SEBELUM plan itu benar-benar aktif (mis. hitung tagihan
-     *         Paket Full sebelum tenant bayar & benar-benar pindah plan).
+     * Total siswa SE-YAYASAN (semua Lembaga digabung) -- ini pengali
+     * tunggal di skema baru, ganti "jumlah siswa per Lembaga" yang
+     * dulu dihitung terpisah tiap Lembaga.
      */
-    protected function aksesPlatformPlan(Yayasan $yayasan, ?SubscriptionPlan $planOverride = null): ?SubscriptionPlan
+    public function totalSiswaYayasan(Yayasan $yayasan): int
     {
-        if ($planOverride) {
-            return $planOverride;
+        return $yayasan->lembagas()
+            ->get()
+            ->sum(fn (Lembaga $l) => $l->jumlah_siswa_billing ?? $l->jumlahSiswaAktif());
+    }
+
+    /**
+     * Modul BERBAYAR yang aktif untuk Yayasan ini -- dicek dari
+     * Lembaga MANA SAJA milik Yayasan (aktivasi disinkronkan ke semua
+     * Lembaga, lihat catatan class di atas). $paksaSemuaAktif dipakai
+     * untuk preview Paket Full (semua modul berbayar dianggap aktif,
+     * walau belum benar-benar disimpan).
+     *
+     * @return \Illuminate\Support\Collection<int, ModulePrice>
+     */
+    protected function modulBerbayarAktif(Yayasan $yayasan, bool $paksaSemuaAktif = false): \Illuminate\Support\Collection
+    {
+        $semuaModulBerbayar = ModulePrice::aktif()->where('is_gratis', false)->orderBy('urutan')->get();
+
+        if ($paksaSemuaAktif) {
+            return $semuaModulBerbayar;
         }
 
-        $subscription = $yayasan->activeSubscription();
+        $lembagaPertama = $yayasan->lembagas()->with('modules')->first();
 
-        if ($subscription?->plan?->harga_per_siswa_tambahan !== null) {
-            return $subscription->plan;
+        if (! $lembagaPertama) {
+            return collect();
         }
 
-        return SubscriptionPlan::where('is_active', true)
-            ->whereNotNull('harga_per_siswa_tambahan')
-            ->orderBy('urutan')
-            ->first();
+        $idAktif = $lembagaPertama->modules->where('is_active', true)->pluck('module_price_id');
+
+        return $semuaModulBerbayar->whereIn('id', $idAktif)->values();
     }
 
     /**
-     * Hitung tagihan 1 Lembaga untuk periode berjalan.
+     * Hitung tagihan BULANAN "murni" (belum ada diskon tahunan/promo)
+     * -- angka dasar yang dipakai ulang oleh hitungYayasan() dan
+     * hitungYayasanTahunan(), supaya keduanya selalu mulai dari titik
+     * yang sama persis.
      *
-     * Dipakai standalone (mis. preview harga di form admin sebelum
-     * menyimpan modul) maupun dipanggil berulang oleh hitungYayasan().
-     */
-    public function hitungLembaga(Lembaga $lembaga, ?SubscriptionPlan $planOverride = null): array
-    {
-        $yayasan = $lembaga->yayasan;
-        $plan = $this->aksesPlatformPlan($yayasan, $planOverride);
-
-        $jumlahSiswa = $lembaga->jumlah_siswa_billing ?? $lembaga->jumlahSiswaAktif();
-
-        $urutanKe = $lembaga->urutanBillingKe();
-
-        $kuotaLembaga = (int) ($plan->maks_lembaga ?? 1);
-        $hargaPerLembagaTambahan = (int) ($plan->harga_per_lembaga_tambahan ?? 0);
-        $lembagaDiDalamKuota = $urutanKe <= $kuotaLembaga;
-
-        // Lembaga di dalam kuota paket (biasanya lembaga ke-1) pakai harga
-        // dasar penuh. Lembaga DI LUAR kuota (ke-2 dst kalau maks_lembaga=1)
-        // pakai harga_per_lembaga_tambahan, BUKAN harga dasar penuh lagi --
-        // sebelumnya di sini selalu pakai harga dasar untuk SEMUA lembaga,
-        // sehingga harga_per_lembaga_tambahan tidak pernah terpakai sama
-        // sekali (bug ditemukan 24 Agustus 2026).
-        $hargaDasar = $lembagaDiDalamKuota
-            ? (int) ($plan->harga_bulanan ?? 0)
-            : $hargaPerLembagaTambahan;
-
-        $kuotaSiswa = (int) ($plan->maks_siswa ?? 100);
-        $hargaPerSiswaTambahan = (int) ($plan->harga_per_siswa_tambahan ?? 0);
-
-        $siswaTambahan = max(0, $jumlahSiswa - $kuotaSiswa);
-        $biayaSiswaTambahan = $siswaTambahan * $hargaPerSiswaTambahan;
-
-        $aksesPlatformSebelumDiskon = $hargaDasar + $biayaSiswaTambahan;
-
-        $diskonPersen = $this->diskonPersenUntukUrutan($urutanKe);
-        $aksesPlatformSetelahDiskon = (int) round($aksesPlatformSebelumDiskon * (1 - $diskonPersen / 100));
-
-        $modulAktif = $lembaga->activeModules()->get();
-        $termasukSemuaModul = (bool) ($plan->termasuk_semua_modul ?? false);
-
-        $rincianModul = $modulAktif->map(function ($lm) use ($termasukSemuaModul) {
-            $mp = $lm->modulePrice;
-
-            // Paket Full: modul sudah termasuk di harga Akses Platform
-            // di atas — jangan dihitung lagi di sini, atau nominalnya
-            // dobel. Tetap dicatat di rincian (harga=0, ditandai
-            // 'termasuk_paket_full') supaya invoice tetap menunjukkan modul
-            // apa saja yang aktif untuk Lembaga ini.
-            return [
-                'key' => $mp->key,
-                'nama' => $mp->nama,
-                'harga' => $termasukSemuaModul ? 0 : $mp->hargaTagihSekolah(),
-                'dibebankan_ke' => $mp->dibebankan_ke,
-                'termasuk_paket_full' => $termasukSemuaModul && ! $mp->is_gratis,
-            ];
-        })->values()->all();
-
-        $totalModul = array_sum(array_column($rincianModul, 'harga'));
-
-        $subtotal = $aksesPlatformSetelahDiskon + $totalModul;
-
-        return [
-            'lembaga_id' => $lembaga->id,
-            'lembaga_nama' => $lembaga->nama,
-            'jumlah_siswa' => $jumlahSiswa,
-            'urutan_ke' => $urutanKe,
-
-            // Rincian komponen Akses Platform, dipisah supaya tampilan
-            // (halaman Langganan) bisa tunjukkan baris per baris tanpa
-            // perlu hitung ulang aturan bisnisnya sendiri.
-            'lembaga_di_dalam_kuota' => $lembagaDiDalamKuota,
-            'harga_dasar' => $hargaDasar,
-            'kuota_siswa' => $kuotaSiswa,
-            'siswa_tambahan' => $siswaTambahan,
-            'harga_per_siswa_tambahan' => $hargaPerSiswaTambahan,
-            'biaya_siswa_tambahan' => $biayaSiswaTambahan,
-
-            'akses_platform_sebelum_diskon' => $aksesPlatformSebelumDiskon,
-            'diskon_persen' => $diskonPersen,
-            'akses_platform' => $aksesPlatformSetelahDiskon,
-            'modul' => $rincianModul,
-            'total_modul' => $totalModul,
-            'subtotal' => $subtotal,
-        ];
-    }
-
-    /**
-     * Hitung tagihan gabungan seluruh Lembaga dalam 1 Yayasan, TANPA
-     * diskon tahunan/promo apa pun -- angka dasar "murni" yang dipakai
-     * ulang oleh hitungYayasan() dan hitungYayasanTahunan() di bawah,
-     * supaya kedua-duanya selalu mulai dari titik yang sama persis.
+     * $planOverride diisi SubscriptionPlan Paket Full untuk preview
+     * "kalau ambil Paket Full, berapa tagihannya" SEBELUM benar-benar
+     * dipilih.
      */
     protected function hitungYayasanMurni(Yayasan $yayasan, ?SubscriptionPlan $planOverride = null): array
     {
-        $rincianLembaga = $yayasan->lembagas()
-            ->orderBy('id')
-            ->get()
-            ->map(function (Lembaga $lembaga) use ($yayasan, $planOverride) {
-                // setRelation() di sini PENTING -- tanpa ini,
-                // hitungLembaga() (lewat $lembaga->yayasan) akan
-                // LAZY-LOAD ulang Yayasan dari database untuk SETIAP
-                // Lembaga, padahal objek $yayasan yang sama sudah ada
-                // di tangan. Ditemukan sebagai salah satu penyebab 1
-                // render halaman Langganan sempat query >100 kali
-                // (7 Sep 2026).
-                $lembaga->setRelation('yayasan', $yayasan);
+        $iniPaketFull = (bool) ($planOverride?->termasuk_semua_modul ?? false);
 
-                return $this->hitungLembaga($lembaga, $planOverride);
-            })
-            ->values()
-            ->all();
+        $planDasar = $this->planAksesPlatform();
+        $hargaDasarPerSiswa = (int) ($planDasar->harga_dasar_per_siswa ?? 0);
 
-        $total = array_sum(array_column($rincianLembaga, 'subtotal'));
+        $modulAktif = $this->modulBerbayarAktif($yayasan, paksaSemuaAktif: $iniPaketFull);
+
+        $rincianModul = $modulAktif->map(fn (ModulePrice $mp) => [
+            'key' => $mp->key,
+            'nama' => $mp->nama,
+            'harga_per_siswa' => $mp->hargaTagihSekolah(),
+        ])->values()->all();
+
+        $totalRateModul = array_sum(array_column($rincianModul, 'harga_per_siswa'));
+        $ratePerSiswa = $hargaDasarPerSiswa + $totalRateModul;
+
+        $totalSiswa = $this->totalSiswaYayasan($yayasan);
+        $subtotalSebelumDiskon = $ratePerSiswa * $totalSiswa;
+
+        $diskonVolumePersen = DiskonVolumeSiswa::persenUntuk($totalSiswa);
+        $setelahDiskonVolume = (int) round($subtotalSebelumDiskon * (100 - $diskonVolumePersen) / 100);
+
+        $diskonPaketFullPersen = $iniPaketFull ? (int) ($planOverride->diskon_paket_full_persen ?? 0) : 0;
+        $total = $diskonPaketFullPersen > 0
+            ? (int) round($setelahDiskonVolume * (100 - $diskonPaketFullPersen) / 100)
+            : $setelahDiskonVolume;
+
+        // Modul GRATIS tetap ditampilkan di rincian (harga 0) supaya
+        // tenant tetap lihat modul apa saja yang mereka pakai, tapi
+        // tidak masuk hitungan sama sekali.
+        $modulGratis = ModulePrice::aktif()->where('is_gratis', true)->orderBy('urutan')->get()
+            ->map(fn (ModulePrice $mp) => [
+                'key' => $mp->key,
+                'nama' => $mp->nama,
+                'harga_per_siswa' => 0,
+            ])->values()->all();
 
         return [
             'yayasan_id' => $yayasan->id,
             'yayasan_nama' => $yayasan->nama,
-            'lembaga' => $rincianLembaga,
-            'total_siswa' => array_sum(array_column($rincianLembaga, 'jumlah_siswa')),
+            'total_siswa' => $totalSiswa,
+            'is_paket_full' => $iniPaketFull,
+
+            'harga_dasar_per_siswa' => $hargaDasarPerSiswa,
+            'rincian_modul' => $rincianModul,
+            'rincian_modul_gratis' => $modulGratis,
+            'rate_per_siswa' => $ratePerSiswa,
+
+            'subtotal_sebelum_diskon' => $subtotalSebelumDiskon,
+            'diskon_volume_persen' => $diskonVolumePersen,
+            'setelah_diskon_volume' => $setelahDiskonVolume,
+            'diskon_paket_full_persen' => $diskonPaketFullPersen,
+
             'total' => $total,
         ];
     }
 
     /**
-     * Hitung tagihan BULANAN gabungan seluruh Lembaga. Kalau Yayasan
-     * ini punya promo pendaftaran yang belum dipakai, diterapkan di
-     * sini (satu kali, ke tagihan bulanan berikutnya).
+     * Hitung tagihan BULANAN gabungan. Kalau Yayasan ini punya promo
+     * pendaftaran yang belum dipakai, diterapkan di sini (satu kali,
+     * ke tagihan bulanan berikutnya) -- LOGIKA TIDAK BERUBAH dari
+     * sebelumnya.
      */
     public function hitungYayasan(Yayasan $yayasan, ?SubscriptionPlan $planOverride = null): array
     {
@@ -225,22 +188,19 @@ class TenantBillingCalculator
     }
 
     /**
-     * Hitung tagihan TAHUNAN gabungan seluruh Lembaga dalam 1 Yayasan.
-     * Selalu turunan dari angka bulanan MURNI (belum ada diskon apa
-     * pun) x 12, baru salah SATU dari dua hal berikut diterapkan --
-     * TIDAK PERNAH DUA-DUANYA SEKALIGUS, supaya tidak ada diskon
-     * menumpuk di luar kendali:
+     * Hitung tagihan TAHUNAN gabungan. Selalu turunan dari angka
+     * bulanan MURNI x 12, baru salah SATU dari dua hal berikut
+     * diterapkan -- TIDAK PERNAH DUA-DUANYA SEKALIGUS (LOGIKA TIDAK
+     * BERUBAH dari sebelumnya):
      *
-     *  - Kalau ada promo pendaftaran yang belum dipakai -> promo itu
-     *    yang berlaku (diskon_tahunan_persen paket diabaikan untuk
-     *    tagihan pertama ini).
-     *  - Kalau tidak ada promo -> diskon_tahunan_persen paket yang
+     *  - Promo pendaftaran belum dipakai -> promo itu yang berlaku.
+     *  - Kalau tidak ada promo -> diskon_tahunan_persen plan yang
      *    berlaku seperti biasa.
      */
     public function hitungYayasanTahunan(Yayasan $yayasan, ?SubscriptionPlan $planOverride = null): array
     {
         $murni = $this->hitungYayasanMurni($yayasan, $planOverride);
-        $plan = $planOverride ?? $this->aksesPlatformPlan($yayasan);
+        $plan = $planOverride ?? $this->planAksesPlatform();
 
         $totalTahunanSebelumDiskon = $murni['total'] * 12;
         $promoPersen = $yayasan->promoPendaftaranBelumDipakai() ? (int) $yayasan->promo_pendaftaran_persen : 0;

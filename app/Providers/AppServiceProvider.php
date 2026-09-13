@@ -13,6 +13,8 @@ use Filament\Http\Responses\Auth\Contracts\LogoutResponse as LogoutResponseContr
 use Filament\Facades\Filament;
 use App\Models\SubscriptionPayment;
 use App\Observers\SubscriptionPaymentObserver;
+use App\Models\Lembaga;
+use App\Observers\LembagaObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -29,6 +31,10 @@ class AppServiceProvider extends ServiceProvider
         // DITAMBAHKAN -- Kas Masuk otomatis dari pembayaran client
         // yang berhasil (lihat SubscriptionPaymentObserver).
         SubscriptionPayment::observe(SubscriptionPaymentObserver::class);
+
+        // DITAMBAHKAN -- sinkronkan modul aktif ke Lembaga baru (lihat
+        // LembagaObserver).
+        Lembaga::observe(LembagaObserver::class);
 
         if (Schema::hasTable('yayasans')) {
             // PENTING: pakai View::composer, BUKAN View::share.

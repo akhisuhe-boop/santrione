@@ -73,15 +73,15 @@ class ModulePriceResource extends BaseResource
                             ->maxLength(255)
                             ->helperText('Nama yang muncul di invoice/rincian tagihan sekolah.'),
 
-                        Forms\Components\TextInput::make('harga_bulanan')
-                            ->label('Harga per Bulan')
+                        Forms\Components\TextInput::make('harga_per_siswa')
+                            ->label('Harga per Siswa / Bulan')
                             ->numeric()
                             ->mask(RawJs::make("\$money(\$input, ',', '.')"))
                             ->stripCharacters('.')
                             ->prefix('Rp')
                             ->required()
                             ->default(0)
-                            ->helperText('Untuk modul gratis (mis. Keuangan, e-Kantin), isi tetap dengan harga referensi "kalau bayar satu-satu" — nilai ini TIDAK ditagih ke sekolah kalau "Gratis untuk Sekolah" di bawah diaktifkan.'),
+                            ->helperText('Dikali jumlah siswa se-Yayasan. Untuk modul gratis (mis. Keuangan, e-Kantin), isi tetap dengan harga referensi "kalau bayar satu-satu" — nilai ini TIDAK ditagih ke sekolah kalau "Gratis untuk Sekolah" di bawah diaktifkan.'),
 
                         Forms\Components\Toggle::make('is_gratis')
                             ->label('Gratis untuk Sekolah')
@@ -123,8 +123,8 @@ class ModulePriceResource extends BaseResource
                     ->label('Modul')
                     ->searchable(),
 
-                Tables\Columns\TextColumn::make('harga_bulanan')
-                    ->label('Harga / Bulan')
+                Tables\Columns\TextColumn::make('harga_per_siswa')
+                    ->label('Harga / Siswa / Bulan')
                     ->formatStateUsing(fn ($state, $record) => $record->is_gratis
                         ? 'GRATIS'
                         : 'Rp ' . number_format($state, 0, ',', '.')),

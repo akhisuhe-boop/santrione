@@ -2,24 +2,30 @@
 
 namespace App\Filament\Resources\LembagaResource\RelationManagers;
 
-use App\Models\ModulePrice;
-use App\Services\TenantBillingCalculator;
-use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
- * Kelola modul add-on yang aktif untuk Lembaga ini (skema à la carte
- * — lihat dokumen "Skema Pembiayaan Qinara Apps" dan
- * App\Services\TenantBillingCalculator untuk rumus tagihannya).
+ * DIUBAH (12 Sep 2026, skema harga per-Yayasan) -- tab ini SEKARANG
+ * READ-ONLY. Sebelumnya di sini bisa toggle modul PER-LEMBAGA satu-
+ * satu + preview estimasi tagihan per-Lembaga (hitungLembaga()).
  *
- * Menonaktifkan modul TIDAK menghapus barisnya (beda dari CheckboxList
- * ->relationship() bawaan Filament yang detach = delete) — is_active
- * diset false + nonaktif_sejak dicatat, supaya riwayat modul apa saja
- * yang pernah dipakai Lembaga ini tetap tersimpan untuk audit/laporan.
+ * Kenapa dihapus: skema baru mengaktifkan modul di level YAYASAN
+ * (satu toggle di halaman Checkout otomatis berlaku ke SEMUA Lembaga
+ * se-Yayasan, lihat Checkout::toggleModule()). Membiarkan tab ini
+ * tetap bisa toggle per-Lembaga akan membuat data Lembaga-Lembaga
+ * dalam satu Yayasan bisa BERBEDA modul aktifnya lagi -- bertentangan
+ * dengan asumsi TenantBillingCalculator yang sekarang cuma mengecek
+ * Lembaga PERTAMA milik Yayasan (mengasumsikan semua Lembaga selalu
+ * tersinkron). hitungLembaga() sendiri juga sudah dihapus dari
+ * TenantBillingCalculator (diganti hitungYayasan()), jadi tombol
+ * "Lihat Estimasi" lama akan error kalau dibiarkan.
+ *
+ * Tabel & relasi `lembaga_modules` TIDAK diubah strukturnya -- tab
+ * ini cuma tampilan, kelola modul yang sebenarnya lewat halaman
+ * Checkout Langganan Yayasan.
  */
 class LembagaModulesRelationManager extends RelationManager
 {
@@ -27,54 +33,26 @@ class LembagaModulesRelationManager extends RelationManager
 
     protected static ?string $title = 'Modul Aktif';
 
-    // Siapa saja yang sudah bisa MEMBUKA halaman Edit Lembaga ini
-    // (sudah lolos permission Shield untuk resource Lembaga) juga
-    // boleh lihat & kelola tab ini -- BUKAN cuma Platform Admin lagi.
-    // Alasannya: mengaktifkan modul TIDAK memicu pembayaran terpisah
-    // saat itu juga -- biayanya otomatis masuk ke tagihan bulan
-    // berikutnya lewat subscription:generate-monthly-invoice, jadi
-    // aman diberikan ke Yayasan sendiri sebagai self-service, sama
-    // seperti mereka mengatur data Lembaga lainnya.
     public static function canViewForRecord($ownerRecord, string $pageClass): bool
     {
         return true;
-    }
-
-    public function form(Form $form): Form
-    {
-        return $form
-            ->schema([
-
-                Forms\Components\Select::make('module_price_id')
-                    ->label('Modul')
-                    ->options(
-                        ModulePrice::aktif()
-                            ->whereNotIn('id', $this->getOwnerRecord()->modules()->pluck('module_price_id'))
-                            ->orderBy('urutan')
-                            ->pluck('nama', 'id')
-                    )
-                    ->required()
-                    ->searchable()
-                    ->helperText('Cuma menampilkan modul yang belum pernah diaktifkan untuk Lembaga ini.'),
-
-            ]);
     }
 
     public function table(Table $table): Table
     {
         return $table
             ->recordTitleAttribute('id')
-            ->modifyQueryUsing(fn (Builder $query) => $query->with('modulePrice'))
+            ->modifyQueryUsing(fn (Builder $query) => $query->with('modulePrice')->where('is_active', true))
             ->columns([
 
                 Tables\Columns\TextColumn::make('modulePrice.nama')
                     ->label('Modul'),
 
-                Tables\Columns\TextColumn::make('modulePrice.harga_bulanan')
+                Tables\Columns\TextColumn::make('modulePrice.harga_per_siswa')
                     ->label('Harga')
                     ->formatStateUsing(fn ($state, $record) => $record->modulePrice->is_gratis
                         ? 'GRATIS (fee dari wali murid)'
-                        : 'Rp ' . number_format($state, 0, ',', '.') . '/bulan'),
+                        : 'Rp ' . number_format($state, 0, ',', '.') . '/siswa/bulan'),
 
                 Tables\Columns\TextColumn::make('modulePrice.dibebankan_ke')
                     ->label('Dibebankan ke')
@@ -82,72 +60,15 @@ class LembagaModulesRelationManager extends RelationManager
                     ->formatStateUsing(fn ($state) => $state === 'wali_murid' ? 'Wali Murid' : 'Sekolah')
                     ->color(fn ($state) => $state === 'wali_murid' ? 'warning' : 'gray'),
 
-                Tables\Columns\IconColumn::make('is_active')
-                    ->label('Aktif')
-                    ->boolean(),
-
                 Tables\Columns\TextColumn::make('aktif_sejak')
                     ->label('Aktif Sejak')
                     ->date('d M Y'),
 
             ])
-            ->headerActions([
-                Tables\Actions\CreateAction::make()
-                    ->label('Aktifkan Modul')
-                    ->modalDescription('Modul yang diaktifkan akan otomatis masuk ke tagihan bulan berikutnya — tidak perlu bayar terpisah sekarang. Cek dulu harganya di "Lihat Estimasi Tagihan" kalau perlu.')
-                    ->mutateFormDataUsing(function (array $data): array {
-                        $data['is_active'] = true;
-                        $data['aktif_sejak'] = now();
-
-                        return $data;
-                    }),
-
-                Tables\Actions\Action::make('lihatEstimasi')
-                    ->label('Lihat Estimasi Tagihan')
-                    ->icon('heroicon-o-calculator')
-                    ->color('gray')
-                    ->modalHeading('Estimasi Tagihan Lembaga Ini')
-                    ->modalSubmitAction(false)
-                    ->modalCancelActionLabel('Tutup')
-                    ->modalContent(function () {
-                        $lembaga = $this->getOwnerRecord();
-                        $hasil = app(TenantBillingCalculator::class)->hitungLembaga($lembaga->fresh());
-
-                        return view('filament.lembaga.estimasi-tagihan', ['hasil' => $hasil]);
-                    }),
-            ])
-            ->actions([
-
-                Tables\Actions\Action::make('nonaktifkan')
-                    ->label('Nonaktifkan')
-                    ->icon('heroicon-o-x-circle')
-                    ->color('danger')
-                    ->visible(fn ($record) => $record->is_active)
-                    ->requiresConfirmation()
-                    ->modalDescription('Modul ini tidak akan ditagih lagi bulan depan untuk Lembaga ini. Riwayat aktivasinya tetap tersimpan.')
-                    ->action(fn ($record) => $record->update([
-                        'is_active' => false,
-                        'nonaktif_sejak' => now(),
-                    ])),
-
-                Tables\Actions\Action::make('aktifkanKembali')
-                    ->label('Aktifkan Lagi')
-                    ->icon('heroicon-o-check-circle')
-                    ->color('success')
-                    ->visible(fn ($record) => ! $record->is_active)
-                    ->action(fn ($record) => $record->update([
-                        'is_active' => true,
-                        'aktif_sejak' => now(),
-                        'nonaktif_sejak' => null,
-                    ])),
-
-                Tables\Actions\DeleteAction::make()
-                    ->label('Hapus')
-                    ->requiresConfirmation()
-                    ->modalDescription('Menghapus baris ini permanen (beda dari "Nonaktifkan" yang tetap menyimpan riwayat). Gunakan hanya kalau modul ini salah tambah.'),
-
-            ])
+            ->headerActions([])
+            ->actions([])
+            ->bulkActions([])
             ->emptyStateHeading('Belum ada modul aktif')
-            ->emptyStateDescription('Klik "Aktifkan Modul" untuk mulai menambahkan modul add-on ke Lembaga ini.');
+            ->emptyStateDescription('Kelola modul untuk seluruh Yayasan lewat halaman Checkout Langganan (menu Langganan → Bayar / Kelola Langganan).');
     }
 }

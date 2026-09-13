@@ -138,6 +138,32 @@ class SubscriptionPaymentResource extends BaseResource
 
                         $yayasan->update(['status' => 'active']);
 
+                        // DITAMBAHKAN -- jalur webhook DOKU/Xendit sudah
+                        // lebih dulu menyalakan semua modul kalau plan-nya
+                        // Paket Full (termasuk_semua_modul), tapi jalur
+                        // verifikasi transfer manual ini TERLEWAT (celah
+                        // ditemukan 12 Sep 2026, saat transfer manual
+                        // disambung lagi). Disamakan di sini.
+                        if ($subscription->plan?->termasuk_semua_modul) {
+                            $modulSemua = \App\Models\ModulePrice::aktif()->get();
+
+                            foreach ($yayasan->lembagas as $lembaga) {
+                                foreach ($modulSemua as $mp) {
+                                    $existingModul = $lembaga->modules()->where('module_price_id', $mp->id)->first();
+
+                                    if ($existingModul) {
+                                        $existingModul->update(['is_active' => true, 'aktif_sejak' => now(), 'nonaktif_sejak' => null]);
+                                    } else {
+                                        $lembaga->modules()->create([
+                                            'module_price_id' => $mp->id,
+                                            'is_active' => true,
+                                            'aktif_sejak' => now(),
+                                        ]);
+                                    }
+                                }
+                            }
+                        }
+
                         if ($statusSebelumnya !== 'active') {
                             try {
                                 \App\Services\NotificationService::sendAplikasiAktif($yayasan);

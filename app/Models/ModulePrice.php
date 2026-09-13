@@ -10,7 +10,7 @@ class ModulePrice extends Model
     protected $fillable = [
         'key',
         'nama',
-        'harga_bulanan',
+        'harga_per_siswa',
         'dibebankan_ke',
         'is_gratis',
         'is_active',
@@ -36,13 +36,14 @@ class ModulePrice extends Model
     }
 
     /**
-     * Harga yang benar-benar ditagih ke sekolah — modul gratis (mis.
-     * Keuangan, e-Kantin) selalu Rp0 di sisi sekolah walau kolom
-     * harga_bulanan diisi (dipakai sebagai referensi "kalau bayar
-     * satu-satu" di ilustrasi/dokumen penawaran, bukan angka tagih).
+     * Harga PER SISWA yang benar-benar ditagih ke sekolah — modul
+     * gratis (mis. Keuangan, e-Kantin) selalu Rp0 di sisi sekolah
+     * walau kolom harga_per_siswa diisi (dipakai sebagai referensi
+     * "kalau bayar satu-satu" di ilustrasi/dokumen penawaran, bukan
+     * angka tagih).
      */
     public function hargaTagihSekolah(): int
     {
-        return $this->is_gratis ? 0 : (int) $this->harga_bulanan;
+        return $this->is_gratis ? 0 : (int) $this->harga_per_siswa;
     }
 }
