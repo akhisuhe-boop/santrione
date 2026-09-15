@@ -48,7 +48,8 @@ class LaporanAbsensiMapelSiswa extends Page implements HasTable, HasForms
 
     public static function canAccess(): bool
     {
-        return auth()->user()->can('page_LaporanAbsensiMapelSiswa');
+        return \App\Support\FeatureGate::tenantBolehLihatGrup(static::$navigationGroup)
+            && auth()->user()->can('page_LaporanAbsensiMapelSiswa');
     }
 
     public ?array $formData = [];

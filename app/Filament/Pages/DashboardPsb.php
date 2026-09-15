@@ -30,7 +30,8 @@ class DashboardPsb extends Page implements HasForms
 
     public static function canAccess(): bool
     {
-        return auth()->user()->can('page_DashboardPsb');
+        return \App\Support\FeatureGate::tenantBolehLihatGrup(static::$navigationGroup)
+            && auth()->user()->can('page_DashboardPsb');
     }
 
     public ?array $data = [];

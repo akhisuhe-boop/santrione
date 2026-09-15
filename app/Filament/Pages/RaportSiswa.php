@@ -28,7 +28,8 @@ class RaportSiswa extends Page implements Forms\Contracts\HasForms
 
     public static function canAccess(): bool
     {
-        return auth()->user()->can('page_RaportSiswa');
+        return \App\Support\FeatureGate::tenantBolehLihatGrup(static::$navigationGroup)
+            && auth()->user()->can('page_RaportSiswa');
     }
 
     /*

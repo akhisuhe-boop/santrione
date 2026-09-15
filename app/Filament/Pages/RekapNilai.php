@@ -22,7 +22,8 @@ class RekapNilai extends Page implements Forms\Contracts\HasForms
 
     public static function canAccess(): bool
     {
-        return auth()->user()->can('page_RekapNilai');
+        return \App\Support\FeatureGate::tenantBolehLihatGrup(static::$navigationGroup)
+            && auth()->user()->can('page_RekapNilai');
     }
     public ?array $data = [];
     public array $rekap = [];

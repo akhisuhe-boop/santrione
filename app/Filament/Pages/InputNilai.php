@@ -32,7 +32,8 @@ class InputNilai extends Page implements Forms\Contracts\HasForms
     
     public static function canAccess(): bool
     {
-        return auth()->user()->can('page_InputNilai');
+        return \App\Support\FeatureGate::tenantBolehLihatGrup(static::$navigationGroup)
+            && auth()->user()->can('page_InputNilai');
     }
 
     public ?array $data = [];

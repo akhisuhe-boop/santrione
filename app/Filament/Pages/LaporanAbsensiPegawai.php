@@ -45,7 +45,8 @@ class LaporanAbsensiPegawai extends Page implements HasTable, HasForms
 
     public static function canAccess(): bool
     {
-        return auth()->user()->can('page_LaporanAbsensiPegawai');
+        return \App\Support\FeatureGate::tenantBolehLihatGrup(static::$navigationGroup)
+            && auth()->user()->can('page_LaporanAbsensiPegawai');
     }
 
     public ?array $formData = [];

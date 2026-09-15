@@ -40,7 +40,8 @@ class PengaturanKurikulum extends Page implements HasForms, HasTable
 
     public static function canAccess(): bool
     {
-        return auth()->user()->can('page_PengaturanKurikulum');
+        return \App\Support\FeatureGate::tenantBolehLihatGrup(static::$navigationGroup)
+            && auth()->user()->can('page_PengaturanKurikulum');
     }
 
     public ?array $data = [];

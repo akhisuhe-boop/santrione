@@ -37,7 +37,8 @@ class LaporanKas extends Page implements HasForms, HasTable
     protected static string $view = 'filament.pages.laporan-kas';
     public static function canAccess(): bool
     {
-        return auth()->user()->can('page_LaporanKas');
+        return \App\Support\FeatureGate::tenantBolehLihatGrup(static::$navigationGroup)
+            && auth()->user()->can('page_LaporanKas');
     }
 
     public $dari;

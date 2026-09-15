@@ -92,4 +92,33 @@ class FeatureGate
     {
         return static::groupMap()[$group] ?? null;
     }
+
+    /**
+     * DITAMBAHKAN -- helper terpusat buat dipakai di canAccess()
+     * SEMUA Page kustom (bukan Resource) di tenant panel yang punya
+     * $navigationGroup terkunci fitur. Ditemukan 15 Sep 2026: 17 Page
+     * kustom (LaporanKas, DashboardPsb, RekapNilai, dst) cuma cek
+     * permission Shield (`can('page_XXX')`), SAMA SEKALI TIDAK cek
+     * status langganan/fitur seperti BaseResource -- jadi Yayasan
+     * suspended tetap bisa lihat & pakai semuanya. BaseResource TIDAK
+     * otomatis menaungi Page (beda hierarki class dari Resource), jadi
+     * tiap Page kustom harus panggil ini SENDIRI di canAccess()
+     * masing-masing.
+     */
+    public static function tenantBolehLihatGrup(?string $group): bool
+    {
+        if (auth()->user()?->is_platform_admin) {
+            return true;
+        }
+
+        $key = static::keyForNavigationGroup($group);
+
+        if ($key === null) {
+            return true;
+        }
+
+        $tenant = \Filament\Facades\Filament::getTenant();
+
+        return (bool) $tenant?->hasFeature($key);
+    }
 }

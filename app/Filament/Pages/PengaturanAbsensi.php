@@ -41,7 +41,8 @@ class PengaturanAbsensi extends Page implements HasForms, HasTable
 
     public static function canAccess(): bool
     {
-        return auth()->user()->can('page_PengaturanAbsensi');
+        return \App\Support\FeatureGate::tenantBolehLihatGrup(static::$navigationGroup)
+            && auth()->user()->can('page_PengaturanAbsensi');
     }
 
     public ?array $data = [];

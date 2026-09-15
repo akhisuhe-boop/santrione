@@ -28,7 +28,8 @@ class LaporanPembayaran extends Page implements HasForms
 
     public static function canAccess(): bool
     {
-        return auth()->user()->can('page_LaporanPembayaran');
+        return \App\Support\FeatureGate::tenantBolehLihatGrup(static::$navigationGroup)
+            && auth()->user()->can('page_LaporanPembayaran');
     }
 
     protected $paginationTheme = 'tailwind';

@@ -43,7 +43,8 @@ class PengaturanNotifikasi extends Page
             return true;
         }
 
-        return (bool) auth()->user()?->can('page_PengaturanNotifikasi');
+        return \App\Support\FeatureGate::tenantBolehLihatGrup(static::$navigationGroup)
+            && (bool) auth()->user()?->can('page_PengaturanNotifikasi');
     }
 
     protected static string $view = 'filament.pages.pengaturan-notifikasi';
