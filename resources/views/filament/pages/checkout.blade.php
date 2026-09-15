@@ -194,10 +194,40 @@
                 @endif
             @endif
 
+            @if (($estimasi['promo_kode_diskon_persen'] ?? 0) > 0)
+                <div class="flex justify-between gap-3 text-sm text-primary-600 mb-1">
+                    <span>Kode Promo "{{ $estimasi['promo_kode'] }}" ({{ $estimasi['promo_kode_diskon_persen'] }}%)</span>
+                    <span class="shrink-0">&minus; Rp {{ number_format($estimasi['total_sebelum_promo_kode'] - $estimasi['total'], 0, ',', '.') }}</span>
+                </div>
+            @endif
+
             <div class="flex justify-between items-center mt-2 pt-2 border-t border-primary-100 dark:border-primary-500/20">
                 <p class="text-sm font-medium text-primary-700 dark:text-primary-300">Total Tagihan / {{ $tahunanDipilih ? 'tahun' : 'bulan' }}</p>
                 <p class="text-2xl font-bold text-primary-600">Rp {{ number_format($estimasi['total'], 0, ',', '.') }}</p>
             </div>
+        </div>
+
+        {{-- KODE PROMO --}}
+        <div class="mt-4">
+            @if ($kodePromoDiterapkan)
+                <div class="flex items-center justify-between gap-3 rounded-xl border border-success-200 bg-success-50 dark:bg-success-500/10 px-4 py-3">
+                    <div class="flex items-center gap-2 text-sm text-success-700 dark:text-success-400">
+                        <x-heroicon-o-ticket class="w-4 h-4 shrink-0" />
+                        Kode <strong>{{ $kodePromoDiterapkan }}</strong> diterapkan
+                    </div>
+                    <button type="button" wire:click="hapusKodePromo" class="text-xs text-gray-400 hover:text-danger-600">Hapus</button>
+                </div>
+            @else
+                <div class="flex gap-2">
+                    <input
+                        type="text"
+                        wire:model="kodePromo"
+                        placeholder="Punya kode promo?"
+                        class="fi-input flex-1 rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-sm uppercase"
+                    >
+                    <x-filament::button wire:click="terapkanKodePromo" color="gray" outlined>Terapkan</x-filament::button>
+                </div>
+            @endif
         </div>
     </x-filament::section>
 

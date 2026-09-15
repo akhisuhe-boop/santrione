@@ -3,6 +3,8 @@
 namespace App\Filament\Pages;
 
 use App\Models\ModulePrice;
+use App\Models\PromoKode;
+use App\Models\PromoKodePemakaian;
 use App\Models\Subscription;
 use App\Models\SubscriptionPlan;
 use App\Services\TenantBillingCalculator;
@@ -52,6 +54,15 @@ class Checkout extends Page
     // Sama seperti dulu di Langganan.php -- lihat catatan di sana soal
     // kenapa ini perlu (cegah transaksi DOKU dobel kalau diklik ulang).
     public ?string $pendingUrl = null;
+
+    // DITAMBAHKAN -- kode promo (diskon persen, diinput tenant sendiri
+    // di form ini). $kodePromo = teks yang sedang diketik di kotak
+    // input; $kodePromoDiterapkan = kode yang SUDAH divalidasi & aktif
+    // dipakai untuk hitung tagihan (baru terisi setelah klik
+    // "Terapkan" dan lolos validasi -- lihat terapkanKodePromo()).
+    public string $kodePromo = '';
+
+    public ?string $kodePromoDiterapkan = null;
 
     protected ?\Illuminate\Support\Collection $lembagasCache = null;
 
@@ -187,9 +198,11 @@ class Checkout extends Page
         $calculator = app(TenantBillingCalculator::class);
         $yayasan = $this->getYayasan();
 
-        return $this->isTahunanDipilih()
+        $hasil = $this->isTahunanDipilih()
             ? $calculator->hitungYayasanTahunan($yayasan)
             : $calculator->hitungYayasan($yayasan);
+
+        return $this->terapkanDiskonPromoKode($hasil);
     }
 
     public function getEstimasiPaketFull(): ?array
@@ -203,9 +216,110 @@ class Checkout extends Page
         $calculator = app(TenantBillingCalculator::class);
         $yayasan = $this->getYayasan();
 
-        return $this->isTahunanDipilih()
+        $hasil = $this->isTahunanDipilih()
             ? $calculator->hitungYayasanTahunan($yayasan, $planFull)
             : $calculator->hitungYayasan($yayasan, $planFull);
+
+        return $this->terapkanDiskonPromoKode($hasil);
+    }
+
+    /**
+     * DITAMBAHKAN -- terapkan diskon kode promo yang SEDANG aktif
+     * ($kodePromoDiterapkan) ke hasil kalkulator. Dipanggil dari
+     * getEstimasi()/getEstimasiPaketFull() (untuk tampilan) DAN dari
+     * bayarSekarang()/aktifkanPaketFull() (untuk angka yang benar-
+     * benar disimpan ke Subscription) -- SATU tempat, supaya angka
+     * yang tenant LIHAT selalu sama persis dengan yang DITAGIH.
+     */
+    protected function terapkanDiskonPromoKode(array $hasil): array
+    {
+        if (! $this->kodePromoDiterapkan) {
+            return $hasil;
+        }
+
+        $promo = PromoKode::where('kode', $this->kodePromoDiterapkan)->first();
+
+        // Kode sempat valid saat "Terapkan" diklik, tapi bisa saja
+        // berubah (dinonaktifkan admin, kedaluwarsa, dsb) di antara
+        // itu dan sekarang -- cek ulang, kalau sudah tidak valid,
+        // diam-diam lepas (jangan biarkan hitungan salah).
+        if (! $promo || $promo->alasanTidakValidUntuk($this->getYayasan())) {
+            $this->kodePromoDiterapkan = null;
+
+            return $hasil;
+        }
+
+        $totalSebelum = $hasil['total'];
+        $hasil['total'] = (int) round($totalSebelum * (100 - $promo->diskon_persen) / 100);
+        $hasil['promo_kode'] = $promo->kode;
+        $hasil['promo_kode_diskon_persen'] = $promo->diskon_persen;
+        $hasil['total_sebelum_promo_kode'] = $totalSebelum;
+
+        return $hasil;
+    }
+
+    public function terapkanKodePromo(): void
+    {
+        $kode = strtoupper(trim($this->kodePromo));
+
+        if ($kode === '') {
+            return;
+        }
+
+        $promo = PromoKode::where('kode', $kode)->first();
+
+        if (! $promo) {
+            Notification::make()->title('Kode promo tidak ditemukan')->danger()->send();
+
+            return;
+        }
+
+        $alasan = $promo->alasanTidakValidUntuk($this->getYayasan());
+
+        if ($alasan) {
+            Notification::make()->title('Kode promo tidak bisa dipakai')->body($alasan)->danger()->send();
+
+            return;
+        }
+
+        $this->kodePromoDiterapkan = $promo->kode;
+
+        Notification::make()
+            ->title('Kode promo diterapkan')
+            ->body("Diskon {$promo->diskon_persen}% sudah masuk ke tagihan.")
+            ->success()
+            ->send();
+    }
+
+    public function hapusKodePromo(): void
+    {
+        $this->kodePromoDiterapkan = null;
+        $this->kodePromo = '';
+    }
+
+    /**
+     * DITAMBAHKAN -- catat pemakaian kode promo (dipanggil SETELAH
+     * Subscription berhasil dibuat, dari bayarSekarang()/
+     * aktifkanPaketFull()) supaya batas pemakaian per-Yayasan
+     * terhitung dengan benar untuk pemakaian berikutnya.
+     */
+    protected function catatPemakaianPromoKode(Subscription $subscription): void
+    {
+        if (! $this->kodePromoDiterapkan) {
+            return;
+        }
+
+        $promo = PromoKode::where('kode', $this->kodePromoDiterapkan)->first();
+
+        if (! $promo) {
+            return;
+        }
+
+        PromoKodePemakaian::create([
+            'promo_kode_id' => $promo->id,
+            'yayasan_id' => $this->getYayasan()->id,
+            'subscription_id' => $subscription->id,
+        ]);
     }
 
     public function getModulOptions()
@@ -340,6 +454,7 @@ class Checkout extends Page
         $hasil = $tahunan
             ? $calculator->hitungYayasanTahunan($yayasan)
             : $calculator->hitungYayasan($yayasan);
+        $hasil = $this->terapkanDiskonPromoKode($hasil);
 
         $subscription = $yayasan->subscriptions()->create([
             'subscription_plan_id' => $plan->id,
@@ -351,6 +466,7 @@ class Checkout extends Page
         ]);
 
         $this->tandaiPromoTerpakai($yayasan, $hasil, 'bayarSekarang');
+        $this->catatPemakaianPromoKode($subscription);
 
         if ($this->metodePembayaran === 'manual') {
             $this->prosesManualDanNotify($subscription);
@@ -529,6 +645,7 @@ class Checkout extends Page
         $hasil = $tahunan
             ? $calculator->hitungYayasanTahunan($yayasan, $planFull)
             : $calculator->hitungYayasan($yayasan, $planFull);
+        $hasil = $this->terapkanDiskonPromoKode($hasil);
 
         if (! $this->isPaketFullAktif()) {
             $snapshot = [];
@@ -554,6 +671,7 @@ class Checkout extends Page
         ]);
 
         $this->tandaiPromoTerpakai($yayasan, $hasil, 'aktifkanPaketFull');
+        $this->catatPemakaianPromoKode($subscription);
 
         if ($this->metodePembayaran === 'manual') {
             $this->prosesManualDanNotify($subscription);
