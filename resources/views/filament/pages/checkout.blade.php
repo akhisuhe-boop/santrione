@@ -62,7 +62,7 @@
     @endif
 
     {{-- PILIH MODUL (kiri) + RINCIAN TAGIHAN (kanan) --}}
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
 
     {{-- PILIH MODUL --}}
     @if ($lembagas->isEmpty())
