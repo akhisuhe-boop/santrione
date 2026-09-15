@@ -1069,7 +1069,7 @@
                             @if($modul->is_gratis)
                                 <p class="text-xs font-semibold text-emerald-600 mt-0.5">Gratis</p>
                             @else
-                                <p class="text-xs font-semibold text-slate-500 mt-0.5">Rp{{ number_format($modul->harga_bulanan / 1000, 0) }}rb/bulan</p>
+                                <p class="text-xs font-semibold text-slate-500 mt-0.5">Rp{{ number_format($modul->harga_per_siswa / 1000, 0) }}rb/siswa/bulan</p>
                             @endif
                         </div>
                         <span class="relative inline-flex h-5 w-9 items-center rounded-full bg-slate-200 group-hover:bg-primary-200 transition-colors shrink-0" aria-hidden="true">

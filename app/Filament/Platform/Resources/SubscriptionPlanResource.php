@@ -57,29 +57,39 @@ class SubscriptionPlanResource extends BaseResource
                             ->required()
                             ->maxLength(255),
 
+                        Forms\Components\TextInput::make('harga_dasar_per_siswa')
+                            ->label('Harga Dasar per Siswa (Billing Aktual)')
+                            ->numeric()
+                            ->minValue(0)
+                            ->prefix('Rp')
+                            ->required()
+                            ->helperText('INI yang benar-benar dipakai hitung tagihan di Checkout (dikali total siswa se-Yayasan + harga tiap modul aktif). Cuma berlaku untuk plan dasar (mis. "Akses Platform") -- untuk Paket Full, field ini diabaikan, dasar tetap diambil dari plan "Akses Platform".')
+                            ->columnSpanFull(),
+
                         Forms\Components\TextInput::make('harga_bulanan')
-                            ->label('Harga per Bulan')
+                            ->label('Harga per Bulan (tampilan Landing Page)')
                             ->numeric()
                             ->mask(RawJs::make("\$money(\$input, ',', '.')"))
                             ->stripCharacters('.')
                             ->prefix('Rp')
-                            ->required(),
+                            ->required()
+                            ->helperText('Cuma buat harga yang dipajang di landing page publik (marketing) -- TIDAK dipakai hitung tagihan sungguhan lagi (lihat Harga Dasar per Siswa di atas).'),
 
                         Forms\Components\TextInput::make('harga_per_siswa_tambahan')
-                            ->label('Harga per Siswa Tambahan')
+                            ->label('Harga per Siswa Tambahan (Landing Page)')
                             ->numeric()
                             ->mask(RawJs::make("\$money(\$input, ',', '.')"))
                             ->stripCharacters('.')
                             ->prefix('Rp')
-                            ->helperText('Dikenakan untuk siswa di atas Maks. Siswa. Kosongkan kalau paket ini flat (tanpa biaya tambahan siswa).'),
+                            ->helperText('Cuma buat teks di landing page publik ("siswa tambahan +Rp.../siswa"). TIDAK dipakai hitung tagihan sungguhan.'),
 
                         Forms\Components\TextInput::make('harga_per_lembaga_tambahan')
-                            ->label('Harga per Lembaga Tambahan')
+                            ->label('Harga per Lembaga Tambahan (Landing Page)')
                             ->numeric()
                             ->mask(RawJs::make("\$money(\$input, ',', '.')"))
                             ->stripCharacters('.')
                             ->prefix('Rp')
-                            ->helperText('Dikenakan untuk lembaga di atas Maks. Lembaga.'),
+                            ->helperText('Cuma buat landing page publik. TIDAK dipakai hitung tagihan sungguhan.'),
 
                         Forms\Components\TextInput::make('diskon_tahunan_persen')
                             ->label('Diskon Kalau Bayar Tahunan')
@@ -155,8 +165,15 @@ class SubscriptionPlanResource extends BaseResource
                     ->label('Nama Paket')
                     ->searchable(),
 
+                Tables\Columns\TextColumn::make('harga_dasar_per_siswa')
+                    ->label('Harga Dasar/Siswa (Billing)')
+                    ->weight('bold')
+                    ->color('primary')
+                    ->formatStateUsing(fn ($state) => $state ? 'Rp ' . number_format($state, 0, ',', '.') : '—'),
+
                 Tables\Columns\TextColumn::make('harga_bulanan')
-                    ->label('Harga / Bulan')
+                    ->label('Harga / Bulan (Landing Page)')
+                    ->toggleable()
                     ->formatStateUsing(fn ($state) => 'Rp ' . number_format($state, 0, ',', '.')),
 
                 Tables\Columns\TextColumn::make('harga_per_siswa_tambahan')
