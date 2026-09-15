@@ -84,7 +84,7 @@
     </x-filament::section>
 
     {{-- MODUL AKTIF (level Yayasan -- berlaku sama untuk semua Lembaga) --}}
-    <x-filament::section heading="Modul Aktif" icon="heroicon-o-squares-2x2">
+    <x-filament::section :heading="$subAktif ? 'Modul Aktif' : 'Modul Dipilih'" icon="heroicon-o-squares-2x2">
         @if ($lembagas->isEmpty())
             <div class="text-center py-6 text-gray-400">Belum ada Lembaga.</div>
         @else
@@ -97,7 +97,7 @@
                     <x-heroicon-o-check-badge class="w-4 h-4" /> Semua modul aktif (Paket Full)
                 </div>
             @elseif ($modulAktif->isEmpty())
-                <div class="text-sm text-gray-400">Belum ada modul berbayar aktif.</div>
+                <div class="text-sm text-gray-400">Belum ada modul berbayar dipilih.</div>
             @else
                 <div class="flex flex-wrap gap-1.5">
                     @foreach ($modulAktif as $lm)
@@ -105,7 +105,14 @@
                     @endforeach
                 </div>
             @endif
-            <p class="text-xs text-gray-400 mt-3">Berlaku untuk semua Lembaga: {{ $lembagas->pluck('nama')->implode(', ') }}.</p>
+
+            @if (! $subAktif)
+                <p class="text-xs text-warning-600 mt-3 flex items-center gap-1">
+                    <x-heroicon-o-exclamation-triangle class="w-3.5 h-3.5 shrink-0" />
+                    Ini baru PILIHAN modul, belum bisa dipakai -- lengkapi pembayaran dulu di Checkout supaya benar-benar aktif.
+                </p>
+            @endif
+            <p class="text-xs text-gray-400 mt-1">Berlaku untuk semua Lembaga: {{ $lembagas->pluck('nama')->implode(', ') }}.</p>
         @endif
     </x-filament::section>
 
