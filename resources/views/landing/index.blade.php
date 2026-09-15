@@ -952,6 +952,43 @@
             };
         @endphp
 
+        @php
+            $modulIcons = [
+                'Keuangan (SPP & Tagihan)' => 'wallet',
+                'e-Kantin' => 'shopping-cart',
+                'Akademik' => 'book-open',
+                'Absensi' => 'calendar-check',
+                'PSB (Pendaftaran Siswa Baru)' => 'user-plus',
+                'Tahfidz' => 'book-marked',
+                'Perizinan' => 'door-open',
+                'Konseling' => 'heart-handshake',
+            ];
+        @endphp
+        @if($modulePrices->where('is_gratis', false)->isNotEmpty())
+        <div class="mt-10 max-w-3xl mx-auto">
+            <p class="text-center text-xs font-semibold text-slate-500 mb-3">Nyalakan modul yang Anda perlukan -- harga langsung dihitung ulang di kartu di bawah</p>
+            <div class="rounded-2xl border border-slate-200 bg-white shadow-sm p-4 md:p-5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    @foreach($modulePrices->where('is_gratis', false) as $modul)
+                    <label class="group flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/70 hover:bg-white hover:border-primary-300 transition-all duration-300 p-3 cursor-pointer">
+                        <div class="w-9 h-9 rounded-lg bg-white shadow-sm text-primary-600 flex items-center justify-center shrink-0">
+                            <i data-lucide="{{ $modulIcons[$modul->nama] ?? 'puzzle' }}" class="w-4 h-4"></i>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-sm font-semibold text-slate-800 truncate">{{ $modul->nama }}</p>
+                            <p class="text-xs text-slate-500 mt-0.5">Rp{{ number_format($modul->harga_per_siswa, 0, ',', '.') }}/siswa/bulan</p>
+                        </div>
+                        <input type="checkbox" class="kalkulator-modul-checkbox peer sr-only" value="{{ $modul->key }}">
+                        <span class="relative inline-flex h-5 w-9 items-center rounded-full bg-slate-200 peer-checked:bg-primary-500 transition-colors shrink-0" aria-hidden="true">
+                            <span class="inline-block h-3.5 w-3.5 translate-x-1 peer-checked:translate-x-4 rounded-full bg-white shadow transition-transform"></span>
+                        </span>
+                    </label>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+        @endif
+
         <div class="mt-12 pt-6 grid grid-cols-1 {{ $gridColsClass }} gap-8 max-w-6xl mx-auto items-stretch">
             @foreach($orderedPlans as $plan)
             <div class="reveal-on-scroll relative {{ $plan->termasuk_semua_modul ? 'md:-translate-y-2 bg-gradient-to-b from-slate-900 to-slate-950 text-white rounded-3xl shadow-2xl ring-2 ring-primary-500' : 'bg-white rounded-2xl border border-slate-200 shadow-[0_1px_3px_rgba(0,0,0,0.04)]' }} p-8 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:shadow-2xl cursor-default">
@@ -987,23 +1024,8 @@
                         <p class="price-monthly-equiv hidden text-xs {{ $plan->termasuk_semua_modul ? 'text-slate-400' : 'text-slate-500' }} mt-1"></p>
                     </div>
                     <p class="text-xs {{ $plan->termasuk_semua_modul ? 'text-slate-400' : 'text-slate-500' }} mt-2">
-                        Dihitung per siswa, mulai dari Rp{{ number_format($plan->harga_dasar_per_siswa ?? 0, 0, ',', '.') }}/siswa/bulan -- semakin banyak siswa & Lembaga, semakin hemat lewat diskon volume.
+                        Mulai dari Rp{{ number_format($plan->harga_dasar_per_siswa ?? 0, 0, ',', '.') }}/siswa/bulan.
                     </p>
-
-                    @if(! $plan->termasuk_semua_modul)
-                    <div class="kalkulator-modul-list mt-4 pt-4 border-t {{ $plan->termasuk_semua_modul ? 'border-white/10' : 'border-slate-100' }}">
-                        <p class="text-xs font-semibold {{ $plan->termasuk_semua_modul ? 'text-slate-300' : 'text-slate-500' }} mb-2">Tambah modul ke estimasi (opsional):</p>
-                        <div class="space-y-1.5 max-h-32 overflow-y-auto pr-1">
-                            @foreach($modulePrices->where('is_gratis', false) as $modul)
-                            <label class="flex items-center gap-2 text-xs {{ $plan->termasuk_semua_modul ? 'text-slate-300' : 'text-slate-600' }} cursor-pointer">
-                                <input type="checkbox" class="kalkulator-modul-checkbox rounded text-primary-600 focus:ring-primary-400" value="{{ $modul->key }}">
-                                {{ $modul->nama }}
-                                <span class="text-slate-400">(+Rp{{ number_format($modul->harga_per_siswa, 0, ',', '.') }}/siswa)</span>
-                            </label>
-                            @endforeach
-                        </div>
-                    </div>
-                    @endif
 
                     <div class="mt-6 h-px w-full {{ $plan->termasuk_semua_modul ? 'bg-white/10' : 'bg-slate-100' }}"></div>
 
@@ -1048,57 +1070,6 @@
             @endforeach
         </div>
 
-        @if($modulePrices->isNotEmpty())
-        @php
-            $modulIcons = [
-                'Keuangan (SPP & Tagihan)' => 'wallet',
-                'e-Kantin' => 'shopping-cart',
-                'Akademik' => 'book-open',
-                'Absensi' => 'calendar-check',
-                'PSB (Pendaftaran Siswa Baru)' => 'user-plus',
-                'Tahfidz' => 'book-marked',
-                'Perizinan' => 'door-open',
-                'Konseling' => 'heart-handshake',
-            ];
-        @endphp
-        <div class="mt-16 max-w-5xl mx-auto">
-            <div class="text-center max-w-xl mx-auto mb-8">
-                <span class="text-xs font-bold tracking-wider text-primary-500 bg-primary-50 px-3.5 py-1.5 rounded-full border border-primary-100">Modul Tambahan</span>
-                <h3 class="mt-4 text-2xl font-bold text-slate-900">Lengkapi Sesuai Kebutuhan</h3>
-                <p class="mt-2 text-sm text-slate-500">Aktifkan satu-satu kapan saja dari halaman Langganan, tanpa terikat paket.</p>
-            </div>
-
-            <div class="rounded-3xl border border-slate-200 bg-white shadow-xl p-5 md:p-7">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    @foreach($modulePrices as $modul)
-                    <div class="group flex items-center gap-4 rounded-2xl border border-slate-100 bg-slate-50/70 hover:bg-white hover:border-primary-300 hover:shadow-md transition-all duration-300 p-4">
-                        <div class="w-11 h-11 rounded-xl bg-white shadow-sm text-primary-600 flex items-center justify-center shrink-0 group-hover:bg-primary-500 group-hover:text-white transition-all duration-300">
-                            <i data-lucide="{{ $modulIcons[$modul->nama] ?? 'puzzle' }}" class="w-5 h-5"></i>
-                        </div>
-                        <div class="min-w-0 flex-1">
-                            <p class="text-sm font-semibold text-slate-800 truncate">{{ $modul->nama }}</p>
-                            @if($modul->is_gratis)
-                                <p class="text-xs font-semibold text-emerald-600 mt-0.5">Gratis</p>
-                            @else
-                                <p class="text-xs font-semibold text-slate-500 mt-0.5">Rp{{ number_format($modul->harga_per_siswa / 1000, 0) }}rb/siswa/bulan</p>
-                            @endif
-                        </div>
-                        <span class="relative inline-flex h-5 w-9 items-center rounded-full bg-slate-200 group-hover:bg-primary-200 transition-colors shrink-0" aria-hidden="true">
-                            <span class="inline-block h-3.5 w-3.5 translate-x-1 rounded-full bg-white shadow transition-transform group-hover:translate-x-4"></span>
-                        </span>
-                    </div>
-                    @endforeach
-                </div>
-
-                <div class="mt-6 text-center">
-                    <a href="javascript:void(0)" onclick="jadwalkanDemo()" class="inline-flex items-center justify-center gap-2 rounded-full bg-primary-500 text-white hover:bg-primary-600 transition-all duration-300 text-sm font-bold py-3 px-8 shadow-md hover:shadow-lg">
-                        Jadwalkan Demo Gratis
-                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                    </a>
-                </div>
-            </div>
-        </div>
-        @endif
     </div>
 </section>
 
@@ -1602,10 +1573,12 @@
         }
 
         function modulTercentangUntuk(block) {
-            // Checklist modul ada di LUAR .price-block (di bawahnya,
-            // dalam kartu paket yang sama) -- naik ke induk kartu dulu.
-            const kartu = block.closest('.reveal-on-scroll') || block.parentElement;
-            const checkboxes = kartu?.querySelectorAll('.kalkulator-modul-checkbox:checked') || [];
+            // Toggle modul sekarang di 1 section BERSAMA di atas kartu
+            // harga (bukan di dalam masing-masing kartu lagi) -- cukup
+            // ambil semua yang tercentang, berlaku sama untuk kartu
+            // mana pun yang bukan Paket Full (Paket Full sendiri
+            // mengabaikan parameter ini, selalu paket_full=1 di server).
+            const checkboxes = document.querySelectorAll('.kalkulator-modul-checkbox:checked');
             return Array.from(checkboxes).map((cb) => cb.value);
         }
 
