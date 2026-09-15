@@ -57,10 +57,23 @@ class RedirectSuspendedYayasan
         // Rute yang selalu boleh diakses walau tidak punya akses -- kalau
         // TIDAK di-allowlist di sini, user akan terjebak loop
         // redirect atau nggak bisa logout sama sekali.
+        //
+        // DITAMBAHKAN (resources.lembagas.*) -- Yayasan yang trial-nya
+        // habis TAPI belum punya Lembaga sama sekali kejebak buntu:
+        // Checkout tidak bisa hitung tagihan apa pun tanpa Lembaga
+        // (total selalu Rp0), tapi tombol "Buat Lembaga" di Checkout
+        // itu navigasi ke halaman PENUH (bukan wire:click), jadi kena
+        // redirect balik oleh middleware ini kalau tidak di-allowlist.
+        // Membiarkan CRUD Lembaga (bukan modul/fitur lain) tetap bisa
+        // diakses saat suspended itu aman -- cuma data setup dasar,
+        // bukan fitur berbayar.
         $ruteBoleh = [
             'filament.admin.pages.langganan',
             'filament.admin.pages.checkout-langganan',
             'filament.admin.auth.logout',
+            'filament.admin.resources.lembagas.index',
+            'filament.admin.resources.lembagas.create',
+            'filament.admin.resources.lembagas.edit',
         ];
 
         if ($request->route() && in_array($request->route()->getName(), $ruteBoleh, true)) {
