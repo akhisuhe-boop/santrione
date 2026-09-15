@@ -59,12 +59,38 @@ class TenantBillingCalculator
      * Total siswa SE-YAYASAN (semua Lembaga digabung) -- ini pengali
      * tunggal di skema baru, ganti "jumlah siswa per Lembaga" yang
      * dulu dihitung terpisah tiap Lembaga.
+     *
+     * DIOPTIMASI (15 Sep 2026) -- versi sebelumnya panggil
+     * jumlahSiswaAktif() di dalam loop, yang menjalankan 1 query
+     * COUNT terpisah PER LEMBAGA (N+1). Untuk Yayasan dengan banyak
+     * Lembaga, itu bisa jadi puluhan query cuma buat 1 halaman
+     * Checkout. Sekarang: kumpulkan dulu Lembaga mana yang punya
+     * jumlah_siswa_billing manual, sisanya (yang belum diisi manual)
+     * dihitung SEKALIGUS lewat 1 query gabungan -- jadi maksimal 2
+     * query total, bukan 1+N.
      */
     public function totalSiswaYayasan(Yayasan $yayasan): int
     {
-        return $yayasan->lembagas()
-            ->get()
-            ->sum(fn (Lembaga $l) => $l->jumlah_siswa_billing ?? $l->jumlahSiswaAktif());
+        $lembagas = $yayasan->lembagas()->get(['id', 'jumlah_siswa_billing']);
+
+        $total = 0;
+        $idPerluHitung = [];
+
+        foreach ($lembagas as $l) {
+            if ($l->jumlah_siswa_billing !== null) {
+                $total += (int) $l->jumlah_siswa_billing;
+            } else {
+                $idPerluHitung[] = $l->id;
+            }
+        }
+
+        if (! empty($idPerluHitung)) {
+            $total += \App\Models\Siswa::whereIn('lembaga_id', $idPerluHitung)
+                ->where('status_siswa', 'Aktif')
+                ->count();
+        }
+
+        return $total;
     }
 
     /**
