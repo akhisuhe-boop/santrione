@@ -987,11 +987,7 @@
                         <p class="price-monthly-equiv hidden text-xs {{ $plan->termasuk_semua_modul ? 'text-slate-400' : 'text-slate-500' }} mt-1"></p>
                     </div>
                     <p class="text-xs {{ $plan->termasuk_semua_modul ? 'text-slate-400' : 'text-slate-500' }} mt-2">
-                        Termasuk {{ $plan->maks_siswa ?? 'tanpa batas' }} siswa
-                        @if($plan->maks_lembaga) & {{ $plan->maks_lembaga }} lembaga @endif.
-                        @if($plan->harga_per_siswa_tambahan)
-                            Siswa tambahan +Rp{{ number_format($plan->harga_per_siswa_tambahan, 0, ',', '.') }}/siswa.
-                        @endif
+                        Dihitung per siswa, mulai dari Rp{{ number_format($plan->harga_dasar_per_siswa ?? 0, 0, ',', '.') }}/siswa/bulan -- semakin banyak siswa & Lembaga, semakin hemat lewat diskon volume.
                     </p>
 
                     <div class="mt-6 h-px w-full {{ $plan->termasuk_semua_modul ? 'bg-white/10' : 'bg-slate-100' }}"></div>

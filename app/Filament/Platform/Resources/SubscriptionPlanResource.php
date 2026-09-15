@@ -75,22 +75,6 @@ class SubscriptionPlanResource extends BaseResource
                             ->required()
                             ->helperText('Cuma buat harga yang dipajang di landing page publik (marketing) -- TIDAK dipakai hitung tagihan sungguhan lagi (lihat Harga Dasar per Siswa di atas).'),
 
-                        Forms\Components\TextInput::make('harga_per_siswa_tambahan')
-                            ->label('Harga per Siswa Tambahan (Landing Page)')
-                            ->numeric()
-                            ->mask(RawJs::make("\$money(\$input, ',', '.')"))
-                            ->stripCharacters('.')
-                            ->prefix('Rp')
-                            ->helperText('Cuma buat teks di landing page publik ("siswa tambahan +Rp.../siswa"). TIDAK dipakai hitung tagihan sungguhan.'),
-
-                        Forms\Components\TextInput::make('harga_per_lembaga_tambahan')
-                            ->label('Harga per Lembaga Tambahan (Landing Page)')
-                            ->numeric()
-                            ->mask(RawJs::make("\$money(\$input, ',', '.')"))
-                            ->stripCharacters('.')
-                            ->prefix('Rp')
-                            ->helperText('Cuma buat landing page publik. TIDAK dipakai hitung tagihan sungguhan.'),
-
                         Forms\Components\TextInput::make('diskon_tahunan_persen')
                             ->label('Diskon Kalau Bayar Tahunan')
                             ->numeric()
@@ -100,16 +84,6 @@ class SubscriptionPlanResource extends BaseResource
                             ->default(0)
                             ->dehydrateStateUsing(fn ($state) => $state === null || $state === '' ? 0 : $state)
                             ->helperText('Diskon yang didapat Yayasan pemakai paket ini kalau bayar 1 tahun sekaligus (dihitung dari total 12 bulan). Kosongkan/0 = tidak ada diskon tahunan untuk paket ini.'),
-
-                        Forms\Components\TextInput::make('maks_lembaga')
-                            ->label('Maks. Lembaga')
-                            ->numeric()
-                            ->helperText('Kosongkan = tidak dibatasi'),
-
-                        Forms\Components\TextInput::make('maks_siswa')
-                            ->label('Maks. Siswa')
-                            ->numeric()
-                            ->helperText('Kosongkan = tidak dibatasi'),
 
                         Forms\Components\TextInput::make('urutan')
                             ->label('Urutan Tampil')
@@ -176,16 +150,6 @@ class SubscriptionPlanResource extends BaseResource
                     ->toggleable()
                     ->formatStateUsing(fn ($state) => 'Rp ' . number_format($state, 0, ',', '.')),
 
-                Tables\Columns\TextColumn::make('harga_per_siswa_tambahan')
-                    ->label('+Siswa')
-                    ->toggleable()
-                    ->formatStateUsing(fn ($state) => $state ? 'Rp ' . number_format($state, 0, ',', '.') : '—'),
-
-                Tables\Columns\TextColumn::make('harga_per_lembaga_tambahan')
-                    ->label('+Lembaga')
-                    ->toggleable()
-                    ->formatStateUsing(fn ($state) => $state ? 'Rp ' . number_format($state, 0, ',', '.') : '—'),
-
                 Tables\Columns\TextColumn::make('diskon_tahunan_persen')
                     ->label('Diskon Tahunan')
                     ->toggleable()
@@ -195,14 +159,6 @@ class SubscriptionPlanResource extends BaseResource
                     ->label('Diskon Full')
                     ->toggleable()
                     ->formatStateUsing(fn ($state) => $state > 0 ? $state . '%' : '—'),
-
-                Tables\Columns\TextColumn::make('maks_lembaga')
-                    ->label('Maks. Lembaga')
-                    ->formatStateUsing(fn ($state) => $state ?? 'Tidak dibatasi'),
-
-                Tables\Columns\TextColumn::make('maks_siswa')
-                    ->label('Maks. Siswa')
-                    ->formatStateUsing(fn ($state) => $state ?? 'Tidak dibatasi'),
 
                 Tables\Columns\IconColumn::make('termasuk_semua_modul')
                     ->label('Full')
