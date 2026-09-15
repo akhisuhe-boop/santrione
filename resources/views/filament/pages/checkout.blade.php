@@ -61,6 +61,9 @@
         </x-filament::section>
     @endif
 
+    {{-- PILIH MODUL (kiri) + RINCIAN TAGIHAN (kanan) --}}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+
     {{-- PILIH MODUL --}}
     @if ($lembagas->isEmpty())
         <x-filament::section>
@@ -197,6 +200,8 @@
             </div>
         </div>
     </x-filament::section>
+
+    </div>
 
     {{-- PAKET FULL --}}
     @if (! $paketFullAktif)
