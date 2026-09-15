@@ -287,6 +287,25 @@ class Yayasan extends Model implements HasName
             return $this->isOnTrial();
         }
 
+        // DITAMBAHKAN -- Yayasan yang suspended TAPI belum punya
+        // Lembaga sama sekali kejebak buntu di level ini juga (beda
+        // dari perbaikan RedirectSuspendedYayasan sebelumnya, yang
+        // cuma menangani redirect middleware -- ini LEBIH DALAM,
+        // gerbang fitur per-menu yang otomatis nutup total begitu
+        // status != 'active'). Tanpa ini, tombol "Buat Lembaga" di
+        // Checkout tetap 403 walau rute-nya sudah di-allowlist,
+        // karena LembagaResource::canCreate() cek hasFeature() di
+        // sini, bukan cuma status middleware.
+        //
+        // Dibatasi KHUSUS key Master Data & KHUSUS saat 0 Lembaga --
+        // supaya cuma buka jalan setup dasar (Lembaga, dan resource
+        // Master Data lain yang mereka butuh untuk bootstrap), TIDAK
+        // membuka fitur berbayar lain (Akademik, Absensi, dst) yang
+        // memang seharusnya masih terkunci sampai mereka bayar.
+        if ($key === \App\Support\FeatureGate::MASTER_DATA && $this->lembagas()->count() === 0) {
+            return true;
+        }
+
         if ($this->status !== 'active') {
             return false;
         }

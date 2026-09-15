@@ -259,6 +259,12 @@
                     <span class="font-extrabold text-lg text-warning-600">Rp {{ number_format($estimasiPaketFull['total'], 0, ',', '.') }}</span>
                     <span class="text-gray-500">/ {{ $tahunanDipilih ? 'tahun' : 'bulan' }}</span>
                 </div>
+                @if ($kodePromoDiterapkan && ($estimasiPaketFull['promo_kode_diskon_persen'] ?? 0) > 0)
+                    <p class="text-xs text-primary-600 mt-1 flex items-center gap-1">
+                        <x-heroicon-o-ticket class="w-3.5 h-3.5" />
+                        Sudah termasuk kode promo "{{ $estimasiPaketFull['promo_kode'] }}" ({{ $estimasiPaketFull['promo_kode_diskon_persen'] }}%)
+                    </p>
+                @endif
             @endif
         </x-filament::section>
     @else
