@@ -114,7 +114,17 @@ class SubscriptionPlanResource extends BaseResource
                             ->label('Paket Full (semua modul termasuk)')
                             ->helperText('Kalau AKTIF: modul yang diaktifkan di Lembaga manapun yang pakai paket ini TIDAK ditagih terpisah (sudah termasuk harga di atas) — jangan aktifkan untuk paket biasa seperti Akses Platform.')
                             ->default(false)
+                            ->live()
                             ->columnSpanFull(),
+
+                        Forms\Components\TextInput::make('diskon_paket_full_persen')
+                            ->label('Diskon Paket Full (%)')
+                            ->numeric()
+                            ->minValue(0)
+                            ->maxValue(100)
+                            ->suffix('%')
+                            ->visible(fn (Forms\Get $get) => (bool) $get('termasuk_semua_modul'))
+                            ->helperText('Diskon EKSTRA (di atas diskon volume siswa) khusus buat Yayasan yang ambil Paket Full — dihitung dari harga dasar + semua modul, BUKAN harga flat terpisah. Kosongkan/0 = tidak ada diskon ekstra.'),
 
                         Forms\Components\CheckboxList::make('fitur')
                             ->label('Fitur Premium yang Dibuka')
@@ -161,6 +171,11 @@ class SubscriptionPlanResource extends BaseResource
 
                 Tables\Columns\TextColumn::make('diskon_tahunan_persen')
                     ->label('Diskon Tahunan')
+                    ->toggleable()
+                    ->formatStateUsing(fn ($state) => $state > 0 ? $state . '%' : '—'),
+
+                Tables\Columns\TextColumn::make('diskon_paket_full_persen')
+                    ->label('Diskon Full')
                     ->toggleable()
                     ->formatStateUsing(fn ($state) => $state > 0 ? $state . '%' : '—'),
 
