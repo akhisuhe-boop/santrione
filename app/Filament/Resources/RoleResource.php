@@ -13,6 +13,29 @@ class RoleResource extends BaseRoleResource
     }
 
     /**
+     * DITAMBAHKAN -- tetap terkunci saat Yayasan suspended. Resource
+     * ini extends BaseRoleResource (punya Filament Shield sendiri),
+     * BUKAN BaseResource kita -- jadi TIDAK PERNAH ikut kena gerbang
+     * FeatureGate/hasFeature() sama sekali sebelumnya, ditemukan
+     * 15 Sep 2026 (menu "Roles" tetap kelihatan & bisa dipakai penuh
+     * walau Yayasan suspended).
+     */
+    public static function canViewAny(): bool
+    {
+        if (auth()->user()?->is_platform_admin) {
+            return true;
+        }
+
+        $tenant = \Filament\Facades\Filament::getTenant();
+
+        if ($tenant && ! $tenant->hasAccess()) {
+            return false;
+        }
+
+        return parent::canViewAny();
+    }
+
+    /**
      * Kelompokkan permission PERSIS mengikuti struktur menu & sub-menu
      * yang tenant lihat sendiri di sidebar -- BUKAN lagi dikelompokkan
      * dari nama tabel/model database (revisi setelah masukan user: itu

@@ -18,6 +18,14 @@ class Dashboard extends BaseDashboard
             return true;
         }
 
+        // DITAMBAHKAN -- tetap terkunci saat Yayasan suspended, sama
+        // seperti Resource lain di luar Master Data.
+        $tenant = \Filament\Facades\Filament::getTenant();
+
+        if ($tenant && ! $tenant->hasAccess()) {
+            return false;
+        }
+
         return static::hasAnyDashboardPermission();
     }
 

@@ -24,6 +24,28 @@ class KelasResource extends BaseResource
     protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
     protected static ?int $navigationSort = 3;
 
+    /**
+     * DITAMBAHKAN -- tetap terkunci saat Yayasan suspended, BEDA dari
+     * Lembaga & Siswa (yang sengaja dibiarkan terbuka lewat bypass
+     * Master Data di Yayasan::hitungHasFeature(), supaya tenant bisa
+     * isi data itu untuk estimasi Checkout). Resource ini bukan
+     * kebutuhan bootstrap, jadi tetap ikut aturan normal.
+     */
+    public static function canViewAny(): bool
+    {
+        if (auth()->user()?->is_platform_admin) {
+            return true;
+        }
+
+        $tenant = \Filament\Facades\Filament::getTenant();
+
+        if ($tenant && ! $tenant->hasAccess()) {
+            return false;
+        }
+
+        return parent::canViewAny();
+    }
+
 public static function form(Form $form): Form
 {
     return $form
