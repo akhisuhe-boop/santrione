@@ -122,25 +122,22 @@ class TenantBillingCalculator
     }
 
     /**
-     * Hitung tagihan BULANAN "murni" (belum ada diskon tahunan/promo)
-     * -- angka dasar yang dipakai ulang oleh hitungYayasan() dan
-     * hitungYayasanTahunan(), supaya keduanya selalu mulai dari titik
-     * yang sama persis.
+     * Inti rumus (dipakai BERSAMA oleh hitungYayasanMurni() -- Yayasan
+     * asli, dari Checkout -- dan hitungEstimasiPublik() -- angka
+     * mentah, dari kalkulator landing page publik). SATU rumus, DUA
+     * pemakai, supaya angka yang tenant lihat di landing page
+     * DIJAMIN sama persis dengan yang muncul di Checkout untuk
+     * kombinasi siswa+modul yang sama -- tidak ada resiko dua rumus
+     * ini perlahan jadi beda kalau nanti diubah.
      *
-     * $planOverride diisi SubscriptionPlan Paket Full untuk preview
-     * "kalau ambil Paket Full, berapa tagihannya" SEBELUM benar-benar
-     * dipilih.
+     * @param  \Illuminate\Support\Collection<int, ModulePrice>  $modulAktifBerbayar
      */
-    protected function hitungYayasanMurni(Yayasan $yayasan, ?SubscriptionPlan $planOverride = null): array
+    protected function hitungInti(int $totalSiswa, \Illuminate\Support\Collection $modulAktifBerbayar, ?SubscriptionPlan $planOverride, bool $iniPaketFull): array
     {
-        $iniPaketFull = (bool) ($planOverride?->termasuk_semua_modul ?? false);
-
         $planDasar = $this->planAksesPlatform();
         $hargaDasarPerSiswa = (int) ($planDasar->harga_dasar_per_siswa ?? 0);
 
-        $modulAktif = $this->modulBerbayarAktif($yayasan, paksaSemuaAktif: $iniPaketFull);
-
-        $rincianModul = $modulAktif->map(fn (ModulePrice $mp) => [
+        $rincianModul = $modulAktifBerbayar->map(fn (ModulePrice $mp) => [
             'key' => $mp->key,
             'nama' => $mp->nama,
             'harga_per_siswa' => $mp->hargaTagihSekolah(),
@@ -149,7 +146,6 @@ class TenantBillingCalculator
         $totalRateModul = array_sum(array_column($rincianModul, 'harga_per_siswa'));
         $ratePerSiswa = $hargaDasarPerSiswa + $totalRateModul;
 
-        $totalSiswa = $this->totalSiswaYayasan($yayasan);
         $subtotalSebelumDiskon = $ratePerSiswa * $totalSiswa;
 
         $diskonVolumePersen = DiskonVolumeSiswa::persenUntuk($totalSiswa);
@@ -160,9 +156,6 @@ class TenantBillingCalculator
             ? (int) round($setelahDiskonVolume * (100 - $diskonPaketFullPersen) / 100)
             : $setelahDiskonVolume;
 
-        // Modul GRATIS tetap ditampilkan di rincian (harga 0) supaya
-        // tenant tetap lihat modul apa saja yang mereka pakai, tapi
-        // tidak masuk hitungan sama sekali.
         $modulGratis = ModulePrice::aktif()->where('is_gratis', true)->orderBy('urutan')->get()
             ->map(fn (ModulePrice $mp) => [
                 'key' => $mp->key,
@@ -171,8 +164,6 @@ class TenantBillingCalculator
             ])->values()->all();
 
         return [
-            'yayasan_id' => $yayasan->id,
-            'yayasan_nama' => $yayasan->nama,
             'total_siswa' => $totalSiswa,
             'is_paket_full' => $iniPaketFull,
 
@@ -188,6 +179,58 @@ class TenantBillingCalculator
 
             'total' => $total,
         ];
+    }
+
+    /**
+     * Hitung tagihan BULANAN "murni" (belum ada diskon tahunan/promo)
+     * -- angka dasar yang dipakai ulang oleh hitungYayasan() dan
+     * hitungYayasanTahunan(), supaya keduanya selalu mulai dari titik
+     * yang sama persis.
+     *
+     * $planOverride diisi SubscriptionPlan Paket Full untuk preview
+     * "kalau ambil Paket Full, berapa tagihannya" SEBELUM benar-benar
+     * dipilih.
+     */
+    protected function hitungYayasanMurni(Yayasan $yayasan, ?SubscriptionPlan $planOverride = null): array
+    {
+        $iniPaketFull = (bool) ($planOverride?->termasuk_semua_modul ?? false);
+        $modulAktif = $this->modulBerbayarAktif($yayasan, paksaSemuaAktif: $iniPaketFull);
+        $totalSiswa = $this->totalSiswaYayasan($yayasan);
+
+        $hasil = $this->hitungInti($totalSiswa, $modulAktif, $planOverride, $iniPaketFull);
+
+        return array_merge($hasil, [
+            'yayasan_id' => $yayasan->id,
+            'yayasan_nama' => $yayasan->nama,
+        ]);
+    }
+
+    /**
+     * DITAMBAHKAN -- versi PUBLIK (kalkulator interaktif di landing
+     * page), TANPA butuh akun/Yayasan sama sekali. Terima angka
+     * mentah dari pengunjung: total siswa yang mereka ketik, dan
+     * key modul mana saja yang mereka centang. Selalu bulanan --
+     * konversi ke tahunan (kalau perlu) dilakukan di sisi tampilan
+     * (JS), sama seperti kartu harga yang sudah ada, BUKAN dihitung
+     * ulang di sini -- supaya satu response bisa dipakai buat kedua
+     * mode tanpa panggil endpoint 2x.
+     *
+     * $paketFull true = anggap SEMUA modul berbayar aktif (parameter
+     * $modulKeys diabaikan), diskon Paket Full ikut diterapkan.
+     */
+    public function hitungEstimasiPublik(int $totalSiswa, array $modulKeys = [], bool $paketFull = false): array
+    {
+        $totalSiswa = max(0, $totalSiswa);
+
+        $semuaModulBerbayar = ModulePrice::aktif()->where('is_gratis', false)->orderBy('urutan')->get();
+
+        $modulAktif = $paketFull
+            ? $semuaModulBerbayar
+            : $semuaModulBerbayar->whereIn('key', $modulKeys)->values();
+
+        $planFull = $paketFull ? $this->planPaketFull() : null;
+
+        return $this->hitungInti($totalSiswa, $modulAktif, $planFull, $paketFull);
     }
 
     /**

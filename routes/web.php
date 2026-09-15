@@ -89,6 +89,10 @@ Route::get('/login', function () {
 Route::get('/daftar', [PublicRegistrationController::class, 'create'])->name('public.daftar');
 Route::post('/daftar', [PublicRegistrationController::class, 'store'])->name('public.daftar.store');
 
+// Kalkulator harga interaktif di landing page -- publik, tanpa login,
+// cuma hitung angka (tidak menyimpan/mengubah data apa pun).
+Route::post('/estimasi-harga', [\App\Http\Controllers\LandingCalculatorController::class, 'estimasi'])->name('public.estimasi-harga');
+
 // Webhook DOKU & Xendit (dipanggil server gateway, bukan browser user —
 // tidak pakai auth/CSRF, verifikasi lewat signature key di dalam
 // controller-nya sendiri).
@@ -187,7 +191,8 @@ Route::middleware(['auth'])->group(function () {
     // belakang MENTAH (hasil compose Intervention Image), tanpa lewat
     // DomPDF sama sekali. Berguna memastikan apakah masalah ada di
     // gambar itu sendiri, atau di cara DomPDF menampilkannya.
-    // DIHAPUS setelah selesai debugging (sudah tidak dipakai).
+    // BOLEH DIHAPUS setelah selesai debugging.
+    Route::get('/kartu/debug-belakang/{id}', [KartuController::class, 'debugKartuBelakang']);
 
     Route::get('/siswa/template', function () {
         return Excel::download(new SiswaTemplateExport, 'template-siswa.xlsx');

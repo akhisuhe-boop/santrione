@@ -918,6 +918,14 @@
                 </button>
             </div>
             <p class="text-xs text-slate-400">Hemat lebih banyak dengan pembayaran tahunan</p>
+
+            <div class="mt-3 max-w-[220px] w-full">
+                <label for="kalkulator-siswa" class="block text-xs font-semibold text-slate-500 mb-1.5 text-center">Jumlah siswa Anda (estimasi)</label>
+                <input
+                    type="number" id="kalkulator-siswa" min="0" step="1" value="100" placeholder="Contoh: 300"
+                    class="w-full text-center text-lg font-bold text-slate-900 border border-slate-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-primary-400 focus:border-primary-400 outline-none"
+                >
+            </div>
         </div>
 
         @php
@@ -964,18 +972,10 @@
                     <h3 class="text-2xl font-bold {{ $plan->termasuk_semua_modul ? 'text-white' : 'text-slate-900' }}">{{ $plan->nama }}</h3>
                     <p class="text-sm {{ $plan->termasuk_semua_modul ? 'text-slate-300' : 'text-slate-600' }} mt-2 leading-relaxed">{{ $plan->deskripsi }}</p>
 
-                    @php
-                        // Diskon tahunan sekarang dibaca LANGSUNG dari plan
-                        // asli ($plan->diskon_tahunan_persen di tabel
-                        // subscription_plans -- field yang sama dipakai
-                        // sistem billing sungguhan), BUKAN dari angka
-                        // global terpisah lagi. Jadi kalau admin ubah
-                        // diskon tahunan per paket di Billing & Harga,
-                        // landing page otomatis ikut berubah, tidak bisa
-                        // beda sendiri dari sistem asli.
-                        $hargaTahunanPerBulan = (int) round($plan->harga_bulanan * (100 - (int) ($plan->diskon_tahunan_persen ?? 0)) / 100);
-                    @endphp
-                    <div class="price-block mt-6" data-monthly="{{ (int) $plan->harga_bulanan }}" data-yearly="{{ $hargaTahunanPerBulan }}" data-promo-persen="{{ $setting->promoAdaDiskon() ? $setting->promo_persen : 0 }}">
+                    {{-- Harga sekarang dihitung LIVE lewat kalkulator interaktif
+                         (lihat script di bawah) -- angka awal di bawah cuma
+                         starting point sebelum JS jalan / kalau JS gagal. --}}
+                    <div class="price-block mt-6" data-plan-slug="{{ $plan->slug }}" data-paket-full="{{ $plan->termasuk_semua_modul ? '1' : '0' }}" data-diskon-tahunan="{{ (int) ($plan->diskon_tahunan_persen ?? 0) }}" data-promo-persen="{{ $setting->promoAdaDiskon() ? $setting->promo_persen : 0 }}">
                         <div class="price-strike text-sm line-through {{ $plan->termasuk_semua_modul ? 'text-slate-500' : 'text-slate-400' }} hidden mb-0.5"></div>
                         <div class="flex items-baseline gap-2 flex-wrap">
                             <span class="flex items-baseline">
@@ -989,6 +989,21 @@
                     <p class="text-xs {{ $plan->termasuk_semua_modul ? 'text-slate-400' : 'text-slate-500' }} mt-2">
                         Dihitung per siswa, mulai dari Rp{{ number_format($plan->harga_dasar_per_siswa ?? 0, 0, ',', '.') }}/siswa/bulan -- semakin banyak siswa & Lembaga, semakin hemat lewat diskon volume.
                     </p>
+
+                    @if(! $plan->termasuk_semua_modul)
+                    <div class="kalkulator-modul-list mt-4 pt-4 border-t {{ $plan->termasuk_semua_modul ? 'border-white/10' : 'border-slate-100' }}">
+                        <p class="text-xs font-semibold {{ $plan->termasuk_semua_modul ? 'text-slate-300' : 'text-slate-500' }} mb-2">Tambah modul ke estimasi (opsional):</p>
+                        <div class="space-y-1.5 max-h-32 overflow-y-auto pr-1">
+                            @foreach($modulePrices->where('is_gratis', false) as $modul)
+                            <label class="flex items-center gap-2 text-xs {{ $plan->termasuk_semua_modul ? 'text-slate-300' : 'text-slate-600' }} cursor-pointer">
+                                <input type="checkbox" class="kalkulator-modul-checkbox rounded text-primary-600 focus:ring-primary-400" value="{{ $modul->key }}">
+                                {{ $modul->nama }}
+                                <span class="text-slate-400">(+Rp{{ number_format($modul->harga_per_siswa, 0, ',', '.') }}/siswa)</span>
+                            </label>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
 
                     <div class="mt-6 h-px w-full {{ $plan->termasuk_semua_modul ? 'bg-white/10' : 'bg-slate-100' }}"></div>
 
@@ -1561,44 +1576,89 @@
         });
     })();
 
-    // Toggle Bulanan/Tahunan + Countdown Promo (Harga)
+    // Kalkulator Harga Interaktif (Bulanan/Tahunan + jumlah siswa +
+    // modul) + Countdown Promo
+    //
+    // DITAMBAHKAN (15 Sep 2026) -- render() sebelumnya cuma baca angka
+    // STATIS dari data-monthly/data-yearly di HTML (angka marketing
+    // flat). Sekarang render() manggil endpoint /estimasi-harga yang
+    // motor hitungnya SAMA PERSIS dengan Checkout sungguhan
+    // (TenantBillingCalculator::hitungEstimasiPublik()) -- supaya
+    // pengunjung tidak pernah kaget lihat angka beda begitu daftar &
+    // buka Checkout beneran.
     (function () {
         const btnBulanan = document.getElementById('toggle-bulanan');
         const btnTahunan = document.getElementById('toggle-tahunan');
         const priceBlocks = document.querySelectorAll('.price-block');
+        const siswaInput = document.getElementById('kalkulator-siswa');
         if (!priceBlocks.length) return;
 
         let cycle = 'bulanan';
         let promoActive = false;
+        let debounceTimer = null;
 
         function formatRupiah(n) {
-            return 'Rp ' + n.toLocaleString('id-ID');
+            return 'Rp ' + Math.round(n).toLocaleString('id-ID');
         }
 
-        function render() {
-            priceBlocks.forEach((block) => {
-                const monthly = parseInt(block.dataset.monthly, 10) || 0;
-                const yearly = parseInt(block.dataset.yearly, 10) || 0;
-                const promoPersen = parseInt(block.dataset.promoPersen, 10) || 0;
+        function modulTercentangUntuk(block) {
+            // Checklist modul ada di LUAR .price-block (di bawahnya,
+            // dalam kartu paket yang sama) -- naik ke induk kartu dulu.
+            const kartu = block.closest('.reveal-on-scroll') || block.parentElement;
+            const checkboxes = kartu?.querySelectorAll('.kalkulator-modul-checkbox:checked') || [];
+            return Array.from(checkboxes).map((cb) => cb.value);
+        }
 
-                // Langkah 1: tentukan basis PER BULAN dulu -- promo
-                // (kalau aktif) selalu menang atas diskon tahunan biasa,
-                // dipotong dari harga bulanan DASAR supaya tidak numpuk.
+        async function hitungSatuBlock(block) {
+            const siswa = Math.max(0, parseInt(siswaInput?.value, 10) || 0);
+            const paketFull = block.dataset.paketFull === '1';
+            const modul = paketFull ? [] : modulTercentangUntuk(block);
+
+            const params = new URLSearchParams();
+            params.set('siswa', siswa);
+            params.set('paket_full', paketFull ? '1' : '0');
+            modul.forEach((m) => params.append('modul[]', m));
+
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+
+            try {
+                const res = await fetch('{{ route('public.estimasi-harga') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRF-TOKEN': csrfToken || '',
+                        'Accept': 'application/json',
+                    },
+                    body: params.toString(),
+                });
+                if (!res.ok) throw new Error('estimasi gagal');
+                return await res.json();
+            } catch (e) {
+                return null;
+            }
+        }
+
+        async function render() {
+            for (const block of priceBlocks) {
+                const hasil = await hitungSatuBlock(block);
+                if (!hasil) continue; // gagal -- biarkan angka lama tetap tampil, jangan bikin blank
+
+                const monthly = hasil.total_bulanan;
+                const promoPersen = parseInt(block.dataset.promoPersen, 10) || 0;
+                const diskonTahunan = parseInt(block.dataset.diskonTahunan, 10) || 0;
+
                 let perBulan, persenHemat = 0;
 
                 if (promoActive && promoPersen > 0) {
                     perBulan = Math.round(monthly * (100 - promoPersen) / 100);
                     persenHemat = promoPersen;
-                } else if (cycle === 'tahunan' && monthly > 0) {
-                    perBulan = yearly;
-                    persenHemat = Math.round((1 - yearly / monthly) * 100);
+                } else if (cycle === 'tahunan' && diskonTahunan > 0) {
+                    perBulan = Math.round(monthly * (100 - diskonTahunan) / 100);
+                    persenHemat = diskonTahunan;
                 } else {
                     perBulan = monthly;
                 }
 
-                // Langkah 2: kalau mode Tahunan, tampilkan AKUMULASI total
-                // 12 bulan (bukan cuma angka per-bulan + keterangan) --
-                // apa pun basisnya (promo atau diskon tahunan biasa).
                 let final, strikeValue = null, savingsLabel = null, monthlyEquivText = null;
 
                 if (cycle === 'tahunan') {
@@ -1607,7 +1667,7 @@
                         strikeValue = monthly * 12;
                         savingsLabel = 'Hemat ' + persenHemat + '%';
                     }
-                    monthlyEquivText = 'Setara Rp ' + perBulan.toLocaleString('id-ID') + ' / bulan';
+                    monthlyEquivText = 'Setara Rp ' + Math.round(perBulan).toLocaleString('id-ID') + ' / bulan';
                 } else {
                     final = perBulan;
                     if (persenHemat > 0) {
@@ -1625,7 +1685,7 @@
                 valueEl.textContent = formatRupiah(final);
                 periodEl.textContent = cycle === 'tahunan' ? '/ tahun' : '/ bulan';
 
-                if (strikeValue && strikeValue !== final) {
+                if (strikeValue && Math.round(strikeValue) !== Math.round(final)) {
                     strikeEl.textContent = formatRupiah(strikeValue);
                     strikeEl.classList.remove('hidden');
                 } else {
@@ -1645,7 +1705,12 @@
                 } else {
                     monthlyEquivEl.classList.add('hidden');
                 }
-            });
+            }
+        }
+
+        function renderDebounced() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(render, 350);
         }
 
         btnBulanan?.addEventListener('click', () => {
@@ -1659,6 +1724,11 @@
             btnTahunan.classList.add('active');
             btnBulanan.classList.remove('active');
             render();
+        });
+
+        siswaInput?.addEventListener('input', renderDebounced);
+        document.querySelectorAll('.kalkulator-modul-checkbox').forEach((cb) => {
+            cb.addEventListener('change', renderDebounced);
         });
 
         // Countdown promo
