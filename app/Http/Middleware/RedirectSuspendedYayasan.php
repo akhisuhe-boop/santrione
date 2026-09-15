@@ -67,6 +67,16 @@ class RedirectSuspendedYayasan
         // Membiarkan CRUD Lembaga (bukan modul/fitur lain) tetap bisa
         // diakses saat suspended itu aman -- cuma data setup dasar,
         // bukan fitur berbayar.
+        // DITAMBAHKAN (Siswa, Kelas) -- celah yang sama seperti Lembaga:
+        // begitu Yayasan berhasil buat Lembaga pertamanya, mereka
+        // butuh isi data Siswa (supaya total siswa di Checkout tidak
+        // Rp0) dan mungkin Kelas -- rute-rute ini juga perlu
+        // di-allowlist, bukan cuma di FeatureGate (Yayasan::
+        // hitungHasFeature()) yang sudah dibuka duluan. Slug 'kelas'
+        // ditambah 2 kemungkinan (Filament bisa pluralkan jadi
+        // "kelas" atau "kelases" tergantung heuristik Laravel) --
+        // yang tidak ada sebagai rute nyata cuma tidak akan pernah
+        // cocok di in_array(), aman ditambahkan berjaga-jaga.
         $ruteBoleh = [
             'filament.admin.pages.langganan',
             'filament.admin.pages.checkout-langganan',
@@ -74,6 +84,15 @@ class RedirectSuspendedYayasan
             'filament.admin.resources.lembagas.index',
             'filament.admin.resources.lembagas.create',
             'filament.admin.resources.lembagas.edit',
+            'filament.admin.resources.siswas.index',
+            'filament.admin.resources.siswas.create',
+            'filament.admin.resources.siswas.edit',
+            'filament.admin.resources.kelas.index',
+            'filament.admin.resources.kelas.create',
+            'filament.admin.resources.kelas.edit',
+            'filament.admin.resources.kelases.index',
+            'filament.admin.resources.kelases.create',
+            'filament.admin.resources.kelases.edit',
         ];
 
         if ($request->route() && in_array($request->route()->getName(), $ruteBoleh, true)) {

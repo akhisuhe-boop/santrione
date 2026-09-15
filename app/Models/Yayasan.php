@@ -287,22 +287,24 @@ class Yayasan extends Model implements HasName
             return $this->isOnTrial();
         }
 
-        // DITAMBAHKAN -- Yayasan yang suspended TAPI belum punya
-        // Lembaga sama sekali kejebak buntu di level ini juga (beda
-        // dari perbaikan RedirectSuspendedYayasan sebelumnya, yang
-        // cuma menangani redirect middleware -- ini LEBIH DALAM,
-        // gerbang fitur per-menu yang otomatis nutup total begitu
-        // status != 'active'). Tanpa ini, tombol "Buat Lembaga" di
-        // Checkout tetap 403 walau rute-nya sudah di-allowlist,
-        // karena LembagaResource::canCreate() cek hasFeature() di
-        // sini, bukan cuma status middleware.
+        // DITAMBAHKAN -- Master Data (Lembaga, Siswa, Kelas, dst) TIDAK
+        // PERNAH dikunci status langganan, titik -- bukan cuma saat
+        // Lembaga masih 0 (syarat sebelumnya TERLALU SEMPIT: begitu
+        // Yayasan berhasil buat Lembaga pertamanya, syarat "count===0"
+        // langsung gagal lagi, jadi menu Siswa/Kelas -- satu grup yang
+        // SAMA, Master Data -- ikut kekunci lagi padahal mereka justru
+        // baru mau isi data siswa ke Lembaga yang baru dibuat itu).
         //
-        // Dibatasi KHUSUS key Master Data & KHUSUS saat 0 Lembaga --
-        // supaya cuma buka jalan setup dasar (Lembaga, dan resource
-        // Master Data lain yang mereka butuh untuk bootstrap), TIDAK
-        // membuka fitur berbayar lain (Akademik, Absensi, dst) yang
-        // memang seharusnya masih terkunci sampai mereka bayar.
-        if ($key === \App\Support\FeatureGate::MASTER_DATA && $this->lembagas()->count() === 0) {
+        // Alasan Master Data memang seharusnya SELALU terbuka: data di
+        // grup ini (Lembaga, Siswa, Kelas) itu justru INPUT yang
+        // dipakai menghitung tagihan di Checkout (total siswa
+        // se-Yayasan) -- Yayasan yang belum/tidak lagi bayar tetap
+        // perlu bisa mengisi data ini dengan benar supaya estimasi
+        // tagihan mereka akurat, bukan sekadar Rp0 karena datanya
+        // kosong. Fitur BERBAYAR sungguhan (Akademik, Absensi, dst)
+        // tetap terkunci seperti biasa lewat pengecekan di bawah ini
+        // -- HANYA Master Data yang dikecualikan.
+        if ($key === \App\Support\FeatureGate::MASTER_DATA) {
             return true;
         }
 
