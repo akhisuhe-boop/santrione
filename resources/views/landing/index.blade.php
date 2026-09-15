@@ -903,6 +903,18 @@
             $diskonUnggulan = $setting->promoAdaDiskon()
                 ? (int) $setting->promo_persen
                 : (int) ($subscriptionPlans->firstWhere('termasuk_semua_modul', true)?->diskon_tahunan_persen ?? 0);
+
+            // DITAMBAHKAN -- "harga dasar per siswa" yang BENERAN
+            // dipakai kalkulator itu SELALU dari plan "Akses Platform",
+            // apa pun plan yang lagi ditampilkan (lihat
+            // TenantBillingCalculator::hitungInti() -> planAksesPlatform()).
+            // Field harga_dasar_per_siswa di plan LAIN (mis. Paket Full)
+            // tidak pernah benar-benar dipakai buat hitung tagihan --
+            // jadi teks "Mulai dari Rp.../siswa" di SEMUA kartu harus
+            // pakai angka Akses Platform ini, BUKAN $plan->harga_dasar_per_siswa
+            // masing-masing (yang bisa beda angka & bikin bingung kalau
+            // field itu kebetulan diisi admin).
+            $hargaDasarAksesPlatform = (int) ($subscriptionPlans->firstWhere('slug', 'akses-platform')?->harga_dasar_per_siswa ?? 0);
         @endphp
 
         <div class="mt-8 flex flex-col items-center gap-3">
@@ -1024,7 +1036,7 @@
                         <p class="price-monthly-equiv hidden text-xs {{ $plan->termasuk_semua_modul ? 'text-slate-400' : 'text-slate-500' }} mt-1"></p>
                     </div>
                     <p class="text-xs {{ $plan->termasuk_semua_modul ? 'text-slate-400' : 'text-slate-500' }} mt-2">
-                        Mulai dari Rp{{ number_format($plan->harga_dasar_per_siswa ?? 0, 0, ',', '.') }}/siswa/bulan.
+                        Mulai dari Rp{{ number_format($hargaDasarAksesPlatform, 0, ',', '.') }}/siswa/bulan.
                     </p>
 
                     <div class="mt-6 h-px w-full {{ $plan->termasuk_semua_modul ? 'bg-white/10' : 'bg-slate-100' }}"></div>
