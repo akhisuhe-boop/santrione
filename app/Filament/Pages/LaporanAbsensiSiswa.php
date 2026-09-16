@@ -42,12 +42,23 @@ class LaporanAbsensiSiswa extends Page implements HasTable, HasForms
     protected static ?string $title =
         'Laporan Absensi Siswa';
 
-    protected static ?int $navigationSort = 8;
+    protected static ?int $navigationSort = 6;
 
     public static function canAccess(): bool
     {
         return \App\Support\FeatureGate::tenantBolehLihatGrup(static::$navigationGroup)
             && auth()->user()->can('page_LaporanAbsensiSiswa');
+    }
+
+    /**
+     * DITAMBAHKAN (16 Sep 2026) -- digantikan LaporanAbsensiKegiatan.php
+     * (gabungan Pegawai+Siswa 1 menu, 2 tab). Halaman ini SENGAJA
+     * TIDAK dihapus (biar ada jalan mundur cepat kalau ada yang
+     * kelewat pas digabung) -- cuma disembunyikan dari sidebar.
+     */
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
     }
 
     public ?array $formData = [];
