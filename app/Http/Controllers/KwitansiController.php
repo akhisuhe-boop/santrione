@@ -86,14 +86,10 @@ class KwitansiController extends Controller
         );
 
         return $pdf
-        // DIUBAH (16 Sep 2026) -- 560pt kepotong (isi lebih panjang
-        // dari itu), 1200pt kebalikannya (ruang kosong kepanjangan di
-        // bawah). 800pt dipilih berdasar proporsi isi kwitansi asli
-        // (kira-kira 60% tinggi versi 1200pt) -- pas buat isi standar
-        // (10 baris rincian + blok total + footer), masih ada sedikit
-        // ruang lebih buat Nama/Kelas yang kebetulan panjang & bikin
-        // baris terbungkus 2 baris.
-        ->setPaper([0, 0, 226.77, 800])
+        // DIUBAH (16 Sep 2026) -- 560pt kepotong, 1200pt & 800pt
+        // kelebihan ruang kosong. 670pt hasil penyesuaian langsung
+        // berdasar tampilan PDF asli.
+        ->setPaper([0, 0, 226.77, 670])
         ->stream('Kwitansi-'.$pembayaran->kode.'.pdf');
     
         // Kalau ingin tampil di browser, ganti menjadi:
