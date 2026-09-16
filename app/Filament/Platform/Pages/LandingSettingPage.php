@@ -73,6 +73,19 @@ class LandingSettingPage extends Page implements HasForms
                         Forms\Components\TextInput::make('x_url')->label('X (Twitter) URL'),
                     ])->columns(2),
 
+                Forms\Components\Section::make('Rekening Qinara (Transfer Manual)')
+                    ->description('Ditampilkan ke Yayasan saat mereka pilih metode "Transfer Manual" di Checkout, supaya tahu harus transfer ke mana.')
+                    ->schema([
+                        Forms\Components\TextInput::make('rekening_bank')
+                            ->label('Nama Bank')
+                            ->placeholder('mis. BCA'),
+                        Forms\Components\TextInput::make('rekening_nomor')
+                            ->label('Nomor Rekening'),
+                        Forms\Components\TextInput::make('rekening_nama_pemilik')
+                            ->label('Nama Pemilik Rekening')
+                            ->placeholder('mis. PT Pakar Digital Technology'),
+                    ])->columns(3),
+
                 Forms\Components\Section::make('Legalitas Badan Hukum')
                     ->description('Ditampilkan di kolom "Kontak Resmi" pada footer, supaya calon client lebih percaya. Isi hanya nomor yang sudah resmi terbit -- kosongkan yang belum ada, baris itu otomatis tidak ditampilkan.')
                     ->schema([

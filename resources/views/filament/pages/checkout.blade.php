@@ -312,6 +312,33 @@
             </div>
 
             @if ($metodePembayaran === 'manual')
+                @php $rekeningQinara = \App\Models\LandingSetting::current(); @endphp
+
+                @if ($rekeningQinara?->rekening_nomor)
+                    <div class="rounded-xl border border-primary-200 bg-primary-50 dark:bg-primary-500/10 p-4 mb-4">
+                        <p class="text-xs font-semibold text-primary-700 dark:text-primary-300 mb-2">Transfer ke rekening ini:</p>
+                        <div class="flex items-center justify-between gap-3">
+                            <div>
+                                <p class="text-sm font-bold text-gray-900 dark:text-white">{{ $rekeningQinara->rekening_bank }} — {{ $rekeningQinara->rekening_nomor }}</p>
+                                <p class="text-xs text-gray-500 mt-0.5">a.n. {{ $rekeningQinara->rekening_nama_pemilik }}</p>
+                            </div>
+                            <button
+                                type="button"
+                                x-data="{ copied: false }"
+                                @click="navigator.clipboard.writeText('{{ $rekeningQinara->rekening_nomor }}'); copied = true; setTimeout(() => copied = false, 2000)"
+                                class="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg border border-primary-300 text-primary-700 dark:text-primary-300 hover:bg-primary-100 dark:hover:bg-primary-500/20 transition-colors flex items-center gap-1"
+                            >
+                                <template x-if="!copied">
+                                    <span class="flex items-center gap-1"><x-heroicon-o-clipboard class="w-3.5 h-3.5" /> Salin</span>
+                                </template>
+                                <template x-if="copied">
+                                    <span class="flex items-center gap-1 text-success-600"><x-heroicon-o-check class="w-3.5 h-3.5" /> Tersalin</span>
+                                </template>
+                            </button>
+                        </div>
+                    </div>
+                @endif
+
                 <div class="rounded-xl bg-gray-50 dark:bg-gray-800/50 p-4 mb-4">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Upload Bukti Transfer</label>
                     <input

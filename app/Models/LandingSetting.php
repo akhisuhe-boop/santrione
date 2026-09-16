@@ -17,6 +17,7 @@ class LandingSetting extends Model
         'crm_notif_wa_numbers',
         'promo_aktif', 'promo_mode', 'promo_teks', 'promo_persen', 'promo_berakhir_pada', 'promo_evergreen_durasi_jam', 'tahunan_diskon_persen',
         'promo_hanya_countdown',
+        'rekening_bank', 'rekening_nomor', 'rekening_nama_pemilik',
     ];
 
     protected $casts = [
