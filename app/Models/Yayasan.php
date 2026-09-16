@@ -312,8 +312,6 @@ class Yayasan extends Model implements HasName
             return false;
         }
 
-        $subscription = $this->activeSubscription();
-
         // Grandfathered: tidak pernah ada baris subscription sama
         // sekali -> anggap semua fitur terbuka. Ini murni untuk
         // Yayasan LAMA yang sudah ada sebelum sistem billing baru ini
@@ -325,19 +323,50 @@ class Yayasan extends Model implements HasName
             return true;
         }
 
-        if ($subscription && $subscription->plan?->hasFeature($key)) {
+        // DIHAPUS (15 Sep 2026) -- checklist "Fitur Premium yang
+        // Dibuka" per-plan sudah dicabut dari form admin, diganti
+        // hardcode di sini. Alasannya: admin cukup atur HARGA per
+        // modul (Harga Modul) & tenant yang tentukan aktivasinya
+        // sendiri lewat toggle di Checkout -- checklist per-plan itu
+        // cuma nambah lapisan yang membingungkan tanpa manfaat nyata
+        // (Paket Full sudah auto-toggle semua LembagaModule saat
+        // pembayaran sukses, jadi tidak butuh jalur checklist
+        // terpisah lagi untuk buka aksesnya).
+        //
+        // Fitur BAWAAN (bukan modul yang dijual/ditoggle terpisah) --
+        // selalu terbuka untuk Yayasan yang statusnya aktif, apa pun
+        // plan-nya:
+        //  - Manajemen Sekolah, Master Setting: fitur dasar aplikasi.
+        //  - Keuangan, e-Kantin: GRATIS untuk sekolah (dibebankan ke
+        //    wali murid) -- TIDAK PERNAH ditoggle lewat LembagaModule
+        //    sama sekali (tidak ada mekanisme otomatis lain buat
+        //    modul gratis), jadi harus selalu terbuka di sini juga,
+        //    supaya tidak sengaja ikut terkunci.
+        if (in_array($key, [
+            \App\Support\FeatureGate::MANAJEMEN_SEKOLAH,
+            \App\Support\FeatureGate::MASTER_SETTING,
+            \App\Support\FeatureGate::KEUANGAN,
+            \App\Support\FeatureGate::E_KANTIN,
+        ], true)) {
             return true;
         }
 
-        // Skema à la carte (per-Lembaga): kalau paket dasar TIDAK
-        // membuka fitur ini tapi ADA minimal 1 Lembaga di yayasan ini
-        // yang mengaktifkan modul tersebut (lihat LembagaModule/
-        // ModulePrice), tetap buka menunya. Ini gating di level
-        // Yayasan (menu sidebar tampil untuk semua Lembaga di bawah
-        // yayasan itu), BUKAN scoping data per-Lembaga — kalau ke
-        // depan dibutuhkan penyembunyian menu yang benar-benar
-        // berbeda per Lembaga dalam satu Yayasan, itu perubahan
-        // arsitektur terpisah (tenant panel saat ini = Yayasan).
+        // Skema à la carte (per-Lembaga): 6 modul BERBAYAR
+        // (Akademik, Absensi, PSB, Tahfidz, Perizinan, Konseling)
+        // MURNI ditentukan tenant lewat toggle Checkout (lihat
+        // LembagaModule/ModulePrice) -- BUKAN dari plan sama sekali.
+        // Paket Full tetap otomatis dapat semua, tapi lewat jalur
+        // yang SAMA ini (semua LembagaModule di-toggle aktif otomatis
+        // saat pembayaran Paket Full sukses -- lihat
+        // DokuWebhookController/XenditWebhookController/
+        // SubscriptionPaymentResource), bukan jalur terpisah lagi.
+        //
+        // Ini gating di level Yayasan (menu sidebar tampil untuk
+        // semua Lembaga di bawah yayasan itu), BUKAN scoping data
+        // per-Lembaga — kalau ke depan dibutuhkan penyembunyian menu
+        // yang benar-benar berbeda per Lembaga dalam satu Yayasan,
+        // itu perubahan arsitektur terpisah (tenant panel saat ini =
+        // Yayasan).
         return $this->lembagas()
             ->whereHas('activeModules.modulePrice', fn ($q) => $q->where('key', $key))
             ->exists();

@@ -111,13 +111,6 @@ class SubscriptionPlanResource extends BaseResource
                             ->visible(fn (Forms\Get $get) => (bool) $get('termasuk_semua_modul'))
                             ->helperText('Diskon EKSTRA (di atas diskon volume siswa) khusus buat Yayasan yang ambil Paket Full — dihitung dari harga dasar + semua modul, BUKAN harga flat terpisah. Kosongkan/0 = tidak ada diskon ekstra.'),
 
-                        Forms\Components\CheckboxList::make('fitur')
-                            ->label('Fitur Premium yang Dibuka')
-                            ->options(\App\Support\FeatureGate::all())
-                            ->columns(2)
-                            ->columnSpanFull()
-                            ->helperText('Fitur yang TIDAK dicentang akan terkunci untuk yayasan yang pakai paket ini (menu disembunyikan + muncul ajakan upgrade).'),
-
                         Forms\Components\Textarea::make('deskripsi')
                             ->label('Deskripsi')
                             ->rows(2)
