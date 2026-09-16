@@ -89,7 +89,7 @@ class KwitansiController extends Controller
         // DIUBAH (16 Sep 2026) -- 560pt kepotong, 1200pt & 800pt
         // kelebihan ruang kosong. 670pt hasil penyesuaian langsung
         // berdasar tampilan PDF asli.
-        ->setPaper([0, 0, 226.77, 670])
+        ->setPaper([0, 0, 226.77, 650])
         ->stream('Kwitansi-'.$pembayaran->kode.'.pdf');
     
         // Kalau ingin tampil di browser, ganti menjadi:

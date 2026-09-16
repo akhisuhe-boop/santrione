@@ -72,7 +72,7 @@
 
             width:65px;
             height:65px;
-            margin:6px auto 8px;
+            margin:16px auto 8px;
             object-fit:contain;
 
         }
