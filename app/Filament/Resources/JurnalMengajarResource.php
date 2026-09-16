@@ -165,7 +165,7 @@ class JurnalMengajarResource extends BaseResource
 ]);
                     })
                     ->live()
-                    ->afterStateUpdated(function ($state, callable $set) {
+                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
                     $jadwal = \App\Models\JadwalPelajaran::find($state);
 
                     // jika jadwal tidak ditemukan
@@ -185,7 +185,29 @@ class JurnalMengajarResource extends BaseResource
                     $set('jam_ke', $jadwal->jamPelajaran->urutan);
                     $set('durasi_jam', $jadwal->jamPelajaran->durasi_jp);
                     $set('jam_pelajaran_id', $jadwal->jam_pelajaran_id);
-                    $set('pegawai_asli_id', $jadwal->pegawai_id);
+
+                    // DIPERBAIKI (16 Sep 2026) -- sebelumnya baris ini
+                    // SELALU mengisi pegawai_asli_id dari jadwal, tidak
+                    // peduli toggle "Guru Pengganti?" di atas ON atau
+                    // OFF. Akibatnya SEMUA jurnal yang dibuat lewat form
+                    // Admin ini (bahkan yang guru mengajar kelas sendiri,
+                    // bukan menggantikan siapa pun) ikut kesimpen dengan
+                    // pegawai_asli_id TERISI -- dan PayrollService
+                    // (lihat method hitungHonorPengganti/hitungGaji di
+                    // sana) menentukan "ini honor guru pengganti" MURNI
+                    // dari pegawai_asli_id kosong/tidak (whereNotNull =
+                    // dianggap pengganti), BUKAN dari toggle ini. Jadi
+                    // honornya salah dihitung sebagai pengganti terus,
+                    // padahal harusnya honor guru biasa.
+                    //
+                    // Sekarang cuma diisi kalau is_pengganti BENERAN
+                    // dicentang -- kalau tidak, tetap null (persis
+                    // seperti input dari portal guru sendiri).
+                    if ($get('is_pengganti')) {
+                        $set('pegawai_asli_id', $jadwal->pegawai_id);
+                    } else {
+                        $set('pegawai_asli_id', null);
+                    }
 
                     // Tarif honor pengganti sekarang di-set per LEMBAGA
                     // di menu Keuangan > Honor Guru Pengganti (berlaku
@@ -194,12 +216,21 @@ class JurnalMengajarResource extends BaseResource
                     // Kalau lembaga belum mengisi tarifnya, biarkan
                     // null supaya PayrollService fallback ke tarif per
                     // JP guru pengganti itu sendiri.
-                    $lembaga = $jadwal->kelas?->lembaga;
+                    //
+                    // Sama seperti pegawai_asli_id di atas -- cuma
+                    // diisi kalau BENERAN guru pengganti, supaya jurnal
+                    // guru mengajar kelas sendiri tidak ikut kebawa
+                    // tarif pengganti.
+                    if ($get('is_pengganti')) {
+                        $lembaga = $jadwal->kelas?->lembaga;
 
-                    $set(
-                        'tarif_pengganti_per_jp',
-                        $lembaga?->tarif_pengganti_per_jp
-                    );
+                        $set(
+                            'tarif_pengganti_per_jp',
+                            $lembaga?->tarif_pengganti_per_jp
+                        );
+                    } else {
+                        $set('tarif_pengganti_per_jp', null);
+                    }
                     /*
                     |--------------------------------------------------------------------------
                     | GENERATE ABSENSI SISWA
