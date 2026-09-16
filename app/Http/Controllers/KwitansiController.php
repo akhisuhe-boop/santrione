@@ -86,15 +86,14 @@ class KwitansiController extends Controller
         );
 
         return $pdf
-        // DIUBAH (16 Sep 2026) -- tinggi sebelumnya (560pt / ~197mm)
-        // terlalu pendek, kwitansi yang isinya agak panjang (banyak
-        // baris rincian) jadi kepotong ke halaman 2. Dinaikkan jadi
-        // 1200pt (~423mm) -- cukup lega buat kwitansi mana pun,
-        // kelebihan tinggi cuma jadi ruang putih kosong di bawah
-        // (tidak masalah, ini PDF buat dilihat/didownload, bukan
-        // langsung ke printer thermal fisik -- itu jalur terpisah
-        // lewat thermal58()/thermal80()).
-        ->setPaper([0, 0, 226.77, 1200])
+        // DIUBAH (16 Sep 2026) -- 560pt kepotong (isi lebih panjang
+        // dari itu), 1200pt kebalikannya (ruang kosong kepanjangan di
+        // bawah). 800pt dipilih berdasar proporsi isi kwitansi asli
+        // (kira-kira 60% tinggi versi 1200pt) -- pas buat isi standar
+        // (10 baris rincian + blok total + footer), masih ada sedikit
+        // ruang lebih buat Nama/Kelas yang kebetulan panjang & bikin
+        // baris terbungkus 2 baris.
+        ->setPaper([0, 0, 226.77, 800])
         ->stream('Kwitansi-'.$pembayaran->kode.'.pdf');
     
         // Kalau ingin tampil di browser, ganti menjadi:
