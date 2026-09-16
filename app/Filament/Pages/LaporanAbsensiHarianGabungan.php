@@ -235,7 +235,19 @@ class LaporanAbsensiHarianGabungan extends Page implements HasTable, HasForms
                 ->badge()
                 ->color('primary')
                 ->getStateUsing(function ($record) use ($idKolom) {
-                    $query = AbsensiHarian::where($idKolom, $record->id);
+                    // DIUBAH -- sebelumnya COUNT semua baris (termasuk
+                    // baris hari YANG SEDANG BERJALAN yang belum
+                    // sempat di-scan orangnya ATAU ditandai Alpa oleh
+                    // command TandaiAlpaAbsensiHarian -- status_masuk
+                    // masih NULL, jadi tidak masuk 5 kategori manapun
+                    // tapi tetap ke-hitung di Total, bikin Total lebih
+                    // besar dari jumlah 5 kolom). Sekarang Total
+                    // SELALU = jumlah 5 kategori di sampingnya (query
+                    // WHERE status_masuk terisi salah satu dari 5 itu
+                    // saja) -- baris NULL yang masih pending otomatis
+                    // tidak ikut terhitung sampai statusnya jelas.
+                    $query = AbsensiHarian::where($idKolom, $record->id)
+                        ->whereIn('status_masuk', ['Hadir', 'Terlambat', 'Izin', 'Sakit', 'Alpa']);
                     $this->applyFilterTanggal($query);
 
                     return $query->count();
