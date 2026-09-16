@@ -71,14 +71,23 @@ class LaporanPerizinanResource extends BaseResource
     }
 
     /**
-     * Total hari izin yang BENAR-BENAR DISETUJUI (status approved) dalam
-     * periode tertentu -- bukan lagi semua pengajuan (termasuk pending/
-     * ditolak) sepanjang masa seperti sebelumnya.
+     * Total hari izin yang BENAR-BENAR DISETUJUI dalam periode tertentu.
+     *
+     * DIPERBAIKI (16 Sep 2026) -- sebelumnya cuma hitung status PERSIS
+     * 'approved', padahal alur perizinan itu bertahap: approved ->
+     * dijemput -> selesai (lihat BadgeColumn di PerizinanResource).
+     * Begitu prosesnya lanjut/selesai, status-nya BUKAN 'approved'
+     * lagi, jadi izin yang sudah kelar (mayoritas kasus kalau
+     * tanggalnya sudah lewat) tidak pernah kehitung -- Total Hari
+     * selalu 0 buat periode yang sudah lewat. 'approved', 'dijemput',
+     * 'selesai' semuanya berarti IZIN INI DISETUJUI, cuma beda tahap
+     * prosesnya -- yang benar2 dikecualikan cuma 'pending' (belum
+     * diputuskan) & 'ditolak'.
      */
     public static function totalHariDisetujui(int $siswaId, array $periode): int
     {
         return Perizinan::where('siswa_id', $siswaId)
-            ->where('status', 'approved')
+            ->whereIn('status', ['approved', 'dijemput', 'selesai'])
             ->whereDate('tanggal_mulai', '<=', $periode[1])
             ->where(function ($q) use ($periode) {
                 $q->whereDate('tanggal_selesai', '>=', $periode[0])
@@ -143,6 +152,21 @@ class LaporanPerizinanResource extends BaseResource
                 ->badge()
                 ->color('success'),
                         ])
+
+            ->headerActions([
+                \Filament\Tables\Actions\Action::make('export')
+                    ->label('Export Excel')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->color('success')
+                    ->action(function ($livewire) {
+                        $periode = static::resolvePeriode($livewire->tableFilters['periode'] ?? null);
+
+                        return \Maatwebsite\Excel\Facades\Excel::download(
+                            new \App\Exports\LaporanPerizinanExport($periode),
+                            'Laporan-Perizinan-' . now()->format('Y-m-d') . '.xlsx'
+                        );
+                    }),
+            ])
 
             ->filters([
 
