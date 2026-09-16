@@ -1,17 +1,17 @@
 <x-filament::page>
 
-    <div class="inline-flex items-center bg-gray-100 dark:bg-gray-800 rounded-full p-1 mb-4">
+    <div class="inline-flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-full p-1 mb-4">
         <button
             type="button"
             wire:click="pilihTipe('siswa')"
-            class="px-5 py-2 rounded-full text-sm font-bold transition-all {{ $tipe === 'siswa' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500' }}"
+            class="px-6 py-2.5 rounded-full text-sm font-bold transition-all {{ $tipe === 'siswa' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500' }}"
         >
             Siswa
         </button>
         <button
             type="button"
             wire:click="pilihTipe('guru')"
-            class="px-5 py-2 rounded-full text-sm font-bold transition-all {{ $tipe === 'guru' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500' }}"
+            class="px-6 py-2.5 rounded-full text-sm font-bold transition-all {{ $tipe === 'guru' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500' }}"
         >
             Pegawai
         </button>
