@@ -27,6 +27,9 @@ use Filament\Forms\Components\Actions\Action as FormAction;
 
 use Filament\Notifications\Notification;
 
+use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
+use pxlrbt\FilamentExcel\Exports\ExcelExport;
+
 /**
  * DITAMBAHKAN (16 Sep 2026) -- laporan absensi HARIAN (masuk/pulang)
  * gabungan Siswa+Pegawai, 1 menu 2 tab -- pola sama persis dengan
@@ -242,7 +245,28 @@ class LaporanAbsensiHarianGabungan extends Page implements HasTable, HasForms
         return $table
             ->query($query)
             ->columns($columns)
+            ->headerActions([
+                ExportAction::make()
+                    ->label('Export Excel')
+                    ->exports([
+                        ExcelExport::make()->fromTable()->withFilename(fn () => 'Laporan-Absensi-Harian-' . ($isSiswa ? 'Siswa' : 'Pegawai') . '-' . now()->format('Y-m-d')),
+                    ]),
+            ])
             ->actions([
+                Action::make('detail')
+                    ->label('Detail')
+                    ->icon('heroicon-o-eye')
+                    ->color('gray')
+                    ->modalHeading(fn ($record) => 'Riwayat Absensi Harian — ' . ($isSiswa ? $record->nama_lengkap : $record->nama))
+                    ->modalContent(function ($record) use ($idKolom) {
+                        $query = AbsensiHarian::where($idKolom, $record->id);
+                        $this->applyFilterTanggal($query);
+
+                        $riwayat = $query->orderByDesc('tanggal')->get();
+
+                        return view('filament.pages.partials.detail-riwayat-harian', ['riwayat' => $riwayat]);
+                    }),
+
                 Action::make('edit_status')
                     ->label('Edit Kehadiran')
                     ->icon('heroicon-o-pencil-square')

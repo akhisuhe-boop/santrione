@@ -24,7 +24,8 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Group;
 use Filament\Forms\Components\Actions;
-use Filament\Forms\Components\Actions\Action as FormAction;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
+use pxlrbt\FilamentExcel\Exports\ExcelExport;
 
 /**
  * DITAMBAHKAN (16 Sep 2026) -- gabungan "Laporan Absensi Pegawai" +
@@ -349,7 +350,31 @@ class LaporanAbsensiKegiatan extends Page implements HasTable, HasForms
         return $table
             ->query($query)
             ->columns($columns)
+            ->headerActions([
+                ExportAction::make()
+                    ->label('Export Excel')
+                    ->exports([
+                        ExcelExport::make()->fromTable()->withFilename(fn () => 'Laporan-Absensi-Kegiatan-' . ($isSiswa ? 'Siswa' : 'Pegawai') . '-' . now()->format('Y-m-d')),
+                    ]),
+            ])
             ->actions([
+                Action::make('detail')
+                    ->label('Detail')
+                    ->icon('heroicon-o-eye')
+                    ->color('gray')
+                    ->modalHeading(fn ($record) => 'Riwayat Absensi Kegiatan — ' . ($isSiswa ? $record->nama_lengkap : $record->nama))
+                    ->modalContent(function ($record) use ($idKolom, $tipeAbsensi) {
+                        $query = Absensi::with('jadwalKegiatan.template')
+                            ->where($idKolom, $record->id)
+                            ->where('tipe', $tipeAbsensi);
+
+                        $this->applyFilter($query);
+
+                        $riwayat = $query->get()->sortByDesc(fn ($a) => $a->jadwalKegiatan?->tanggal);
+
+                        return view('filament.pages.partials.detail-riwayat-kegiatan', ['riwayat' => $riwayat]);
+                    }),
+
                 Action::make('edit_status')
                     ->label('Edit Kehadiran')
                     ->icon('heroicon-o-pencil-square')

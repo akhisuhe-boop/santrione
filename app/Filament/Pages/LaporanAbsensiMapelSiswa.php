@@ -15,6 +15,10 @@ use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Concerns\InteractsWithTable;
 
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Actions\Action;
+
+use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
+use pxlrbt\FilamentExcel\Exports\ExcelExport;
 
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -44,7 +48,7 @@ class LaporanAbsensiMapelSiswa extends Page implements HasTable, HasForms
     protected static ?string $title =
         'Laporan Absensi Mapel Siswa';
 
-    protected static ?int $navigationSort = 8;
+    protected static ?int $navigationSort = 7;
 
     public static function canAccess(): bool
     {
@@ -371,6 +375,33 @@ class LaporanAbsensiMapelSiswa extends Page implements HasTable, HasForms
                     $this->applyFilter($query);
                     return $query->count();
                 }),
+            ])
+
+            ->headerActions([
+                ExportAction::make()
+                    ->label('Export Excel')
+                    ->exports([
+                        ExcelExport::make()->fromTable()->withFilename(fn () => 'Laporan-Absensi-Mapel-Siswa-' . now()->format('Y-m-d')),
+                    ]),
+            ])
+
+            ->actions([
+                Action::make('detail')
+                    ->label('Detail')
+                    ->icon('heroicon-o-eye')
+                    ->color('gray')
+                    ->modalHeading(fn ($record) => 'Riwayat Absensi Mapel — ' . $record->nama_lengkap)
+                    ->modalContent(function ($record) {
+                        $query = AbsensiMapel::with('jadwalPelajaran.mataPelajaran')
+                            ->where('siswa_id', $record->id)
+                            ->whereHas('jurnalMengajar', fn ($q) => $q->where('status', 'valid'));
+
+                        $this->applyFilter($query);
+
+                        $riwayat = $query->orderByDesc('tanggal')->get();
+
+                        return view('filament.pages.partials.detail-riwayat-mapel', ['riwayat' => $riwayat]);
+                    }),
             ])
 
             ->defaultPaginationPageOption(10)
