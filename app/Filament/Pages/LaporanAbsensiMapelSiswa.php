@@ -392,7 +392,7 @@ class LaporanAbsensiMapelSiswa extends Page implements HasTable, HasForms
                     ->color('gray')
                     ->modalHeading(fn ($record) => 'Riwayat Absensi Mapel — ' . $record->nama_lengkap)
                     ->modalContent(function ($record) {
-                        $query = AbsensiMapel::with('jadwalPelajaran.mataPelajaran')
+                        $query = AbsensiMapel::with(['jadwalPelajaran.mataPelajaran', 'jurnalMengajar.pegawai', 'jurnalMengajar.jamPelajaran'])
                             ->where('siswa_id', $record->id)
                             ->whereHas('jurnalMengajar', fn ($q) => $q->where('status', 'valid'));
 
