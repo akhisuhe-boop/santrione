@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Models\Lembaga;
+use App\Models\JadwalAbsensiHarian;
 
 use Filament\Pages\Page;
 use Filament\Forms\Contracts\HasForms;
@@ -13,6 +14,8 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Tabs;
+use Filament\Forms\Components\Tabs\Tab;
 
 use Filament\Tables\Table;
 use Filament\Tables\Contracts\HasTable;
@@ -22,6 +25,14 @@ use Filament\Tables\Actions\Action as TableAction;
 
 use Filament\Notifications\Notification;
 
+/**
+ * DIUBAH TOTAL (16 Sep 2026) -- jam absensi sekarang PER HARI, bukan
+ * general lagi (lihat migration create_jadwal_absensi_harians_table
+ * untuk alasan lengkapnya). Tiap hari punya set jam sendiri-sendiri,
+ * dan BOLEH DIKOSONGKAN kalau memang hari itu bukan hari sekolah
+ * (libur) -- hari yang kosong otomatis TIDAK dihitung wajib absen
+ * sama sekali (dicek di TandaiAlpaAbsensiHarian & AbsensiHarianController).
+ */
 class PengaturanAbsensi extends Page implements HasForms, HasTable
 {
     use InteractsWithForms;
@@ -56,13 +67,23 @@ class PengaturanAbsensi extends Page implements HasForms, HasTable
 
     protected function fillFromLembaga(?Lembaga $lembaga): void
     {
+        $isiHari = [];
+
+        foreach (JadwalAbsensiHarian::HARI as $hari) {
+            $jadwal = $lembaga?->jadwalAbsensiUntukHari($hari);
+
+            $isiHari[$hari] = [
+                'jam_masuk_siswa' => $jadwal?->jam_masuk_siswa,
+                'jam_pulang_siswa' => $jadwal?->jam_pulang_siswa,
+                'jam_masuk_guru' => $jadwal?->jam_masuk_guru,
+                'jam_pulang_guru' => $jadwal?->jam_pulang_guru,
+                'toleransi_telat_menit' => $jadwal?->toleransi_telat_menit ?? 15,
+            ];
+        }
+
         $this->form->fill([
             'lembaga_id' => $lembaga?->id,
-            'jam_masuk_siswa' => $lembaga?->jam_masuk_siswa,
-            'jam_pulang_siswa' => $lembaga?->jam_pulang_siswa,
-            'jam_masuk_guru' => $lembaga?->jam_masuk_guru,
-            'jam_pulang_guru' => $lembaga?->jam_pulang_guru,
-            'toleransi_telat_menit' => $lembaga?->toleransi_telat_menit ?? 15,
+            'hari' => $isiHari,
         ]);
     }
 
@@ -76,29 +97,10 @@ class PengaturanAbsensi extends Page implements HasForms, HasTable
                     ->label('Lembaga')
                     ->searchable(),
 
-                TextColumn::make('jam_masuk_siswa')
-                    ->label('Masuk Siswa')
-                    ->time('H:i')
-                    ->placeholder('Belum diatur'),
-
-                TextColumn::make('jam_pulang_siswa')
-                    ->label('Pulang Siswa')
-                    ->time('H:i')
-                    ->placeholder('Belum diatur'),
-
-                TextColumn::make('jam_masuk_guru')
-                    ->label('Masuk Guru')
-                    ->time('H:i')
-                    ->placeholder('Belum diatur'),
-
-                TextColumn::make('jam_pulang_guru')
-                    ->label('Pulang Guru')
-                    ->time('H:i')
-                    ->placeholder('Belum diatur'),
-
-                TextColumn::make('toleransi_telat_menit')
-                    ->label('Toleransi')
-                    ->suffix(' menit'),
+                TextColumn::make('jadwal_absensi_harians_count')
+                    ->label('Hari Diatur')
+                    ->counts('jadwalAbsensiHarians')
+                    ->formatStateUsing(fn ($state) => $state . ' / 7 hari'),
 
             ])
             ->actions([
@@ -108,6 +110,7 @@ class PengaturanAbsensi extends Page implements HasForms, HasTable
                     ->icon('heroicon-o-pencil-square')
                     ->color('primary')
                     ->action(function (Lembaga $record) {
+                        $record->load('jadwalAbsensiHarians');
                         $this->fillFromLembaga($record);
                     }),
 
@@ -127,40 +130,48 @@ class PengaturanAbsensi extends Page implements HasForms, HasTable
                             ->options(Lembaga::orderBy('nama')->pluck('nama', 'id'))
                             ->required()
                             ->live()
-                            ->afterStateUpdated(fn ($state) => $this->fillFromLembaga(Lembaga::find($state)))
+                            ->afterStateUpdated(function ($state) {
+                                $lembaga = Lembaga::find($state);
+                                $lembaga?->load('jadwalAbsensiHarians');
+                                $this->fillFromLembaga($lembaga);
+                            })
                             ->searchable()
                             ->preload(),
                     ]),
 
-                Section::make('Jam Absensi Masuk & Pulang')
-                    ->description('Dipakai untuk menentukan status Terlambat / Pulang Awal pada fitur Absensi Masuk & Pulang')
-                    ->icon('heroicon-o-clock')
-                    ->schema([
+                Tabs::make('Hari')
+                    ->tabs(
+                        collect(JadwalAbsensiHarian::HARI)->map(
+                            fn (string $hari) => Tab::make($hari)
+                                ->schema([
 
-                        TimePicker::make('jam_masuk_siswa')
-                            ->label('Jam Masuk Siswa')
-                            ->seconds(false),
+                                    TimePicker::make("hari.{$hari}.jam_masuk_siswa")
+                                        ->label('Jam Masuk Siswa')
+                                        ->seconds(false),
 
-                        TimePicker::make('jam_pulang_siswa')
-                            ->label('Jam Pulang Siswa')
-                            ->seconds(false),
+                                    TimePicker::make("hari.{$hari}.jam_pulang_siswa")
+                                        ->label('Jam Pulang Siswa')
+                                        ->seconds(false),
 
-                        TextInput::make('toleransi_telat_menit')
-                            ->label('Toleransi Terlambat (menit)')
-                            ->numeric()
-                            ->default(15)
-                            ->suffix('menit'),
+                                    TextInput::make("hari.{$hari}.toleransi_telat_menit")
+                                        ->label('Toleransi Terlambat (menit)')
+                                        ->numeric()
+                                        ->default(15)
+                                        ->suffix('menit'),
 
-                        TimePicker::make('jam_masuk_guru')
-                            ->label('Jam Masuk Guru/Pegawai')
-                            ->seconds(false),
+                                    TimePicker::make("hari.{$hari}.jam_masuk_guru")
+                                        ->label('Jam Masuk Guru/Pegawai')
+                                        ->seconds(false),
 
-                        TimePicker::make('jam_pulang_guru')
-                            ->label('Jam Pulang Guru/Pegawai')
-                            ->seconds(false),
+                                    TimePicker::make("hari.{$hari}.jam_pulang_guru")
+                                        ->label('Jam Pulang Guru/Pegawai')
+                                        ->seconds(false),
 
-                    ])
-                    ->columns(3),
+                                ])
+                                ->columns(3)
+                        )->all()
+                    )
+                    ->columnSpanFull(),
 
             ])
             ->statePath('data');
@@ -183,13 +194,35 @@ class PengaturanAbsensi extends Page implements HasForms, HasTable
             return;
         }
 
-        $lembaga->update([
-            'jam_masuk_siswa' => $data['jam_masuk_siswa'] ?? null,
-            'jam_pulang_siswa' => $data['jam_pulang_siswa'] ?? null,
-            'jam_masuk_guru' => $data['jam_masuk_guru'] ?? null,
-            'jam_pulang_guru' => $data['jam_pulang_guru'] ?? null,
-            'toleransi_telat_menit' => $data['toleransi_telat_menit'] ?? 15,
-        ]);
+        foreach (JadwalAbsensiHarian::HARI as $hari) {
+            $isi = $data['hari'][$hari] ?? [];
+
+            // Kalau SEMUA field kosong buat hari ini -> hapus baris
+            // (kalau ada) supaya hari itu benar-benar dianggap "tidak
+            // diatur" (libur), bukan tersimpan dengan nilai kosong.
+            $adaIsi = collect($isi)->except('toleransi_telat_menit')
+                ->filter()
+                ->isNotEmpty();
+
+            if (!$adaIsi) {
+                JadwalAbsensiHarian::where('lembaga_id', $lembaga->id)
+                    ->where('hari', $hari)
+                    ->delete();
+
+                continue;
+            }
+
+            JadwalAbsensiHarian::updateOrCreate(
+                ['lembaga_id' => $lembaga->id, 'hari' => $hari],
+                [
+                    'jam_masuk_siswa' => $isi['jam_masuk_siswa'] ?? null,
+                    'jam_pulang_siswa' => $isi['jam_pulang_siswa'] ?? null,
+                    'jam_masuk_guru' => $isi['jam_masuk_guru'] ?? null,
+                    'jam_pulang_guru' => $isi['jam_pulang_guru'] ?? null,
+                    'toleransi_telat_menit' => $isi['toleransi_telat_menit'] ?? 15,
+                ]
+            );
+        }
 
         Notification::make()
             ->title('Pengaturan jam absensi berhasil disimpan')

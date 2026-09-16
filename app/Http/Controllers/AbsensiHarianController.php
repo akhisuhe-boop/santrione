@@ -90,6 +90,19 @@ class AbsensiHarianController extends Controller
                 ? $siswa->lembaga
                 : $pegawai?->lembagas?->first();
 
+            // DITAMBAHKAN (16 Sep 2026) -- jam absensi sekarang per
+            // hari (lihat migration create_jadwal_absensi_harians_table).
+            // $jadwalHariIni null kalau lembaga tidak mengatur hari
+            // ini sama sekali (mis. libur) -- status tetap "Hadir"
+            // polos (tidak bisa dihitung telat/pulang awal tanpa jam
+            // acuan), sama seperti sebelumnya waktu setting kosong.
+            $hariIni = [
+                0 => 'Minggu', 1 => 'Senin', 2 => 'Selasa', 3 => 'Rabu',
+                4 => 'Kamis', 5 => 'Jumat', 6 => 'Sabtu',
+            ][Carbon::now()->dayOfWeek];
+
+            $jadwalHariIni = $lembaga?->jadwalAbsensiUntukHari($hariIni);
+
             // ===============================
             // MODE MASUK
             // ===============================
@@ -106,10 +119,10 @@ class AbsensiHarianController extends Controller
                 }
 
                 $jamMasukSetting = $siswa
-                    ? $lembaga?->jam_masuk_siswa
-                    : $lembaga?->jam_masuk_guru;
+                    ? $jadwalHariIni?->jam_masuk_siswa
+                    : $jadwalHariIni?->jam_masuk_guru;
 
-                $toleransi = $lembaga?->toleransi_telat_menit ?? 15;
+                $toleransi = $jadwalHariIni?->toleransi_telat_menit ?? 15;
 
                 $status = 'Hadir';
 
@@ -179,8 +192,8 @@ class AbsensiHarianController extends Controller
                 }
 
                 $jamPulangSetting = $siswa
-                    ? $lembaga?->jam_pulang_siswa
-                    : $lembaga?->jam_pulang_guru;
+                    ? $jadwalHariIni?->jam_pulang_siswa
+                    : $jadwalHariIni?->jam_pulang_guru;
 
                 $status = 'Pulang';
 

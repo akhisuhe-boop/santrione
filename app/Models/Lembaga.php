@@ -193,6 +193,26 @@ class Lembaga extends Model
      * jumlah_siswa_billing (snapshot terkunci), bukan panggil method
      * ini langsung, supaya tagihan tidak berubah-ubah di tengah bulan.
      */
+    /**
+     * DITAMBAHKAN -- pengganti kolom jam_masuk_siswa/dst yang lama
+     * (general, sama semua hari). Lihat migration
+     * create_jadwal_absensi_harians_table untuk alasannya.
+     */
+    public function jadwalAbsensiHarians()
+    {
+        return $this->hasMany(\App\Models\JadwalAbsensiHarian::class);
+    }
+
+    /**
+     * Ambil pengaturan jam absensi untuk HARI TERTENTU (mis. "Senin"),
+     * atau null kalau hari itu memang tidak diatur -- yang berarti
+     * TIDAK WAJIB absen hari itu (bukan alpa), bukan error.
+     */
+    public function jadwalAbsensiUntukHari(string $hari): ?\App\Models\JadwalAbsensiHarian
+    {
+        return $this->jadwalAbsensiHarians->firstWhere('hari', $hari);
+    }
+
     public function jumlahSiswaAktif(): int
     {
         return $this->siswas()->where('status_siswa', 'Aktif')->count();

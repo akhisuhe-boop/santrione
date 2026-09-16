@@ -38,7 +38,7 @@ class LaporanAbsensiHarian extends Page implements HasTable, HasForms
 
     protected static ?string $navigationLabel = 'Absensi Masuk & Pulang';
 
-    protected static ?int $navigationSort = 9;
+    protected static ?int $navigationSort = 4;
 
     public static function canAccess(): bool
     {
