@@ -17,9 +17,6 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Actions\Action;
 
-use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
-use pxlrbt\FilamentExcel\Exports\ExcelExport;
-use pxlrbt\FilamentExcel\Columns\Column;
 
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -379,51 +376,33 @@ class LaporanAbsensiMapelSiswa extends Page implements HasTable, HasForms
             ])
 
             ->headerActions([
-                ExportAction::make()
+                \Filament\Tables\Actions\Action::make('export')
                     ->label('Export Excel')
-                    ->exports([
-                        // DIUBAH (16 Sep 2026) -- sebelumnya export ini
-                        // pakai ->fromTable() (rekap angka per siswa:
-                        // Hadir/Izin/Sakit/Alpha/Total, sama seperti
-                        // tabel di layar). Diganti jadi format DETAIL
-                        // per kejadian (1 baris = 1 kali absen mapel),
-                        // sama persis dengan yang ditampilkan di modal
-                        // "Detail" -- supaya file Excel-nya bisa
-                        // dipakai buat audit/cek manual per tanggal,
-                        // bukan cuma rekap jumlah.
-                        ExcelExport::make('detail')
-                            ->fromCollection(function () {
-                                $siswaIds = Siswa::query()
-                                    ->when($this->formData['kelas'] ?? null, fn ($q, $kelas) => $q->where('kelas_id', $kelas))
-                                    ->pluck('id');
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->color('success')
+                    ->action(function () {
+                        $siswaIds = Siswa::query()
+                            ->when($this->formData['kelas'] ?? null, fn ($q, $kelas) => $q->where('kelas_id', $kelas))
+                            ->pluck('id');
 
-                                $query = AbsensiMapel::with([
-                                    'jadwalPelajaran.mataPelajaran',
-                                    'jurnalMengajar.pegawai',
-                                    'jurnalMengajar.jamPelajaran',
-                                    'siswa.kelas',
-                                ])
-                                    ->whereIn('siswa_id', $siswaIds)
-                                    ->whereHas('jurnalMengajar', fn ($q) => $q->where('status', 'valid'));
+                        $query = AbsensiMapel::with([
+                            'jadwalPelajaran.mataPelajaran',
+                            'jurnalMengajar.pegawai',
+                            'jurnalMengajar.jamPelajaran',
+                            'siswa.kelas',
+                        ])
+                            ->whereIn('siswa_id', $siswaIds)
+                            ->whereHas('jurnalMengajar', fn ($q) => $q->where('status', 'valid'));
 
-                                $this->applyFilter($query);
+                        $this->applyFilter($query);
 
-                                return $query->orderBy('tanggal')->orderBy('siswa_id')->get();
-                            })
-                            ->withColumns([
-                                Column::make('tanggal')
-                                    ->heading('Tanggal')
-                                    ->formatStateUsing(fn ($state) => \Carbon\Carbon::parse($state)->translatedFormat('d F Y')),
-                                Column::make('jurnalMengajar.jamPelajaran.nama')->heading('Jam Ke'),
-                                Column::make('siswa.nama_lengkap')->heading('Nama Siswa'),
-                                Column::make('siswa.kelas.nama')->heading('Kelas'),
-                                Column::make('jadwalPelajaran.mataPelajaran.nama')->heading('Mapel'),
-                                Column::make('jurnalMengajar.pegawai.nama')->heading('Guru'),
-                                Column::make('status')->heading('Status'),
-                                Column::make('keterangan')->heading('Keterangan'),
-                            ])
-                            ->withFilename(fn () => 'Detail-Absensi-Mapel-Siswa-' . now()->format('Y-m-d')),
-                    ]),
+                        $riwayat = $query->orderBy('tanggal')->orderBy('siswa_id')->get();
+
+                        return \Maatwebsite\Excel\Facades\Excel::download(
+                            new \App\Exports\DetailAbsensiMapelExport($riwayat),
+                            'Detail-Absensi-Mapel-Siswa-' . now()->format('Y-m-d') . '.xlsx'
+                        );
+                    }),
             ])
 
             ->actions([
