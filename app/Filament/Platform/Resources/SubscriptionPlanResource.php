@@ -62,8 +62,9 @@ class SubscriptionPlanResource extends BaseResource
                             ->numeric()
                             ->minValue(0)
                             ->prefix('Rp')
-                            ->required()
-                            ->helperText('INI yang benar-benar dipakai hitung tagihan di Checkout (dikali total siswa se-Yayasan + harga tiap modul aktif). Cuma berlaku untuk plan dasar (mis. "Akses Platform") -- untuk Paket Full, field ini diabaikan, dasar tetap diambil dari plan "Akses Platform".')
+                            ->required(fn (Forms\Get $get) => ! $get('termasuk_semua_modul'))
+                            ->hidden(fn (Forms\Get $get) => (bool) $get('termasuk_semua_modul'))
+                            ->helperText('INI yang benar-benar dipakai hitung tagihan di Checkout (dikali total siswa se-Yayasan + harga tiap modul aktif). Cuma berlaku untuk plan dasar (mis. "Akses Platform") -- kalau toggle "Paket Full" di bawah diaktifkan, field ini otomatis disembunyikan karena dasar SELALU diambil dari plan "Akses Platform", bukan dari sini.')
                             ->columnSpanFull(),
 
                         Forms\Components\TextInput::make('harga_bulanan')
