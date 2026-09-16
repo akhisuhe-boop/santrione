@@ -117,6 +117,7 @@ class PerizinanResource extends BaseResource
 public static function table(Table $table): Table
 {
     return $table
+        ->defaultSort('tanggal_mulai', 'desc')
         ->columns([
     TextColumn::make('siswa.nama_lengkap')
         ->label('Nama')
