@@ -143,8 +143,10 @@ class SubscriptionPlanResource extends BaseResource
                 Tables\Columns\TextColumn::make('harga_dasar_per_siswa')
                     ->label('Harga Dasar/Siswa (Billing)')
                     ->weight('bold')
-                    ->color('primary')
-                    ->formatStateUsing(fn ($state) => $state ? 'Rp ' . number_format($state, 0, ',', '.') : '—'),
+                    ->color(fn ($record) => $record->termasuk_semua_modul ? 'gray' : 'primary')
+                    ->formatStateUsing(fn ($state, $record) => $record->termasuk_semua_modul
+                        ? '— (ikut Akses Platform)'
+                        : ($state ? 'Rp ' . number_format($state, 0, ',', '.') : '—')),
 
                 Tables\Columns\TextColumn::make('harga_bulanan')
                     ->label('Harga / Bulan (Landing Page)')
