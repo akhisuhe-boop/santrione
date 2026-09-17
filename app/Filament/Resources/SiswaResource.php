@@ -281,7 +281,15 @@ class SiswaResource extends BaseResource
             Forms\Components\TextInput::make('password')
             ->password()
             ->dehydrated(fn ($state) => filled($state))
-            ->default('123456')
+            // DIPERBAIKI (16 Sep 2026) -- sebelumnya default di sini
+            // "123456" (6 digit), padahal Siswa::booted() &
+            // SiswaImport.php sama-sama pakai "12345678" (8 digit)
+            // sebagai default. Akibatnya siswa yang dibuat lewat form
+            // Admin ini dapat password 6 digit, sementara yang dibuat
+            // lewat import Excel dapat 8 digit -- beda-beda tergantung
+            // jalur pembuatannya. Disamakan ke "12345678" di semua
+            // tempat.
+            ->default('12345678')
             ->required(fn (string $operation) => $operation === 'create'),
 
             TextInput::make('pin')
