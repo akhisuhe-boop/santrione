@@ -277,6 +277,23 @@ class LembagaResource extends BaseResource
             ->filters([
             ])
             ->actions([
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\Action::make('link_absensi_harian')
+                        ->label('Link Absensi Masuk & Pulang')
+                        ->icon('heroicon-o-clock')
+                        ->color('gray')
+                        ->url(fn ($record) => url("/absensi-harian/{$record->id}"))
+                        ->openUrlInNewTab(),
+                    Tables\Actions\Action::make('link_absensi_kegiatan')
+                        ->label('Link Absensi Kegiatan')
+                        ->icon('heroicon-o-qr-code')
+                        ->color('gray')
+                        ->url(fn ($record) => url("/absensi/{$record->id}"))
+                        ->openUrlInNewTab(),
+                ])
+                    ->label('Link Kiosk')
+                    ->icon('heroicon-o-link')
+                    ->color('gray'),
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),

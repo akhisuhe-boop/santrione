@@ -114,6 +114,19 @@ body{
     color:var(--muted);
 }
 
+.lembaga-badge{
+    display:inline-block;
+    margin-top:8px;
+    padding:5px 14px;
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:.3px;
+    color:var(--text);
+    background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.18);
+    border-radius:999px;
+}
+
 .icon-xl{width:32px;height:32px;}
 .icon-lg{width:26px;height:26px;}
 .icon-md{width:22px;height:22px;}
@@ -561,11 +574,12 @@ body{
                 <div>
 
                     <h1>Scan Absensi</h1>
-                    <p style="text-align:center; color:#64748b; font-size:0.9rem;">{{ $lembaga->nama }}</p>
 
                     <p>
                         Sistem Absensi Digital Siswa & Guru
                     </p>
+
+                    <span class="lembaga-badge">{{ $lembaga->nama }}</span>
 
                 </div>
 

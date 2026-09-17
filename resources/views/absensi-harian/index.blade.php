@@ -65,6 +65,18 @@ body{
 .page-title{text-align:center;}
 .page-title h1{font-size:26px;font-weight:700;line-height:1.2;}
 .page-title p{margin-top:4px;font-size:14px;color:var(--muted);}
+.lembaga-badge{
+    display:inline-block;
+    margin-top:10px;
+    padding:5px 14px;
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:.3px;
+    color:var(--text);
+    background:var(--glass);
+    border:1px solid var(--glass-border);
+    border-radius:999px;
+}
 .icon-md{width:22px;height:22px;}
 .icon-sm{width:18px;height:18px;}
 
@@ -200,8 +212,8 @@ body{
 
         <div class="page-title">
             <h1>Absensi Masuk & Pulang</h1>
-            <p style="text-align:center; color:#64748b; font-size:0.9rem; margin-top:-0.5rem;">{{ $lembaga->nama }}</p>
             <p>Sistem Absensi Harian Siswa & Guru/Pegawai</p>
+            <span class="lembaga-badge">{{ $lembaga->nama }}</span>
         </div>
 
         <div class="clock-wrapper">
