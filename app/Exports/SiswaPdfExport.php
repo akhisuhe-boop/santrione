@@ -20,7 +20,10 @@ class SiswaPdfExport
 
     public function download()
     {
-        $query = Siswa::query();
+        // DITAMBAHKAN (16 Sep 2026) -- sama seperti SiswaExport.php,
+        // sebelumnya export PDF ini juga tidak ada filter status,
+        // siswa Lulus/Pindah ikut terbawa.
+        $query = Siswa::query()->where('status_siswa', 'Aktif');
 
         if ($this->lembaga_id) {
             $query->where('lembaga_id', $this->lembaga_id);

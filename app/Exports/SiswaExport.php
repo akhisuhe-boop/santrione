@@ -53,7 +53,11 @@ class SiswaExport implements
 
     public function collection()
     {
-        $query = Siswa::query();
+        // DITAMBAHKAN (16 Sep 2026) -- sebelumnya export ini tidak
+        // ada filter status sama sekali, jadi siswa yang sudah
+        // Lulus/Pindah ikut terbawa. Sekarang cuma yang statusnya
+        // Aktif.
+        $query = Siswa::query()->where('status_siswa', 'Aktif');
 
         if ($this->lembaga_id) {
             $query->where('lembaga_id', $this->lembaga_id);
