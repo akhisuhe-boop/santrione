@@ -10,24 +10,22 @@ use App\Models\Siswa;
 use App\Models\Pegawai;
 use App\Models\JadwalKegiatan;
 use App\Models\Absensi;
+use App\Models\Lembaga;
 use App\Services\NotificationService;
 use App\Models\WhatsappSetting;
 
 class AbsensiController extends Controller
 {
 
-    public function index()
+    public function index(Lembaga $lembaga)
     {
         $today = Carbon::today()->format('Y-m-d');
         $now = Carbon::now()->format('H:i:s');
 
-        $kegiatan = JadwalKegiatan::where('tanggal', $today)
-            ->where('jam_mulai', '<=', $now)
-            ->where('jam_selesai', '>=', $now)
-            ->with('templateKegiatan')
-            ->first();
+        $kegiatan = $this->kegiatanAktif($lembaga->id);
 
-        $next = JadwalKegiatan::where('tanggal', $today)
+        $next = JadwalKegiatan::whereHas('template', fn ($q) => $q->where('lembaga_id', $lembaga->id))
+            ->where('tanggal', $today)
             ->where('jam_mulai', '>', $now)
             ->with('templateKegiatan')
             ->orderBy('jam_mulai')
@@ -35,7 +33,8 @@ class AbsensiController extends Controller
 
         return view('absensi.index', [
             'kegiatan' => $kegiatan,
-            'next' => $next
+            'next' => $next,
+            'lembaga' => $lembaga,
         ]);
     }
 
@@ -44,12 +43,15 @@ class AbsensiController extends Controller
     // KEGIATAN AKTIF
     // ===============================
 
-    private function kegiatanAktif()
+    // DIUBAH (16 Sep 2026) -- wajib dibatasi ke 1 Lembaga, dulu ambil
+    // kegiatan PERTAMA yang ketemu lintas SEMUA Lembaga/Yayasan.
+    private function kegiatanAktif(int $lembagaId)
     {
         $today = Carbon::today()->format('Y-m-d');
         $now = Carbon::now()->format('H:i:s');
 
-        return JadwalKegiatan::where('tanggal', $today)
+        return JadwalKegiatan::whereHas('template', fn ($q) => $q->where('lembaga_id', $lembagaId))
+            ->where('tanggal', $today)
             ->where('jam_mulai', '<=', $now)
             ->where('jam_selesai', '>=', $now)
             ->with('templateKegiatan')
@@ -61,9 +63,15 @@ class AbsensiController extends Controller
     // GENERATE ABSENSI SISWA DEFAULT ALPA
     // ===============================
 
+    // DIUBAH (16 Sep 2026) -- sebelumnya Siswa::all() bikin baris
+    // "Alpa" buat SEMUA SISWA DI SELURUH DATABASE (lintas Lembaga
+    // lain yang sama sekali tidak ikut kegiatan ini). Sekarang
+    // dibatasi ke siswa Lembaga pemilik kegiatan ini saja.
     private function generateAbsensi($kegiatan)
     {
-        $siswas = Siswa::all();
+        $lembagaId = $kegiatan->template?->lembaga_id;
+
+        $siswas = Siswa::where('lembaga_id', $lembagaId)->get();
 
         foreach ($siswas as $siswa) {
 
@@ -106,12 +114,23 @@ class AbsensiController extends Controller
                 ]);
             }
 
+            // DITAMBAHKAN (16 Sep 2026) -- lembaga_id wajib valid
+            // sebelum lanjut, sama seperti AbsensiHarianController.
+            $lembaga = Lembaga::find($request->lembaga_id);
+
+            if (! $lembaga) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Lembaga tidak valid. Muat ulang halaman ini.'
+                ]);
+            }
+
 
             // ===============================
             // KEGIATAN AKTIF
             // ===============================
 
-            $kegiatan = $this->kegiatanAktif();
+            $kegiatan = $this->kegiatanAktif($lembaga->id);
 
             if (!$kegiatan) {
 
@@ -130,28 +149,34 @@ class AbsensiController extends Controller
 
 
             // ===============================
-            // CARI SISWA
+            // CARI SISWA -- DIBATASI ke Lembaga ini saja
             // ===============================
 
-            $siswa = Siswa::where('nis', $code)
-                ->orWhere('nisn', $code)
-                ->orWhere('rfid', $code)
-                ->orWhere('rfid_code', $code)
-                ->orWhere('qr_code', $code)
+            $siswa = Siswa::where('lembaga_id', $lembaga->id)
+                ->where(function ($q) use ($code) {
+                    $q->where('nis', $code)
+                        ->orWhere('nisn', $code)
+                        ->orWhere('rfid', $code)
+                        ->orWhere('rfid_code', $code)
+                        ->orWhere('qr_code', $code);
+                })
                 ->first();
 
 
             // ===============================
-            // CARI GURU
+            // CARI GURU -- DIBATASI ke Lembaga ini saja
             // ===============================
 
             $pegawai = null;
 
             if (!$siswa) {
 
-                $pegawai = Pegawai::where('rfid', $code)
-                    ->orWhere('qr_code', $code)
-                    ->orWhere('niy', $code)
+                $pegawai = Pegawai::whereHas('lembagas', fn ($q) => $q->where('lembagas.id', $lembaga->id))
+                    ->where(function ($q) use ($code) {
+                        $q->where('rfid', $code)
+                            ->orWhere('qr_code', $code)
+                            ->orWhere('niy', $code);
+                    })
                     ->first();
             }
 

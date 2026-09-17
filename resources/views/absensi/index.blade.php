@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="csrf-token" content="{{ csrf_token() }}">
 
-<title>Scan Absensi</title>
+<title>Scan Absensi — {{ $lembaga->nama }}</title>
 
 <script src="https://unpkg.com/html5-qrcode"></script>
 
@@ -561,6 +561,7 @@ body{
                 <div>
 
                     <h1>Scan Absensi</h1>
+                    <p style="text-align:center; color:#64748b; font-size:0.9rem;">{{ $lembaga->nama }}</p>
 
                     <p>
                         Sistem Absensi Digital Siswa & Guru
@@ -1448,7 +1449,8 @@ async function sendScan(code){
                 },
 
                 body:JSON.stringify({
-                    qr_code:code
+                    qr_code:code,
+                    lembaga_id:{{ $lembaga->id }}
                 })
             }
         );

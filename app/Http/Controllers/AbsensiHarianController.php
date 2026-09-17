@@ -9,14 +9,15 @@ use Illuminate\Support\Facades\Log;
 use App\Models\Siswa;
 use App\Models\Pegawai;
 use App\Models\AbsensiHarian;
+use App\Models\Lembaga;
 use App\Services\NotificationService;
 use App\Support\FileUrlResolver;
 
 class AbsensiHarianController extends Controller
 {
-    public function index()
+    public function index(Lembaga $lembaga)
     {
-        return view('absensi-harian.index');
+        return view('absensi-harian.index', ['lembaga' => $lembaga]);
     }
 
     // ===============================
@@ -38,22 +39,46 @@ class AbsensiHarianController extends Controller
             }
 
             // ===============================
-            // CARI SISWA / GURU
+            // DITAMBAHKAN (16 Sep 2026) -- lembaga_id WAJIB ada &
+            // valid sebelum lanjut cari siswa/pegawai. Ini akar
+            // perbaikan bug isolasi data: dulu $lembaga ditebak
+            // BELAKANGAN dari hasil pencarian yang sudah kebuka
+            // lebar ke seluruh database -- sekarang ditentukan
+            // DULUAN dari sini, dipakai buat MEMBATASI pencarian.
             // ===============================
 
-            $siswa = Siswa::where('nis', $code)
-                ->orWhere('nisn', $code)
-                ->orWhere('rfid', $code)
-                ->orWhere('rfid_code', $code)
-                ->orWhere('qr_code', $code)
+            $lembaga = Lembaga::find($request->lembaga_id);
+
+            if (! $lembaga) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Lembaga tidak valid. Muat ulang halaman ini.'
+                ]);
+            }
+
+            // ===============================
+            // CARI SISWA / GURU -- DIBATASI ke Lembaga ini saja
+            // ===============================
+
+            $siswa = Siswa::where('lembaga_id', $lembaga->id)
+                ->where(function ($q) use ($code) {
+                    $q->where('nis', $code)
+                        ->orWhere('nisn', $code)
+                        ->orWhere('rfid', $code)
+                        ->orWhere('rfid_code', $code)
+                        ->orWhere('qr_code', $code);
+                })
                 ->first();
 
             $pegawai = null;
 
             if (!$siswa) {
-                $pegawai = Pegawai::where('rfid', $code)
-                    ->orWhere('qr_code', $code)
-                    ->orWhere('niy', $code)
+                $pegawai = Pegawai::whereHas('lembagas', fn ($q) => $q->where('lembagas.id', $lembaga->id))
+                    ->where(function ($q) use ($code) {
+                        $q->where('rfid', $code)
+                            ->orWhere('qr_code', $code)
+                            ->orWhere('niy', $code);
+                    })
                     ->first();
             }
 
@@ -86,9 +111,10 @@ class AbsensiHarianController extends Controller
                 ? FileUrlResolver::public($siswa->foto)
                 : FileUrlResolver::public($pegawai->foto);
 
-            $lembaga = $siswa
-                ? $siswa->lembaga
-                : $pegawai?->lembagas?->first();
+            // $lembaga sudah divalidasi & ditentukan di awal method
+            // (dari request->lembaga_id) -- TIDAK ditebak lagi dari
+            // siswa/pegawai yang ketemu, supaya konsisten dengan yang
+            // dipakai buat MEMBATASI pencarian di atas.
 
             // DITAMBAHKAN (16 Sep 2026) -- jam absensi sekarang per
             // hari (lihat migration create_jadwal_absensi_harians_table).

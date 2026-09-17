@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="csrf-token" content="{{ csrf_token() }}">
 
-<title>Absensi Masuk & Pulang</title>
+<title>Absensi Masuk & Pulang — {{ $lembaga->nama }}</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -200,6 +200,7 @@ body{
 
         <div class="page-title">
             <h1>Absensi Masuk & Pulang</h1>
+            <p style="text-align:center; color:#64748b; font-size:0.9rem; margin-top:-0.5rem;">{{ $lembaga->nama }}</p>
             <p>Sistem Absensi Harian Siswa & Guru/Pegawai</p>
         </div>
 
@@ -423,7 +424,7 @@ async function sendScan(code){
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
             },
-            body: JSON.stringify({ qr_code: code, jenis: currentJenis })
+            body: JSON.stringify({ qr_code: code, jenis: currentJenis, lembaga_id: {{ $lembaga->id }} })
         });
 
         const data = await response.json();

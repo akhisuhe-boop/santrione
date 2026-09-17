@@ -137,10 +137,21 @@ Route::get('/y/{slug}', function (string $slug) {
 
 Route::post('/whatsapp/test', [WhatsappSettingController::class, 'test']);
 
-Route::get('/absensi', [AbsensiController::class, 'index']);
+// DIUBAH (16 Sep 2026) -- sama seperti /absensi-harian, rute ini
+// sebelumnya tanpa {lembaga} sama sekali -- kegiatanAktif() ambil
+// JadwalKegiatan PERTAMA yang ketemu LINTAS SEMUA LEMBAGA/YAYASAN,
+// dan generateAbsensi() bikin baris "Alpa" untuk SEMUA SISWA DI
+// SELURUH DATABASE. Sekarang wajib sertakan {lembaga} di URL.
+Route::get('/absensi/{lembaga}', [AbsensiController::class, 'index']);
 Route::post('/absensi/scan', [AbsensiController::class, 'scan'])->name('absensi.scan');
 
-Route::get('/absensi-harian', [\App\Http\Controllers\AbsensiHarianController::class, 'index'])->name('absensi-harian.index');
+// DIUBAH (16 Sep 2026) -- sebelumnya rute ini TIDAK PUNYA parameter
+// Lembaga sama sekali, jadi pencarian siswa/pegawai di scan()
+// mencari ke SELURUH DATABASE lintas Yayasan/Lembaga (bug isolasi
+// data serius -- kalau 2 sekolah beda kebetulan NIS-nya sama, siswa
+// sekolah A bisa ke-scan jadi siswa sekolah B). Sekarang wajib
+// sertakan {lembaga} di URL, dipakai buat membatasi pencarian.
+Route::get('/absensi-harian/{lembaga}', [\App\Http\Controllers\AbsensiHarianController::class, 'index'])->name('absensi-harian.index');
 Route::post('/absensi-harian/scan', [\App\Http\Controllers\AbsensiHarianController::class, 'scan'])->name('absensi-harian.scan');
 
 Route::get('/kartu/siswa-massal', function () {
