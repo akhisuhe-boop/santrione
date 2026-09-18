@@ -11,21 +11,36 @@ use App\Models\RekapNilai;
 use App\Models\TahunAjaran;
 use App\Models\RaportNonAkademik;
 
+use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class PrintRaportController extends Controller
 {
-    public function generate(Siswa $siswa)
+    public function generate(Request $request, Siswa $siswa)
     {
         /*
         |--------------------------------------------------------------------------
-        | TAHUN AJARAN AKTIF
+        | JENIS PENILAIAN (PTS / PAS)
         |--------------------------------------------------------------------------
         */
 
-        $tahunAjaran = TahunAjaran::query()
-            ->where('aktif', true)
-            ->first();
+        $jenisPenilaian =
+            in_array($request->query('jenis_penilaian'), ['pts', 'pas'])
+                ? $request->query('jenis_penilaian')
+                : 'pas';
+
+        /*
+        |--------------------------------------------------------------------------
+        | TAHUN AJARAN
+        |--------------------------------------------------------------------------
+        | Default ke tahun ajaran aktif kalau tidak dikirim lewat query string,
+        | supaya link lama (mis. dari dashboard wali) tetap jalan.
+        |--------------------------------------------------------------------------
+        */
+
+        $tahunAjaran = $request->query('tahun_ajaran_id')
+            ? TahunAjaran::find($request->query('tahun_ajaran_id'))
+            : TahunAjaran::query()->where('aktif', true)->first();
         
         /*
         |--------------------------------------------------------------------------
@@ -80,6 +95,11 @@ class PrintRaportController extends Controller
             ->where(
                 'tahun_ajaran_id',
                 $tahunAjaran->id
+            )
+
+            ->where(
+                'jenis_penilaian',
+                $jenisPenilaian
             )
 
             ->orderBy('mapel_id')
@@ -263,6 +283,7 @@ class PrintRaportController extends Controller
             compact(
             'siswa',
             'tahunAjaran',
+            'jenisPenilaian',
             'lembaga',
             'yayasan',
             'nilaiAkademik',
@@ -289,6 +310,10 @@ class PrintRaportController extends Controller
         return $pdf->stream(
 
             'raport-' .
+
+            strtoupper($jenisPenilaian) .
+
+            '-' .
 
             $siswa->nama_lengkap .
 

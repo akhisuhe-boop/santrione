@@ -56,6 +56,8 @@ class RaportSiswa extends Page implements Forms\Contracts\HasForms
 
     public array $summary = [];
 
+    public string $jenisPenilaian = 'pas';
+
     /*
     |--------------------------------------------------------------------------
     | MOUNT
@@ -72,6 +74,9 @@ class RaportSiswa extends Page implements Forms\Contracts\HasForms
                     'aktif',
                     true
                 )->value('id'),
+
+            'jenis_penilaian' =>
+                'pas',
 
         ]);
     }
@@ -137,6 +142,44 @@ class RaportSiswa extends Page implements Forms\Contracts\HasForms
                             ->preload()
 
                             ->live()
+
+                            ->afterStateUpdated(
+                                fn () =>
+                                $this->loadRaport()
+                            )
+
+                            ->required(),
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | JENIS RAPORT (PTS / PAS)
+                        |--------------------------------------------------------------------------
+                        */
+
+                        Forms\Components\Select::make(
+                            'jenis_penilaian'
+                        )
+
+                            ->label('Jenis Raport')
+
+                            ->options([
+
+                                'pts' =>
+                                    'PTS - Penilaian Tengah Semester',
+
+                                'pas' =>
+                                    'PAS - Penilaian Akhir Semester',
+
+                            ])
+
+                            ->default('pas')
+
+                            ->live()
+
+                            ->afterStateUpdated(
+                                fn () =>
+                                $this->loadRaport()
+                            )
 
                             ->required(),
 
@@ -247,7 +290,7 @@ class RaportSiswa extends Page implements Forms\Contracts\HasForms
 
                     ])
 
-                    ->columns(3),
+                    ->columns(4),
 
             ])
 
@@ -286,6 +329,10 @@ class RaportSiswa extends Page implements Forms\Contracts\HasForms
 
             return;
         }
+
+        $this->jenisPenilaian =
+            $this->data['jenis_penilaian']
+                ?? 'pas';
 
         /*
         |--------------------------------------------------------------------------
@@ -355,6 +402,11 @@ class RaportSiswa extends Page implements Forms\Contracts\HasForms
             ->where(
                 'tahun_ajaran_id',
                 $this->data['tahun_ajaran_id']
+            )
+
+            ->where(
+                'jenis_penilaian',
+                $this->jenisPenilaian
             )
 
             ->orderBy('mapel_id')

@@ -23,6 +23,7 @@ class RekapNilai extends Model
         'mapel_id',
         'guru_id',
         'tahun_ajaran_id',
+        'jenis_penilaian',
 
         'nilai_akhir',
         'grade',

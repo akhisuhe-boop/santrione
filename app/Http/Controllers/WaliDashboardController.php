@@ -390,6 +390,8 @@ class WaliDashboardController extends Controller
         */
         $rekapNilai = RekapNilai::with(['mapel', 'guru'])
             ->where('siswa_id', $siswa->id)
+            // Raport yang ditampilkan ke wali adalah raport akhir semester (PAS).
+            ->where('jenis_penilaian', 'pas')
             ->when($raport, function ($q) use ($raport) {
                 $q->where('tahun_ajaran_id', $raport->tahun_ajaran_id);
             })

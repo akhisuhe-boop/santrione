@@ -41,6 +41,9 @@
                                 "
                             >
                                 Raport Siswa
+                                <span class="text-base font-semibold text-primary-600 dark:text-primary-400">
+                                    ({{ $jenisPenilaian === 'pts' ? 'PTS - Penilaian Tengah Semester' : 'PAS - Penilaian Akhir Semester' }})
+                                </span>
                             </h2>
 
                             <p
@@ -59,7 +62,7 @@
                             color="success"
                             icon="heroicon-m-printer"
                             tag="a"
-                            :href="route('raport.pdf', $siswa->id)"
+                            :href="route('raport.pdf', ['siswa' => $siswa->id, 'tahun_ajaran_id' => $tahunAjaran?->id, 'jenis_penilaian' => $jenisPenilaian])"
                             target="_blank"
                         >
                             Print Raport

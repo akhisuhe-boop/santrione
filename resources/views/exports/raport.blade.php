@@ -98,7 +98,7 @@
 
     {{-- HEADER --}}
     <div class="title">
-        RAPORT HASIL STUDI SISWA
+        RAPORT {{ $jenisPenilaian === 'pts' ? 'PENILAIAN TENGAH SEMESTER (PTS)' : 'PENILAIAN AKHIR SEMESTER (PAS)' }}
     </div>
 
     <div class="subtitle">

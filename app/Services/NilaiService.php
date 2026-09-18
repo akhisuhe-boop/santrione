@@ -29,6 +29,42 @@ class NilaiService
 
     /*
     |--------------------------------------------------------------------------
+    | HITUNG NILAI AKHIR - PTS (PENILAIAN TENGAH SEMESTER)
+    |--------------------------------------------------------------------------
+    | Dipakai saat UAS belum ada (raport tengah semester).
+    | Bobot tugas/harian/uts tetap sama proporsinya dengan formula PAS
+    | (20 : 30 : 20), tapi dinormalisasi ke skala 100 karena UAS
+    | belum ikut dihitung.
+    |--------------------------------------------------------------------------
+    */
+
+    public static function hitungNilaiAkhirPts(
+        $tugas,
+        $harian,
+        $uts
+    ) {
+
+        $bobotTugas = 0.20;
+        $bobotHarian = 0.30;
+        $bobotUts = 0.20;
+
+        $totalBobot =
+            $bobotTugas +
+            $bobotHarian +
+            $bobotUts;
+
+        $nilai =
+            (($tugas ?? 0) * $bobotTugas) +
+            (($harian ?? 0) * $bobotHarian) +
+            (($uts ?? 0) * $bobotUts);
+
+        return round(
+            $nilai / $totalBobot
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | GENERATE GRADE
     |--------------------------------------------------------------------------
     */
