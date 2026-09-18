@@ -34,6 +34,9 @@ class RaportEkstrakurikuler extends Model
 
     public function raport()
     {
-        return $this->belongsTo(RaportNonAkademik::class);
+        return $this->belongsTo(
+            RaportNonAkademik::class,
+            'raport_non_akademik_id'
+        );
     }
 }

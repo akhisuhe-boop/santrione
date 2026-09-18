@@ -148,9 +148,41 @@ class RoleResource extends BaseRoleResource
             }
 
             if (! $pageClass::shouldRegisterNavigation()) {
-                $sudahDipakai['page_' . class_basename($pageClass)] = true;
 
-                continue;
+                /*
+                |--------------------------------------------------------------------------
+                | PENGECUALIAN -- HALAMAN TERSEMBUNYI TAPI TETAP DIJAGA PERMISSION
+                |--------------------------------------------------------------------------
+                | Beberapa Page sengaja shouldRegisterNavigation() = false (diakses
+                | lewat link dari halaman lain, bukan sidebar langsung -- mis.
+                | DetailNilai dari Rekap Nilai, atau LaporanAbsensiSiswa/Pegawai,
+                | Checkout) TAPI tetap override canAccess() untuk mengecek
+                | permission "page_{Nama}". Kalau kita skip SEMUA halaman
+                | tersembunyi di sini (perilaku lama), permission itu jadi TIDAK
+                | PERNAH bisa dicentang dari role manapun -- termasuk Super
+                | Admin -- ditemukan 19 Sep 2026 lewat DetailNilai yang selalu
+                | 403 walau permission-nya sudah ada di database.
+                |
+                | Deteksi otomatis pakai reflection: kalau canAccess() memang
+                | di-override (bukan warisan langsung dari Filament\Pages\Page
+                | bawaan), berarti developer sengaja menaruh logic permission
+                | di situ, jadi tetap ditampilkan togglenya -- tapi HANYA kalau
+                | permission "page_{Nama}"-nya memang ada di database (dicek
+                | lagi lewat isset($adaNama[$nama]) di bawah), supaya Page
+                | tersembunyi yang canAccess()-nya cuma cek is_platform_admin/
+                | FeatureGate saja (tanpa permission Shield) tetap tidak nongol.
+                |--------------------------------------------------------------------------
+                */
+
+                $overrideCanAccess = (new \ReflectionMethod($pageClass, 'canAccess'))
+                    ->getDeclaringClass()
+                    ->getName() !== \Filament\Pages\Page::class;
+
+                if (! $overrideCanAccess) {
+                    $sudahDipakai['page_' . class_basename($pageClass)] = true;
+
+                    continue;
+                }
             }
 
             $navGroup = $pageClass::getNavigationGroup() ?? 'Lainnya';

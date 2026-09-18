@@ -19,6 +19,9 @@ class DetailNilai extends Page
 {
     protected static bool $shouldRegisterNavigation = false;
 
+    protected static ?string $navigationGroup =
+        'Akademik';
+
     /**
      * Sama seperti PengaturanNotifikasi -- sebelumnya tidak ada
      * canAccess() sama sekali, jadi permission "page_DetailNilai"
