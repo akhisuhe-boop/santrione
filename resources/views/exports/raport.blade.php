@@ -97,7 +97,7 @@
 <body>
 
     {{-- HEADER: JUDUL RAPORT --}}
-    <div class="title" style="margin:0; padding:0;">
+    <div class="title" style="margin:0; padding:0; font-size:17px;">
         RAPORT {{ $jenisPenilaian === 'pts' ? 'PENILAIAN TENGAH SEMESTER (PTS)' : 'PENILAIAN AKHIR SEMESTER (PAS)' }}
     </div>
 
@@ -106,7 +106,7 @@
 
         <tr>
 
-            <td width="15%" style="vertical-align:middle; padding:0;">
+            <td width="15%" style="vertical-align:top; padding:0;">
                 @if($logoBase64)
                     <img
                         src="{{ $logoBase64 }}"
@@ -115,9 +115,9 @@
                 @endif
             </td>
 
-            <td style="vertical-align:middle; text-align:center; padding:0;">
+            <td style="vertical-align:top; text-align:center; padding:0;">
 
-                <div style="font-size:16px; font-weight:bold; text-transform:uppercase;">
+                <div style="font-size:17px; font-weight:bold; text-transform:uppercase;">
                     {{ $siswa->kelas->lembaga->nama ?? '-' }}
                 </div>
 
@@ -717,7 +717,7 @@
             class="no-border text-center"
         >
             @if($ttdWaliKelasBase64)
-                <img src="{{ $ttdWaliKelasBase64 }}" style="height:70px; width:auto; max-width:150px;">
+                <img src="{{ $ttdWaliKelasBase64 }}" style="height:90px; width:auto; max-width:180px;">
             @else
                 &nbsp;
             @endif
@@ -727,7 +727,7 @@
             class="no-border text-center"
         >
             @if($ttdKepalaSekolahBase64)
-                <img src="{{ $ttdKepalaSekolahBase64 }}" style="height:70px; width:auto; max-width:150px;">
+                <img src="{{ $ttdKepalaSekolahBase64 }}" style="height:90px; width:auto; max-width:180px;">
             @else
                 &nbsp;
             @endif
