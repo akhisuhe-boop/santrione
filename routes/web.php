@@ -414,9 +414,6 @@ Route::prefix('wali')->group(function () {
     Route::post('/nilai', [GuruNilaiController::class,'store'])
     ->name('guru.nilai.store');
 
-    Route::post('/nilai/reset', [GuruNilaiController::class,'reset'])
-    ->name('guru.nilai.reset');
-
     // Gaji
     Route::get('/gaji', [GuruGajiController::class, 'index'])
     ->name('guru.gaji');

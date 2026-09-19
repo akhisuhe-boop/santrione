@@ -150,43 +150,4 @@ class GuruNilaiController extends Controller
             'Nilai berhasil disimpan.'
         );
     }
-
-    /**
-     * Hapus nilai yang sudah tersimpan untuk 1 kelas+mapel+jenis penilaian
-     * (dipakai tombol "Reset" -- benar-benar menghapus dari database,
-     * bukan cuma bersihin tampilan form).
-     */
-    public function reset(Request $request)
-    {
-        $request->validate([
-
-            'jadwal_id'  => 'required|exists:jadwal_pelajarans,id',
-            'tipe_nilai' => 'required|in:tugas,harian,uts,uas',
-
-        ]);
-
-        $jadwal = JadwalPelajaran::where('id', $request->jadwal_id)
-            ->where('pegawai_id', session('guru_id'))
-            ->firstOrFail();
-
-        $tahunAjaran = TahunAjaran::where('aktif', true)->first();
-
-        $jumlahDihapus = Nilai::query()
-            ->where('kelas_id', $jadwal->kelas_id)
-            ->where('mapel_id', $jadwal->mata_pelajaran_id)
-            ->where('guru_id', $jadwal->pegawai_id)
-            ->where('tahun_ajaran_id', $tahunAjaran?->id)
-            ->where('tipe_nilai', $request->tipe_nilai)
-            ->delete();
-
-        return redirect()
-            ->route('guru.nilai', [
-                'jadwal_id' => $request->jadwal_id,
-                'tipe_nilai' => $request->tipe_nilai,
-            ])
-            ->with(
-                'success',
-                "Nilai {$jumlahDihapus} siswa untuk jenis penilaian ini berhasil dihapus."
-            );
-    }
 }

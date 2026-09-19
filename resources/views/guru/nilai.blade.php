@@ -329,7 +329,7 @@ setTimeout(() => {
                    bg-slate-50
                    p-4">
     
-            <div class="grid grid-cols-2 gap-3">
+            <div class="grid grid-cols-1 gap-3">
 
                 <button
                     type="submit"
@@ -340,38 +340,12 @@ setTimeout(() => {
                     Simpan Nilai
             
                 </button>
-            
-                <button
-                    type="submit"
-                    form="resetNilaiForm"
-                    onclick="return confirm('Yakin mau hapus nilai yang sudah tersimpan untuk jenis penilaian ini? Aksi ini tidak bisa dibatalkan.')"
-                    class="py-2.5 rounded-2xl border border-red-200
-                           bg-white text-center text-sm font-semibold
-                           text-red-600
-                           hover:bg-red-50 transition-colors">
-            
-                    Reset
-            
-                </button>
-            
+
             </div>
     
         </div>
     
     </div>
-
-    </form>
-
-    <form
-        id="resetNilaiForm"
-        action="{{ route('guru.nilai.reset') }}"
-        method="POST"
-        style="display:none;">
-
-        @csrf
-
-        <input type="hidden" name="jadwal_id" value="{{ request('jadwal_id') }}">
-        <input type="hidden" name="tipe_nilai" value="{{ request('tipe_nilai') }}">
 
     </form>
 
