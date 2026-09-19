@@ -97,11 +97,9 @@
 <body>
 
     {{-- HEADER: JUDUL RAPORT --}}
-    <div class="title">
+    <div class="title" style="margin-bottom:10px;">
         RAPORT {{ $jenisPenilaian === 'pts' ? 'PENILAIAN TENGAH SEMESTER (PTS)' : 'PENILAIAN AKHIR SEMESTER (PAS)' }}
     </div>
-
-    <div class="line" style="margin:6px 0 10px;"></div>
 
     {{-- KOP SURAT --}}
     <table class="borderless" style="margin-bottom:8px;">
@@ -608,19 +606,13 @@
 
     </table>
 
-</td>
-
-            </td>
-
-        </tr>
-
-    </table>
-
-    {{-- KETERANGAN KENAIKAN KELAS (PAS, SEMESTER GENAP SAJA) --}}
+    {{-- KETERANGAN KENAIKAN KELAS (PAS, SEMESTER GENAP SAJA) -- diletakkan
+    di bawah tabel Absensi, di kolom kanan yang sama, ukuran mengikuti
+    lebar kolom ini (bukan lebar penuh halaman). --}}
     @if($jenisPenilaian === 'pas' && strtolower($tahunAjaran->semester ?? '') === 'genap')
-        <table class="borderless" style="margin-top:15px;">
+        <table style="margin-top:10px;">
             <tr>
-                <td width="55%" style="border:1px solid #000; padding:10px; vertical-align:top;">
+                <td style="padding:10px; vertical-align:top;">
 
                     <div style="font-weight:bold;">
                         Keputusan:
@@ -639,10 +631,17 @@
                     </div>
 
                 </td>
-                <td width="45%"></td>
             </tr>
         </table>
     @endif
+
+</td>
+
+            </td>
+
+        </tr>
+
+    </table>
 
     {{-- TTD --}}
 <table class="borderless signature">
