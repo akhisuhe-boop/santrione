@@ -675,7 +675,7 @@
             class="no-border text-center"
         >
             @if($ttdWaliKelasBase64)
-                <img src="{{ $ttdWaliKelasBase64 }}" style="height:50px; width:auto;">
+                <img src="{{ $ttdWaliKelasBase64 }}" style="height:70px; width:auto; max-width:150px;">
             @else
                 &nbsp;
             @endif
@@ -685,7 +685,7 @@
             class="no-border text-center"
         >
             @if($ttdKepalaSekolahBase64)
-                <img src="{{ $ttdKepalaSekolahBase64 }}" style="height:50px; width:auto;">
+                <img src="{{ $ttdKepalaSekolahBase64 }}" style="height:70px; width:auto; max-width:150px;">
             @else
                 &nbsp;
             @endif
@@ -740,14 +740,12 @@
 </table>
 
     {{-- QR CODE VERIFIKASI --}}
-    @if(isset($qrCodeSvg))
+    @if(isset($qrCodeBase64))
         <table class="borderless" style="margin-top:15px;">
             <tr>
                 <td width="70%"></td>
                 <td width="30%" style="text-align:center;">
-                    <div style="width:80px; margin:0 auto;">
-                        {!! $qrCodeSvg !!}
-                    </div>
+                    <img src="{{ $qrCodeBase64 }}" style="width:80px; height:80px;">
                     <div style="font-size:8px; color:#555; margin-top:2px;">
                         Scan untuk verifikasi keaslian raport
                     </div>

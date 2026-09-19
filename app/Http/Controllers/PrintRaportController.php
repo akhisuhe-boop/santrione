@@ -105,7 +105,27 @@ class PrintRaportController extends Controller
             'jenisPenilaian' => $jenisPenilaian,
         ]);
 
-        $qrCodeSvg = QrCode::size(90)->generate($urlVerifikasi);
+        /*
+        |--------------------------------------------------------------------------
+        | QR CODE: BERSIHKAN PROLOG XML, EMBED SEBAGAI <img> BASE64
+        |--------------------------------------------------------------------------
+        | simple-qrcode mengembalikan SVG lengkap dengan prolog
+        | "<?xml version=...?>" di depannya. Prolog itu TIDAK VALID kalau
+        | ditempel langsung ke tengah dokumen HTML (bukan file .svg
+        | berdiri sendiri) -- DomPDF diam-diam GAGAL me-render seluruh
+        | blok itu kalau prolognya masih ada (makanya QR tidak muncul
+        | sama sekali, tanpa error). Solusinya: buang prolognya, lalu
+        | embed sebagai <img src="data:image/svg+xml;base64,..."> --
+        | sama persis polanya dengan logo/tanda tangan supaya konsisten
+        | dan pasti didukung DomPDF.
+        |--------------------------------------------------------------------------
+        */
+
+        $qrCodeSvgMentah = QrCode::size(200)->generate($urlVerifikasi);
+
+        $qrCodeSvgBersih = preg_replace('/<\?xml.*?\?>/', '', $qrCodeSvgMentah);
+
+        $qrCodeBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrCodeSvgBersih);
 
         /*
         |--------------------------------------------------------------------------
@@ -345,7 +365,7 @@ class PrintRaportController extends Controller
             'logoBase64',
             'ttdWaliKelasBase64',
             'ttdKepalaSekolahBase64',
-            'qrCodeSvg',
+            'qrCodeBase64',
             'nilaiAkademik',
             'nonAkademik',
             'total',
