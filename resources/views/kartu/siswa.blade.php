@@ -132,6 +132,22 @@ td{
     } catch (\Throwable $e) {
         // biarkan null kalau gagal ambil dari R2, kartu tetap tercetak tanpa background
     }
+
+    // DITAMBAHKAN -- untuk cetak bolak-balik (duplex): posisi kartu di
+    // sisi BELAKANG perlu ditukar urutan barisnya (baris atas <-> baris
+    // bawah per halaman) supaya ketemu posisi fisiknya dengan kartu
+    // DEPAN begitu kertas dibalik saat print. Sisi depan TETAP pakai
+    // urutan asli ($siswas, tidak diubah) -- yang ditukar cuma versi
+    // yang dipakai di render kartu belakang di bawah
+    // ($siswasUrutanCetak).
+    $siswasUrutanCetak = collect();
+    foreach ($siswas->chunk(10) as $halamanChunk) {
+        $barisChunks = $halamanChunk->values()->chunk(5)->reverse()->values();
+        foreach ($barisChunks as $baris) {
+            $siswasUrutanCetak = $siswasUrutanCetak->merge($baris);
+        }
+    }
+    $siswasUrutanCetak = $siswasUrutanCetak->values();
 @endphp
 
 {{-- KARTU DEPAN --}}
@@ -224,7 +240,7 @@ NIS : {{ $siswa->nis }}
 
 
 {{-- KARTU BELAKANG --}}
-@foreach($siswas->chunk(10) as $chunk)
+@foreach($siswasUrutanCetak->chunk(10) as $chunk)
 
 <table>
 <tr>
