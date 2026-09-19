@@ -59,6 +59,7 @@ class Siswa extends Model
         'penghasilan_wali',
         'wa_wali',
         'foto',
+        'izin_lihat_raport',
         'scan_kk',
         'scan_akta',
         'scan_ijazah',
@@ -73,6 +74,7 @@ class Siswa extends Model
     protected $casts = [
     'password' => 'hashed',
         //'pin' => 'hashed', // tetap seperti punya Akhi (tidak diubah)
+        'izin_lihat_raport' => 'boolean',
     ];
 
     protected static function booted()

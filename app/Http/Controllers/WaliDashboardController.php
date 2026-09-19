@@ -366,7 +366,20 @@ class WaliDashboardController extends Controller
 
     public function raport(Request $request)
     {
-        $siswa = Siswa::with('kelas')->findOrFail(session('siswa_id'));
+        $siswa = Siswa::with('kelas.lembaga')->findOrFail(session('siswa_id'));
+
+        /*
+        |---------------------------------------------
+        | GATE: PROTEKSI RAPORT (KEBIJAKAN SEKOLAH)
+        |---------------------------------------------
+        */
+
+        if (! $this->bolehLihatRaport($siswa)) {
+
+            return view('wali.raport-terkunci', [
+                'siswa' => $siswa,
+            ]);
+        }
 
         /*
         |---------------------------------------------
@@ -451,9 +464,63 @@ class WaliDashboardController extends Controller
      */
     public function raportPdf(Request $request)
     {
-        $siswa = Siswa::findOrFail(session('siswa_id'));
+        $siswa = Siswa::with('kelas.lembaga')->findOrFail(session('siswa_id'));
+
+        abort_unless(
+            $this->bolehLihatRaport($siswa),
+            403,
+            'Raport belum bisa diunduh. Silakan lunasi tagihan terlebih dahulu atau hubungi pihak sekolah.'
+        );
 
         return app(PrintRaportController::class)->generate($request, $siswa);
+    }
+
+    /**
+     * Cek apakah wali siswa ini boleh melihat/download raport digital,
+     * berdasarkan kebijakan proteksi raport yang diatur admin/keuangan
+     * di data Lembaga, dengan kemungkinan override per siswa.
+     *
+     * Urutan pengecekan:
+     * 1. Override di data siswa (izin_lihat_raport) selalu menang mutlak,
+     *    apapun status tagihannya.
+     * 2. Kalau proteksi tidak diaktifkan di Lembaga siswa ini, semua
+     *    wali boleh lihat raport seperti biasa.
+     * 3. Kalau aktif, cek ada/tidaknya tagihan BELUM lunas sesuai cakupan
+     *    (tahun ajaran aktif saja / semua tagihan) dan jenis tagihan yang
+     *    dipilih (kosong = semua jenis).
+     */
+    private function bolehLihatRaport(Siswa $siswa): bool
+    {
+        if ($siswa->izin_lihat_raport !== null) {
+            return (bool) $siswa->izin_lihat_raport;
+        }
+
+        $lembaga = $siswa->kelas?->lembaga;
+
+        if (! $lembaga || ! $lembaga->proteksi_raport_aktif) {
+            return true;
+        }
+
+        $query = Tagihan::query()
+            ->where('siswa_id', $siswa->id)
+            ->where('status', '!=', 'lunas');
+
+        if ($lembaga->proteksi_raport_cakupan === 'tahun_ajaran_aktif') {
+
+            $tahunAjaranAktif = TahunAjaran::where('aktif', true)->value('id');
+
+            if ($tahunAjaranAktif) {
+                $query->where('tahun_ajaran_id', $tahunAjaranAktif);
+            }
+        }
+
+        if ($lembaga->proteksi_raport_jenis_tagihan_id) {
+            $query->where('jenis_tagihan_id', $lembaga->proteksi_raport_jenis_tagihan_id);
+        }
+
+        $adaTagihanBelumLunas = $query->exists();
+
+        return ! $adaTagihanBelumLunas;
     }
 
     public function showPembayaran(Tagihan $tagihan)

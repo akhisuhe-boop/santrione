@@ -221,7 +221,40 @@ class LembagaResource extends BaseResource
 
                     ])
                     ->columns(3),
-    
+
+                Section::make('Proteksi Raport')
+                    ->description('Batasi akses lihat/download raport digital di portal wali sampai tagihan lunas. Kebijakan ini murni pilihan sekolah -- kalau dimatikan, semua wali bisa lihat raport seperti biasa.')
+                    ->icon('heroicon-o-lock-closed')
+                    ->schema([
+
+                        Forms\Components\Toggle::make('proteksi_raport_aktif')
+                            ->label('Aktifkan Proteksi Raport')
+                            ->live()
+                            ->columnSpanFull(),
+
+                        Select::make('proteksi_raport_cakupan')
+                            ->label('Tagihan yang Dicek')
+                            ->options([
+                                'tahun_ajaran_aktif' => 'Cukup tagihan Tahun Ajaran yang sedang berjalan',
+                                'semua_tagihan' => 'Semua tagihan siswa (sepanjang waktu)',
+                            ])
+                            ->default('tahun_ajaran_aktif')
+                            ->native(false)
+                            ->visible(fn (Get $get) => $get('proteksi_raport_aktif')),
+
+                        Select::make('proteksi_raport_jenis_tagihan_id')
+                            ->label('Jenis Tagihan yang Wajib Lunas')
+                            ->relationship('proteksiJenisTagihan', 'nama')
+                            ->searchable()
+                            ->preload()
+                            ->native(false)
+                            ->placeholder('Semua jenis tagihan')
+                            ->helperText('Kosongkan kalau semua jenis tagihan (SPP, uang gedung, dll) harus lunas. Pilih satu kalau cuma jenis tertentu yang jadi syarat, mis. SPP saja.')
+                            ->visible(fn (Get $get) => $get('proteksi_raport_aktif')),
+
+                    ])
+                    ->columns(2),
+
             ]);
     }
 

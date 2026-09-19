@@ -24,6 +24,9 @@ class Lembaga extends Model
     'is_tes',
     'kepala_sekolah',
     'tanda_tangan_kepala_sekolah',
+    'proteksi_raport_aktif',
+    'proteksi_raport_cakupan',
+    'proteksi_raport_jenis_tagihan_id',
     'bendahara_id',
     'printer_kwitansi',
     'limit_tunai_kantin_harian',
@@ -160,9 +163,15 @@ class Lembaga extends Model
     {
         return $this->belongsTo(Pegawai::class, 'bendahara_id');
     }
+
+    public function proteksiJenisTagihan()
+    {
+        return $this->belongsTo(JenisTagihan::class, 'proteksi_raport_jenis_tagihan_id');
+    }
     
     protected $casts = [
     'is_tes' => 'boolean',
+    'proteksi_raport_aktif' => 'boolean',
     ];
 
     public function jenisTagihan()

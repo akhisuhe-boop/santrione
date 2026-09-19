@@ -299,7 +299,23 @@ class SiswaResource extends BaseResource
             ->length(6)
             ->required(false), // optional saat edit,
             ])->columns(4),               
-            
+
+            Section::make('Akses Raport Digital')
+                ->description('Default-nya ikut aturan sekolah (lihat Data Lembaga → Proteksi Raport). Gunakan ini kalau siswa ini butuh pengecualian khusus.')
+                ->icon('heroicon-o-lock-open')
+                ->schema([
+
+                    Select::make('izin_lihat_raport')
+                        ->label('Override Akses Raport')
+                        ->options([
+                            '1' => 'Selalu diizinkan (walau ada tagihan belum lunas)',
+                            '0' => 'Selalu diblokir (walau tagihan lunas semua)',
+                        ])
+                        ->placeholder('Ikuti aturan sekolah (default)')
+                        ->native(false),
+
+                ]),
+
         ]);
     }
 

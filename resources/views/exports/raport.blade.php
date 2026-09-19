@@ -96,12 +96,7 @@
 
 <body>
 
-    {{-- HEADER: JUDUL RAPORT --}}
-    <div class="title" style="margin:0; padding:0; font-size:17px;">
-        RAPORT {{ $jenisPenilaian === 'pts' ? 'PENILAIAN TENGAH SEMESTER (PTS)' : 'PENILAIAN AKHIR SEMESTER (PAS)' }}
-    </div>
-
-    {{-- KOP SURAT --}}
+    {{-- HEADER: LOGO + JUDUL + KOP SURAT (SATU TABEL SUPAYA LOGO SEJAJAR DENGAN JUDUL) --}}
     <table class="borderless" style="margin:0 0 8px; border-collapse:collapse;">
 
         <tr>
@@ -110,12 +105,16 @@
                 @if($logoBase64)
                     <img
                         src="{{ $logoBase64 }}"
-                        style="height:60px; width:auto; max-width:100%;"
+                        style="height:75px; width:auto; max-width:100%;"
                     >
                 @endif
             </td>
 
             <td style="vertical-align:top; text-align:center; padding:0;">
+
+                <div class="title" style="margin:0; padding:0; font-size:17px;">
+                    RAPORT {{ $jenisPenilaian === 'pts' ? 'PENILAIAN TENGAH SEMESTER (PTS)' : 'PENILAIAN AKHIR SEMESTER (PAS)' }}
+                </div>
 
                 <div style="font-size:17px; font-weight:bold; text-transform:uppercase;">
                     {{ $siswa->kelas->lembaga->nama ?? '-' }}
@@ -173,17 +172,17 @@
                 <table class="borderless">
 
                     <tr>
-                        <td width="30%">Nama</td>
+                        <td width="18%" style="white-space:nowrap;">Nama</td>
                         <td>: {{ $siswa->nama_lengkap }}</td>
                     </tr>
 
                     <tr>
-                        <td>NIS</td>
+                        <td style="white-space:nowrap;">NIS</td>
                         <td>: {{ $siswa->nis ?? '-' }}</td>
                     </tr>
 
                     <tr>
-                        <td>NISN</td>
+                        <td style="white-space:nowrap;">NISN</td>
                         <td>: {{ $siswa->nisn ?? '-' }}</td>
                     </tr>
 
@@ -192,22 +191,22 @@
             </td>
 
             {{-- SEKOLAH / KELAS / SEMESTER --}}
-            <td width="37%" style="vertical-align:top;">
+            <td width="37%" style="vertical-align:top; padding-left:18px;">
 
                 <table class="borderless">
 
                     <tr>
-                        <td width="30%">Sekolah</td>
+                        <td width="22%" style="white-space:nowrap;">Sekolah</td>
                         <td>: {{ $siswa->kelas->lembaga->nama ?? '-' }}</td>
                     </tr>
 
                     <tr>
-                        <td>Kelas</td>
+                        <td style="white-space:nowrap;">Kelas</td>
                         <td>: {{ $siswa->kelas->nama ?? '-' }}</td>
                     </tr>
 
                     <tr>
-                        <td>Semester</td>
+                        <td style="white-space:nowrap;">Semester</td>
                         <td>: {{ ucfirst($tahunAjaran->semester ?? '-') }}</td>
                     </tr>
 
