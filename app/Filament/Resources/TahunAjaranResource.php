@@ -23,20 +23,27 @@ class TahunAjaranResource extends BaseResource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('nama')
-            ->label('Tahun Ajaran')
-            ->required()
-            ->placeholder('2025/2026'),
+                Forms\Components\Section::make('Data Tahun Ajaran')
+                    ->schema([
 
-        Forms\Components\Select::make('semester')
-            ->options([
-                'Ganjil' => 'Semester Ganjil',
-                'Genap' => 'Semester Genap',
-            ])
-            ->required(),
+                        Forms\Components\TextInput::make('nama')
+                            ->label('Tahun Ajaran')
+                            ->required()
+                            ->placeholder('2025/2026'),
 
-        Forms\Components\Toggle::make('aktif')
-            ->label('Tahun Aktif'),
+                        Forms\Components\Select::make('semester')
+                            ->options([
+                                'Ganjil' => 'Semester Ganjil',
+                                'Genap' => 'Semester Genap',
+                            ])
+                            ->required(),
+
+                        Forms\Components\Toggle::make('aktif')
+                            ->label('Tahun Aktif')
+                            ->columnSpanFull(),
+
+                    ])
+                    ->columns(2),
             ]);
     }
 

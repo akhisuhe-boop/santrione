@@ -96,6 +96,13 @@
 
 <body>
 
+    {{-- HEADER: JUDUL RAPORT --}}
+    <div class="title">
+        RAPORT {{ $jenisPenilaian === 'pts' ? 'PENILAIAN TENGAH SEMESTER (PTS)' : 'PENILAIAN AKHIR SEMESTER (PAS)' }}
+    </div>
+
+    <div class="line" style="margin:6px 0 10px;"></div>
+
     {{-- KOP SURAT --}}
     <table class="borderless" style="margin-bottom:8px;">
 
@@ -131,17 +138,6 @@
         </tr>
 
     </table>
-
-    <div class="line" style="margin:6px 0 15px;"></div>
-
-    {{-- HEADER --}}
-    <div class="title">
-        RAPORT {{ $jenisPenilaian === 'pts' ? 'PENILAIAN TENGAH SEMESTER (PTS)' : 'PENILAIAN AKHIR SEMESTER (PAS)' }}
-    </div>
-
-    <div class="subtitle">
-        {{ $siswa->kelas->lembaga->nama ?? '-' }}
-    </div>
 
     <div class="line"></div>
 
@@ -622,9 +618,30 @@
 
     {{-- KETERANGAN KENAIKAN KELAS (PAS, SEMESTER GENAP SAJA) --}}
     @if($jenisPenilaian === 'pas' && strtolower($tahunAjaran->semester ?? '') === 'genap')
-        <div style="margin-top:10px; font-weight:bold;">
-            Keterangan: Naik ke kelas berikutnya.
-        </div>
+        <table class="borderless" style="margin-top:15px;">
+            <tr>
+                <td width="55%" style="border:1px solid #000; padding:10px; vertical-align:top;">
+
+                    <div style="font-weight:bold;">
+                        Keputusan:
+                    </div>
+
+                    <div style="margin-top:4px;">
+                        Berdasarkan pencapaian seluruh kompetensi, peserta didik dinyatakan:
+                    </div>
+
+                    <div style="margin-top:12px;">
+                        Naik/Tinggal*) kelas ......... ( .................... )
+                    </div>
+
+                    <div style="margin-top:10px; font-size:10px; font-style:italic;">
+                        *) Coret yang tidak perlu
+                    </div>
+
+                </td>
+                <td width="45%"></td>
+            </tr>
+        </table>
     @endif
 
     {{-- TTD --}}
