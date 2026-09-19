@@ -59,6 +59,11 @@ td{
     font-size:13px;
     font-weight:bold;
     letter-spacing:0.5px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    padding:0 0.15cm;
+    box-sizing:border-box;
 }
 
 .nisn{
@@ -157,8 +162,30 @@ td{
 <img class="foto" src="{{ $fotoBase64 }}">
 @endif
 
-<div class="nama">
-{{ strtoupper($siswa->nama_lengkap) }}
+@php
+    // DITAMBAHKAN -- paksa nama selalu muat 1 baris (sama seperti
+    // semangat kartu belakang), dengan mengecilkan font bertahap
+    // sesuai panjang nama. white-space:nowrap + text-overflow:ellipsis
+    // di CSS .nama jadi jaring pengaman terakhir kalau ada nama yang
+    // tetap terlalu panjang bahkan di ukuran font terkecil.
+    $namaUpper = strtoupper($siswa->nama_lengkap);
+    $panjangNama = mb_strlen($namaUpper);
+
+    if ($panjangNama <= 22) {
+        $namaFontSize = 13;
+    } elseif ($panjangNama <= 26) {
+        $namaFontSize = 11;
+    } elseif ($panjangNama <= 31) {
+        $namaFontSize = 9.5;
+    } elseif ($panjangNama <= 37) {
+        $namaFontSize = 8;
+    } else {
+        $namaFontSize = 7;
+    }
+@endphp
+
+<div class="nama" style="font-size:{{ $namaFontSize }}px;">
+{{ $namaUpper }}
 </div>
 
 <div class="nisn">
