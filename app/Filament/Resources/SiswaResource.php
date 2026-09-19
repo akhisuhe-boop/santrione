@@ -264,7 +264,9 @@ class SiswaResource extends BaseResource
                     DatePicker::make('tanggal_pindah')->label('Tanggal Pindah'),
                     ])->columns(3),
             
-            Section::make('Akun Orang Tua')->schema([
+            Section::make('Akun Orang Tua')
+            ->hidden()
+            ->schema([
 
             //TextInput::make('nama_ayah')
             //->label('Nama Orang Tua')
