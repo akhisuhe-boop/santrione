@@ -280,6 +280,7 @@ class SiswaResource extends BaseResource
 
             Forms\Components\TextInput::make('password')
             ->password()
+            ->hidden()
             ->dehydrated(fn ($state) => filled($state))
             // DIPERBAIKI (16 Sep 2026) -- sebelumnya default di sini
             // "123456" (6 digit), padahal Siswa::booted() &
@@ -294,6 +295,7 @@ class SiswaResource extends BaseResource
 
             TextInput::make('pin')
             ->label('PIN')
+            ->hidden()
             ->numeric()
             ->integer()
             ->length(6)
@@ -337,10 +339,14 @@ class SiswaResource extends BaseResource
 
                 Tables\Columns\TextColumn::make('nis')
                     ->label('NIS')
-                    ->searchable(),
+                    ->searchable()
+                    ->copyable()
+                    ->copyMessage('NIS disalin'),
 
                 Tables\Columns\TextColumn::make('nisn')
-                    ->label('NISN'),
+                    ->label('NISN')
+                    ->copyable()
+                    ->copyMessage('NISN disalin'),
 
                 Tables\Columns\TextColumn::make('lembaga.nama')
                     ->label('Lembaga')
@@ -650,6 +656,24 @@ class SiswaResource extends BaseResource
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+
+                Tables\Actions\Action::make('reset_password')
+                ->label('Reset Password')
+                ->icon('heroicon-o-key')
+                ->color('warning')
+                ->requiresConfirmation()
+                ->modalHeading('Reset Password ke Default?')
+                ->modalDescription('Password siswa ini akan dikembalikan ke default "12345678".')
+                ->action(function ($record) {
+                    $record->update([
+                        'password' => '12345678',
+                    ]);
+
+                    \Filament\Notifications\Notification::make()
+                        ->title('Password berhasil direset ke default')
+                        ->success()
+                        ->send();
+                }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkAction::make('delete')

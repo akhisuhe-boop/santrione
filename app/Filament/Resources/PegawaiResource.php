@@ -330,14 +330,6 @@ class PegawaiResource extends BaseResource
                         ->success()
                         ->send();
                 }),
-
-                Tables\Actions\Action::make('cetak')
-                ->label('Cetak ID')
-                ->icon('heroicon-o-printer')
-                ->url(fn ($record) => route('kartu.pegawai', [
-                    'ids' => $record->id
-                ]))
-                ->openUrlInNewTab(),
             ])
             
             ->bulkActions([
