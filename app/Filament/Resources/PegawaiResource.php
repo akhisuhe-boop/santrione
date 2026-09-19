@@ -141,6 +141,16 @@ class PegawaiResource extends BaseResource
 		        return $filename;
 		    }),
 
+                // 🖋️ TANDA TANGAN (untuk raport, kalau pegawai ini jadi wali kelas)
+                Forms\Components\FileUpload::make('tanda_tangan')
+                    ->label('Tanda Tangan (untuk Raport)')
+                    ->helperText('Scan tanda tangan dengan latar transparan (PNG), dipakai otomatis di raport kalau pegawai ini wali kelas.')
+                    ->image()
+                    ->disk('r2-public')
+                    ->directory('tanda-tangan-pegawai')
+                    ->maxSize(1024)
+                    ->imagePreviewHeight('60'),
+
                 // 🔥 IJAZAH
                 Forms\Components\FileUpload::make('file_ijazah')
                     ->label('Fotocopy Ijazah')

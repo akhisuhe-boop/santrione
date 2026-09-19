@@ -57,6 +57,7 @@ class Pegawai extends Authenticatable
     'golongan',
     'tanggal_masuk',
     'foto',
+    'tanda_tangan',
     'file_ijazah',
     'is_active',
     'qr_code',

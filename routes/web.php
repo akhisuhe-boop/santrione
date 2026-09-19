@@ -17,6 +17,7 @@ use App\Http\Controllers\WhatsappSettingController;
 use App\Http\Controllers\AbsensiController;
 use App\Http\Controllers\WaliAuthController;
 use App\Http\Controllers\PrintRaportController;
+use App\Http\Controllers\RaportVerifikasiController;
 use App\Http\Controllers\WaliDashboardController;
 use App\Http\Controllers\PublicRegistrationController;
 use App\Http\Controllers\SubscriptionController;
@@ -240,6 +241,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/raport/pdf/{siswa}', [PrintRaportController::class, 'generate'])
         ->name('raport.pdf');
 });
+
+// ==========================
+// VERIFIKASI RAPORT (PUBLIK, DIAKSES LEWAT QR CODE DI PDF)
+// ==========================
+Route::get('/raport/verifikasi/{siswa}/{tahunAjaran}/{jenisPenilaian}', [RaportVerifikasiController::class, 'show'])
+    ->middleware('signed')
+    ->name('raport.verifikasi');
 
 // ==========================
 // KWITANSI

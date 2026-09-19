@@ -12,7 +12,9 @@ use App\Models\TahunAjaran;
 use App\Models\RaportNonAkademik;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\URL;
 use Barryvdh\DomPDF\Facade\Pdf;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class PrintRaportController extends Controller
 {
@@ -73,6 +75,37 @@ class PrintRaportController extends Controller
                 $logoBase64 = null;
             }
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | TANDA TANGAN WALI KELAS & KEPALA SEKOLAH
+        |--------------------------------------------------------------------------
+        */
+
+        $waliKelas = $siswa->kelas?->waliKelas;
+
+        $ttdWaliKelasBase64 = $this->gambarKeBase64($waliKelas?->tanda_tangan);
+
+        $ttdKepalaSekolahBase64 = $this->gambarKeBase64($lembaga?->tanda_tangan_kepala_sekolah);
+
+        /*
+        |--------------------------------------------------------------------------
+        | QR CODE VERIFIKASI KEASLIAN RAPORT
+        |--------------------------------------------------------------------------
+        | URL ditandatangani (signed route) supaya siswa/tahunAjaran/jenis di
+        | dalamnya tidak bisa diubah tanpa ketahuan -- kalau ada yang
+        | mengutak-atik query string-nya, middleware 'signed' otomatis
+        | menolak sebelum sampai ke controller verifikasi.
+        |--------------------------------------------------------------------------
+        */
+
+        $urlVerifikasi = URL::signedRoute('raport.verifikasi', [
+            'siswa' => $siswa->id,
+            'tahunAjaran' => $tahunAjaran->id,
+            'jenisPenilaian' => $jenisPenilaian,
+        ]);
+
+        $qrCodeSvg = QrCode::size(90)->generate($urlVerifikasi);
 
         /*
         |--------------------------------------------------------------------------
@@ -310,6 +343,9 @@ class PrintRaportController extends Controller
             'lembaga',
             'yayasan',
             'logoBase64',
+            'ttdWaliKelasBase64',
+            'ttdKepalaSekolahBase64',
+            'qrCodeSvg',
             'nilaiAkademik',
             'nonAkademik',
             'total',
@@ -343,5 +379,26 @@ class PrintRaportController extends Controller
 
             '.pdf'
         );
+    }
+
+    /**
+     * Ambil file gambar dari storage disk r2-public lalu ubah jadi
+     * data URI base64, supaya pasti bisa ditampilkan DomPDF (tidak
+     * bergantung pada DomPDF bisa fetch langsung dari URL storage).
+     * Dipakai untuk logo, tanda tangan wali kelas & kepala sekolah.
+     */
+    private function gambarKeBase64(?string $path): ?string
+    {
+        if (! $path) {
+            return null;
+        }
+
+        try {
+            return 'data:image/png;base64,' . base64_encode(
+                \Storage::disk('r2-public')->get($path)
+            );
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 }

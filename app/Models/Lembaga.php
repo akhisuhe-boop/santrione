@@ -23,6 +23,7 @@ class Lembaga extends Model
     'jenis',
     'is_tes',
     'kepala_sekolah',
+    'tanda_tangan_kepala_sekolah',
     'bendahara_id',
     'printer_kwitansi',
     'limit_tunai_kantin_harian',

@@ -188,6 +188,14 @@ class LembagaResource extends BaseResource
     
                         TextInput::make('kepala_sekolah')
                             ->label('Kepala Sekolah'),
+
+                        FileUpload::make('tanda_tangan_kepala_sekolah')
+                            ->label('Tanda Tangan Kepala Sekolah')
+                            ->helperText('Scan tanda tangan dengan latar transparan (PNG), dipakai otomatis di raport.')
+                            ->image()
+                            ->disk('r2-public')
+                            ->directory('tanda-tangan-kepala-sekolah')
+                            ->imageEditor(),
     
                         Select::make('bendahara_id')
                             ->label('Bendahara')
