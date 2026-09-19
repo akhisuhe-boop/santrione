@@ -137,17 +137,23 @@ td{
     // sisi BELAKANG perlu ditukar urutan barisnya (baris atas <-> baris
     // bawah per halaman) supaya ketemu posisi fisiknya dengan kartu
     // DEPAN begitu kertas dibalik saat print. Sisi depan TETAP pakai
-    // urutan asli ($siswas, tidak diubah) -- yang ditukar cuma versi
-    // yang dipakai di render kartu belakang di bawah
-    // ($siswasUrutanCetak).
-    $siswasUrutanCetak = collect();
+    // urutan asli ($siswas, tidak diubah).
+    //
+    // PENTING -- kalau baris terakhir di satu halaman jumlahnya TIDAK
+    // PAS 5 (misal cuma 4 siswa karena sisa), pengelompokan baris
+    // ASLI-nya (yang mana 5, yang mana 4) harus tetap dipertahankan
+    // waktu ditukar -- TIDAK BOLEH digabung-lalu-dipecah-ulang jadi
+    // kelompok 5 dari nol, karena itu bikin batas barisnya geser
+    // (ada siswa dari baris 1 yang "kebawa" ke baris 2, dan
+    // sebaliknya). Makanya di sini disimpan sebagai struktur
+    // halaman -> daftar baris -> daftar siswa (bukan di-flatten jadi
+    // satu list rata seperti sebelumnya), dan dirender langsung
+    // per-baris di bawah.
+    $halamanBelakang = collect();
     foreach ($siswas->chunk(10) as $halamanChunk) {
         $barisChunks = $halamanChunk->values()->chunk(5)->reverse()->values();
-        foreach ($barisChunks as $baris) {
-            $siswasUrutanCetak = $siswasUrutanCetak->merge($baris);
-        }
+        $halamanBelakang->push($barisChunks);
     }
-    $siswasUrutanCetak = $siswasUrutanCetak->values();
 @endphp
 
 {{-- KARTU DEPAN --}}
@@ -240,11 +246,12 @@ NIS : {{ $siswa->nis }}
 
 
 {{-- KARTU BELAKANG --}}
-@foreach($siswasUrutanCetak->chunk(10) as $chunk)
+@foreach($halamanBelakang as $halaman)
 
 <table>
+@foreach($halaman as $baris)
 <tr>
-@foreach($chunk as $i => $siswa)
+@foreach($baris as $siswa)
 
 <td>
 <div class="card-belakang">
@@ -257,12 +264,9 @@ NIS : {{ $siswa->nis }}
 </div>
 </td>
 
-@if(($i+1) % 5 == 0 && !$loop->last)
-</tr><tr>
-@endif
-
 @endforeach
 </tr>
+@endforeach
 </table>
 
 @if(!$loop->last)
