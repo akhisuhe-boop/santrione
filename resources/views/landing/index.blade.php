@@ -1754,7 +1754,7 @@
                 return new Date(promoEl.dataset.promoEnd).getTime();
             }
 
-            const endTime = getPromoEndTime();
+            let endTime = getPromoEndTime();
             const dEl = document.getElementById('promo-cd-d');
             const hEl = document.getElementById('promo-cd-h');
             const mEl = document.getElementById('promo-cd-m');
@@ -1763,13 +1763,43 @@
             const banner = document.getElementById('promo-banner');
 
             function tickCountdown() {
-                const diff = endTime - Date.now();
+                let diff = endTime - Date.now();
+
                 if (diff <= 0) {
-                    banner?.remove();
-                    promoActive = false;
-                    render();
-                    clearInterval(timer);
-                    return;
+
+                    if (promoEl.dataset.promoMode === 'evergreen') {
+
+                        // EVERGREEN: jangan pernah benar-benar berhenti --
+                        // begitu satu putaran habis, langsung mulai
+                        // putaran baru (reset jam mulainya di localStorage),
+                        // supaya banner-nya selalu tampil lagi berulang-
+                        // ulang selamanya untuk pengunjung ini, bukan mati
+                        // permanen setelah 1x habis.
+                        try {
+                            localStorage.setItem(
+                                'qinara_promo_evergreen_mulai',
+                                String(Date.now())
+                            );
+                        } catch (e) {
+                            // localStorage diblokir -- tidak apa-apa,
+                            // getPromoEndTime() sudah punya fallback sendiri.
+                        }
+
+                        endTime = getPromoEndTime();
+                        diff = endTime - Date.now();
+
+                    } else {
+
+                        // Mode manual: tanggal akhirnya memang ditentukan
+                        // pasti oleh admin, jadi kalau sudah lewat ya
+                        // sungguhan berakhir -- banner-nya hilang seperti
+                        // semula.
+                        banner?.remove();
+                        promoActive = false;
+                        render();
+                        clearInterval(timer);
+                        return;
+                    }
                 }
                 const d = Math.floor(diff / 86400000);
                 const h = Math.floor((diff % 86400000) / 3600000);
