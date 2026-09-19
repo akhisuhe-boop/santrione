@@ -140,52 +140,94 @@
     <div class="line"></div>
 
     {{-- IDENTITAS --}}
-    <table class="borderless mb-20">
+    <table class="borderless mb-20" style="table-layout:fixed;">
 
         <tr>
 
-            <td width="10%">Nama</td>
+            {{-- FOTO SISWA --}}
+            <td width="13%" style="vertical-align:top; text-align:center;">
 
-            <td width="40%">
-                : {{ $siswa->nama_lengkap }}
+                @if($fotoSiswaBase64)
+
+                    <img
+                        src="{{ $fotoSiswaBase64 }}"
+                        style="width:70px; height:70px; object-fit:cover; border:1px solid #999;">
+
+                @else
+
+                    {{-- ICON USER DEFAULT (INLINE SVG, TANPA PROLOG XML) --}}
+                    <div style="width:70px; height:70px; border:1px solid #999; background:#f1f1f1; margin:0 auto; text-align:center;">
+                        <svg width="70" height="70" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="12" cy="8" r="4" fill="#b0b0b0"/>
+                            <path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7" fill="#b0b0b0"/>
+                        </svg>
+                    </div>
+
+                @endif
+
             </td>
 
-            <td width="10%">Sekolah</td>
+            {{-- NAMA / NIS / NISN --}}
+            <td width="37%" style="vertical-align:top;">
 
-            <td width="40%">
-                : {{ $siswa->kelas->lembaga->nama ?? '-' }}
+                <table class="borderless">
+
+                    <tr>
+                        <td width="30%">Nama</td>
+                        <td>: {{ $siswa->nama_lengkap }}</td>
+                    </tr>
+
+                    <tr>
+                        <td>NIS</td>
+                        <td>: {{ $siswa->nis ?? '-' }}</td>
+                    </tr>
+
+                    <tr>
+                        <td>NISN</td>
+                        <td>: {{ $siswa->nisn ?? '-' }}</td>
+                    </tr>
+
+                </table>
+
             </td>
 
-        </tr>
+            {{-- SEKOLAH / KELAS / SEMESTER --}}
+            <td width="37%" style="vertical-align:top;">
 
-        <tr>
+                <table class="borderless">
 
-            <td>NIS</td>
+                    <tr>
+                        <td width="30%">Sekolah</td>
+                        <td>: {{ $siswa->kelas->lembaga->nama ?? '-' }}</td>
+                    </tr>
 
-            <td>
-                : {{ $siswa->nis ?? '-' }}
+                    <tr>
+                        <td>Kelas</td>
+                        <td>: {{ $siswa->kelas->nama ?? '-' }}</td>
+                    </tr>
+
+                    <tr>
+                        <td>Semester</td>
+                        <td>: {{ ucfirst($tahunAjaran->semester ?? '-') }}</td>
+                    </tr>
+
+                </table>
+
             </td>
 
-            <td>Kelas</td>
+            {{-- QR VERIFIKASI --}}
+            <td width="13%" style="vertical-align:top; text-align:center;">
 
-            <td>
-                : {{ $siswa->kelas->nama ?? '-' }}
-            </td>
+                @if(isset($qrCodeBase64))
 
-        </tr>
+                    <img src="{{ $qrCodeBase64 }}" style="width:65px; height:65px;">
 
-        <tr>
+                    <div style="font-size:7px; color:#555; margin-top:2px;">
+                        Scan untuk verifikasi
+                    </div>
 
-            <td>NISN</td>
+                @endif
 
-            <td>
-                : {{ $siswa->nisn ?? '-' }}
-            </td>
-
-            <td>Semester</td>
-
-            <td>
-                : {{ ucfirst($tahunAjaran->semester ?? '-') }}
             </td>
 
         </tr>
@@ -738,21 +780,6 @@
     </tr>
 
 </table>
-
-    {{-- QR CODE VERIFIKASI --}}
-    @if(isset($qrCodeBase64))
-        <table class="borderless" style="margin-top:15px;">
-            <tr>
-                <td width="70%"></td>
-                <td width="30%" style="text-align:center;">
-                    <img src="{{ $qrCodeBase64 }}" style="width:80px; height:80px;">
-                    <div style="font-size:8px; color:#555; margin-top:2px;">
-                        Scan untuk verifikasi keaslian raport
-                    </div>
-                </td>
-            </tr>
-        </table>
-    @endif
 
 </body>
 </html>

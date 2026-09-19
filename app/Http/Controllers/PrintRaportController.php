@@ -90,6 +90,14 @@ class PrintRaportController extends Controller
 
         /*
         |--------------------------------------------------------------------------
+        | FOTO SISWA
+        |--------------------------------------------------------------------------
+        */
+
+        $fotoSiswaBase64 = $this->gambarKeBase64($siswa->foto);
+
+        /*
+        |--------------------------------------------------------------------------
         | QR CODE VERIFIKASI KEASLIAN RAPORT
         |--------------------------------------------------------------------------
         | URL ditandatangani (signed route) supaya siswa/tahunAjaran/jenis di
@@ -365,6 +373,7 @@ class PrintRaportController extends Controller
             'logoBase64',
             'ttdWaliKelasBase64',
             'ttdKepalaSekolahBase64',
+            'fotoSiswaBase64',
             'qrCodeBase64',
             'nilaiAkademik',
             'nonAkademik',
