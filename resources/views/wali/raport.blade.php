@@ -47,7 +47,7 @@
             </div>
 
             <div class="text-xl font-bold mt-1">
-                {{ $raport->siswa->nama_lengkap ?? '-' }}
+                {{ $siswa->nama_lengkap ?? '-' }}
             </div>
 
             {{-- TAGS --}}
@@ -109,7 +109,7 @@
                         NIS
                     </div>
                     <div class="text-sm font-semibold">
-                        {{ $raport->siswa->nis ?? '-' }}
+                        {{ $siswa->nis ?? '-' }}
                     </div>
                 </div>
 
@@ -125,7 +125,7 @@
                         NISN
                     </div>
                     <div class="text-sm font-semibold">
-                        {{ $raport->siswa->nisn ?? '-' }}
+                        {{ $siswa->nisn ?? '-' }}
                     </div>
                 </div>
 
@@ -205,6 +205,27 @@
 
     </form>
 
+    {{-- ========================= --}}
+    {{-- DOWNLOAD RAPORT (PDF) --}}
+    {{-- ========================= --}}
+    @if(!$nilaiAkademik->isEmpty() || $raport)
+
+        <a
+            href="{{ route('wali.raport.pdf', ['tahun_ajaran_id' => $tahunAjaranId, 'jenis_penilaian' => $jenisPenilaian]) }}"
+            target="_blank"
+            class="flex items-center justify-center gap-2
+                   w-full py-3 rounded-2xl
+                   bg-[#00A39D] hover:bg-[#018983]
+                   text-sm font-semibold text-white
+                   shadow-sm transition-colors">
+
+            <x-heroicon-o-arrow-down-tray class="w-4 h-4" />
+            Download Raport {{ $jenisPenilaian === 'pts' ? 'PTS' : 'PAS' }} (PDF)
+
+        </a>
+
+    @endif
+
     @if($nilaiAkademik->isEmpty() && !$raport)
 
         {{-- EMPTY: BENAR-BENAR TIDAK ADA DATA SAMA SEKALI --}}
@@ -228,7 +249,7 @@
     <div class="grid grid-cols-3 gap-3">
 
         {{-- CARD 1 --}}
-        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-50 via-white to-teal-50 border border-emerald-100 shadow-sm p-4">
+        <div class="relative overflow-hidden rounded-2xl bg-emerald-50 border border-emerald-100 shadow-sm p-4">
 
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
@@ -246,7 +267,7 @@
         </div>
 
         {{-- CARD 2 --}}
-        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-sky-50 via-white to-blue-50 border border-sky-100 shadow-sm p-4">
+        <div class="relative overflow-hidden rounded-2xl bg-sky-50 border border-sky-100 shadow-sm p-4">
 
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl bg-sky-100 flex items-center justify-center">
@@ -264,7 +285,7 @@
         </div>
 
         {{-- CARD 3 --}}
-        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-orange-50 via-white to-amber-50 border border-orange-100 shadow-sm p-4">
+        <div class="relative overflow-hidden rounded-2xl bg-orange-50 border border-orange-100 shadow-sm p-4">
 
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center">

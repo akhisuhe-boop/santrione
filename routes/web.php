@@ -327,6 +327,7 @@ Route::prefix('wali')->group(function () {
         Route::get('/pelanggaran', [WaliDashboardController::class, 'pelanggaran'])->name('wali.pelanggaran');
         Route::get('/prestasi', [WaliDashboardController::class, 'prestasi'])->name('wali.prestasi');
         Route::get('/raport', [WaliDashboardController::class, 'raport'])->name('wali.raport');
+        Route::get('/raport/pdf', [WaliDashboardController::class, 'raportPdf'])->name('wali.raport.pdf');
 
         Route::get('/profil', [WaliDashboardController::class, 'profil'])->name('wali.profil');
         Route::post('/profil/password', [WaliDashboardController::class, 'updatePassword'])->name('wali.profil.updatePassword');

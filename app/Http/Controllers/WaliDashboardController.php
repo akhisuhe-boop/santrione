@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use App\Models\RaportNonAkademik;
+use App\Http\Controllers\PrintRaportController;
 use App\Models\Nilai;
 use App\Models\RekapNilai;
 use App\Models\Kurikulum;
@@ -440,6 +441,19 @@ class WaliDashboardController extends Controller
             'tahunAjaranTerpilih',
             'jenisPenilaian'
         ));
+    }
+
+    /**
+     * Download PDF raport siswa dari portal wali.
+     * Dibatasi ke siswa yang sedang login di sesi wali ini saja --
+     * tidak menerima siswa_id dari luar, supaya wali tidak bisa
+     * mengunduh raport siswa lain.
+     */
+    public function raportPdf(Request $request)
+    {
+        $siswa = Siswa::findOrFail(session('siswa_id'));
+
+        return app(PrintRaportController::class)->generate($request, $siswa);
     }
 
     public function showPembayaran(Tagihan $tagihan)
