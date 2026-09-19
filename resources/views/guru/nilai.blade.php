@@ -342,11 +342,13 @@ setTimeout(() => {
                 </button>
             
                 <button
-                    type="button"
-                    onclick="document.querySelectorAll('input[name^=&quot;nilai&quot;]').forEach(el => el.value = '')"
-                    class="py-2.5 rounded-2xl border border-slate-200
+                    type="submit"
+                    form="resetNilaiForm"
+                    onclick="return confirm('Yakin mau hapus nilai yang sudah tersimpan untuk jenis penilaian ini? Aksi ini tidak bisa dibatalkan.')"
+                    class="py-2.5 rounded-2xl border border-red-200
                            bg-white text-center text-sm font-semibold
-                           hover:bg-slate-50 transition-colors">
+                           text-red-600
+                           hover:bg-red-50 transition-colors">
             
                     Reset
             
@@ -357,6 +359,19 @@ setTimeout(() => {
         </div>
     
     </div>
+
+    </form>
+
+    <form
+        id="resetNilaiForm"
+        action="{{ route('guru.nilai.reset') }}"
+        method="POST"
+        style="display:none;">
+
+        @csrf
+
+        <input type="hidden" name="jadwal_id" value="{{ request('jadwal_id') }}">
+        <input type="hidden" name="tipe_nilai" value="{{ request('tipe_nilai') }}">
 
     </form>
 
