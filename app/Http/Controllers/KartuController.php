@@ -522,10 +522,15 @@ class KartuController extends Controller
     {
         $siswa = Siswa::with('lembaga')->findOrFail($id);
 
+        // DIUBAH -- dulu ada fallback ke template lembaga lain (baik
+        // "template pertama" maupun versi is_default). Disederhanakan:
+        // lembaga yang belum punya template sendiri untuk jenis kartu
+        // ini TIDAK dapat template apapun ($template = null) -- kartu
+        // tetap tercetak, cuma tanpa background (putih polos), tidak
+        // pernah "meminjam" desain lembaga lain.
         $template = KartuTemplate::where('jenis', 'siswa')
             ->where('lembaga_id', $siswa->lembaga_id)
-            ->first()
-            ?? KartuTemplate::where('jenis', 'siswa')->first();
+            ->first();
 
         $dataUri = $this->buildKartuBelakangImage($siswa, $template);
 
@@ -553,8 +558,7 @@ class KartuController extends Controller
 
         $template = KartuTemplate::where('jenis', 'siswa')
             ->where('lembaga_id', $siswas->first()?->lembaga_id)
-            ->first()
-            ?? KartuTemplate::where('jenis', 'siswa')->first();
+            ->first();
 
         $kartuBelakangImages = $siswas->mapWithKeys(fn ($s) => [
             $s->id => $this->buildKartuBelakangImage($s, $template),
@@ -586,8 +590,7 @@ class KartuController extends Controller
 
         $template = KartuTemplate::where('jenis', 'siswa')
             ->where('lembaga_id', $siswas->first()?->lembaga_id)
-            ->first()
-            ?? KartuTemplate::where('jenis', 'siswa')->first();
+            ->first();
 
         $kartuBelakangImages = $siswas->mapWithKeys(fn ($s) => [
             $s->id => $this->buildKartuBelakangImage($s, $template),
@@ -621,8 +624,7 @@ class KartuController extends Controller
 
         $template = \App\Models\KartuTemplate::where('jenis', 'pegawai')
             ->where('lembaga_id', $lembagaId)
-            ->first()
-            ?? \App\Models\KartuTemplate::where('jenis', 'pegawai')->first();
+            ->first();
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('kartu.pegawai', [
             'pegawais' => $pegawais,
