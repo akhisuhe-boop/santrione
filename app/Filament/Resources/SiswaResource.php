@@ -650,13 +650,6 @@ class SiswaResource extends BaseResource
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
-
-                Tables\Actions\Action::make('cetak_kartu')
-                ->label('Cetak Kartu')
-                ->icon('heroicon-o-identification')
-                ->color('success')
-                ->url(fn ($record) => url('/kartu/siswa/'.$record->id))
-                ->openUrlInNewTab(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkAction::make('delete')
