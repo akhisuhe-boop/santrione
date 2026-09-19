@@ -97,7 +97,7 @@
 <body>
 
     {{-- HEADER: JUDUL RAPORT --}}
-    <div class="title" style="margin-bottom:10px;">
+    <div class="title" style="margin-bottom:2px;">
         RAPORT {{ $jenisPenilaian === 'pts' ? 'PENILAIAN TENGAH SEMESTER (PTS)' : 'PENILAIAN AKHIR SEMESTER (PAS)' }}
     </div>
 
