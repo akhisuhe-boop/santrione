@@ -341,15 +341,16 @@ setTimeout(() => {
             
                 </button>
             
-                <a
-                    href="{{ route('guru.nilai', ['jadwal_id' => request('jadwal_id'), 'tipe_nilai' => request('tipe_nilai')]) }}"
+                <button
+                    type="button"
+                    onclick="document.querySelectorAll('input[name^=&quot;nilai&quot;]').forEach(el => el.value = '')"
                     class="py-2.5 rounded-2xl border border-slate-200
                            bg-white text-center text-sm font-semibold
                            hover:bg-slate-50 transition-colors">
             
                     Reset
             
-                </a>
+                </button>
             
             </div>
     
