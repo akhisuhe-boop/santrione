@@ -198,7 +198,22 @@ class DetailNilai extends Page
             |--------------------------------------------------------------------------
             | STATUS
             |--------------------------------------------------------------------------
+            | PTS hanya butuh Tugas + Harian + UTS (UAS belum wajib ada).
+            | PAS butuh keempatnya lengkap -- ini status "resmi" yang dipakai
+            | RekapNilaiService juga.
+            |--------------------------------------------------------------------------
             */
+
+            $statusPts = (
+
+                $tugas !== null &&
+                $harian !== null &&
+                $uts !== null
+
+            )
+
+                ? 'Lengkap'
+                : 'Belum Lengkap';
 
             $status = (
 
@@ -214,7 +229,41 @@ class DetailNilai extends Page
 
             /*
             |--------------------------------------------------------------------------
-            | NILAI AKHIR
+            | NILAI AKHIR PTS
+            |--------------------------------------------------------------------------
+            */
+
+            $nilaiAkhirPts = null;
+
+            $gradePts = '-';
+
+            $deskripsiPts = '-';
+
+            if ($statusPts == 'Lengkap') {
+
+                $nilaiAkhirPts =
+                    NilaiService::hitungNilaiAkhirPts(
+
+                        $tugas,
+                        $harian,
+                        $uts
+
+                    );
+
+                $gradePts =
+                    NilaiService::generateGrade(
+                        $nilaiAkhirPts
+                    );
+
+                $deskripsiPts =
+                    NilaiService::generateDeskripsi(
+                        $nilaiAkhirPts
+                    );
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | NILAI AKHIR PAS
             |--------------------------------------------------------------------------
             */
 
@@ -269,6 +318,23 @@ class DetailNilai extends Page
 
                 'uas' =>
                     $uas,
+
+                'nilai_akhir_pts' =>
+
+                    $nilaiAkhirPts !== null
+
+                        ? round($nilaiAkhirPts)
+
+                        : null,
+
+                'grade_pts' =>
+                    $gradePts,
+
+                'deskripsi_pts' =>
+                    $deskripsiPts,
+
+                'status_pts' =>
+                    $statusPts,
 
                 'nilai_akhir' =>
 

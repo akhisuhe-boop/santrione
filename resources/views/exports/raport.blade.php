@@ -96,6 +96,44 @@
 
 <body>
 
+    {{-- KOP SURAT --}}
+    <table class="borderless" style="margin-bottom:8px;">
+
+        <tr>
+
+            <td width="15%" style="vertical-align:middle;">
+                @if($logoBase64)
+                    <img
+                        src="{{ $logoBase64 }}"
+                        style="height:60px; width:auto; max-width:100%;"
+                    >
+                @endif
+            </td>
+
+            <td style="vertical-align:middle; text-align:center;">
+
+                <div style="font-size:16px; font-weight:bold; text-transform:uppercase;">
+                    {{ $siswa->kelas->lembaga->nama ?? '-' }}
+                </div>
+
+                <div style="font-size:10px; margin-top:2px;">
+                    {{ $yayasan->alamat ?? '-' }}
+                </div>
+
+                <div style="font-size:10px; margin-top:2px;">
+                    NSS: {{ $lembaga->nss ?? '-' }} &nbsp;&nbsp;|&nbsp;&nbsp; NPSN: {{ $lembaga->npsn ?? '-' }}
+                </div>
+
+            </td>
+
+            <td width="15%"></td>
+
+        </tr>
+
+    </table>
+
+    <div class="line" style="margin:6px 0 15px;"></div>
+
     {{-- HEADER --}}
     <div class="title">
         RAPORT {{ $jenisPenilaian === 'pts' ? 'PENILAIAN TENGAH SEMESTER (PTS)' : 'PENILAIAN AKHIR SEMESTER (PAS)' }}
@@ -581,6 +619,13 @@
         </tr>
 
     </table>
+
+    {{-- KETERANGAN KENAIKAN KELAS (PAS, SEMESTER GENAP SAJA) --}}
+    @if($jenisPenilaian === 'pas' && strtolower($tahunAjaran->semester ?? '') === 'genap')
+        <div style="margin-top:10px; font-weight:bold;">
+            Keterangan: Naik ke kelas berikutnya.
+        </div>
+    @endif
 
     {{-- TTD --}}
 <table class="borderless signature">

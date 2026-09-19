@@ -77,6 +77,10 @@
             ->whereNotNull('uas')
             ->avg('uas');
 
+        $avgNilaiPts = collect($siswas)
+            ->whereNotNull('nilai_akhir_pts')
+            ->avg('nilai_akhir_pts');
+
         $avgNilaiAkhir = collect($siswas)
             ->whereNotNull('nilai_akhir')
             ->avg('nilai_akhir');
@@ -256,7 +260,7 @@
 
                         </th>
 
-                        {{-- NILAI AKHIR --}}
+                        {{-- NILAI PTS --}}
                         <th
                             class="
                                 border-b
@@ -268,7 +272,22 @@
                                 font-bold
                             "
                         >
-                            Nilai Akhir
+                            Nilai PTS
+                        </th>
+
+                        {{-- NILAI AKHIR (PAS) --}}
+                        <th
+                            class="
+                                border-b
+                                border-gray-200 dark:border-gray-700
+                                px-4
+                                py-3
+                                text-center
+                                text-sm
+                                font-bold
+                            "
+                        >
+                            Nilai Akhir (PAS)
                         </th>
 
                         {{-- GRADE --}}
@@ -347,7 +366,7 @@
                                 {{ $siswa['uas'] ?? '-' }}
                             </td>
 
-                            {{-- NILAI AKHIR --}}
+                            {{-- NILAI PTS --}}
                             <td
                                 class="
                                     px-3
@@ -357,7 +376,27 @@
                                     font-bold
                                 "
                             >
-                                {{ round($siswa['nilai_akhir']) }}
+                                @if ($siswa['nilai_akhir_pts'] !== null)
+                                    <span title="{{ $siswa['deskripsi_pts'] }}" class="cursor-help">
+                                        {{ $siswa['nilai_akhir_pts'] }}
+                                        <span class="font-normal text-gray-400">({{ $siswa['grade_pts'] }})</span>
+                                    </span>
+                                @else
+                                    -
+                                @endif
+                            </td>
+
+                            {{-- NILAI AKHIR (PAS) --}}
+                            <td
+                                class="
+                                    px-3
+                                    py-2.5
+                                    text-center
+                                    text-sm
+                                    font-bold
+                                "
+                            >
+                                {{ $siswa['nilai_akhir'] ?? '-' }}
                             </td>
 
                             {{-- GRADE --}}
@@ -438,19 +477,17 @@
                             {{-- STATUS --}}
                             <td class="px-4 py-2.5 text-center">
 
-                                @if ($siswa['status'] == 'Lengkap')
+                                <div class="flex flex-col gap-1 items-center">
 
-                                    <x-filament::badge color="success">
-                                        Selesai
+                                    <x-filament::badge :color="$siswa['status_pts'] == 'Lengkap' ? 'success' : 'gray'">
+                                        PTS: {{ $siswa['status_pts'] == 'Lengkap' ? 'Selesai' : 'Belum' }}
                                     </x-filament::badge>
 
-                                @else
-
-                                    <x-filament::badge color="danger">
-                                        Belum Lengkap
+                                    <x-filament::badge :color="$siswa['status'] == 'Lengkap' ? 'success' : 'danger'">
+                                        PAS: {{ $siswa['status'] == 'Lengkap' ? 'Selesai' : 'Belum' }}
                                     </x-filament::badge>
 
-                                @endif
+                                </div>
 
                             </td>
 
@@ -466,7 +503,7 @@
                     <tr>
 
                         <td
-                            colspan="8"
+                            colspan="9"
                             class="
                                 border-t
                                 border-gray-200 dark:border-gray-700
@@ -541,10 +578,21 @@
                             </div>
                         </td>
 
+                        {{-- NILAI PTS --}}
+                        <td class="px-3 py-2.5 text-center">
+                            <div class="text-xs text-gray-500 dark:text-gray-400">
+                                Nilai PTS
+                            </div>
+
+                            <div class="mt-2 text-base font-bold">
+                                {{ $avgNilaiPts !== null ? round($avgNilaiPts) : '-' }}
+                            </div>
+                        </td>
+
                         {{-- NILAI AKHIR --}}
                         <td class="px-3 py-2.5 text-center">
                             <div class="text-xs text-gray-500 dark:text-gray-400">
-                                Nilai Akhir
+                                Nilai Akhir (PAS)
                             </div>
 
                             <div class="mt-2 text-base font-bold">

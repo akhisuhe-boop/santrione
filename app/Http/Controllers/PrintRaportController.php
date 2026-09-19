@@ -53,6 +53,29 @@ class PrintRaportController extends Controller
 
         /*
         |--------------------------------------------------------------------------
+        | LOGO (LEMBAGA, FALLBACK KE LOGO YAYASAN)
+        |--------------------------------------------------------------------------
+        | Sama seperti pola di kwitansi/slip-gaji: di-embed sebagai base64
+        | supaya pasti muncul di DomPDF (DomPDF tidak selalu bisa fetch
+        | langsung dari URL storage disk r2-public).
+        |--------------------------------------------------------------------------
+        */
+
+        $logoPath = $lembaga?->logo ?? $yayasan?->logo;
+        $logoBase64 = null;
+
+        if ($logoPath) {
+            try {
+                $logoBase64 = 'data:image/png;base64,' . base64_encode(
+                    \Storage::disk('r2-public')->get($logoPath)
+                );
+            } catch (\Throwable $e) {
+                $logoBase64 = null;
+            }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
         | GURU MAPEL SESUAI KURIKULUM
         |--------------------------------------------------------------------------
         */
@@ -286,6 +309,7 @@ class PrintRaportController extends Controller
             'jenisPenilaian',
             'lembaga',
             'yayasan',
+            'logoBase64',
             'nilaiAkademik',
             'nonAkademik',
             'total',
