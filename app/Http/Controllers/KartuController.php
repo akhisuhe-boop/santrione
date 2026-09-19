@@ -493,14 +493,16 @@ class KartuController extends Controller
                 $font->align('left', 'top');
             });
 
-            // Putar 90 derajat -- arah dibalik dari sebelumnya (-90,
-            // bukan 90) atas permintaan: baris judul/foto/data yang
-            // tadinya jatuh di atas dan banner logo yang jatuh di
-            // bawah, sekarang ditukar (banner di atas, data di bawah).
-            // Membalik tanda rotasi (90 -> -90) = rotasi tambahan 180
-            // derajat dari hasil sebelumnya, yang secara visual persis
-            // menukar ujung atas <-> ujung bawah kartu final.
-            $canvas->rotate(-90);
+            // Putar 90 derajat -- dikembalikan ke arah semula (90).
+            // Percobaan sebelumnya (-90) TERBUKTI SALAH: itu bukan
+            // cuma menukar atas<->bawah, tapi ikut membalik kiri<->kanan
+            // juga (rotasi tambahan 180 derajat = point reflection, 2
+            // sumbu sekaligus), makanya desainnya berantakan. Menukar
+            // posisi banner<->data yang BENAR (tanpa mengubah desain)
+            // butuh reposisi koordinat overlay di canvas SEBELUM
+            // diputar, bukan main-main arah rotasi -- lihat catatan di
+            // buildKartuBelakangImage().
+            $canvas->rotate(90);
 
             return (string) $canvas->encodeUsingMediaType('image/png')->toDataUri();
         } catch (\Throwable $e) {
