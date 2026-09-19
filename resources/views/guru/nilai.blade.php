@@ -134,6 +134,31 @@ setTimeout(() => {
                 </select>
             </div>
 
+            {{-- Jenis Penilaian --}}
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">
+                    Jenis Penilaian
+                </label>
+
+                <select
+                    name="tipe_nilai"
+                    onchange="this.form.submit()"
+                    class="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm
+                           focus:ring-2 focus:ring-[#00A39D] focus:border-[#00A39D]">
+
+                    <option value="">Pilih Jenis Penilaian</option>
+                    <option value="tugas" @selected(request('tipe_nilai') == 'tugas')>Tugas</option>
+                    <option value="harian" @selected(request('tipe_nilai') == 'harian')>Harian</option>
+                    <option value="uts" @selected(request('tipe_nilai') == 'uts')>UTS</option>
+                    <option value="uas" @selected(request('tipe_nilai') == 'uas')>UAS</option>
+
+                </select>
+
+                <p class="text-xs text-slate-400 mt-1.5">
+                    Nilai yang sudah tersimpan untuk jenis ini akan otomatis tampil di bawah.
+                </p>
+            </div>
+
         </div>
 
     </div>
@@ -147,7 +172,15 @@ setTimeout(() => {
     {{-- TABEL INPUT NILAI --}}
     {{-- ========================= --}}
 
-    @if(isset($siswas) && $siswas->count())
+    @if(isset($siswas) && $siswas->count() && request('jadwal_id') && !request('tipe_nilai'))
+
+        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-sm text-amber-800">
+            Pilih <span class="font-semibold">Jenis Penilaian</span> di atas dulu untuk mulai input/lihat nilai.
+        </div>
+
+    @endif
+
+    @if(isset($siswas) && $siswas->count() && request('tipe_nilai'))
 
     <form
         action="{{ route('guru.nilai.store') }}"
@@ -159,6 +192,11 @@ setTimeout(() => {
         type="hidden"
         name="jadwal_id"
         value="{{ request('jadwal_id') }}">
+
+        <input
+        type="hidden"
+        name="tipe_nilai"
+        value="{{ request('tipe_nilai') }}">
 
         <div
         class="bg-white
@@ -205,39 +243,27 @@ setTimeout(() => {
     
         </div>
     
-        {{-- ================= FORM PENILAIAN ================= --}}
+        {{-- ================= JENIS PENILAIAN AKTIF ================= --}}
         <div class="p-5 border-b border-slate-100">
-    
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-    
-                {{-- Jenis Penilaian --}}
-                <div>
 
-                    <label class="block text-[13px] font-medium text-slate-700 mb-2">
-                        Jenis Penilaian
-                    </label>
-                
-                    <select
-                        name="tipe_nilai"
-                        required
-                        class="w-full rounded-2xl border border-slate-200
-                               px-4 py-2.5 text-sm
-                               focus:ring-2
-                               focus:ring-[#00A39D]
-                               focus:border-[#00A39D]">
-                
-                        <option value="">Pilih Jenis Penilaian</option>
-                        <option value="tugas">Tugas</option>
-                        <option value="harian">Harian</option>
-                        <option value="uts">UTS</option>
-                        <option value="uas">UAS</option>
-                
-                    </select>
-                
-                </div>
-    
+            <label class="block text-[13px] font-medium text-slate-700 mb-2">
+                Jenis Penilaian
+            </label>
+
+            <div
+                class="inline-flex items-center gap-2
+                       rounded-2xl border border-[#00A39D]/30
+                       bg-[#00A39D]/10 px-4 py-2.5
+                       text-sm font-semibold text-[#00807A]">
+
+                {{ ['tugas' => 'Tugas', 'harian' => 'Harian', 'uts' => 'UTS', 'uas' => 'UAS'][request('tipe_nilai')] ?? request('tipe_nilai') }}
+
             </div>
-    
+
+            <p class="text-xs text-slate-400 mt-2">
+                Mau input jenis penilaian lain? Ganti dulu di "Jenis Penilaian" pada Filter Penilaian di atas.
+            </p>
+
         </div>
     
         {{-- ================= TABEL ================= --}}
@@ -279,6 +305,7 @@ setTimeout(() => {
                                 min="0"
                                 max="100"
                                 placeholder="0-100"
+                                value="{{ old('nilai.' . $siswa->id, $nilaiTersimpan[$siswa->id] ?? '') }}"
                                 class="w-24 rounded-xl border border-slate-200
                                        py-2 text-center
                                        focus:ring-[#00A39D]
@@ -315,7 +342,7 @@ setTimeout(() => {
                 </button>
             
                 <a
-                    href="{{ route('guru.nilai') }}"
+                    href="{{ route('guru.nilai', ['jadwal_id' => request('jadwal_id'), 'tipe_nilai' => request('tipe_nilai')]) }}"
                     class="py-2.5 rounded-2xl border border-slate-200
                            bg-white text-center text-sm font-semibold
                            hover:bg-slate-50 transition-colors">
