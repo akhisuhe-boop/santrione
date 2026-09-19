@@ -43,7 +43,9 @@ class GuruNilaiController extends Controller
         $siswas = collect();
 
         $jadwal = null;
-        
+
+        $nilaiTersimpan = [];
+
         if ($request->filled('jadwal_id')) {
         
             $jadwal = JadwalPelajaran::with([
@@ -55,12 +57,35 @@ class GuruNilaiController extends Controller
             $siswas = Siswa::where('kelas_id', $jadwal->kelas_id)
                 ->orderBy('nama_lengkap')
                 ->get();
+
+            /*
+            |--------------------------------------------------------------------------
+            | NILAI YANG SUDAH TERSIMPAN (UNTUK JENIS PENILAIAN YANG DIPILIH)
+            |--------------------------------------------------------------------------
+            | Supaya guru langsung lihat nilai yang sudah pernah dia input,
+            | bukan form kosong -- terutama saat ganti device/browser, atau
+            | cuma mau cek/koreksi sebagian nilai siswa.
+            |--------------------------------------------------------------------------
+            */
+
+            if ($request->filled('tipe_nilai')) {
+
+                $tahunAjaranAktif = TahunAjaran::where('aktif', true)->first();
+
+                $nilaiTersimpan = Nilai::query()
+                    ->where('kelas_id', $jadwal->kelas_id)
+                    ->where('mapel_id', $jadwal->mata_pelajaran_id)
+                    ->where('tahun_ajaran_id', $tahunAjaranAktif?->id)
+                    ->where('tipe_nilai', $request->tipe_nilai)
+                    ->pluck('nilai', 'siswa_id');
+            }
         }
 
         return view('guru.nilai', compact(
             'jadwals',
             'jadwal',
-            'siswas'
+            'siswas',
+            'nilaiTersimpan'
         ));
     }
 
