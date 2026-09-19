@@ -363,13 +363,35 @@ class WaliDashboardController extends Controller
         return view('wali.prestasi', compact('siswa'));
     }
 
-    public function raport()
+    public function raport(Request $request)
     {
         $siswa = Siswa::with('kelas')->findOrFail(session('siswa_id'));
 
         /*
         |---------------------------------------------
+        | FILTER: TAHUN AJARAN & JENIS RAPORT (PTS/PAS)
+        |---------------------------------------------
+        */
+
+        $tahunAjaranList = TahunAjaran::orderByDesc('id')->get();
+
+        $tahunAjaranId = $request->filled('tahun_ajaran_id')
+            ? (int) $request->tahun_ajaran_id
+            : (TahunAjaran::where('aktif', true)->value('id') ?? $tahunAjaranList->first()?->id);
+
+        $jenisPenilaian = in_array($request->query('jenis_penilaian'), ['pts', 'pas'])
+            ? $request->query('jenis_penilaian')
+            : 'pas';
+
+        $tahunAjaranTerpilih = $tahunAjaranList->firstWhere('id', $tahunAjaranId);
+
+        /*
+        |---------------------------------------------
         | RAPORT NON AKADEMIK
+        |---------------------------------------------
+        | Dibatasi ke tahun ajaran yang dipilih -- kalau admin belum input
+        | non-akademik untuk tahun ajaran ini, $raport akan null, tapi itu
+        | TIDAK BOLEH menyembunyikan nilai akademik (lihat blade).
         |---------------------------------------------
         */
         $raport = RaportNonAkademik::with([
@@ -380,7 +402,7 @@ class WaliDashboardController extends Controller
             'ekstrakurikulers'
         ])
         ->where('siswa_id', $siswa->id)
-        ->latest()
+        ->where('tahun_ajaran_id', $tahunAjaranId)
         ->first();
 
         /*
@@ -390,11 +412,8 @@ class WaliDashboardController extends Controller
         */
         $rekapNilai = RekapNilai::with(['mapel', 'guru'])
             ->where('siswa_id', $siswa->id)
-            // Raport yang ditampilkan ke wali adalah raport akhir semester (PAS).
-            ->where('jenis_penilaian', 'pas')
-            ->when($raport, function ($q) use ($raport) {
-                $q->where('tahun_ajaran_id', $raport->tahun_ajaran_id);
-            })
+            ->where('tahun_ajaran_id', $tahunAjaranId)
+            ->where('jenis_penilaian', $jenisPenilaian)
             ->get();
 
         /*
@@ -415,7 +434,11 @@ class WaliDashboardController extends Controller
         return view('wali.raport', compact(
             'siswa',
             'raport',
-            'nilaiAkademik'
+            'nilaiAkademik',
+            'tahunAjaranList',
+            'tahunAjaranId',
+            'tahunAjaranTerpilih',
+            'jenisPenilaian'
         ));
     }
 

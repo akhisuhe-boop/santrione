@@ -329,7 +329,7 @@ setTimeout(() => {
                    bg-slate-50
                    p-4">
     
-            <div class="grid grid-cols-2 gap-3">
+            <div class="grid grid-cols-1 gap-3">
 
                 <button
                     type="submit"
@@ -340,17 +340,7 @@ setTimeout(() => {
                     Simpan Nilai
             
                 </button>
-            
-                <a
-                    href="{{ route('guru.nilai', ['jadwal_id' => request('jadwal_id'), 'tipe_nilai' => request('tipe_nilai')]) }}"
-                    class="py-2.5 rounded-2xl border border-slate-200
-                           bg-white text-center text-sm font-semibold
-                           hover:bg-slate-50 transition-colors">
-            
-                    Reset
-            
-                </a>
-            
+
             </div>
     
         </div>

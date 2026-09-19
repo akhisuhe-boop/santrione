@@ -97,16 +97,16 @@
 <body>
 
     {{-- HEADER: JUDUL RAPORT --}}
-    <div class="title" style="margin-bottom:2px;">
+    <div class="title" style="margin:0; padding:0;">
         RAPORT {{ $jenisPenilaian === 'pts' ? 'PENILAIAN TENGAH SEMESTER (PTS)' : 'PENILAIAN AKHIR SEMESTER (PAS)' }}
     </div>
 
     {{-- KOP SURAT --}}
-    <table class="borderless" style="margin-bottom:8px;">
+    <table class="borderless" style="margin:0 0 8px; border-collapse:collapse;">
 
         <tr>
 
-            <td width="15%" style="vertical-align:middle;">
+            <td width="15%" style="vertical-align:middle; padding:0;">
                 @if($logoBase64)
                     <img
                         src="{{ $logoBase64 }}"
@@ -115,7 +115,7 @@
                 @endif
             </td>
 
-            <td style="vertical-align:middle; text-align:center;">
+            <td style="vertical-align:middle; text-align:center; padding:0;">
 
                 <div style="font-size:16px; font-weight:bold; text-transform:uppercase;">
                     {{ $siswa->kelas->lembaga->nama ?? '-' }}

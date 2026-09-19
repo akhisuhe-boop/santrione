@@ -62,7 +62,7 @@
                     font-medium
                     backdrop-blur-sm
                 ">
-                    Tahun : {{ $raport->tahunAjaran->nama ?? '-' }}
+                    Tahun : {{ $tahunAjaranTerpilih->nama ?? '-' }}
                 </span>
 
                 <span class="
@@ -74,7 +74,19 @@
                     font-medium
                     backdrop-blur-sm
                 ">
-                    Semester : {{ $raport->semester ?? '-' }}
+                    Semester : {{ $tahunAjaranTerpilih->semester ?? '-' }}
+                </span>
+
+                <span class="
+                    px-3 py-1
+                    rounded-full
+                    bg-white/25
+                    border border-white/20
+                    text-[11px]
+                    font-bold
+                    backdrop-blur-sm
+                ">
+                    {{ $jenisPenilaian === 'pts' ? 'PTS' : 'PAS' }}
                 </span>
 
             </div>
@@ -129,7 +141,7 @@
                         Kelas
                     </div>
                     <div class="text-sm font-semibold">
-                        {{ $raport->kelas->nama ?? '-' }}
+                        {{ $siswa->kelas->nama ?? '-' }}
                     </div>
                 </div>
 
@@ -138,12 +150,67 @@
         </div>
     </div>
 
-    @if(!$raport)
+    {{-- ========================= --}}
+    {{-- FILTER: TAHUN AJARAN & JENIS RAPORT --}}
+    {{-- ========================= --}}
+    <form
+        method="GET"
+        action="{{ route('wali.raport') }}"
+        class="bg-white rounded-[28px] border border-slate-100 shadow-sm p-4">
 
-        {{-- EMPTY --}}
+        <div class="grid grid-cols-2 gap-3">
+
+            {{-- TAHUN AJARAN --}}
+            <div>
+                <label class="block text-xs font-medium text-slate-500 mb-1.5">
+                    Tahun Ajaran
+                </label>
+
+                <select
+                    name="tahun_ajaran_id"
+                    onchange="this.form.submit()"
+                    class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm
+                           focus:ring-2 focus:ring-[#00A39D] focus:border-[#00A39D]">
+
+                    @foreach($tahunAjaranList as $ta)
+                        <option
+                            value="{{ $ta->id }}"
+                            @selected($tahunAjaranId == $ta->id)>
+                            {{ $ta->nama }} - {{ $ta->semester }}
+                        </option>
+                    @endforeach
+
+                </select>
+            </div>
+
+            {{-- JENIS RAPORT --}}
+            <div>
+                <label class="block text-xs font-medium text-slate-500 mb-1.5">
+                    Jenis Raport
+                </label>
+
+                <select
+                    name="jenis_penilaian"
+                    onchange="this.form.submit()"
+                    class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm
+                           focus:ring-2 focus:ring-[#00A39D] focus:border-[#00A39D]">
+
+                    <option value="pts" @selected($jenisPenilaian === 'pts')>PTS - Tengah Semester</option>
+                    <option value="pas" @selected($jenisPenilaian === 'pas')>PAS - Akhir Semester</option>
+
+                </select>
+            </div>
+
+        </div>
+
+    </form>
+
+    @if($nilaiAkademik->isEmpty() && !$raport)
+
+        {{-- EMPTY: BENAR-BENAR TIDAK ADA DATA SAMA SEKALI --}}
         <x-wali.empty
             title="Raport Belum Tersedia"
-            description="Data raport non akademik belum dipublish."
+            description="Nilai untuk {{ $jenisPenilaian === 'pts' ? 'PTS' : 'PAS' }} tahun ajaran ini belum tersedia."
         />
 
     @else
